@@ -215,3 +215,23 @@ test('a shop may sell several capacitors but the carry limit is three',()=>{
  assert.equal(rogue.pulse,2);
  assert.equal(purchasePulse(rogue,1).ok,true);
 });
+
+test('Wildcard Beacon plus Operator Reserve works across 250 shuffled bags',()=>{
+ const equipment=boosted(['wild-beacon','operator-reserve']);
+ let seed=7;
+ for(let iteration=0;iteration<250;iteration++){
+   seed=(1664525*seed+1013904223)>>>0;
+   let state=seed;
+   const rng=()=>{state=(1664525*state+1013904223)>>>0;return state/4294967296;};
+   const all=makeBag(rng);
+   const deal=dealPlayableRack([],all,rogueRackOptions(equipment));
+   assert.equal(deal.rack.length,7);
+   const blanks=deal.rack.filter(t=>Boolean(t.blank)).length;
+   const operators=deal.rack.filter(t=>['+','−','×','÷'].includes(t.value)||['blank-operator','blank-any'].includes(t.blank)).length;
+   const numbers=deal.rack.filter(t=>/^[0-9]$/.test(t.value)||['blank-number','blank-any'].includes(t.blank)).length;
+   assert.ok(blanks>=2,'need at least two flexible tiles, iteration '+iteration);
+   assert.ok(operators>=2,'need at least two operator-capable tiles, iteration '+iteration);
+   assert.ok(numbers>=4,'need at least four number-capable tiles, iteration '+iteration);
+   assert.equal(deal.rack.length+deal.bag.length,151);
+ }
+});
