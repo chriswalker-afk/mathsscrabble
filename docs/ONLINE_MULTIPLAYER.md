@@ -50,7 +50,9 @@ The Node suite exercises 2–4 player lobbies, authentication, private snapshots
 
 The Chromium test opens two isolated browser sessions against a simulated authoritative room API. It covers creation, joining, host starting, private racks, rejected equations, scoring animations, reconnecting after a refresh, passing, finishing and mobile controls. Existing Sector Run, Drift, bag-animation and Local Match tests remain enabled.
 
-The automated browser test uses a simulated backend. It does not prove that a real Cloudflare Worker is deployed or configured correctly. A live post-deployment smoke test remains necessary.
+In addition, the worker-build CI job performs a real `cf deploy --dry-run` and starts `cf dev` locally with a SQLite-backed Durable Object. The integration script `tests/online-worker-runtime.mjs` exercises actual Worker endpoints: creates/joins a room, verifies separate bearer credentials and private racks, confirms access rejection, rejects forged/stale/late-turn actions, tests idempotent retry handling, performs timed/untimed passes and reads durable final standings. This uses the real local Cloudflare runtime without publishing to the live internet.
+
+The online Chromium test still uses a simulated API. The Cloudflare runtime integration test uses the actual local Worker and Durable Object, but neither proves that the external custom domain, DNS or any production Cloudflare restrictions are configured. A live two-device post-deployment smoke test remains necessary.
 
 ### Live two-device checklist
 
