@@ -1,12 +1,23 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
- lockedFlash:new Set(),preview:null,modalEpoch:0
+ lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false
 };
+const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+function persistRun(){
+  state.saveAvailable=saveRun(storage,state);
+  $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
+  $('save-status').classList.toggle('unavailable',!state.saveAvailable);
+  $('save-status').title=state.saveAvailable?
+    'Your current run, rack and unscored tiles are saved on this device.':
+    'Your browser could not save this run. Keep this tab open to avoid losing progress.';
+}
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 function announce(message,isError=false){
  $('log').textContent=message;
@@ -17,34 +28,31 @@ function announce(message,isError=false){
    $('preview-status').textContent=message;
  }
 }
-function freshSector(sector=1){
-  state.modalEpoch++;
-  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
-  state.turn=1;state.score=0;state.ended=false;state.busy=false;
-  state.selected=null;state.swapping=false;state.swapSet.clear();
-  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
-  state.focusedIndex=pos(CENTER,CENTER);
-  state.bag=makeBag();
-  if(sector===1){
-    const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
-    state.rack=required.map(v=>{
-      const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
-      return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
-    });
-  }else{
-    const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;
-    // A sector always begins with at least one flexible tile where stock permits.
-    if(!state.rack.some(isBlank)){
-      const blankIndex=state.bag.findIndex(isBlank);
-      if(blankIndex>=0){
-        const wildcard=state.bag.splice(blankIndex,1)[0];
-        state.bag.push(state.rack.pop());state.rack.push(wildcard);
-      }
-    }
-  }
-  announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');
-  $('board-frame').classList.remove('reactor-scored');
-  render();
+function freshSector(sector=1,{newRun=false}={}){
+ state.modalEpoch++;
+ if(newRun||sector===1||!state.progress)state.progress=freshProgress();
+ state.stats=freshStats();state.phase='playing';
+ state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
+ state.turn=1;state.score=0;state.ended=false;state.busy=false;
+ state.selected=null;state.swapping=false;state.swapSet.clear();
+ state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
+ state.focusedIndex=pos(CENTER,CENTER);
+ state.bag=makeBag();
+ if(sector===1){
+   const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
+   state.rack=required.map(v=>{
+     const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
+     return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
+   });
+ }else{
+   const deal=dealPlayableRack([],state.bag);
+   state.rack=deal.rack;state.bag=deal.bag;
+ }
+ announce(sector===1?
+   'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.':
+   'New sector online. Use the centre to begin and aim for the new energy target.');
+ $('board-frame').classList.remove('reactor-scored');
+ render();
 }
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
@@ -190,16 +198,17 @@ function boardCell(i){
    (i===state.recentlyPlaced?' tile-landing':'')+
    (state.lockedFlash.has(i)?' locked-flash':'');
  node.setAttribute('role','gridcell');
- node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${pending?', unscored':''}`);
+ node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
  node.dataset.index=String(i);
  node.dataset.locked=String(locked);
  node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
-   const inner=document.createElement('span');inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
+   const inner=document.createElement('span');
+   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
    inner.textContent=tile.value;
-   if(tile.value!=='='){
-     const point=document.createElement('sup');point.textContent=tile.points;inner.append(point);
-   }
+   // Keep board symbols completely unobstructed. Point values remain visible
+   // on the rack, in the equation breakdown, and in this accessible tooltip.
+   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points`;
    node.append(inner);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
@@ -253,7 +262,7 @@ function tileButton(tile, rackIndex){
    const direction=event.key==='ArrowRight'?1:-1;
    const hidden=Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id);
    state.rack=reorderRack(state.rack,tile.id,rackIndex+direction+(direction>0?1:0),hidden);
-   renderRack();
+   renderRack();persistRun();
    const next=$('rack').querySelector('[data-tile-id="'+tile.id+'"]');
    next?.focus({preventScroll:true});
  });
@@ -298,39 +307,122 @@ function renderPreview(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
- $('score').textContent=state.score;$('target').textContent=nextTarget(state.sector);
+ const target=nextTarget(state.sector),remaining=Math.max(0,target-state.score);
+ const turnsAvailable=state.phase==='playing'?
+   Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
+ $('score').textContent=state.score;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('bag-count').textContent=state.bag.length;
- $('remaining-label').textContent=state.score>=nextTarget(state.sector)?
-   'TARGET ACHIEVED':`${nextTarget(state.sector)-state.score} points to stabilise`;
- $('progress').style.width=Math.min(100,state.score/nextTarget(state.sector)*100)+'%';
- 
+ $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
+   state.phase==='lost'?(`${remaining} energy short · try again`):
+   `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
+ $('progress').style.width=Math.min(100,state.score/target*100)+'%';
+ $('progress').setAttribute('aria-label',`${state.score} of ${target} energy collected`);
+ $('run-summary').textContent=`${state.progress.completed.length} sector${state.progress.completed.length===1?'':'s'} · ${state.progress.runPoints} energy`;
+ const history=$('history-mini');
+ history.replaceChildren();
+ if(state.stats.moves.length){
+   const heading=document.createElement('div');heading.className='history-heading';heading.textContent='SCORED EQUATIONS';
+   history.append(heading);
+   for(const move of state.stats.moves.slice(-3).reverse()){
+     const row=document.createElement('div');row.className='history-row';
+     const equation=document.createElement('span');equation.textContent=move.equation;
+     const points=document.createElement('strong');points.textContent='+'+move.points;
+     row.append(equation,points);history.append(row);
+   }
+ }
+ const coach=$('coach-hint');
+ const placed=Object.keys(state.pending).length;
+ if(state.phase==='won')coach.textContent='Reactor stabilised. Open the sector report to advance.';
+ else if(state.phase==='lost')coach.textContent='Review your moves and retry this sector.';
+ else if(state.swapping)coach.textContent=freeExchangeReason(state.rack)?
+   'All numbers or all operations? You can exchange tiles without spending a turn.':
+   'Select your exchange tiles. This will use one turn.';
+ else if(state.board.every(t=>!t)&&!placed)coach.textContent=
+   state.sector===1?'TRAINING · Try 8 + 4 = 12 through the glowing centre.':'START · Your first equation must cross the centre.';
+ else if(placed&&state.preview.ready)coach.textContent=
+   'CHECK · A complete equation is in place. Submit it when you trust your BIDMAS calculation.';
+ else if(placed)coach.textContent='BUILD · Arrange one unbroken equation, then add your free equals sign.';
+ else coach.textContent='EXPAND · Connect a fresh equation to any locked tile. Reused tiles score again.';
+ if(!state.busy)persistRun();
 }
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  $('modal').showModal();
 }
-function turnCompleted(){
+function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
- state.placementOrder=[];state.recentlyPlaced=null;state.busy=false;
+ state.placementOrder=[];state.recentlyPlaced=null;
  if(state.score>=nextTarget(state.sector)){
-  state.ended=true;render();
-  showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,
-    `<p>You generated <strong>${state.score} energy points</strong> against a target of ${nextTarget(state.sector)}.</p><p>The next reactor will demand more energy.</p>`,
-    [{text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]);
-  return;
+   state.phase='won';state.ended=true;
+   state.progress=completeProgress(state.progress,
+     sectorReport(state.sector,state.score,state.turn,state.stats,true));
+ }else if(state.turn>=TURNS_PER_SECTOR){
+   state.phase='lost';state.ended=true;
+ }else{
+   state.phase='playing';state.ended=false;state.turn++;
  }
- if(state.turn>=TURNS_PER_SECTOR){
-  state.ended=true;render();
-  showModal('REACTOR OFFLINE','Sector failed',
-    `<p>You scored <strong>${state.score}</strong> of the required <strong>${nextTarget(state.sector)}</strong> points.</p><p>Try a new rack, different placements and bonus multipliers.</p>`,
-    [{text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)},
-     {text:'START OVER',fn:()=>freshSector(1)}]);
-  return;
+ // This must happen synchronously before any animation or modal: refreshing
+ // immediately after a scoring action must never replay or lose the turn.
+ persistRun();
+}
+function reportRows(moves){
+ if(!moves.length)return '<p>No equations scored yet. Start with one accurate calculation, then build outward from it.</p>';
+ return '<div class="report-moves">'+moves.map(m=>
+   `<div class="report-move"><span class="report-turn">T${m.turn}</span><strong>${escapeText(m.equation)}</strong><span>+${m.points}</span></div>`
+ ).join('')+'</div>';
+}
+function showSectorOutcome(){
+ const won=state.phase==='won';
+ const report=sectorReport(state.sector,state.score,state.turn,state.stats,won);
+ const best=report.best?`${escapeText(report.best.equation)} (+${report.best.points})`:'No scored equations';
+ const message=won?
+   'Target reached. Your run continues into a fresh sector.':
+   report.equations?
+     'You can retry this sector with a new rack. Look for connections and premium squares.':
+     'Try a short, correct equation first. A balanced rack provides digits, an operation and a wildcard.';
+ const body=`<div class="sector-report">
+ <div class="report-energy"><div><span>ENERGY COLLECTED</span><strong>${report.score}</strong></div>
+ <div><span>SECTOR TARGET</span><strong>${report.target}</strong></div></div>
+ <div class="report-meter"><div style="width:${Math.min(100,Math.round(100*report.score/report.target))}%"></div></div>
+ <div class="report-facts"><div><span>Equations</span><strong>${report.equations}</strong></div>
+ <div><span>Turns used</span><strong>${report.turnsUsed}/6</strong></div>
+ <div><span>Best move</span><strong>${report.best?report.best.points:0} pts</strong></div>
+ <div><span>Free exchanges</span><strong>${report.freeExchanges}</strong></div></div>
+ <p class="report-best">Best calculation: ${best}</p>
+ ${reportRows(report.moves)}
+ <p class="report-note">${message}</p></div>`;
+ if(won){
+   showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,body,[
+    {text:'VIEW RUN',fn:showRunReport},
+    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
+   ]);
+ }else{
+   showModal('REACTOR OFFLINE',`Sector ${state.sector} report`,body,[
+    {text:'NEW RUN',fn:()=>freshSector(1,{newRun:true})},
+    {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}
+   ]);
  }
- state.turn++;render();
+}
+function showRunReport(){
+ const progress=state.progress;
+ const rows=progress.completed.slice(-10).map(item=>
+   `<div class="report-move"><span class="report-turn">S${item.sector}</span><strong>${item.score} / ${item.target} energy</strong><span>${item.turnsUsed} turns</span></div>`
+ ).join('');
+ const body=`<div class="sector-report"><div class="report-energy"><div><span>SECTORS CLEARED</span><strong>${progress.completed.length}</strong></div>
+ <div><span>RUN ENERGY</span><strong>${progress.runPoints}</strong></div></div>
+ <p class="report-note">Current sector ${state.sector}: ${state.score} / ${nextTarget(state.sector)} energy. Progress saves automatically on this device.</p>
+ <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
+ const buttons=state.phase==='won'?
+   [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
+    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
+   state.phase==='lost'?
+     [{text:'BACK TO REPORT',fn:showSectorOutcome},
+      {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
+     [{text:'BACK TO GAME',primary:true}];
+ showModal('CAPTAIN’S LOG','Your reactor run',body,buttons);
 }
 function showEnergyBurst(points){
  const burst=$('energy-burst');
@@ -344,29 +436,42 @@ function showEnergyBurst(points){
 function score(){
  if(state.ended||state.swapping||state.busy)return;
  try{
-  const move=validateMove(state.board,state.pending);
-  const points=scoreMove(state.board,state.pending,move);
-  const changed=Object.keys(state.pending).map(Number);
-  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
-  for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
-  state.rack=state.rack.filter(t=>!used.has(t.id));
-  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
-  state.score+=points.total;
-  state.busy=true;
-  state.pending={};state.placementOrder=[];state.selected=null;state.recentlyPlaced=null;
-  state.lockedFlash=new Set(changed);
-  announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
-  render();showEnergyBurst(points.total);
-  const epoch=++state.modalEpoch;
-  window.setTimeout(()=>{
-    if(epoch!==state.modalEpoch)return;
-    state.busy=false;state.lockedFlash.clear();
-    render();
-    showModal('EQUATION VERIFIED',`+${points.total} energy`,
-      `<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Completed calculation</span><b>+${points.equation}</b></div><div><span>Connected to board</span><b>+${points.crossing}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
-      [{text:'CONTINUE →',primary:true,fn:turnCompleted}]);
-  },420);
+   const move=validateMove(state.board,state.pending);
+   const points=scoreMove(state.board,state.pending,move);
+   const changed=Object.keys(state.pending).map(Number);
+   const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
+   state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
+   for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
+   state.rack=state.rack.filter(t=>!used.has(t.id));
+   const draw=dealPlayableRack(state.rack,state.bag);
+   state.rack=draw.rack;state.bag=draw.bag;
+   state.score+=points.total;
+   state.busy=true;
+   state.lockedFlash=new Set(changed);
+   const epoch=++state.modalEpoch;
+   completeTurn();
+   announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
+   render();showEnergyBurst(points.total);
+   window.setTimeout(()=>{
+     if(epoch!==state.modalEpoch)return;
+     state.busy=false;state.lockedFlash.clear();render();
+     showModal('EQUATION VERIFIED',`+${points.total} energy`,
+       `<p class="equation-result">${escapeText(move.text)}</p>
+       <div class="score-breakdown">
+       <div><span>Tile points</span><b>${points.base}</b></div>
+       <div><span>Equation multiplier</span><b>×${points.multiplier}</b></div>
+       <div><span>Equation length</span><b>+${points.length}</b></div>
+       <div><span>Completed calculation</span><b>+${points.equation}</b></div>
+       <div><span>Connected to board</span><b>+${points.crossing}</b></div>
+       <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
+       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
+       [{text:state.phase==='playing'?'CONTINUE →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
+         if(state.phase!=='playing')showSectorOutcome();
+       }}]);
+   },420);
  }catch(err){
+   state.stats.attempts++;
+   persistRun();
    announce(err.message,true);
    $('board').classList.remove('shake');void $('board').offsetWidth;
    $('board').classList.add('shake');
@@ -390,19 +495,23 @@ function swap(){
  const free=Boolean(freeExchangeReason(state.rack));
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
- const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
+ const draw=dealPlayableRack(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
  state.bag.push(...exchanged);
  for(let i=state.bag.length-1;i>0;i--){
    const j=Math.floor(Math.random()*(i+1));
    [state.bag[i],state.bag[j]]=[state.bag[j],state.bag[i]];
  }
  if(free){
+   state.stats.freeExchanges++;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
    render();
  }else{
+   state.stats.paidExchanges++;
+   completeTurn();
    announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);
-   turnCompleted();
+   render();
+   if(state.phase!=='playing')showSectorOutcome();
  }
 }
 function clear(){
@@ -427,18 +536,50 @@ enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
-   '<p>This will reset your current sector and score.</p>',
-   [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1)}]);
+   '<p>A new run replaces your current local save, including your sector and accumulated run points. Your completed sector history will be lost.</p>',
+   [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1,{newRun:true})}]);
 };
-$('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',
- `<p>Create a complete horizontal or vertical equation, using <strong>BIDMAS</strong> to check the arithmetic. Drag tiles by mouse, touch or pen, or tap a tile then its square. The <strong>=</strong> tile beside your rack is unlimited and free.</p>
- <p>Your first equation must cross the centre. Later equations must reuse a locked tile. Each move must make one continuous equation.</p>
- <p>Double and triple squares multiply tile or equation points. You earn 3 extra points per square beyond five, plus 20 for placing all seven physical rack tiles. Exchanging tiles uses a turn. Reach the energy target in six turns to advance.</p>
- <p>Move an unscored tile by dragging it. Tap it to pick it up, or use the <strong>Undo Tile</strong> control. Keyboard: <strong>1–7</strong> selects a rack tile, <strong>=</strong> selects the free equals sign, arrow keys navigate the board and Backspace undoes the last placed tile.</p>
- <p>The equation preview in the command panel shows potential points but does not check whether your mathematics is correct until you submit.</p>
- <p><strong>A calculation is required:</strong> 3=3 is not accepted. A completed equation earns +5 points, and reusing a locked board tile earns another +5. Blank number (#), blank operator (◇) and flexible (✦) tiles score zero tile points; choose their symbol when you place them.</p>
- <p>If your rack contains only numbers or only operators, you may exchange tiles without losing your turn. Drag unscored tiles back to the rack to remove them, or drag rack tiles to rearrange their order.</p>`,
- [{text:'LET’S PLAY',primary:true}]);
+$('run-report-btn').onclick=()=>{if(!state.busy)showRunReport();};
+$('run-report-header').onclick=()=>{if(!state.busy)showRunReport();};
+function rememberIntro(){
+ try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
+}
+function showTraining(firstVisit=false){
+ const message=`<div class="training-steps">
+  <div class="training-step"><span>01</span><div><strong>Build one real calculation</strong>
+    <p>Try <em>8 + 4 = 12</em> through the centre. Use <strong>BIDMAS</strong>: brackets, indices, division/multiplication, then addition/subtraction. An identity like 3 = 3 does not score.</p></div></div>
+  <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
+    <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
+  <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
+    <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can exchange an all-number or all-operation rack for free.</p></div></div>
+ </div>
+ <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–7 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
+ showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
+   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
+   message,firstVisit?
+    [{text:'SKIP GUIDE',fn:rememberIntro},
+     {text:'START MISSION →',primary:true,fn:rememberIntro}]:
+    [{text:'BACK TO GAME',primary:true}]);
+}
+$('help-btn').onclick=()=>showTraining();
+function startSolo(){
+ const previous=loadRun(storage);
+ if(previous){
+   Object.assign(state,previous);
+   state.ended=state.phase!=='playing';state.busy=false;
+   state.swapping=false;state.swapSet.clear();state.selected=null;
+   state.recentlyPlaced=null;state.lockedFlash.clear();
+   state.focusedIndex=pos(CENTER,CENTER);
+   announce('Saved run restored. Your board, rack, and unfinished placements are ready.');
+   render();
+   if(state.ended)showSectorOutcome();
+ }else{
+   freshSector(1,{newRun:true});
+   let seen=false;
+   try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
+   if(!seen)showTraining(true);
+ }
+}
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
@@ -458,6 +599,14 @@ document.addEventListener('keydown',event=>{
    if(tile){event.preventDefault();selectTile(tile.id);}
  }
 });
-$('modal-close').onclick=()=>{if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){$('modal-actions').querySelector('button')?.click();}else if(!state.ended){$('modal').close();}};
+$('modal-close').onclick=()=>{
+ if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){
+   $('modal-actions').querySelector('button')?.click();
+ }else if($('modal-eyebrow').textContent==='WELCOME TO THE REACTOR'){
+   rememberIntro();$('modal').close();
+ }else if(!state.ended){
+   $('modal').close();
+ }
+};
 $('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
-freshSector();
+startSolo();

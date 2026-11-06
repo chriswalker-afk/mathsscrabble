@@ -31,6 +31,14 @@ async function drag(source,dest){
 try{
   await page.goto(base,{waitUntil:'networkidle'});
   await page.locator('.cell').first().waitFor();
+  // First-visit guide must be explicit, dismissible and not lose the opening rack.
+  assert.equal(await page.locator('#modal[open]').count(),1);
+  assert.match(await page.locator('#modal-title').textContent(),/first equation/i);
+  assert.match(await page.locator('.training-steps').textContent(),/BIDMAS/i);
+  await page.locator('#modal-actions button').last().click();
+  const initialSave=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
+  assert.ok(initialSave?.length>1000,'the initial run should be saved');
+  assert.match(await page.locator('#save-status').textContent(),/autosaved/i);
   assert.equal(await page.locator('.cell').count(),169);
   assert.equal(await page.locator('#rack .tile').count(),7);
   assert.equal(await page.locator('#bag-count').textContent(),String(144));
@@ -82,6 +90,13 @@ try{
   await drag(page.locator('#rack .tile:not(.wildcard)').first(),cell(5,10));
   assert.match(await cell(5,10).getAttribute('class'),/pending/);
   assert.equal(await page.locator('#rack-count').textContent(),'6 / 7');
+  // An unfinished placement and all other rack tiles must survive a page refresh.
+  const pendingTile=await cell(5,10).locator('.board-tile').textContent();
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#modal[open]').count(),0,'welcome should only appear on first visit');
+  assert.equal(await cell(5,10).locator('.board-tile').textContent(),pendingTile);
+  assert.equal(await page.locator('#rack-count').textContent(),'6 / 7');
+  assert.match(await page.locator('#log').textContent(),/restored/i);
   await drag(cell(5,10),cell(5,11));
   assert.match(await cell(5,11).getAttribute('class'),/pending/);
   assert.doesNotMatch(await cell(5,10).getAttribute('class'),/pending/);
@@ -120,7 +135,9 @@ try{
   await selectRackTile('◇');
   await cell(4,9).click();
   await page.locator('#wildcard-choices button', {hasText:'+'}).first().click();
-  assert.equal(await cell(4,9).locator('.board-tile').textContent(),'+0');
+  assert.equal(await cell(4,9).locator('.board-tile').textContent(),'+');
+  assert.equal(await page.locator('#board .board-tile sup').count(),0,
+    'board glyphs should not contain tiny score overlays');
   await drag(cell(4,9),page.locator('#rack .tile').first());
   assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
   assert.ok(await page.locator('#rack .wildcard-blank-operator').count()>=1);
@@ -148,10 +165,13 @@ try{
     const geometry=await page.evaluate(()=>{
       const board=document.querySelector('.board-frame').getBoundingClientRect();
       const rack=document.querySelector('.rack-row').getBoundingClientRect();
-      return {boardWidth:board.width,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      const font=parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize);
+      return {boardWidth:board.width,boardFont:font,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Layout',size,geometry);
-    assert.ok(geometry.boardWidth>=(size.height>=768?490:455),'board should gain substantial space after moving the preview');
+    const minimum=size.height>=768?575:520;
+    assert.ok(geometry.boardWidth>=minimum,'board must be legible and enlarged on classroom laptops');
+    assert.ok(geometry.boardFont>=24,'maths glyphs should fill enough of each board cell');
     assert.ok(geometry.rackBottom<=geometry.height-20,'rack must remain on screen');
     assert.ok(geometry.scrollHeight<=geometry.height+3,'desktop should not need vertical scrolling');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'desktop should not need horizontal scrolling');
@@ -171,16 +191,73 @@ try{
     assert.ok(geometry.boardWidth>=250,'board should retain readable dimensions');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'no horizontal scrolling');
     if(size.width===390){
+      assert.ok(await page.locator('#run-report-header').isVisible(),'compact screens need an accessible run-report button');
       assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
       assert.ok(geometry.scoreButtonBottom<=size.height-20,'score command must be visible without scrolling on phones');
       assert.ok(geometry.previewBottom<=size.height-4,'equation preview should fit on one mobile screen');
       assert.ok(geometry.scoreLabelTop>=0&&geometry.scoreLabelTop<size.height,'energy readout must be visible');
     }
-    if(size.width===768)assert.ok(geometry.boardWidth>=430,'portrait tablets need a broader board');
+    if(size.width===768)assert.ok(geometry.boardWidth>=620,'portrait tablets must give priority to the board');
     await page.screenshot({path:'/tmp/equanova-'+size.width+'x'+size.height+'.png'});
   }
+  // New run replaces the current save after confirmation.
+  await page.locator('#new-btn').click();
+  assert.match(await page.locator('#modal-title').textContent(),/new run/i);
+  await page.locator('#modal-actions button').last().click();
+  assert.equal(await page.locator('#turn').textContent(),'1 / 6');
+  assert.equal(await page.locator('#score').textContent(),'0');
+  assert.equal(await page.locator('#run-summary').textContent(),'0 sectors · 0 energy');
+
+  // Simulate an unfinished final turn at 39/40 energy, then score a genuine
+  // tutorial equation. The save must be committed before the 420 ms animation.
+  await page.evaluate(raw=>{
+    const data=JSON.parse(raw);
+    data.turn=6;data.score=39;data.phase='playing';data.stats={
+      attempts:0,freeExchanges:0,paidExchanges:0,moves:[]
+    };
+    localStorage.setItem('equa-nova.sector-run.v1',JSON.stringify(data));
+  },initialSave);
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#turn').textContent(),'6 / 6');
+  for(const [symbol,row,col] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7]])await put(symbol,row,col);
+  await selectRackTile('✦');
+  await cell(6,8).click();
+  await page.locator('#wildcard-choices button', {hasText:'2'}).first().click();
+  await page.locator('#score-btn').click();
+  // Refresh *before* the score animation finishes.
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#turn').textContent(),'6 / 6');
+  assert.match(await page.locator('#modal-title').textContent(),/sector 1 complete/i);
+  const restoredWinScore=Number(await page.locator('#score').textContent());
+  assert.ok(restoredWinScore>=40,'the finishing equation stabilises the sector');
+  assert.equal(await page.locator('#run-summary').textContent(),'1 sector · '+restoredWinScore+' energy');
+  await page.locator('#modal-actions button').last().click();
+  assert.equal(await page.locator('#sector-label').textContent(),'SECTOR 02 · POLARIS');
+  assert.equal(await page.locator('#turn').textContent(),'1 / 6');
+  assert.ok((await page.locator('#rack .tile.wildcard').count())>=1);
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#sector-label').textContent(),'SECTOR 02 · POLARIS');
+  assert.equal(await page.locator('#run-summary').textContent(),'1 sector · '+restoredWinScore+' energy');
+
+  // Report can be reopened without changing the current sector.
+  await page.locator('#run-report-header').click();
+  assert.match(await page.locator('#modal-title').textContent(),/reactor run/i);
+  assert.match(await page.locator('.sector-report').textContent(),/S1/);
+  await page.locator('#modal-actions button').last().click();
+  await page.setViewportSize({width:1366,height:768});
+  await page.locator('#run-report-btn').click();
+  assert.match(await page.locator('#modal-title').textContent(),/reactor run/i);
+  await page.locator('#modal-actions button').last().click();
+
+  // Damaged browser storage must fall back to a clean new run.
+  await page.evaluate(()=>localStorage.setItem('equa-nova.sector-run.v1','{corrupted'));
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#sector-label').textContent(),'SECTOR 01 · ORIGIN');
+  assert.equal(await page.locator('#turn').textContent(),'1 / 6');
+  assert.equal(await page.locator('#modal[open]').count(),0);
+
   assert.deepEqual(pageErrors,[]);
-  console.log('Browser smoke passed: calculation rule, configurable blanks, scoring, board/rack drags, reordering, keyboard and enlarged-board layout.');
+  console.log('Browser smoke passed: intro, autosave/resume, scoring atomicity, sector progression, rack interaction, keyboard and responsive layout.');
 }finally{
   await browser.close();
 }
