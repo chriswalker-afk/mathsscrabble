@@ -14,12 +14,18 @@ function opening(match){
  // Swap physical tiles with the bag rather than duplicating any tile.
  const wanted=['8','+','4','1','2'];
  const rack=[...match.players[0].rack],bag=[...match.bag];
+ const reserved=new Set();
  for(const value of wanted){
-   if(rack.some(t=>t.value===value&& !t.blank))continue;
-   const index=bag.findIndex(t=>t.value===value&&!t.blank);
-   assert.ok(index>=0,'supply includes '+value);
-   const chosen=bag.splice(index,1)[0];
-   bag.push(rack.pop());rack.push(chosen);
+   const exists=rack.findIndex((tile,i)=>!reserved.has(i)&&tile.value===value&&!tile.blank);
+   if(exists>=0){reserved.add(exists);continue;}
+   const fromBag=bag.findIndex(tile=>tile.value===value&&!tile.blank);
+   assert.ok(fromBag>=0,'bag contains '+value);
+   const replacement=bag.splice(fromBag,1)[0];
+   const swap=rack.findIndex((tile,i)=>!reserved.has(i)&&!wanted.includes(tile.value));
+   const swapIndex=swap>=0?swap:rack.findIndex((_,i)=>!reserved.has(i));
+   assert.ok(swapIndex>=0,'unreserved rack slot available');
+   bag.push(rack[swapIndex]);rack[swapIndex]=replacement;
+   reserved.add(swapIndex);
  }
  const players=match.players.map((p,i)=>i===0?{...p,rack}:p);
  const pending={};
