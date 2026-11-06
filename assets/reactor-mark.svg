@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title"><title id="title">EQUA NOVA energy reactor mark</title>
+ <defs><linearGradient id="g" x1="0" x2="1" y1="1" y2="0"><stop stop-color="#4c9baf"/><stop offset=".55" stop-color="#7eeada"/><stop offset="1" stop-color="#f6ce89"/></linearGradient></defs>
+ <path d="M48 5 88 28v40L48 91 8 68V28Z" fill="#0e2333" stroke="url(#g)" stroke-width="3"/>
+ <path d="M48 15 78 32v32L48 81 18 64V32Z" fill="none" stroke="#507d89" stroke-width="1.5"/>
+ <circle cx="48" cy="48" r="25" fill="none" stroke="#64d8c9" stroke-width="2" stroke-dasharray="5 8"/>
+ <path d="M30 38h36M30 58h36" stroke="#f5d39a" stroke-width="5" stroke-linecap="round"/>
+ <path d="M48 20v10m0 36v10M20 48h9m38 0h9" stroke="#7be0d6" stroke-width="3" stroke-linecap="round"/>
+ <circle cx="48" cy="48" r="3" fill="#f4dcaa"/>
+</svg>

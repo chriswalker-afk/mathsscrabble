@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,scoreMove,bonusAt,nextTarget} from '../src/engine.js';
+import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,inspectPlacement,scoreMove,bonusAt,nextTarget} from '../src/engine.js';
 const make=arr=>arr.map(makeTile);
 const place=(symbols,orientation='h',start=0,row=CENTER)=>{
  const pending={};make(symbols).forEach((tile,k)=>pending[orientation==='h'?pos(row,start+k):pos(start+k,row)]=tile);return pending;
@@ -57,4 +57,35 @@ test('score calculation respects premium squares, length and full hand',()=>{
 test('bag refilling, turn targets and rack clear bookkeeping',()=>{
  const bag=makeBag(()=>0.5);assert.ok(bag.length>100);const draw=refill([],bag);assert.equal(draw.rack.length,7);
  assert.equal(draw.rack.length+draw.bag.length,bag.length);assert.ok(nextTarget(3)>nextTarget(2));
+});
+
+test('placement inspection guides students without answering the arithmetic',()=>{
+ const board=Array(SIZE*SIZE).fill(null);
+ const empty=inspectPlacement(board,{});
+ assert.equal(empty.status,'empty');
+ const pending=place(['8','+','4','=','1','2'],'h',3);
+ const ready=inspectPlacement(board,pending);
+ assert.equal(ready.status,'ready');
+ assert.equal(ready.ready,true);
+ assert.equal(ready.text,'8+4=12');
+ assert.equal(ready.indices.length,6);
+ const incorrect=place(['8','+','4','=','1','3'],'h',3);
+ assert.equal(inspectPlacement(board,incorrect).ready,true);
+ assert.throws(()=>validateMove(board,incorrect),/not balanced/i);
+ const noEquals=place(['8','+','4'],'h',4);
+ assert.equal(inspectPlacement(board,noEquals).status,'building');
+ const gap={...pending};delete gap[pos(CENTER,5)];
+ assert.equal(inspectPlacement(board,gap).status,'gap');
+ const offCentre=place(['1','=','1'],'h',0,0);
+ assert.equal(inspectPlacement(board,offCentre).status,'centre');
+});
+test('preview follows existing tiles when an equation is connected',()=>{
+ const board=Array(SIZE*SIZE).fill(null);
+ const first=place(['8','+','4','=','1','2'],'h',3);
+ Object.entries(first).forEach(([i,t])=>board[i]=t);
+ const second=place(['+','3','=','1','1'],'v',CENTER+1,3);
+ const preview=inspectPlacement(board,second);
+ assert.equal(preview.text,'8+3=11');
+ assert.equal(preview.ready,true);
+ assert.deepEqual(preview.indices,validateMove(board,second).indices);
 });

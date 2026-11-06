@@ -79,6 +79,50 @@ export function checkEquation(values){
   if(a.n*b.d!==b.n*a.d)throw Error('That equation is not balanced. Check both sides using BIDMAS.');
   return {left:a,right:b,text:symbols};
 }
+/**
+ * Non-judgemental placement inspection for the board UI. It intentionally does
+ * not evaluate the arithmetic: the student still has to submit an equation to
+ * discover whether it balances. The official validator remains authoritative.
+ */
+export function inspectPlacement(board,pending) {
+  const added=Object.entries(pending).map(([key,tile])=>({index:Number(key),tile}));
+  if(!added.length)return {status:'empty',ready:false,indices:[],text:'',feedback:'Select a tile, then drag or tap a square to begin.'};
+  if(added.some(({index})=>board[index]))return {status:'locked',ready:false,indices:[],text:'',feedback:'Locked tiles cannot be replaced.'};
+  const rows=new Set(added.map(x=>coords(x.index)[0]));
+  const cols=new Set(added.map(x=>coords(x.index)[1]));
+  if(rows.size>1&&cols.size>1)return {status:'alignment',ready:false,indices:added.map(x=>x.index),text:'',feedback:'Place all new tiles in one row or one column.'};
+  const directions=rows.size===1&&cols.size===1?['h','v']:[rows.size===1?'h':'v'];
+  const first=board.every(tile=>!tile);
+  const choices=directions.map(orientation=>{
+    const line=orientation==='h'?coords(added[0].index)[0]:coords(added[0].index)[1];
+    const axes=added.map(x=>orientation==='h'?coords(x.index)[1]:coords(x.index)[0]);
+    let min=Math.min(...axes),max=Math.max(...axes);
+    const at=axis=>orientation==='h'?pos(line,axis):pos(axis,line);
+    while(min>0&&board[at(min-1)])min--;
+    while(max<SIZE-1&&board[at(max+1)])max++;
+    const indices=Array.from({length:max-min+1},(_,k)=>at(min+k));
+    const tiles=indices.map(index=>pending[index]||board[index]);
+    const gap=tiles.some(tile=>!tile);
+    const central=indices.includes(pos(CENTER,CENTER));
+    const connects=indices.some(index=>!!board[index]);
+    const text=tiles.map(tile=>tile?.value??'·').join('');
+    const equalCount=tiles.filter(tile=>tile?.value==='=').length;
+    const parts=text.split('=');
+    const mathShape=equalCount===1&&parts.every(side=>side.length>0 && !side.includes('·'));
+    const complete=!gap&&(first?central:connects);
+    let status='building',feedback='Keep building your equation.';
+    if(gap){status='gap';feedback='Fill the gaps in your equation.';}
+    else if(first&&!central){status='centre';feedback='Your first equation must cross the central reactor square.';}
+    else if(!first&&!connects){status='connect';feedback='Connect to an existing locked tile.';}
+    else if(!mathShape){status='building';feedback='Add a free equals sign and complete both sides.';}
+    else{status='ready';feedback='Placement ready. Submit to check BIDMAS.';}
+    return {status,ready:complete&&mathShape,indices,tiles,orientation,text,feedback,complete,connects};
+  });
+  // A one-cell move can touch an existing horizontal or vertical chain.
+  // Prefer the orientation with a complete geometry and longer connection.
+  choices.sort((a,b)=>Number(b.ready)-Number(a.ready)||Number(b.complete)-Number(a.complete)||Number(b.connects)-Number(a.connects)||b.indices.length-a.indices.length);
+  return choices[0];
+}
 export function validateMove(board,pending) {
   const added=Object.entries(pending).map(([key,tile])=>({index:Number(key),tile}));
   if(!added.length)throw Error('Place some tiles on the grid first.');
