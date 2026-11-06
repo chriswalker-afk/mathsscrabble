@@ -368,7 +368,9 @@ function renderPreview(){
    (freeReason?'Choose exactly one tile for your free swap; multiple tiles cost a turn.':
      'Choose tiles to replace — this uses a turn.'):
    freeReason&&!Object.keys(state.pending).length?
-     'One free tile swap available this turn.':preview.feedback;
+     isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
+       'Two separate free single-tile swaps available this turn.':
+       'One free single-tile swap available this turn.':preview.feedback;
  const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
@@ -1256,8 +1258,9 @@ function swap(){
    }
    if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}
    state.swapping=true;state.selected=null;
-   announce(state.freeSwapTurn!==state.turn?
-     'Choose one tile for your free swap. Several tiles will cost a turn.':
+   announce((isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
+     state.freeSwapTurn!==state.turn)?
+     'Choose exactly one tile for a free swap. Selecting several costs your turn.':
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
@@ -1366,9 +1369,9 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector still uses the same BIDMAS rules, physical tile rack and premium grid. Reach the energy target within six turns.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. Normally there are six turns and an eight-tile rack; equipment can extend either.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Choose permanent upgrades for this run: strengthen sevens, boost crossings, attract wildcards or power up board multipliers.</p></div></div>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
