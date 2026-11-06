@@ -460,3 +460,14 @@ dialog:has(.salvage-grid) .modal-content{padding:20px}
 .tile.charged-rack-tile{border-color:#d2a758;box-shadow:inset 1px 2px #fff7df,0 4px 0 #aa8551,0 0 11px #f5c67985,0 6px 10px #0008}
 .cell.pending .board-tile.charged-tile{border-color:#d2a758;box-shadow:inset 1px 1px #fff4e1,0 0 0 1px #e5c278,0 0 11px #e6bd697a}
 #app[data-mode="rogue"] .charged-rack-tile.selected{outline-color:#ffdda0}
+
+/* Keep Leave/Continue controls visible while browsing the shop on phones. */
+dialog:has(.salvage-grid){overflow:hidden}
+dialog:has(.salvage-grid) .modal-content{display:flex;flex-direction:column;max-height:calc(90dvh - 2px);min-height:0}
+dialog:has(.salvage-grid) #modal-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
+dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:11px 0 0;border-top:1px solid #4a6977}
+@media(max-width:410px){
+ dialog:has(.salvage-grid) .modal-content{padding:14px}
+ dialog:has(.salvage-grid) #modal-actions .primary-command,
+ dialog:has(.salvage-grid) #modal-actions .secondary-command{font-size:10px;padding:11px 5px}
+}
