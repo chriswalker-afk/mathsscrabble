@@ -38,7 +38,7 @@ try{
  // Selecting the whole card using a keyboard must load the requested game.
  await page.locator('#home-sector').focus();
  await page.keyboard.press('Enter');
- await page.waitForURL(/play\.html\?mode=sector$/);
+ await page.waitForURL(/play\.html\?mode=sector(?:&tiles=natural)?$/);
  await page.locator('.cell').first().waitFor();
  if(await page.locator('#modal[open]').count())
    await page.locator('#modal-actions button').last().click();
@@ -47,7 +47,7 @@ try{
  await page.waitForURL(/index\.html$/);
  assert.match(await page.locator('[data-save="sector"]').textContent(),/CONTINUE/);
  await page.locator('#home-rogue').click();
- await page.waitForURL(/play\.html\?mode=rogue$/);
+ await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT/);
  if(await page.locator('#modal[open]').count())
    await page.locator('#modal-actions button').last().click();
@@ -68,6 +68,16 @@ try{
  assert.equal(await page.locator('.exit-link').count(),1);
  await page.locator('.exit-link').click();
  await page.waitForURL(/index\.html$/);
+ await page.goto(ORIGIN+'/',{waitUntil:'networkidle'});
+ assert.equal(await page.locator('#home-tile-kits .tile-kit-card').count(),4);
+ await page.locator('[data-tile-kit="rational"]').click();
+ assert.equal(await page.locator('[data-tile-kit="rational"]').getAttribute('aria-pressed'),'true');
+ assert.match(await page.locator('#home-sector').getAttribute('href'),/&tiles=rational$/);
+ await page.locator('#home-sector').click();
+ await page.waitForURL(/play\.html\?mode=sector&tiles=rational$/);
+ assert.equal(await page.locator('#rack .bracket-tile').count(),2);
+ assert.equal(await page.locator('#rack-count').textContent(),'10 / 10');
+ assert.equal(await page.locator('#board .cell').count(),169);
  assert.deepEqual(errors,[],'all home-page navigation must be free of script errors');
  console.log('Mission home browser passed: four full-card keyboard/click routes, save/resume, Local setup back, online and Alien Lab, 4 viewport widths.');
  await page.close();
