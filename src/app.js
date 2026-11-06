@@ -390,10 +390,11 @@ function showModal(eyebrow,title,body,buttons){
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
- if(state.score>=nextTarget(state.sector)){
+ if(state.score>=currentTarget()){
    state.phase='won';state.ended=true;
    state.progress=completeProgress(state.progress,
-     sectorReport(state.sector,state.score,state.turn,state.stats,true));
+     sectorReport(state.sector,state.score,state.turn,state.stats,true,currentTarget()));
+   if(isDrift())state.rogue=rewardSector(state.rogue,state.sector,state.score,state.turn).rogue;
  }else if(state.turn>=TURNS_PER_SECTOR){
    state.phase='lost';state.ended=true;
  }else{
@@ -411,7 +412,7 @@ function reportRows(moves){
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
- const report=sectorReport(state.sector,state.score,state.turn,state.stats,won);
+ const report=sectorReport(state.sector,state.score,state.turn,state.stats,won,currentTarget());
  const best=report.best?`${escapeText(report.best.equation)} (+${report.best.points})`:'No scored equations';
  const message=won?
    'Target reached. Your run continues into a fresh sector.':
@@ -429,12 +430,21 @@ function showSectorOutcome(){
  <p class="report-best">Best calculation: ${best}</p>
  ${reportRows(report.moves)}
  <p class="report-note">${message}</p></div>`;
+ if(isDrift()&&won){showShop();return;}
  if(won){
    showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,body,[
     {text:'VIEW RUN',fn:showRunReport},
     {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
    ]);
- }else{
+  }else{
+   if(isDrift()){
+     showModal('DRIFT SIGNAL LOST',`Run ended in sector ${state.sector}`,body+
+       '<p class="rogue-death-note">Your upgrades and remaining Flux reset when you start a new Drift run.</p>',[
+       {text:'VIEW RUN',fn:showRunReport},
+       {text:'NEW DRIFT',primary:true,fn:()=>freshSector(1,{newRun:true})}
+     ]);
+     return;
+   }
    showModal('REACTOR OFFLINE',`Sector ${state.sector} report`,body,[
     {text:'NEW RUN',fn:()=>freshSector(1,{newRun:true})},
     {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}
@@ -448,7 +458,7 @@ function showRunReport(){
  ).join('');
  const body=`<div class="sector-report"><div class="report-energy"><div><span>SECTORS CLEARED</span><strong>${progress.completed.length}</strong></div>
  <div><span>RUN ENERGY</span><strong>${progress.runPoints}</strong></div></div>
- <p class="report-note">Current sector ${state.sector}: ${state.score} / ${nextTarget(state.sector)} energy. Progress saves automatically on this device.</p>
+ <p class="report-note">Current sector ${state.sector}: ${state.score} / ${currentTarget()} energy. Progress saves automatically on this device.</p>
  <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
  const buttons=state.phase==='won'?
    [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
@@ -472,13 +482,13 @@ function score(){
  if(state.ended||state.swapping||state.busy)return;
  try{
    const move=validateMove(state.board,state.pending);
-   const points=scoreMove(state.board,state.pending,move);
+   const points=calculateMove(move);
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
    for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
    state.rack=state.rack.filter(t=>!used.has(t.id));
-   const draw=dealPlayableRack(state.rack,state.bag);
+   const draw=dealPlayableRack(state.rack,state.bag,currentRackOptions());
    state.rack=draw.rack;state.bag=draw.bag;
    state.score+=points.total;
    state.busy=true;
@@ -530,7 +540,7 @@ function swap(){
  const free=Boolean(freeExchangeReason(state.rack));
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
- const draw=dealPlayableRack(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
+ const draw=dealPlayableRack(state.rack,state.bag,currentRackOptions());state.rack=draw.rack;state.bag=draw.bag;
  state.bag.push(...exchanged);
  for(let i=state.bag.length-1;i>0;i--){
    const j=Math.floor(Math.random()*(i+1));
