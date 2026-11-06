@@ -49,7 +49,8 @@ test('score calculation respects premium squares, length and full hand',()=>{
  const pending=place(['8','+','4','=','1','2'],'h',3);
  const move=validateMove(board,pending);
  const score=scoreMove(board,pending,move);
- assert.equal(score.base,11);assert.equal(score.length,3);assert.equal(score.sweep,0);
+ assert.equal(score.base,15); // 11 natural tile points + 4 for the Double Tile under 8
+ assert.ok(score.bonuses.includes('Double tile'));assert.equal(score.length,3);assert.equal(score.sweep,0);
  assert.equal(score.total,score.base*score.multiplier+3);
  assert.equal(bonusAt(0,0),'3E');
 });
