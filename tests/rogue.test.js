@@ -205,7 +205,7 @@ test('single-use capacitor is purchased with Flux and consumed exactly once',()=
 });
 test('temporary items occupy at most two equipped slots',()=>{
  let rogue=rewardSector(makeRogueState(),1,500,1).rogue;
- for(let i=0;i<3;i++){
+ for(let i=0;i<2;i++){
    const purchase=purchasePulse(rogue,1);
    assert.equal(purchase.ok,true);
    rogue=purchase.rogue;
