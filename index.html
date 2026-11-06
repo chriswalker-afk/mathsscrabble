@@ -30,7 +30,13 @@
 <div class="rack-row"><div id="rack" class="rack" aria-label="Your seven tiles"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div></div>
 </section>
 <aside class="side-panel right-panel" aria-label="Game controls"><div class="panel-heading">COMMAND CONSOLE</div>
-<div id="equation-preview" class="equation-preview" aria-label="Equation placement preview"><div class="preview-led" aria-hidden="true"></div><div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="preview-equation" aria-label="Equation preview">—</strong></div><span id="preview-status" role="status" aria-live="polite">Choose a tile and a grid square.</span></div><div class="preview-points"><small>IF BALANCED</small><strong id="potential-score">—</strong></div></div>
+<div id="equation-preview" class="equation-preview" aria-label="Equation placement preview"><div class="preview-led" aria-hidden="true"></div><div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="preview-equation" aria-label="Equation preview">—</strong></div><span id="preview-status" role="status" aria-live="polite">Choose a tile and a grid square.</span></div><div class="preview-points"><small>IF BALANCED</small><strong id="potential-score">—</strong></div>
+<div id="ceremony-readout" class="ceremony-readout" hidden aria-hidden="true">
+  <div class="ceremony-heading"><span>ENERGY TRANSFER</span><span id="ceremony-tile-count">0 / 0</span></div>
+  <div class="ceremony-values"><strong id="ceremony-count">+0</strong><span id="ceremony-step">TILE SCORING</span></div>
+  <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
+  <button id="skip-ceremony" type="button" class="ceremony-skip" aria-label="Skip scoring animation and view results">SKIP <span aria-hidden="true">»</span></button>
+</div></div>
 <div id="anomaly-banner" class="anomaly-banner" hidden role="note"><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
 <div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
 <button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
