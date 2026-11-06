@@ -203,18 +203,18 @@ test('single-use capacitor is purchased with Flux and consumed exactly once',()=
    scoreRogueMove(board,pending,move,reward.rogue,2).total);
  assert.equal(consumePulse(after.rogue),after.rogue,'empty capacitor cannot be used twice');
 });
-test('a shop may sell several capacitors but the carry limit is three',()=>{
+test('temporary items occupy at most two equipped slots',()=>{
  let rogue=rewardSector(makeRogueState(),1,500,1).rogue;
  for(let i=0;i<3;i++){
    const purchase=purchasePulse(rogue,1);
    assert.equal(purchase.ok,true);
    rogue=purchase.rogue;
  }
- assert.equal(rogue.pulse,3);
+ assert.equal(rogue.pulse,2);
  assert.equal(purchasePulse(rogue,1).ok,false);
  assert.equal(validRogueState(rogue,1,'won'),true);
  rogue=consumePulse(rogue);
- assert.equal(rogue.pulse,2);
+ assert.equal(rogue.pulse,1);
  assert.equal(purchasePulse(rogue,1).ok,true);
 });
 
