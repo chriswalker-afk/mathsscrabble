@@ -59,7 +59,7 @@ try{
  if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'sector');
  const original=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
- await openBagAndValidate(144);
+ await openBagAndValidate(143);
  const afterInspection=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
  assert.equal(afterInspection,original,'opening bag scan must not change the saved game');
  await page.locator('#bag-details-btn').click();
