@@ -18,15 +18,15 @@ async function put(symbol,row,col){
  await cell(row,col).click();
 }
 try{
- await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+ await page.goto('http://127.0.0.1:4173/play.html?mode=sector',{waitUntil:'networkidle'});
  await page.locator('.cell').first().waitFor();
  if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  const classicBefore=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
  assert.ok(classicBefore,'the original Sector Run must be saved');
  await page.locator('#mode-btn').click();
- assert.match(await page.locator('#modal-title').textContent(),/reactor mission/i);
- assert.match(await page.locator('.mode-choice-grid').textContent(),/THE DRIFT/i);
- await page.locator('#modal-actions button').nth(1).click();
+ await page.waitForURL(/index\.html$/);
+ await page.locator('#home-rogue').click();
+ await page.waitForURL(/play\.html\?mode=rogue$/);
  assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
  await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'rogue');
@@ -130,7 +130,7 @@ try{
 
  // Switching modes must restore the untouched original classroom save.
  await page.locator('#mode-btn').click();
- await page.locator('#modal-actions button').first().click();
+ await page.locator('#home-sector').click();
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  assert.equal(await page.locator('#score').textContent(),'0');
  const classicRestored=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
@@ -142,7 +142,7 @@ try{
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
- await page.locator('#modal-actions button').nth(1).click();
+ await page.locator('#home-rogue').click();
  assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
 
