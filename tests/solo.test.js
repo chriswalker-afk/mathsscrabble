@@ -23,12 +23,12 @@ function randomFromSeed(seed){
  let n=seed>>>0;
  return ()=>{n=(1664525*n+1013904223)>>>0;return n/4294967296;};
 }
-test('balanced seven-tile draws always preserve bag and physical tile IDs',()=>{
+test('balanced eight-tile draws always preserve bag and physical tile IDs',()=>{
  for(let seed=1;seed<=350;seed++){
    const full=makeBag(randomFromSeed(seed));
    const dealt=dealPlayableRack([],full);
    const all=[...dealt.rack,...dealt.bag];
-   assert.equal(dealt.rack.length,7);
+   assert.equal(dealt.rack.length,8);
    assert.equal(all.length,full.length);
    assert.equal(new Set(all.map(t=>t.id)).size,full.length);
    assert.ok(dealt.rack.filter(t=>isDigit(t.value)||t.blank==='blank-number'||t.blank==='blank-any').length>=4,'number-capable rack');
@@ -41,7 +41,7 @@ test('balanced refill retains every tile that was not played',()=>{
  const first=dealPlayableRack([],full);
  const held=first.rack.slice(0,3);
  const result=dealPlayableRack(held,first.bag);
- assert.equal(result.rack.length,7);
+ assert.equal(result.rack.length,8);
  assert.deepEqual(result.rack.slice(0,3),held);
  assert.equal(new Set([...result.rack,...result.bag].map(x=>x.id)).size, result.rack.length+result.bag.length);
 });
@@ -83,8 +83,8 @@ test('roundtrip save preserves pending tiles and programmed wildcards',()=>{
  assert.ok(loaded);
  assert.equal(loaded.version,SAVE_VERSION);
  assert.equal(loaded.pending[pos(6,6)].value,selected);
- assert.equal(loaded.rack.length,7);
- assert.equal(loaded.bag.length,144);
+ assert.equal(loaded.rack.length,8);
+ assert.equal(loaded.bag.length,143);
  assert.equal(loaded.progress.runPoints,0);
 });
 test('saved victory includes current sector in cumulative progress',()=>{
