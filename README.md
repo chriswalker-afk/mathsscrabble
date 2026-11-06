@@ -28,6 +28,14 @@ Drag tiles to the 13 × 13 board with a mouse, finger or pen; or click/tap a til
 - Responsive board sizing keeps the larger board, physical rack and primary controls visible together on standard laptop screens. On portrait phones secondary panels may sit below the play area.
 - First-time players see a short three-step guide. The left-hand panel provides context-sensitive placement tips, remaining-points-per-turn guidance, the last three scored equations, and a **Run Summary** button. Sector reports include a progress bar, best move, equations scored, turns used, exchanges and a per-turn record.
 
+## Scoring animation and tile-bag information
+
+**Score Equation** still checks the complete expression using BIDMAS before anything scores. After a correct submission, each tile in the verified equation **lifts, settles, and reveals the exact energy it contributes**, in order. A small energy counter and the sector-energy total advance tile by tile; the equation-length, calculation, connection, rack, equipment and anomaly effects are displayed as separate score stages afterward. Values on 2T/3T and equation-multiplier squares—and equipment such as Ionised Sevens—are correctly included in each tile's animated award. Free equals and blank tiles visibly contribute zero. The complete score is written to local save **immediately**, before any animation starts.
+
+The animation runs only while the current view is active. Use **SKIP** in the command panel to go directly to the score breakdown. Players using the browser's **reduced-motion** setting receive the completed result immediately with no tile bounce. A refresh during scoring resumes the already committed game instead of duplicating points or consuming any one-use equipment twice.
+
+**Click/tap the IN BAG count** in Mission Telemetry to inspect every remaining digit (0–9), operation (+, −, ×, ÷), and each of the three blank tile types (#, ◇, ✦). The pop-in groups tiles with their exact current counts, including types that have run out. It does **not** include tiles already on the board or in the rack. It never reveals the bag's draw order, which may be adjusted by playable-rack balancing. The equals sign is unlimited and is not part of the physical bag. Opening the pop-in is free and does not change the game.
+
 ## Game modes
 
 Use **◈ MODE** in the header to switch without deleting the other mode's save.
@@ -60,7 +68,7 @@ npm run check
 
 The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover both modes, separate saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover both modes, separate saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 
