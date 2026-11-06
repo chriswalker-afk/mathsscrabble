@@ -5,7 +5,15 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/engine.js && node --check src/solo.js && node --check src/rogue.js && node --check src/score-ceremony.js && node --check src/bag-inventory.js && node --check src/multiplayer.js && node --check src/random-start.js && node --check src/pointer-drag.js && node --check src/app.js && node --check src/online-rules.js && node --check src/online-ui.js && node --check server/worker.js && npm test"
+    "check": "node --check src/engine.js && node --check src/solo.js && node --check src/rogue.js && node --check src/score-ceremony.js && node --check src/bag-inventory.js && node --check src/multiplayer.js && node --check src/random-start.js && node --check src/pointer-drag.js && node --check src/app.js && node --check src/online-rules.js && node --check src/online-ui.js && node --check server/worker.js && npm test",
+    "dev:rooms": "cf dev",
+    "build:rooms": "cf build",
+    "deploy:rooms": "cf deploy"
   },
-  "description": "Maths Scrabble equation reactor prototype"
+  "description": "Maths Scrabble equation reactor prototype",
+  "devDependencies": {
+    "cf": "latest",
+    "@cloudflare/vite-plugin": "beta",
+    "vite": "^7.0.0"
+  }
 }
