@@ -56,7 +56,7 @@ try{
  assert.ok(solo);
  await page.locator('#mode-btn').click();
  assert.match(await page.locator('.mode-choice-grid').textContent(),/LOCAL MATCH/);
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(2).click();
  assert.match(await page.locator('#modal-title').textContent(),/local match/i);
  await page.locator('#local-player-count').selectOption('3');
  assert.equal(await page.locator('#local-setup-names input:visible').count(),3);
@@ -156,7 +156,7 @@ try{
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  assert.equal(await page.locator('#local-privacy').isVisible(),false);
  await page.locator('#mode-btn').click();
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(2).click();
  await handover('Ari');
 
  // Check that the local game panel still fits without horizontal overflow.
