@@ -1,7 +1,7 @@
 // The Drift: self-contained roguelike economy, anomalies and scoring.
 import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat,tilePool} from './engine.js';
 import {BOSS_BY_ID,zoneBoss,bossForSector,bossField,restrictedDraws,validateBossMove} from './drift-bosses.js';
-import {normalizeTileSet,hasBracketPair} from './tile-sets.js';
+import {normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
@@ -163,7 +163,7 @@ export function consumeTemporary(rogue,id){
 }
 export function consumePulse(rogue){return consumeTemporary(rogue,PULSE_ITEM.id);}
 export function rogueRackOptions(rogue,sector){
- return {minBlanks:owns(rogue,'wild-beacon')?2:1,
+ return {...kitRackOptions(rogue?.tileSet),minBlanks:owns(rogue,'wild-beacon')?2:1,
          preferAdvancedOperators:owns(rogue,'operator-reserve'),
          numberSlots:owns(rogue,'wide-rack')?6:5,
          forbiddenValues:restrictedDraws(rogue,sector),
