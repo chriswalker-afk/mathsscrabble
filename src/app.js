@@ -613,19 +613,23 @@ function showEnergyBurst(points){
  $('board-frame').classList.add('reactor-scored');
 }
 const ceremonyDelay=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
-function clearCeremonyTile(){
+function clearCeremonyTile(removePips=false){
  $('board').querySelectorAll('.scoring-lift,.scoring-settled').forEach(cell=>{
    cell.classList.remove('scoring-lift','scoring-settled');
    cell.style.removeProperty('--ceremony-speed');
-   cell.querySelector('.score-pip')?.remove();
  });
+ // Old point floaters are allowed to finish rising while the next tile lifts.
+ // Skip/end removes them immediately so no decoration survives the ceremony.
+ if(removePips)$('board').querySelectorAll('.score-pip').forEach(pip=>pip.remove());
 }
 function setCeremonyReadout(ctl,label){
  const shown=ctl.startScore+ctl.awarded;
  $('score').textContent=String(shown);
  $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
  $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
- $('ceremony-count').textContent='+'+ctl.awarded;
+ $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
+   ctl.awarded+' / +'+ctl.total;
+ $('ceremony-count').textContent=(ctl.awarded>=0?'+':'')+ctl.awarded;
  $('ceremony-step').textContent=label;
  $('ceremony-tile-count').textContent=ctl.completedTiles+' / '+ctl.tileCount+' TILES';
  $('ceremony-meter-fill').style.width=
@@ -654,7 +658,7 @@ function showScoreResult(points,move){
 function finishScoringCeremony(ctl){
  if(!ctl||state.ceremony!==ctl||ctl.finished)return;
  ctl.finished=true;ctl.awarded=ctl.total;
- clearCeremonyTile();
+ clearCeremonyTile(true);
  $('board-frame').classList.remove('ceremony-bonus');
  state.ceremony=null;state.busy=false;state.lockedFlash.clear();
  render();
@@ -685,6 +689,7 @@ async function playScoringCeremony(ctl){
        pip.textContent=stage.amount?'+'+stage.amount:'+0';
        pip.setAttribute('aria-hidden','true');
        if(stage.amount===0)pip.classList.add('score-pip-zero');
+       pip.addEventListener('animationend',()=>pip.remove(),{once:true});
        cell.append(pip);
      }
      ctl.awarded+=stage.amount;ctl.completedTiles++;
