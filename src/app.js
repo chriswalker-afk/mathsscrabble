@@ -572,6 +572,11 @@ function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  $('app').dataset.tileSet=state.tileSet;
  $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
+ $('operator-rules-note').textContent=state.tileSet==='advanced'?
+   'Use +, −, ×, ÷, powers (^), roots (√) or factorials (!). Brackets are linked pairs; equals is unlimited.':
+   hasBracketPair(state.tileSet)?
+     'Use +, −, × or ÷ with positive fractions and linked bracket pairs. Equals is unlimited.':
+     'Use +, −, × or ÷. Equals signs are unlimited and free.';
  renderBoard();renderRack();renderPreview();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
@@ -762,6 +767,7 @@ function startNewLocalMatch(config){
        i===0?{...player,rack}:player)})
    );
    rememberOpening(storage,'local',match.players[0].rack);
+   try{storage?.setItem(TILE_SET_STORAGE_KEY,match.tileSet);}catch{/* storage optional */}
    localSetupBadges=()=>{};
    localStateFromMatch(match);
  }catch(err){
