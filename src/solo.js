@@ -126,6 +126,7 @@ function validSnapshot(data){
  if(!['sector','rogue'].includes(mode))return false;
  if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
  if(mode==='sector'&&data.rogue!=null)return false;
+ if(!validInteger(data.freeSwapTurn??0,0,6))return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
     !validInteger(data.turn,1,6)||
@@ -168,6 +169,7 @@ export function snapshotRun(state){
   version:SAVE_VERSION,savedAt:Date.now(),
   board:state.board,pending:state.pending,rack:state.rack,bag:state.bag,
   sector:state.sector,turn:state.turn,score:state.score,
+   freeSwapTurn:state.freeSwapTurn??0,
   phase:state.phase,placementOrder:state.placementOrder,
   stats:state.stats,progress:state.progress,
   mode:state.mode||'sector',rogue:state.mode==='rogue'?state.rogue:null
