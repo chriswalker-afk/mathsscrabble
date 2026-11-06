@@ -1,4 +1,5 @@
 // Pure game rules. Both a future multiplayer server and this solo client can use these.
+import {normalizeTileSet,hasBracketPair,FRACTION_VALUES,BRACKET_PAIRS_PER_BAG} from './tile-sets.js';
 export const SIZE = 13;
 export const CENTER = 6;
 export const HAND_SIZE = 8;
@@ -16,7 +17,7 @@ export const BLANK_KINDS = Object.freeze({
 });
 export const isBlank = tile => Boolean(tile?.blank && BLANK_KINDS[tile.blank]);
 export const isDigit = value => typeof value==='string' && /^[0-9]$/.test(value);
-export const isOperator = value => ['+','−','×','÷'].includes(value);
+export const isOperator = value => ['+','−','×','÷','^','√','!'].includes(value);
 export function resolveBlank(tile,value){
  if(!isBlank(tile)||!BLANK_KINDS[tile.blank].choices.includes(value))throw Error('That symbol cannot be assigned to this blank tile.');
  return {...tile,value,points:0};
@@ -24,7 +25,8 @@ export function resolveBlank(tile,value){
 /** Physical tiles are drawn from separate number and operator pools.
  * Universal wildcards belong to the number pool so every tile has one stable bag.
  */
-export const tilePool=tile=>isOperator(tile?.value)||tile?.blank===BLANK_OPERATOR?'operators':'numbers';
+export const tilePool=tile=>['(',')'].includes(tile?.value)?'brackets':
+  isOperator(tile?.value)||tile?.blank===BLANK_OPERATOR?'operators':'numbers';
 export function freeExchangeReason(availableRack){
  return availableRack?.length?'one tile each turn':null;
 }
@@ -40,7 +42,14 @@ export function reorderRack(rack,sourceId,index,hiddenIds=[]){
  without.splice(insert,0,source);
  return [...without,...rack.filter(tile=>hidden.has(tile.id)&&tile.id!==sourceId)];
 }
-export const POINTS = Object.freeze({'0':1,'1':1,'2':2,'3':2,'4':2,'5':3,'6':3,'7':3,'8':4,'9':4,'+':2,'−':2,'×':3,'÷':4,'(':0,')':0,'=':0});
+const BASIC_POINTS={'0':1,'1':1,'2':2,'3':2,'4':2,'5':3,'6':3,'7':3,'8':4,'9':4,
+ '+':2,'−':2,'×':3,'÷':4,'(':0,')':0,'^':5,'√':5,'!':5,'=':0};
+for(let digit=1;digit<=9;digit++)BASIC_POINTS['−'+digit]=BASIC_POINTS[String(digit)]+1;
+for(const value of FRACTION_VALUES){
+ const numerator=Math.abs(Number(value.replace('−','').split('/')[0]));
+ BASIC_POINTS[value]=Math.min(6,2+Math.ceil(numerator/2)+(value.startsWith('−')?1:0));
+}
+export const POINTS=Object.freeze(BASIC_POINTS);
 export const pos = (r,c) => r * SIZE + c;
 export const coords = index => [Math.floor(index / SIZE), index % SIZE];
 export function bonusAt(r,c) {
@@ -59,11 +68,12 @@ export function bonusAt(r,c) {
  return '';
 }
 let nextId = 0;
-export const makeTile = value => ({
+export const makeTile = (value,options={}) => ({
  id:'tile-'+(++nextId),
  value:BLANK_KINDS[value]?null:value,
  points:BLANK_KINDS[value]?0:(POINTS[value]??0),
- ...(BLANK_KINDS[value]?{blank:value}:{})
+ ...(BLANK_KINDS[value]?{blank:value}:{}),
+ ...(options.pairId?{pairId:options.pairId}:{})
 });
 /** Web Crypto-backed entropy for fresh games, with Math.random fallback for
  * environments without crypto. Inject a seeded rng in unit tests. */
@@ -74,14 +84,45 @@ export function randomFloat(){
   }
   return Math.random();
 }
-export function makeBag(random=randomFloat) {
-  const values=[];
-  for(let digit=0;digit<=9;digit++) for(let i=0;i<(digit<=4?9:7);i++) values.push(String(digit));
-  for(const [value,count] of [['+',18],['−',14],['×',12],['÷',10]]) for(let i=0;i<count;i++) values.push(value);
- // Wildcards increase playable equation choices without creating high-value tiles.
- for(const [value,count] of [[BLANK_NUMBER,7],[BLANK_OPERATOR,5],[BLANK_ANY,5]]) for(let i=0;i<count;i++) values.push(value);
-  for(let i=values.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}
-  return values.map(makeTile);
+/** All kits contain 151 physical tiles; 16 digits become 8 bracket pairs. */
+export function makeBag(random=randomFloat,tileSet='natural') {
+ const kit=normalizeTileSet(tileSet),values=[];
+ let fractionIndex=0,bracketIndex=0;
+ for(let digit=0;digit<=9;digit++){
+   const copies=digit<=4?9:7;
+   for(let i=0;i<copies;i++){
+     if(kit==='integer'&&digit>0&&i<3)values.push('−'+digit);
+     else if(hasBracketPair(kit)&&i<(digit<=3?5:4)){
+       if(fractionIndex<FRACTION_VALUES.length){
+         values.push(FRACTION_VALUES[fractionIndex++]);
+       }else{
+         const pair=Math.floor(bracketIndex/2);
+         values.push({value:bracketIndex%2===0?'(':')',pairId:'paren-'+pair});
+         bracketIndex++;
+       }
+     }else values.push(String(digit));
+   }
+ }
+ if(hasBracketPair(kit)&&bracketIndex!==BRACKET_PAIRS_PER_BAG*2)
+   throw Error('Bracket supply must contain eight complete pairs.');
+ for(const [value,count] of [['+',18],['−',14],['×',12],['÷',10]]){
+   for(let i=0;i<count;i++){
+     let face=value;
+     if(kit==='advanced'){
+       if(value==='+'&&i<5)face='^';
+       else if(value==='−'&&i<5)face='√';
+       else if(value==='×'&&i<4)face='!';
+     }
+     values.push(face);
+   }
+ }
+ for(const [value,count] of [[BLANK_NUMBER,7],[BLANK_OPERATOR,5],[BLANK_ANY,5]])
+   for(let i=0;i<count;i++)values.push(value);
+ for(let i=values.length-1;i>0;i--){
+   const j=Math.min(i,Math.floor(random()*(i+1)));
+   [values[i],values[j]]=[values[j],values[i]];
+ }
+ return values.map(v=>typeof v==='string'?makeTile(v):makeTile(v.value,{pairId:v.pairId}));
 }
 export function refill(rack,bag) {
  const nextRack=[...rack],nextBag=[...bag];
