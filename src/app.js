@@ -1,4 +1,4 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 const $=id=>document.getElementById(id);
 const state={
@@ -26,13 +26,21 @@ function freshSector(sector=1){
   state.focusedIndex=pos(CENTER,CENTER);
   state.bag=makeBag();
   if(sector===1){
-    const required=['8','+','4','1','2','3','×'];
+    const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
     state.rack=required.map(v=>{
       const i=state.bag.findIndex(t=>t.value===v);
       return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
     });
   }else{
     const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;
+    // A sector always begins with at least one flexible tile where stock permits.
+    if(!state.rack.some(isBlank)){
+      const blankIndex=state.bag.findIndex(isBlank);
+      if(blankIndex>=0){
+        const wildcard=state.bag.splice(blankIndex,1)[0];
+        state.bag.push(state.rack.pop());state.rack.push(wildcard);
+      }
+    }
   }
   announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');
   $('board-frame').classList.remove('reactor-scored');
@@ -45,12 +53,42 @@ function selectTile(id){
  renderRack();
  renderBoard();
 }
+function availableRack(){
+ const used=new Set(Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id));
+ return state.rack.filter(tile=>!used.has(tile.id));
+}
+function chooseBlank(tile,index){
+ const config=BLANK_KINDS[tile.blank];
+ if(!config)return;
+ state.selected=null;renderRack();renderBoard();
+ showModal('PROGRAM WILDCARD',config.label==='ANY TILE'?'Choose any value':'Choose a '+config.label.toLowerCase(),
+   '<p>Pick the number or operation for this blank. It will score <strong>0 tile points</strong>, but it can still activate a premium square.</p><p>The choice stays fixed when you score the equation.</p><div id="wildcard-choices" class="wildcard-choices" role="group" aria-label="Choose a blank tile value"></div>',
+   [{text:'CANCEL'}]);
+ const chooser=$('wildcard-choices');
+ for(const value of config.choices){
+   const button=document.createElement('button');
+   button.type='button';button.className='wild-choice';button.textContent=value;
+   button.setAttribute('aria-label','Use '+value+' for blank');
+   button.onclick=()=>{
+     $('modal').close();
+     commitPending(resolveBlank(tile,value),index);
+   };
+   chooser.append(button);
+ }
+ chooser.querySelector('button')?.focus();
+}
+function commitPending(tile,index){
+ if(state.ended||state.swapping||state.busy||state.board[index])return;
+ state.pending[index]=tile;
+ state.placementOrder=state.placementOrder.filter(i=>i!==index);
+ state.placementOrder.push(index);
+ state.recentlyPlaced=index;state.selected=null;render();
+}
 function placePayload(payload,index){
  if(state.ended||state.swapping||state.busy||!Number.isInteger(index)||index<0||index>=SIZE*SIZE)return;
  if(state.board[index]){announce('This tile is locked. Choose an empty square.',true);return;}
  if(payload.kind==='pending'){
-   const from=payload.index;
-   const moving=state.pending[from];
+   const from=payload.index,moving=state.pending[from];
    if(!moving||from===index)return;
    const displaced=state.pending[index];
    delete state.pending[from];state.pending[index]=moving;
@@ -58,20 +96,40 @@ function placePayload(payload,index){
    state.placementOrder=state.placementOrder.filter(i=>i!==from&&i!==index);
    if(displaced)state.placementOrder.push(from);
    state.placementOrder.push(index);
- }else{
-   let tile;
-   if(payload.kind==='equals'){
-     tile={id:'equals-'+index,value:'=',points:0};
-   }else if(payload.kind==='rack'){
-     tile=state.rack.find(t=>t.id===payload.id);
-     if(!tile||Object.values(state.pending).some(t=>t.id===tile.id))return;
-   }else{return;}
-   state.pending[index]=tile;
-   state.placementOrder=state.placementOrder.filter(i=>i!==index);
-   state.placementOrder.push(index);
+   state.recentlyPlaced=index;state.selected=null;render();return;
  }
- state.recentlyPlaced=index;state.selected=null;
- render();
+ if(payload.kind==='equals'){
+   commitPending({id:'equals-'+index,value:'=',points:0},index);return;
+ }
+ if(payload.kind!=='rack')return;
+ const tile=state.rack.find(t=>t.id===payload.id);
+ if(!tile||Object.values(state.pending).some(t=>t.id===tile.id))return;
+ if(isBlank(tile)){chooseBlank(tile,index);return;}
+ commitPending(tile,index);
+}
+function onTileDrop(payload,target){
+ if(state.ended||state.swapping||state.busy)return;
+ if(target.kind==='board'){placePayload(payload,target.index);return;}
+ if(target.kind!=='rack')return;
+ if(payload.kind==='rack'){
+   const hidden=Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id);
+   state.rack=reorderRack(state.rack,payload.id,target.index,hidden);
+   state.selected=null;state.recentlyPlaced=null;
+   announce('Rack tiles rearranged. No turn used.');render();return;
+ }
+ if(payload.kind==='pending'){
+   const tile=state.pending[payload.index];
+   if(!tile)return;
+   delete state.pending[payload.index];
+   state.placementOrder=state.placementOrder.filter(i=>i!==payload.index);
+   if(tile.value!=='='){
+     const hidden=Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id);
+     state.rack=reorderRack(state.rack,tile.id,target.index,hidden);
+   }
+   state.selected=null;state.recentlyPlaced=null;
+   announce(tile.value==='='?'Free equals sign returned.':'Tile returned to your rack. No turn used.');
+   render();
+ }
 }
 function placeAt(index){
  if(state.ended||state.swapping||state.busy)return;
@@ -154,7 +212,7 @@ function boardCell(i){
      event.preventDefault();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
    }
  });
- if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},placePayload);
+ if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},onTileDrop);
  return node;
 }
 function renderBoard(){
@@ -182,7 +240,7 @@ function tileButton(tile){
    }
    selectTile(tile.id);
  });
- if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},placePayload);
+ if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
  return button;
 }
 function renderRack(){
@@ -331,7 +389,7 @@ $('equals-tile').onclick=event=>{
  if(wasDragClick(event))return;
  selectTile('equals');
 };
-enableTileDrag($('equals-tile'),{kind:'equals'},placePayload);
+enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
