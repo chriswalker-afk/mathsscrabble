@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {installKnownRack} from './opening-fixture.mjs';
 
-const base='http://127.0.0.1:4173/';
+const base='http://127.0.0.1:4173/play.html?mode=sector';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768},deviceScaleFactor:1});
 const pageErrors=[];
