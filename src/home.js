@@ -12,9 +12,11 @@ function applyKit(id){
    node.classList.toggle('is-selected',active);
    node.setAttribute('aria-pressed',String(active));
  });
- const kit=TILE_SET_BY_ID[selectedKit];
+ const online=document.getElementById('home-online');
+  if(online)online.href='./online.html?tiles='+selectedKit;
+  const kit=TILE_SET_BY_ID[selectedKit];
  document.getElementById('tile-kit-active').textContent=kit.short.toUpperCase()+' ACTIVE';
- for(const mode of ['sector','rogue']){
+ for(const mode of ['sector','rogue','local']){
    const card=document.getElementById('home-'+mode);
    if(card)card.href='./play.html?mode='+mode+'&tiles='+selectedKit;
  }
