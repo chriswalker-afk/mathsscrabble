@@ -76,7 +76,7 @@ async function handleApi(request,ctx){
      const seed=new Uint8Array(6);crypto.getRandomValues(seed);
      const code=roomCode(seed);
      const stub=ctx.exports.GameRoom.getByName(code);
-     const created=await stub.create({
+     const created=await roomRpc(stub,'create',{
        code,hostName:body.name,hostHash:hash,
        maxPlayers:body.maxPlayers,turnSeconds:body.turnSeconds
      });
@@ -103,16 +103,26 @@ async function handleApi(request,ctx){
  if(endpoint==='join'){
    const body=await readBody(request);
    const playerToken=token(),hash=await tokenHash(playerToken);
-   const joined=await stub.join(body.name,hash);
+   const joined=await roomRpc(stub,'join',body.name,hash);
    return json({room:joined,token:playerToken},201,origin);
  }
  const hash=await bearer(request);
- if(endpoint==='state')return json({room:await stub.view(hash)},200,origin);
+ if(endpoint==='state')return json({room:await roomRpc(stub,'view',hash)},200,origin);
  const action=await readBody(request);
- if(endpoint==='start')return json(await stub.start(hash,action),200,origin);
- if(endpoint==='action')return json(await stub.act(hash,action),200,origin);
- if(endpoint==='leave')return json(await stub.leave(hash,action),200,origin);
+ if(endpoint==='start')return json(await roomRpc(stub,'start',hash,action),200,origin);
+ if(endpoint==='action')return json(await roomRpc(stub,'act',hash,action),200,origin);
+ if(endpoint==='leave')return json(await roomRpc(stub,'leave',hash,action),200,origin);
  throw new OnlineError('Unknown operation.',404);
+}
+// Durable Object RPC error classes do not preserve their prototype across
+// isolates. Return explicit status codes so user mistakes stay 400/401/403/409
+// rather than accidentally surfacing as an opaque 503.
+async function roomRpc(stub,method,...args){
+ const envelope=await stub[method](...args);
+ if(!envelope?.ok)throw new OnlineError(
+   envelope?.error||'Room temporarily unavailable.',
+   Number.isInteger(envelope?.status)?envelope.status:503);
+ return envelope.data;
 }
 export default {
  async fetch(request,env,ctx){
@@ -132,6 +142,14 @@ export default {
 };
 
 export class GameRoom extends DurableObject {
+ async guarded(fn){
+   try{return {ok:true,data:await fn()};}
+   catch(err){
+     if(err instanceof OnlineError)return {ok:false,status:err.status,error:err.message};
+     console.error('Durable room operation failed',err?.name||'UnknownError');
+     return {ok:false,status:503,error:'The room service is temporarily unavailable.'};
+   }
+ }
  async load(){
    const room=await this.ctx.storage.get('room');
    if(room&&room.expiresAt<=Date.now()){
@@ -165,39 +183,51 @@ export class GameRoom extends DurableObject {
    return tick.room;
  }
  async create(params){
-   const existing=await this.load();
-   if(existing)return {collision:true};
-   const room=makeOnlineLobby(params);
-   await this.store(room);
-   return {collision:false,state:viewOnlineRoom(room,params.hostHash)};
+   return this.guarded(async()=>{
+     const existing=await this.load();
+     if(existing)return {collision:true};
+     const room=makeOnlineLobby(params);
+     await this.store(room);
+     return {collision:false,state:viewOnlineRoom(room,params.hostHash)};
+   });
  }
  async join(name,hash){
-   const room=await this.readAndTick();
-   const updated=joinOnlineLobby(room,name,hash);
-   await this.store(updated);
-   return viewOnlineRoom(updated,hash);
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     const updated=joinOnlineLobby(room,name,hash);
+     await this.store(updated);
+     return viewOnlineRoom(updated,hash);
+   });
  }
  async view(hash){
-   const room=await this.readAndTick();
-   return viewOnlineRoom(room,hash);
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     return viewOnlineRoom(room,hash);
+   });
  }
  async start(hash,request){
-   const room=await this.readAndTick();
-   const next=startOnlineMatch(room,hash,request);
-   if(!next.replayed)await this.store(next.room);
-   return {room:viewOnlineRoom(next.room,hash),event:next.result};
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     const next=startOnlineMatch(room,hash,request);
+     if(!next.replayed)await this.store(next.room);
+     return {room:viewOnlineRoom(next.room,hash),event:next.result};
+   });
  }
  async act(hash,request){
-   const room=await this.readAndTick();
-   const next=takeOnlineAction(room,hash,request);
-   if(!next.replayed)await this.store(next.room);
-   return {room:viewOnlineRoom(next.room,hash),event:next.result};
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     const next=takeOnlineAction(room,hash,request);
+     if(!next.replayed)await this.store(next.room);
+     return {room:viewOnlineRoom(next.room,hash),event:next.result};
+   });
  }
  async leave(hash,request){
-   const room=await this.readAndTick();
-   const next=leaveOnlineLobby(room,hash,request);
-   if(!next.replayed)await this.store(next.room);
-   return {left:true,revision:next.room.revision};
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     const next=leaveOnlineLobby(room,hash,request);
+     if(!next.replayed)await this.store(next.room);
+     return {left:true,revision:next.room.revision};
+   });
  }
  async alarm(){
    const room=await this.load();
