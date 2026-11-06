@@ -1,6 +1,6 @@
 // Keep board navigation independent of the board's overall screen footprint.
 import {SIZE,CENTER} from './engine.js';
-const DEFAULT_CELL=34,MIN_CELL=19,MAX_CELL=58,STEP=5,GAP=2,PAD=6;
+const DEFAULT_CELL=34,MIN_CELL=12,MAX_CELL=58,STEP=5,GAP=2,PAD=6;
 export function initBoardZoom(){
  const view=document.getElementById('board-viewport'),board=document.getElementById('board');
  if(!view||!board)return null;

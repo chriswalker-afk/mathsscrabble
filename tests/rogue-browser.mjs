@@ -63,11 +63,31 @@ try{
  assert.equal(await page.locator('#drift-hub .drift-summary-energy strong').count(),3,
    'round results must include energy, target and Flux reward');
  const visibleButtons=await page.locator('#drift-hub-actions button').allTextContents();
+ const wonSave=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
+ // Verify that the player may bypass shopping entirely without paying Flux.
+ const skipBay=await browser.newPage({viewport:{width:1366,height:768}});
+ await skipBay.addInitScript(raw=>{
+   localStorage.setItem('equa-nova.drift.v1',raw);
+   localStorage.setItem('equa-nova.last-mode.v1','rogue');
+ },wonSave);
+ await skipBay.goto('http://127.0.0.1:4173/play.html?mode=rogue',{waitUntil:'networkidle'});
+ assert.equal(await skipBay.locator('#drift-hub').isVisible(),true);
+ await skipBay.locator('#drift-hub-actions .drift-go').click();
+ const bypassed=await skipBay.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.drift.v1')));
+ assert.equal(bypassed.sector,2);
+ assert.equal(bypassed.rogue.upgrades.length,0);
+ assert.equal(bypassed.rogue.flux,Number(JSON.parse(wonSave).rogue.flux));
+ await skipBay.close();
  assert.ok(visibleButtons.some(t=>/salvage bay/i.test(t)));
  assert.ok(visibleButtons.some(t=>/continue to sector 02/i.test(t)));
  await page.locator('#drift-hub-actions .drift-bay').click();
  assert.match(await page.locator('#drift-hub-title').textContent(),/salvage bay/i);
  assert.equal(await page.locator('.drift-salvage-hero img').count(),1);
+ assert.equal(await page.locator('.drift-salvage-hero img').evaluate(img=>img.complete&&img.naturalWidth>0),true,
+   'the illustrated hangar should load as a real SVG asset');
+ await page.locator('#drift-hub-actions .drift-back').click();
+ assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
+ await page.locator('#drift-hub-actions .drift-bay').click();
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
  assert.equal(await page.locator('.salvage-card').count(),7);
