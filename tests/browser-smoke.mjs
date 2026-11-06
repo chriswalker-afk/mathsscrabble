@@ -209,6 +209,17 @@ try{
   assert.equal(await page.locator('#turn').textContent(),'1 / 6');
   assert.equal(await page.locator('#score').textContent(),'0');
   assert.equal(await page.locator('#run-summary').textContent(),'0 sectors · 0 energy');
+  const firstNew=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
+  await page.locator('#new-btn').click();
+  await page.locator('#modal-actions button').last().click();
+  const secondNew=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
+  assert.notEqual(firstNew.rack.map(t=>t.blank||t.value).join('|'),
+    secondNew.rack.map(t=>t.blank||t.value).join('|'),
+    'consecutive new Solo games must have distinct visible opening racks');
+  assert.notEqual(firstNew.bag.map(t=>t.blank||t.value).join('|'),
+    secondNew.bag.map(t=>t.blank||t.value).join('|'),
+    'each new Solo game must reshuffle its remaining bag draw sequence');
+
 
   // Simulate an unfinished final turn at 39/40 energy, then score a genuine
   // tutorial equation. The save must be committed before the 420 ms animation.
