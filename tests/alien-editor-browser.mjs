@@ -179,7 +179,11 @@ try{
      preview:document.querySelector('.specimen-panel').getBoundingClientRect().toJSON(),
      workshop:document.querySelector('.workshop-panel').getBoundingClientRect().toJSON(),
      lastButton:document.querySelector('#alien-export').getBoundingClientRect().toJSON(),
-     miniDisplay:getComputedStyle(document.querySelector('#mobile-live')).display
+     miniDisplay:getComputedStyle(document.querySelector('#mobile-live')).display,
+     overflowElements:[...document.querySelectorAll('body *')].map(e=>({
+       tag:e.tagName,id:e.id,cls:typeof e.className==='string'?e.className.slice(0,45):'',
+       right:Math.round(e.getBoundingClientRect().right)
+     })).filter(e=>e.right>innerWidth+3).slice(0,12)
    }));
    assert.ok(boxes.scroll<=boxes.width+2,'horizontal overflow '+JSON.stringify(boxes));
    assert.ok(boxes.workshop.right<=boxes.width+2,'editor exceeds viewport '+width);
