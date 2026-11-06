@@ -17,6 +17,38 @@ const SAFE_ATTRS=new Set([
 const illegalText=/url\s*\(|javascript:|data:|<\s*(?:script|image|foreignObject|use|style|filter|mask)\b|<!doctype|<!entity|on[a-z]+\s*=/i;
 const safeAssetName=(v)=>typeof v==='string'&&/^[a-z][a-z0-9-]{0,31}$/.test(v);
 
+/** Tight artwork framing for small player icons and category thumbnails.
+ * These crops never alter the stored alien, source SVGs or full export.
+ * Portrait excludes the deliberately peripheral moonlet when necessary,
+ * keeping facial features large enough to read in a 48px scoreboard icon.
+ */
+export const ALIEN_FRAMINGS=Object.freeze({
+ full:'0 0 320 360',
+ portrait:'52 3 216 216',
+ bust:'38 10 244 265',
+ head:'48 0 224 220',
+ face:'90 57 140 116',
+ torso:'63 130 194 176',
+ arms:'23 112 274 174',
+ legs:'27 218 266 128',
+ badge:'85 179 153 118',
+ companion:'137 54 175 158'
+});
+export function framingForPart(field,id=''){
+ if(field==='head')return 'head';
+ if(field==='eyes'||field==='mouth')return 'face';
+ if(field==='body')return 'torso';
+ if(field==='arms')return 'arms';
+ if(field==='legs')return 'legs';
+ if(field==='accessory'){
+   if(id==='badge')return 'badge';
+   if(id==='companion')return 'companion';
+   if(id==='jetpack')return 'arms';
+   if(['antennae','horns','helmet'].includes(id))return 'head';
+ }
+ return 'full';
+}
+
 export function validateAlienSvg(source,collection,id,manifest){
  if(!ALIEN_COLLECTIONS.includes(collection)||!manifest.parts[collection]?.includes(id)||
     collection==='accessories'&&id==='none')
@@ -83,13 +115,15 @@ export async function loadAlienLibrary(base='./',fetcher=fetch){
  return {manifest,parts};
 }
 /** Returns a complete, self-contained transparent SVG and never parses user HTML. */
-export function renderAlienSVG(alien,library,{width=320,height=360,accessible=true}={}){
+export function renderAlienSVG(alien,library,{width=320,height=360,accessible=true,framing='full'}={}){
  const {manifest,parts}=library;
  if(!Number.isFinite(width)||!Number.isFinite(height)||width<16||height<16||
    width>1024||height>1024)throw new Error('Unsupported alien render size.');
+ if(!Object.hasOwn(ALIEN_FRAMINGS,framing))
+   throw new Error('Unsupported alien framing.');
  const svg=document.createElementNS(SVG_NS,'svg');
  svg.setAttribute('xmlns',SVG_NS);
- svg.setAttribute('viewBox','0 0 320 360');
+ svg.setAttribute('viewBox',ALIEN_FRAMINGS[framing]);
  svg.setAttribute('width',String(Math.round(width)));
  svg.setAttribute('height',String(Math.round(height)));
  if(accessible){
