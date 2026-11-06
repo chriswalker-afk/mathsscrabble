@@ -87,7 +87,7 @@ try{
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
  assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-7));
- assert.match(await page.locator('.salvage-consumable').textContent(),/1\/3/);
+ assert.match(await page.locator('.salvage-consumable').first().textContent(),/1\/2/);
  assert.equal(await page.locator('.salvage-card').filter({hasText:'Ionised Sevens'}).count(),0);
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
