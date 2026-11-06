@@ -12,6 +12,18 @@ jobs:
         with:
           node-version: '22'
       - run: npm run check
+  worker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Cloudflare CLI
+        run: npm install --no-save --no-package-lock cf@latest
+      - name: Validate Durable Object Worker without deploying
+        run: npx cf deploy --dry-run
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
