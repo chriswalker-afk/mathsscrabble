@@ -7,6 +7,9 @@ import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
 import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
+import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
+ nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
+import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -17,6 +20,17 @@ const state={
  localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+let localSetupAliens=[];
+let localSetupBadges=()=>{};
+function prepareLocalArtwork(){
+ void loadPilotArtwork().then(()=>{
+   if(isLocal()&&state.localMatch){
+     renderLocalStatus();
+     if(state.localMatch.phase==='handover')showLocalHandover();
+   }
+   localSetupBadges();
+ });
+}
 function persistRun(){
   if(state.mode==='local'&&state.localMatch){
     if(state.localMatch.phase==='playing'){
@@ -361,6 +375,9 @@ function showLocalHandover(){
  $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
  if(!hidden)return;
  const player=match.players[match.current];
+ paintPilotAvatar($('local-handover-avatar'),player.avatar,match.current,
+   {size:108,framing:'bust'});
+ $('local-handover-avatar').classList.add('alien-handover-avatar');
  $('local-handover-title').textContent=player.name+' · YOUR TURN';
  $('local-handover-description').textContent=
    'Pass the device to '+player.name+' first. Tap Ready to reveal this player’s private rack.';
@@ -421,7 +438,8 @@ function renderLocalStatus(){
    row.className='local-score-row'+
      (index===scoringIndex&&match.phase!=='finished'?' is-active':'')+
      (player.score===leading&&player.score>0?' is-leader':'');
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=index+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,player.avatar,index,{size:38,framing:'portrait'});
    const name=document.createElement('span');name.className='local-score-name';name.textContent=player.name;
    const points=document.createElement('span');points.className='local-score-points';
    const total=document.createElement('strong');total.textContent=displayScores[index];
@@ -578,6 +596,7 @@ function showBagInventory(){
 }
 $('bag-details-btn').onclick=showBagInventory;
 function localStateFromMatch(match,{privateTurn=true}={}){
+ prepareLocalArtwork();
  state.mode='local';state.localMatch=match;
  state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
  state.localDeferPrivacy=false;state.focusedIndex=pos(CENTER,CENTER);
@@ -603,6 +622,7 @@ function startNewLocalMatch(config){
        i===0?{...player,rack}:player)})
    );
    rememberOpening(storage,'local',match.players[0].rack);
+   localSetupBadges=()=>{};
    localStateFromMatch(match);
  }catch(err){
    showModal('MATCH SETUP ERROR','Please check the player settings',
@@ -614,7 +634,9 @@ function showLocalSetup(){
  const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
  const count=saved?.players.length||2;
  const seconds=saved?.turnSeconds||0;
- showModal('PASS E · LOCAL MULTIPLAYER','Set up a local match',
+ localSetupAliens=Array.from({length:4},(_,i)=>safePilotAlien(saved?.players?.[i]?.avatar,i));
+ prepareLocalArtwork();
+ showModal('ALIEN CREW · LOCAL MULTIPLAYER','Set up a local match',
    `<div class="local-setup-grid">
     <div class="local-setup-row"><label for="local-player-count">PLAYERS</label>
      <select id="local-player-count" aria-label="Number of players">
@@ -634,7 +656,7 @@ function showLocalSetup(){
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
-     startNewLocalMatch({names,turnSeconds});
+     startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds});
    }}]);
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
