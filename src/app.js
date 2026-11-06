@@ -922,61 +922,61 @@ function reportRows(moves){
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
  const offers=shopOffers(state.sector,state.rogue);
+ const consumables=shopTemperatures(state.sector);
+ const occupied=heldConsumables(state.rogue).length;
  const intro=`<div class="salvage-intro">
- <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
- <div><strong>SECTOR ${state.sector} STABILISED</strong>
- <p>+${state.rogue.lastReward} Flux earned. Buy permanent upgrades, or a single-use capacitor (+12 on the next correct equation). All equipment resets at the end of the run.</p></div>
- </div>
- <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Available Salvage Bay upgrades"></div>
- <p id="salvage-feedback" class="salvage-feedback">Permanent upgrades can be installed once; Pulse Capacitors are consumed by scoring and can be bought repeatedly.</p>`;
+   <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
+   <div><strong>SECTOR ${state.sector} STABILISED</strong>
+   <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
+   </div>
+   <div class="salvage-loadout"><strong>PERMANENT ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
+     <strong>TEMPORARY ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
+   <div class="salvage-section-heading">PERMANENT MODULES <small>FOUR ROTATING OFFERS</small></div>
+   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Permanent Salvage Bay upgrades"></div>
+   <div class="salvage-section-heading">TEMPORARY POWER-UPS <small>USE ONCE · UP TO TWO HELD</small></div>
+   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Temporary Salvage Bay powers"></div>
+   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap equipped artwork during play for details or activation.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
    {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
  ]);
- const grid=$('salvage-grid');
+ const permanentGrid=$('salvage-grid');
  if(!offers.length){
-   const end=document.createElement('p');
-   end.className='salvage-empty';
-   end.textContent='All ten upgrades installed. Your build is complete—continue into the next sector.';
-   grid.append(end);
+   const end=document.createElement('p');end.className='salvage-empty';
+   end.textContent='No unowned permanent modules remain.';
+   permanentGrid.append(end);
  }
- for(const item of offers){
-   const card=document.createElement('div');card.className='salvage-card';
+ function makeCard(item,temporary=false){
+   const card=document.createElement('div');card.className='salvage-card'+
+     (temporary?' salvage-consumable':'');
+   card.dataset.category=item.kind;card.dataset.itemId=item.id;
    const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
-   const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=item.icon;
-   const title=document.createElement('strong');title.textContent=item.name;
+   const icon=document.createElement('div');icon.className='salvage-icon';icon.innerHTML=equipmentArt(item.id);
+   const title=document.createElement('strong');
+   title.textContent=item.name+(temporary?' · '+heldConsumables(state.rogue).filter(id=>id===item.id).length+'/'+MAX_TEMPORARY_SLOTS:'');
    const description=document.createElement('p');description.textContent=item.description;
-   const buy=document.createElement('button');buy.type='button';buy.className='salvage-buy';
-   buy.textContent=item.cost+' FLUX · '+(state.rogue.flux>=item.cost?'INSTALL':'NOT ENOUGH');
-   buy.disabled=state.rogue.flux<item.cost;
-   buy.setAttribute('aria-label','Install '+item.name+' for '+item.cost+' Flux');
+   const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
+   const full=temporary?heldConsumables(state.rogue).length>=MAX_TEMPORARY_SLOTS:
+     state.rogue.upgrades.length>=MAX_PERMANENT_SLOTS;
+   buy.disabled=full||state.rogue.flux<item.cost;
+   buy.textContent=item.cost+' FLUX · '+(full?'SLOTS FULL':
+     state.rogue.flux<item.cost?'NOT ENOUGH':temporary?'STORE':'INSTALL');
+   buy.setAttribute('aria-label',(temporary?'Store ':'Install ')+item.name+
+     ' for '+item.cost+' Flux');
    buy.onclick=()=>{
-     const purchase=purchaseUpgrade(state.rogue,item.id,state.sector);
-     if(!purchase.ok){$('salvage-feedback').textContent=purchase.reason;return;}
-     state.rogue=purchase.rogue;
-     persistRun();render();showShop();
-     $('salvage-feedback').textContent=purchase.reason+'. Upgrade equipped for the rest of this run.';
+     const result=temporary?purchaseTemporary(state.rogue,item.id,state.sector):
+       purchaseUpgrade(state.rogue,item.id,state.sector);
+     if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
+     state.rogue=result.rogue;persistRun();render();showShop();
+     $('salvage-feedback').textContent=result.reason+
+       (temporary?'. Stored in your temporary power-up slots.':
+         '. Equipped for the remainder of this run.');
    };
-   card.append(tag,icon,title,description,buy);grid.append(card);
+   card.append(tag,icon,title,description,buy);return card;
  }
- const charge=document.createElement('div');charge.className='salvage-card salvage-consumable';
- const type=document.createElement('span');type.className='salvage-type';type.textContent=PULSE_ITEM.kind;
- const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=PULSE_ITEM.icon;
- const title=document.createElement('strong');title.textContent=PULSE_ITEM.name+' · '+state.rogue.pulse+'/3';
- const detail=document.createElement('p');detail.textContent=PULSE_ITEM.description;
- const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
- buy.textContent=PULSE_ITEM.cost+' FLUX · '+(state.rogue.flux>=PULSE_ITEM.cost&&state.rogue.pulse<3?'CHARGE':'UNAVAILABLE');
- buy.disabled=state.rogue.flux<PULSE_ITEM.cost||state.rogue.pulse>=3;
- buy.setAttribute('aria-label','Buy single-use '+PULSE_ITEM.name+' for '+PULSE_ITEM.cost+' Flux');
- buy.onclick=()=>{
-   const p=purchasePulse(state.rogue,state.sector);
-   if(!p.ok){$('salvage-feedback').textContent=p.reason;return;}
-   state.rogue=p.rogue;
-   persistRun();render();showShop();
-   $('salvage-feedback').textContent=p.reason+'. It will activate on your next scored equation.';
- };
- charge.append(type,icon,title,detail,buy);
- grid.append(charge);
+ for(const item of offers)permanentGrid.append(makeCard(item));
+ const temporaryGrid=$('salvage-temporary-grid');
+ for(const item of consumables)temporaryGrid.append(makeCard(item,true));
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
