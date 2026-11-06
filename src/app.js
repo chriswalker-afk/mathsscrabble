@@ -351,25 +351,77 @@ function showModal(eyebrow,title,body,buttons){
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  $('modal').showModal();
 }
-function turnCompleted(){
+function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
- state.placementOrder=[];state.recentlyPlaced=null;state.busy=false;
+ state.placementOrder=[];state.recentlyPlaced=null;
  if(state.score>=nextTarget(state.sector)){
-  state.ended=true;render();
-  showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,
-    `<p>You generated <strong>${state.score} energy points</strong> against a target of ${nextTarget(state.sector)}.</p><p>The next reactor will demand more energy.</p>`,
-    [{text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]);
-  return;
+   state.phase='won';state.ended=true;
+   state.progress=completeProgress(state.progress,
+     sectorReport(state.sector,state.score,state.turn,state.stats,true));
+ }else if(state.turn>=TURNS_PER_SECTOR){
+   state.phase='lost';state.ended=true;
+ }else{
+   state.phase='playing';state.ended=false;state.turn++;
  }
- if(state.turn>=TURNS_PER_SECTOR){
-  state.ended=true;render();
-  showModal('REACTOR OFFLINE','Sector failed',
-    `<p>You scored <strong>${state.score}</strong> of the required <strong>${nextTarget(state.sector)}</strong> points.</p><p>Try a new rack, different placements and bonus multipliers.</p>`,
-    [{text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)},
-     {text:'START OVER',fn:()=>freshSector(1)}]);
-  return;
+ // This must happen synchronously before any animation or modal: refreshing
+ // immediately after a scoring action must never replay or lose the turn.
+ persistRun();
+}
+function reportRows(moves){
+ if(!moves.length)return '<p>No equations scored yet. Start with one accurate calculation, then build outward from it.</p>';
+ return '<div class="report-moves">'+moves.map(m=>
+   `<div class="report-move"><span class="report-turn">T${m.turn}</span><strong>${escapeText(m.equation)}</strong><span>+${m.points}</span></div>`
+ ).join('')+'</div>';
+}
+function showSectorOutcome(){
+ const won=state.phase==='won';
+ const report=sectorReport(state.sector,state.score,state.turn,state.stats,won);
+ const best=report.best?`${escapeText(report.best.equation)} (+${report.best.points})`:'No scored equations';
+ const message=won?
+   'Target reached. Your run continues into a fresh sector.':
+   report.equations?
+     'You can retry this sector with a new rack. Look for connections and premium squares.':
+     'Try a short, correct equation first. A balanced rack provides digits, an operation and a wildcard.';
+ const body=`<div class="sector-report">
+ <div class="report-energy"><div><span>ENERGY COLLECTED</span><strong>${report.score}</strong></div>
+ <div><span>SECTOR TARGET</span><strong>${report.target}</strong></div></div>
+ <div class="report-meter"><div style="width:${Math.min(100,Math.round(100*report.score/report.target))}%"></div></div>
+ <div class="report-facts"><div><span>Equations</span><strong>${report.equations}</strong></div>
+ <div><span>Turns used</span><strong>${report.turnsUsed}/6</strong></div>
+ <div><span>Best move</span><strong>${report.best?report.best.points:0} pts</strong></div>
+ <div><span>Free exchanges</span><strong>${report.freeExchanges}</strong></div></div>
+ <p class="report-best">Best calculation: ${best}</p>
+ ${reportRows(report.moves)}
+ <p class="report-note">${message}</p></div>`;
+ if(won){
+   showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,body,[
+    {text:'VIEW RUN',fn:showRunReport},
+    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
+   ]);
+ }else{
+   showModal('REACTOR OFFLINE',`Sector ${state.sector} report`,body,[
+    {text:'NEW RUN',fn:()=>freshSector(1,{newRun:true})},
+    {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}
+   ]);
  }
- state.turn++;render();
+}
+function showRunReport(){
+ const progress=state.progress;
+ const rows=progress.completed.slice(-10).map(item=>
+   `<div class="report-move"><span class="report-turn">S${item.sector}</span><strong>${item.score} / ${item.target} energy</strong><span>${item.turnsUsed} turns</span></div>`
+ ).join('');
+ const body=`<div class="sector-report"><div class="report-energy"><div><span>SECTORS CLEARED</span><strong>${progress.completed.length}</strong></div>
+ <div><span>RUN ENERGY</span><strong>${progress.runPoints}</strong></div></div>
+ <p class="report-note">Current sector ${state.sector}: ${state.score} / ${nextTarget(state.sector)} energy. Progress saves automatically on this device.</p>
+ <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
+ const buttons=state.phase==='won'?
+   [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
+    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
+   state.phase==='lost'?
+     [{text:'BACK TO REPORT',fn:showSectorOutcome},
+      {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
+     [{text:'BACK TO GAME',primary:true}];
+ showModal('CAPTAIN’S LOG','Your reactor run',body,buttons);
 }
 function showEnergyBurst(points){
  const burst=$('energy-burst');
@@ -383,29 +435,42 @@ function showEnergyBurst(points){
 function score(){
  if(state.ended||state.swapping||state.busy)return;
  try{
-  const move=validateMove(state.board,state.pending);
-  const points=scoreMove(state.board,state.pending,move);
-  const changed=Object.keys(state.pending).map(Number);
-  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
-  for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
-  state.rack=state.rack.filter(t=>!used.has(t.id));
-  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
-  state.score+=points.total;
-  state.busy=true;
-  state.pending={};state.placementOrder=[];state.selected=null;state.recentlyPlaced=null;
-  state.lockedFlash=new Set(changed);
-  announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
-  render();showEnergyBurst(points.total);
-  const epoch=++state.modalEpoch;
-  window.setTimeout(()=>{
-    if(epoch!==state.modalEpoch)return;
-    state.busy=false;state.lockedFlash.clear();
-    render();
-    showModal('EQUATION VERIFIED',`+${points.total} energy`,
-      `<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Completed calculation</span><b>+${points.equation}</b></div><div><span>Connected to board</span><b>+${points.crossing}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
-      [{text:'CONTINUE →',primary:true,fn:turnCompleted}]);
-  },420);
+   const move=validateMove(state.board,state.pending);
+   const points=scoreMove(state.board,state.pending,move);
+   const changed=Object.keys(state.pending).map(Number);
+   const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
+   state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
+   for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
+   state.rack=state.rack.filter(t=>!used.has(t.id));
+   const draw=dealPlayableRack(state.rack,state.bag);
+   state.rack=draw.rack;state.bag=draw.bag;
+   state.score+=points.total;
+   state.busy=true;
+   state.lockedFlash=new Set(changed);
+   const epoch=++state.modalEpoch;
+   completeTurn();
+   announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
+   render();showEnergyBurst(points.total);
+   window.setTimeout(()=>{
+     if(epoch!==state.modalEpoch)return;
+     state.busy=false;state.lockedFlash.clear();render();
+     showModal('EQUATION VERIFIED',`+${points.total} energy`,
+       `<p class="equation-result">${escapeText(move.text)}</p>
+       <div class="score-breakdown">
+       <div><span>Tile points</span><b>${points.base}</b></div>
+       <div><span>Equation multiplier</span><b>×${points.multiplier}</b></div>
+       <div><span>Equation length</span><b>+${points.length}</b></div>
+       <div><span>Completed calculation</span><b>+${points.equation}</b></div>
+       <div><span>Connected to board</span><b>+${points.crossing}</b></div>
+       <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
+       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
+       [{text:state.phase==='playing'?'CONTINUE →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
+         if(state.phase!=='playing')showSectorOutcome();
+       }}]);
+   },420);
  }catch(err){
+   state.stats.attempts++;
+   persistRun();
    announce(err.message,true);
    $('board').classList.remove('shake');void $('board').offsetWidth;
    $('board').classList.add('shake');
@@ -429,19 +494,23 @@ function swap(){
  const free=Boolean(freeExchangeReason(state.rack));
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
- const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
+ const draw=dealPlayableRack(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
  state.bag.push(...exchanged);
  for(let i=state.bag.length-1;i>0;i--){
    const j=Math.floor(Math.random()*(i+1));
    [state.bag[i],state.bag[j]]=[state.bag[j],state.bag[i]];
  }
  if(free){
+   state.stats.freeExchanges++;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
    render();
  }else{
+   state.stats.paidExchanges++;
+   completeTurn();
    announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);
-   turnCompleted();
+   render();
+   if(state.phase!=='playing')showSectorOutcome();
  }
 }
 function clear(){
