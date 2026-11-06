@@ -533,3 +533,49 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
  .board-frame.ceremony-bonus{animation:none!important}
  .ceremony-meter>div{transition:none}
 }
+
+/* Remaining physical bag inventory: compact but complete and easy to inspect. */
+.bag-stat{appearance:none;font:inherit;color:inherit;display:block;width:100%;text-align:left;cursor:pointer;position:relative;transition:border-color .12s,background .12s,box-shadow .12s}
+.bag-stat small{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.bag-stat small span{color:#8edfd3;font-size:15px;line-height:.7;transition:transform .15s}
+.bag-stat:hover:not(:disabled){border-color:#82c9bc;background:#1e4250;box-shadow:inset 0 0 0 1px #76ddc221}
+.bag-stat:hover:not(:disabled) small span{transform:scale(1.15)}
+.bag-stat:focus-visible{outline:2px solid #a9f6db;outline-offset:2px}
+.bag-stat:disabled{cursor:default}
+.bag-overview{display:grid;gap:14px;margin-top:8px}
+.bag-overview-total{display:flex;align-items:center;gap:16px;border:1px solid #4b777b;border-radius:9px;background:linear-gradient(125deg,#294e59,#182e3d);padding:12px 15px}
+.bag-overview-total>strong{font-size:42px;line-height:1;color:#f5dda3;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.bag-overview-total>div{min-width:0}
+.bag-overview-total span{display:block;color:#a4dbd2;font-size:10px;letter-spacing:.15em;font-weight:900}
+.bag-overview-total p{margin:3px 0 0!important;font-size:11px!important;color:#c4dcdb!important}
+.bag-inventory-groups{display:grid;gap:15px}
+.bag-inventory-group{min-width:0}
+.bag-inventory-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+.bag-inventory-heading strong{color:#b7ddda;font-size:10px;letter-spacing:.1em}
+.bag-inventory-heading span{color:#edcf96;font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bag-inventory-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.bag-inventory-operators{grid-template-columns:repeat(4,minmax(0,1fr))}
+.bag-inventory-wildcards{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bag-inventory-tile{min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border:1px solid #476b77;border-radius:7px;background:#1b3848}
+.bag-inventory-face{display:grid;place-items:center;min-width:32px;width:min(43px,95%);height:34px;background:linear-gradient(145deg,#fff3da,#e1cfac);border:1px solid #b5a07e;border-radius:5px;box-shadow:inset 0 1px #fff9e9,0 2px 0 #a18b69;color:#1f3b47;font-size:19px;line-height:1;font-weight:850}
+.bag-inventory-count{font-size:12px;color:#f3d69e;line-height:1.2;font-variant-numeric:tabular-nums}
+.bag-inventory-wildcard .bag-inventory-face{background:linear-gradient(145deg,#e4faf9,#98c8d2);border-color:#7cc6ca}
+.bag-inventory-wildcard:nth-child(2) .bag-inventory-face{background:linear-gradient(145deg,#f5e6fc,#b7a4d8);border-color:#c3a3e0}
+.bag-inventory-wildcard:nth-child(3) .bag-inventory-face{background:linear-gradient(145deg,#fff2d2,#e7b879);border-color:#edb770}
+.bag-inventory-tile small{font-size:9px;color:#b4cfd4;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.bag-inventory-tile.is-empty{opacity:.45}
+.bag-inventory-tile.is-empty .bag-inventory-count{color:#9fb4b9}
+.bag-inventory-note{border-top:1px solid #42616e;padding-top:10px;margin:0!important;font-size:11px!important;line-height:1.5!important;color:#9cbec6!important}
+@media(max-width:440px){
+ .bag-overview{gap:10px}
+ .bag-overview-total{padding:9px 11px;gap:11px}
+ .bag-overview-total>strong{font-size:34px}
+ .bag-inventory-groups{gap:10px}
+ .bag-inventory-heading strong{font-size:9px}
+ .bag-inventory-heading span{font-size:9px}
+ .bag-inventory-tiles{gap:4px}
+ .bag-inventory-face{min-width:24px;height:30px;font-size:17px}
+ .bag-inventory-count{font-size:11px}
+ .bag-inventory-tile{padding:4px 2px}
+ .bag-inventory-tile small{font-size:8px}
+}
