@@ -3,23 +3,73 @@ import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR} fr
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
+export const MAX_PERMANENT_SLOTS=4;
+export const MAX_TEMPORARY_SLOTS=2;
+// Distinct shop disciplines: a tile-type boost is not a board-space upgrade,
+// nor is an improvement to equation length. Art IDs map to inline SVG badges.
 export const ROGUE_ITEMS=Object.freeze([
- {id:'ion-seven',name:'Ionised Sevens',cost:4,kind:'TILE UPGRADE',icon:'7',description:'Every nonblank 7 you place earns +3 tile points, boosted by its square.'},
- {id:'crosslink',name:'Crosslink Circuit',cost:5,kind:'EQUATION UPGRADE',icon:'⊕',description:'Gain +5 energy when an equation reuses a locked tile.'},
- {id:'longwave',name:'Longwave Coil',cost:5,kind:'EQUATION UPGRADE',icon:'⇥',description:'Gain +7 energy for an equation of seven cells or more.'},
- {id:'wild-beacon',name:'Wildcard Beacon',cost:6,kind:'RACK UPGRADE',icon:'✦',description:'Newly completed racks seek at least two wildcards while the bag permits.'},
- {id:'operator-core',name:'Operator Core',cost:5,kind:'TILE UPGRADE',icon:'×',description:'Newly placed, nonblank × and ÷ tiles earn +3 tile points.'},
- {id:'amplifier',name:'Amplifier Array',cost:7,kind:'BOARD UPGRADE',icon:'3T',description:'Every 2T square behaves like a 3T square for your new tiles.'},
- {id:'echo',name:'Echo Generator',cost:6,kind:'EQUATION UPGRADE',icon:'∞',description:'Score +2 for every newly placed physical tile after the fourth.'},
- {id:'operator-reserve',name:'Operator Reserve',cost:5,kind:'RACK UPGRADE',icon:'◇',description:'New operator draws favour × and ÷ while the operator bag permits.'},
- {id:'flux-recycler',name:'Flux Recycler',cost:7,kind:'ECONOMY UPGRADE',icon:'◈',description:'Receive three extra Flux whenever you stabilise a sector.'},
- {id:'leak-shield',name:'Leak Shield',cost:7,kind:'DEFENCE UPGRADE',icon:'⬡',description:'Neutralise the Power Leak anomaly on its next appearance.'}
+ {id:'ion-seven',name:'Ionised Sevens',cost:4,kind:'TILE TYPE',icon:'7',description:'New physical 7 tiles gain +3 base points, boosted by their tile squares.'},
+ {id:'crosslink',name:'Crosslink Circuit',cost:5,kind:'CONNECTION',icon:'⊕',description:'+5 energy when your equation crosses a locked tile.'},
+ {id:'longwave',name:'Longwave Coil',cost:5,kind:'LENGTH BONUS',icon:'⇥',description:'+7 energy for equations spanning at least seven squares.'},
+ {id:'wild-beacon',name:'Wildcard Beacon',cost:6,kind:'RACK',icon:'✦',description:'Fresh draws favour two wildcards whenever the supply allows.'},
+ {id:'operator-core',name:'Operator Core',cost:5,kind:'TILE TYPE',icon:'×',description:'New physical × and ÷ tiles gain +3 base points, boosted by their squares.'},
+ {id:'amplifier',name:'Amplifier Array',cost:7,kind:'BOARD SPACE',icon:'3T',description:'2T squares become 3T for new physical tiles.'},
+ {id:'echo',name:'Echo Generator',cost:6,kind:'LENGTH BONUS',icon:'∞',description:'+2 energy per new physical tile after your fourth each equation.'},
+ {id:'operator-reserve',name:'Operator Reserve',cost:5,kind:'RACK',icon:'◇',description:'New operator draws favour × and ÷ when the operator supply allows.'},
+ {id:'flux-recycler',name:'Flux Recycler',cost:7,kind:'ECONOMY',icon:'◈',description:'+3 Flux each time you stabilise a sector.'},
+ {id:'leak-shield',name:'Leak Shield',cost:7,kind:'DEFENCE',icon:'⬡',description:'Cancel Power Leak’s 15% energy penalty whenever it appears.'},
+ {id:'odd-charge',name:'Oddity Coil',cost:5,kind:'TILE TYPE',icon:'135',description:'New physical odd digits (1, 3, 5, 7, 9) gain +2 base points.'},
+ {id:'bonus-echo',name:'Second Spark',cost:7,kind:'BOARD SPACE',icon:'2×',description:'A premium square can activate once more when its locked tile is crossed.'},
+ {id:'length-matrix',name:'Stretch Matrix',cost:6,kind:'LENGTH BONUS',icon:'⇢',description:'+2 more energy per equation square after the fifth.'},
+ {id:'precision-pay',name:'Precision Dividend',cost:5,kind:'ECONOMY',icon:'◎',description:'Earn +2 Flux every time you score with no wildcards in your new tiles.'},
+ {id:'premium-dividend',name:'Premium Prospect',cost:6,kind:'ECONOMY',icon:'✷',description:'Earn +1 Flux per newly activated premium square in each scored move.'},
+ {id:'extra-swap',name:'Exchange License',cost:6,kind:'TACTICS',icon:'⇄',description:'Get a second separate free single-tile swap every turn.'},
+ {id:'wide-rack',name:'Rack Extension',cost:8,kind:'RACK',icon:'+1',description:'Add one extra number slot: carry six numbers and three operators (nine total).'},
+ {id:'extra-turn',name:'Time Dilator',cost:8,kind:'TACTICS',icon:'+1',description:'Play a seventh turn in every Drift sector.'},
+ {id:'starter-spark',name:'Core Igniter',cost:5,kind:'BOARD SPACE',icon:'✳',description:'+6 energy for a scored opening equation through the centre.'}
 ]);
 export const ROGUE_ITEM_BY_ID=Object.freeze(Object.fromEntries(ROGUE_ITEMS.map(item=>[item.id,item])));
-export const PULSE_ITEM=Object.freeze({
- id:'pulse-charge',name:'Pulse Capacitor',cost:3,kind:'SINGLE-USE',icon:'⚡',
- description:'Your next valid equation gains +12 energy. The charge is consumed only after scoring.'
-});
+export const TEMP_ITEMS=Object.freeze([
+ {id:'pulse-charge',name:'Pulse Capacitor',cost:3,kind:'SCORE BOOST',icon:'⚡',description:'Arm for +12 flat energy on your next valid equation.',action:'score'},
+ {id:'double-score',name:'Double Reactor',cost:7,kind:'SCORE BOOST',icon:'×2',description:'Arm to double the total energy of your next valid equation.',action:'score'},
+ {id:'power-surge',name:'Power Surge',cost:5,kind:'SCORE BOOST',icon:'+50%',description:'Arm to add 50% more energy to your next valid equation.',action:'score'},
+ {id:'step-up',name:'Step Up',cost:3,kind:'TILE SWAP',icon:'↑1',description:'Choose a number tile; swap it for one numbered 1 higher from the bag.',action:'tile'},
+ {id:'step-down',name:'Step Down',cost:3,kind:'TILE SWAP',icon:'↓1',description:'Choose a number tile; swap it for one numbered 1 lower from the bag.',action:'tile'},
+ {id:'operator-shift',name:'Operator Shift',cost:3,kind:'TILE SWAP',icon:'⇆',description:'Choose a physical operator; exchange + for × or − for ÷ (and reverse) if available.',action:'tile'},
+ {id:'wildcard-hunt',name:'Wildcard Hunt',cost:5,kind:'TILE SWAP',icon:'◇',description:'Choose a rack tile; swap it for a wildcard from its own bag.',action:'tile'},
+ {id:'recycle-tile',name:'Recycle Tile',cost:2,kind:'TILE SWAP',icon:'↻',description:'Choose one tile; replace it with a different tile from the same bag.',action:'tile'}
+]);
+export const TEMP_ITEM_BY_ID=Object.freeze(Object.fromEntries(TEMP_ITEMS.map(item=>[item.id,item])));
+export const PULSE_ITEM=TEMP_ITEMS[0];
+export const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
+export function turnLimit(rogue){return 6+Number(owns(rogue,'extra-turn'));}
+export function rackSlots(rogue){return 8+Number(owns(rogue,'wide-rack'));}
+export function shopTemperatures(sector){
+ const rotations=TEMP_ITEMS.filter(item=>item.id!=='pulse-charge');
+ const start=(sector-1)*2%rotations.length;
+ return [PULSE_ITEM,rotations[start],rotations[(start+1)%rotations.length]];
+}
+// A pre-upgrade save may only contain the old Pulse counter. Its charges
+// remain usable, but new purchases obey the two-slot maximum.
+export function heldConsumables(rogue){
+ return rogue?.tempSlots?[...rogue.tempSlots]:
+   Array.from({length:rogue?.pulse||0},()=>PULSE_ITEM.id);
+}
+export function armedConsumable(rogue){
+ const held=heldConsumables(rogue);
+ return held.includes(rogue?.armed||'')?rogue.armed:
+   (held.includes(PULSE_ITEM.id)?PULSE_ITEM.id:null);
+}
+export function freeSwapsRemaining(rogue,turn,legacyTurn=0){
+ const cap=1+Number(owns(rogue,'extra-swap'));
+ const used=rogue?.swapTurn===turn?rogue.swapsUsed||0:
+   (legacyTurn===turn?1:0);
+ return Math.max(0,cap-used);
+}
+export function markFreeSwap(rogue,turn,legacyTurn=0){
+ const used=rogue?.swapTurn===turn?rogue.swapsUsed||0:Number(legacyTurn===turn);
+ return {...rogue,swapTurn:turn,swapsUsed:used+1};
+}
 export const ROGUE_ANOMALIES=Object.freeze([
  {id:'power-leak',name:'POWER LEAK',icon:'⚠',description:'An unstable reactor drains 15% of each equation’s energy unless shielded.',short:'−15% energy on every move'},
  {id:'signal-jam',name:'SIGNAL JAM',icon:'⌁',description:'Double-equation (2E) squares lose their multiplier this sector.',short:'2E multipliers disabled'},
