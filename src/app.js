@@ -535,6 +535,7 @@ function render(){
  $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
+ $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
