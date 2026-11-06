@@ -113,6 +113,7 @@ try{
    const data=JSON.parse(localStorage.getItem('equa-nova.drift.v1'));
    const clean=JSON.parse(starter);
    data.sector=3;data.turn=1;data.score=0;data.phase='playing';
+    data.rogue.zoneBosses=['power-leak'];data.rogue.forcedTile=null;
    data.board=clean.board;data.rack=clean.rack;data.bag=clean.bag;
    data.pending={};data.placementOrder=[];data.stats=clean.stats;
    localStorage.setItem('equa-nova.drift.v1',JSON.stringify(data));
