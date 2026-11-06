@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {pos,makeTile} from '../src/engine.js';
+import {SIZE,pos,makeTile} from '../src/engine.js';
 import {
  OnlineError,roomCode,cleanRoomCode,cleanPilotName,makeOnlineLobby,
  joinOnlineLobby,leaveOnlineLobby,startOnlineMatch,takeOnlineAction,
@@ -41,7 +41,7 @@ const makeGoodOpening=room=>{
 const placements=(room,symbols=['8','+','4','=','1','2'])=>{
  const rack=room.match.players[room.match.current].rack;
  return symbols.map((symbol,offset)=>{
-   const index=pos(6,3+offset);
+   const index=pos(9,6+offset);
    if(symbol==='=')return {index,tileId:'=',value:'='};
    const tile=rack.find(t=>t.value===symbol&&!t.blank);
    assert.ok(tile,'Fixture missing '+symbol);
@@ -90,7 +90,7 @@ test('snapshots reveal only own rack, opponent names/counts, aggregate bag inven
    const snap=viewOnlineRoom(room,hash,2100);
    assert.equal(snap.match.players.length,4);
    assert.equal(snap.match.rack.length,8);
-   assert.equal(snap.match.board.length,169);
+   assert.equal(snap.match.board.length,SIZE*SIZE);
    assert.equal(snap.match.bagCount,119);
    assert.equal(snap.match.bagInventory.groups.reduce((n,g)=>n+g.total,0),119);
    assert.equal(JSON.stringify(snap).includes('tokenHash'),false);
@@ -121,7 +121,7 @@ test('server validates real BIDMAS, scores exactly once and moves turn',()=>{
  assert.equal(ok.room.match.current,1);
  assert.equal(ok.room.match.phase,'playing');
  assert.equal(ok.room.revision,room.revision+1);
- assert.equal(ok.room.match.board[pos(6,6)].value,'=');
+ assert.equal(ok.room.match.board[pos(9,9)].value,'=');
  assert.equal(allPhysical(ok.room).length,151);
  assert.equal(JSON.stringify(room),original,'pure move transition must not mutate original');
  const again=takeOnlineAction(ok.room,H,

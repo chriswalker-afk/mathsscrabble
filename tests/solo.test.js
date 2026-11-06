@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeBag,makeTile,BLANK_ANY,BLANK_OPERATOR,tilePool,isBlank,isDigit,isOperator,pos,nextTarget} from '../src/engine.js';
+import {SIZE,makeBag,makeTile,BLANK_ANY,BLANK_OPERATOR,tilePool,isBlank,isDigit,isOperator,pos,nextTarget} from '../src/engine.js';
 import {
  SAVE_KEY,SAVE_VERSION,dealPlayableRack,freshStats,freshProgress,
  recordMove,sectorReport,completeProgress,snapshotRun,saveRun,loadRun,clearRun
@@ -14,7 +14,7 @@ const makeState=()=>{
  const original=makeBag(()=>0.5);
  const deal=dealPlayableRack([],original);
  return {
-  board:Array(169).fill(null),rack:deal.rack,bag:deal.bag,pending:{},
+  board:Array(SIZE*SIZE).fill(null),rack:deal.rack,bag:deal.bag,pending:{},
   sector:1,turn:1,score:0,phase:'playing',placementOrder:[],
   stats:freshStats(),progress:freshProgress()
  };
@@ -80,13 +80,13 @@ test('roundtrip save preserves pending tiles and programmed wildcards',()=>{
  const wild=state.rack.find(isBlank);
  assert.ok(wild);
  const selected=(wild.blank==='blank-operator')?'+':'4';
- state.pending[pos(6,6)]={...wild,value:selected,points:0};
- state.placementOrder=[pos(6,6)];
+ state.pending[pos(9,9)]={...wild,value:selected,points:0};
+ state.placementOrder=[pos(9,9)];
  assert.equal(saveRun(store,state),true);
  const loaded=loadRun(store);
  assert.ok(loaded);
  assert.equal(loaded.version,SAVE_VERSION);
- assert.equal(loaded.pending[pos(6,6)].value,selected);
+ assert.equal(loaded.pending[pos(9,9)].value,selected);
  assert.equal(loaded.rack.length,8);
  assert.equal(loaded.bag.length,143);
  assert.equal(loaded.progress.runPoints,0);
