@@ -85,7 +85,7 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
- if(isDrift())state.rogue={...state.rogue,echoed:[]};
+ if(isDrift())state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0};
  state.itemTarget=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
