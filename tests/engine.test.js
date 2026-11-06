@@ -122,7 +122,7 @@ test('blank number, operator and any accept only their allowed symbols',()=>{
  const board=Array(SIZE*SIZE).fill(null);
  const move=validateMove(board,pending);
  assert.equal(move.text,'2+4=6');
- assert.equal(scoreMove(board,pending,move).base,4);
+ assert.equal(scoreMove(board,pending,move).base,7); // 2 + operator 2 + blank 0 + digit 6 worth 3
 });
 test('free swaps apply to racks entirely made of numbers or operations',()=>{
  assert.equal(freeExchangeReason(make(['1','2','4'])), 'numbers');
