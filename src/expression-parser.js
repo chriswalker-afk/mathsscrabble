@@ -47,6 +47,7 @@ function exactRoot(n){
 function power(base,exponent){
  if(exponent.d!==1n||exponent.n>8n||exponent.n< -8n)
   throw Error('Powers require integer exponents between −8 and 8.');
+ if(base.n===0n&&exponent.n===0n)throw Error('Zero to the power zero is undefined.');
  const magnitude=abs(exponent.n);
  if(exponent.n<0n&&base.n===0n)throw Error('Zero cannot have a negative power.');
  const n=base.n**magnitude,d=base.d**magnitude;
@@ -77,7 +78,8 @@ function evaluate(values){
  };
  const postfix=()=>{
   let x=primary();
-  while(at()==='!'){i++;x=factorial(x);operations++;}
+  if(at()==='!'){i++;x=factorial(x);operations++;
+   if(at()==='!')throw Error('Use brackets for repeated factorials.');}
   return x;
  };
  const powerTerm=()=>{
