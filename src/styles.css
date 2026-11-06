@@ -76,3 +76,55 @@ body{overscroll-behavior:none}
 @media(max-width:730px){body{overflow:auto}.board-frame{width:min(100%,550px)}.equation-preview{margin-top:7px}.rack-sub{display:none}.keys-guide{display:none}.rack-row{padding:6px}.rack{gap:5px}.tile{width:clamp(29px,9vw,51px);height:clamp(37px,10vw,53px)}.equals-tile{width:42px;height:41px}.preview-label{display:none}.preview-points{min-width:70px}.side-panel{overflow:visible}}
 @media(max-width:390px){.preview-points{min-width:58px;padding-left:7px}.rack-undo{font-size:8px;padding:4px}.rack-actions{gap:5px}.rack{gap:3px}.tile{width:clamp(28px,8vw,42px)}.equals-bank{padding-left:5px}}
 @media(prefers-reduced-motion:reduce){.cell.tile-landing .board-tile,.cell.locked-flash .board-tile,.board-frame.reactor-scored,.energy-burst.burst-active{animation:none!important}.energy-burst{display:none}}
+
+/* Portrait tablets: keep a broad board without obscuring the two command rails. */
+@media(min-width:731px) and (max-width:900px) and (orientation:portrait){
+ .game-shell{grid-template-columns:minmax(108px,123px) minmax(0,1fr) minmax(110px,125px);gap:7px}
+ .side-panel{padding:9px}
+ .right-panel .primary-command{font-size:10px;padding:11px 4px}
+ .right-panel .secondary-command{font-size:9px;padding:10px 3px;letter-spacing:0}
+ .right-panel .legend>div{gap:6px;font-size:9px}
+ .left-panel .score-row strong{font-size:36px}
+ .left-panel .score-row{gap:4px;flex-wrap:wrap}
+ .left-panel .stat-grid{gap:4px}
+ .left-panel .mini-stat{padding:7px 5px}
+ .left-panel .mini-stat strong{font-size:15px}
+}
+/* On small screens the information strip, board, rack AND scoring buttons
+   must appear in that order, instead of hiding the controls below sidebars. */
+@media(max-width:730px){
+ .game-shell{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:8px;padding:9px 0 6px}
+ .left-panel{grid-column:1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 10px;min-height:57px}
+ .left-panel>.panel-heading,.left-panel>.pilot-emblem,.left-panel>.pilot-name,.left-panel>.panel-divider,.left-panel>.side-footer{display:none}
+ .left-panel .stat-block{display:grid;grid-template-columns:auto auto;gap:2px 9px;align-items:center}
+ .left-panel .stat-label{font-size:9px}
+ .left-panel .score-row{margin:0;gap:5px}
+ .left-panel .score-row strong{font-size:24px}
+ .left-panel .score-row span{font-size:10px}
+ .left-panel .progress-track{grid-column:1/-1;height:6px}
+ .left-panel .stat-note{display:none}
+ .left-panel .stat-grid{display:flex;gap:5px;margin:0}
+ .left-panel .mini-stat{min-width:64px;padding:5px 7px}
+ .left-panel .mini-stat small{font-size:8px}
+ .left-panel .mini-stat strong{font-size:14px;margin-top:2px}
+ .left-panel #log{grid-column:1/-1;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-height:14px;margin:0;font-size:10px;line-height:1.3}
+ .arena{grid-column:1;grid-row:2}
+ .right-panel{grid-column:1;grid-row:3;display:block;padding:7px 8px;overflow:hidden}
+ .right-panel>.panel-heading,.right-panel>.panel-divider,.right-panel>.legend,.right-panel>.rules-note,.right-panel>.keys-guide{display:none}
+ .right-panel .command-group{display:grid;grid-template-columns:1.23fr 1fr 1fr;align-items:stretch;width:100%;gap:6px;margin:0}
+ .right-panel .primary-command{font-size:10px;letter-spacing:0;padding:9px 3px}
+ .right-panel .primary-command small{display:none}
+ .right-panel .secondary-command{font-size:9px;letter-spacing:0;padding:8px 3px}
+ .rack-row{min-height:58px}
+ .bottom-strip{height:27px}
+}
+@media(max-width:390px){
+ .left-panel .stat-block{gap:2px 4px}
+ .left-panel .score-row strong{font-size:21px}
+ .left-panel .mini-stat{min-width:56px;padding:4px}
+ .right-panel .command-group{gap:4px}
+ .right-panel .primary-command{font-size:9px}
+ .right-panel .secondary-command{font-size:8px}
+}
+.equation-preview[data-state="error"] .preview-led{background:#f2a6a4;box-shadow:0 0 10px #f2a6a47a}
+.equation-preview[data-state="error"] #preview-status{color:#ffbbb5}
