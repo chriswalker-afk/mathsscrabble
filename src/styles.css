@@ -437,3 +437,21 @@ dialog:has(.salvage-grid) .modal-content{padding:20px}
  .mode-choice p{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.salvage-buy:hover{filter:none}}
+
+/* Four compact header actions must fit even at 320–390 px without overflow. */
+@media(max-width:460px){
+ .topbar{min-width:0;gap:3px}
+ .brand{min-width:0;gap:4px}
+ .brand-icon{width:24px;height:24px;flex-shrink:0}
+ .brand strong{font-size:clamp(12px,3.6vw,15px);letter-spacing:0;white-space:nowrap}
+ .top-actions{display:flex;flex-shrink:0;align-items:center;gap:3px}
+ .top-actions .quiet-button{padding:5px 4px;min-width:29px}
+ .top-actions #mode-btn{width:45px;max-width:45px;min-width:45px;font-size:0;white-space:nowrap}
+ .top-actions #mode-btn::after{content:"◈ MODE";font-size:8px}
+ .top-actions #run-report-header{font-size:0;min-width:34px}
+ .top-actions #run-report-header::after{content:"RUN";font-size:8px}
+ .top-actions #new-btn{font-size:0;min-width:35px}
+ .top-actions #new-btn::after{content:"↻ NEW";font-size:8px}
+ .top-actions #help-btn{font-size:0;min-width:29px}
+ .top-actions #help-btn::after{content:"?";font-size:10px}
+}
