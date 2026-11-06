@@ -6,7 +6,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
-const cell=(row,col)=>page.locator('.cell[data-index="'+(row*13+col)+'"]');
+const cell=(row,col)=>page.locator('.cell[data-index="'+((row+3)*19+(col+3))+'"]');
 async function put(symbol,row,col){
  if(symbol==='=')await page.locator('#equals-tile').click();
  else await page.locator('#rack .tile').evaluateAll((buttons,value)=>{
@@ -81,7 +81,7 @@ try{
  const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
  assert.equal(saved.turn,2,'turn must be committed before presentation');
  assert.ok(saved.score>0);
- assert.equal(saved.board[6*13+3].value,'8');
+ assert.equal(saved.board[9*19+6].value,'8');
  assert.equal(await page.locator('#bag-details-btn').isEnabled(),false,'bag scan is deferred while tiles animate');
  await page.waitForFunction(()=>Number(document.querySelector('#score').textContent)>0);
  const partial=Number(await page.locator('#score').textContent());

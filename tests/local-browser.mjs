@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
-const cell=(r,c)=>page.locator('.cell[data-index="'+(13*r+c)+'"]');
+const cell=(r,c)=>page.locator('.cell[data-index="'+((r+3)*19+(c+3))+'"]');
 const getMatch=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.local-match.v1')));
 async function place(symbol,r,c){
  if(symbol==='=')await page.locator('#equals-tile').click();
@@ -102,7 +102,7 @@ try{
  assert.equal(scored.current,1);
  assert.ok(scored.players[0].score>0);
  assert.equal(scored.players[1].score,0);
- assert.equal(scored.board[13*6+6].value,'=');
+ assert.equal(scored.board[19*9+9].value,'=');
  assert.equal(scored.consecutiveStalls,0);
  assert.equal(scored.bag.length,122);
  await page.locator('#skip-ceremony').click();

@@ -22,7 +22,7 @@ try{
   assert.equal(saved.tileSet,kit);
   assert.equal(saved.bag.length+saved.rack.length,151);
   assert.equal(new Set([...saved.bag,...saved.rack].map(t=>t.id)).size,151);
-  assert.equal(await page.locator('#board .cell').count(),169);
+  assert.equal(await page.locator('#board .cell').count(),361);
   const pairExpected=['rational','advanced'].includes(kit);
   if(kit==='rational')assert.ok([...saved.bag,...saved.rack].every(t=>!(t.value?.startsWith('−')&&t.value?.includes('/'))),'Nebula supplies positive fractions only');
   assert.equal(saved.rack.length,pairExpected?11:8);
