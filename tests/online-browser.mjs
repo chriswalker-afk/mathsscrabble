@@ -213,15 +213,19 @@ try{
    'host must not receive any opponent rack tiles');
 
  await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await guest.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  assert.equal(await guest.locator('#online-pass').isEnabled(),true);
  await guest.locator('#online-pass').click();
  assert.equal(backend.room.match.current,0);
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  assert.equal(await host.locator('#online-pass').isEnabled(),true);
  await host.locator('#online-pass').click();
  await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await guest.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  await guest.locator('#online-pass').click();
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  await host.locator('#online-pass').click();
  assert.equal(backend.room.phase,'finished');
  assert.equal(backend.room.match.finalScores.length,2);
