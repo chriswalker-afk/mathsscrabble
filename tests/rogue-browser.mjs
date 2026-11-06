@@ -92,7 +92,7 @@ try{
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
- assert.ok(await page.locator('#rack .tile').count()===7);
+ assert.ok(await page.locator('#rack .tile').count()===8);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
 
