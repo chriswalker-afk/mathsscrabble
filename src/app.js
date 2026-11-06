@@ -3,6 +3,7 @@ import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
+import {summarizeBag} from './bag-inventory.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -359,6 +360,9 @@ function render(){
    }
  }
  $('bag-count').textContent=state.bag.length;
+ $('bag-details-btn').disabled=state.busy;
+ $('bag-details-btn').setAttribute('aria-label',
+   'Show remaining tiles in the bag: '+state.bag.length+' physical tiles');
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
    `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
@@ -399,6 +403,53 @@ function showModal(eyebrow,title,body,buttons){
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  if(!$('modal').open)$('modal').showModal();
 }
+function showBagInventory(){
+ if(state.busy)return;
+ const inventory=summarizeBag(state.bag);
+ showModal('TILE BAG · SCAN','Tiles remaining in the bag',
+   `<div class="bag-overview"><div class="bag-overview-total">
+     <strong>${inventory.total}</strong><div><span>PHYSICAL TILES</span>
+     <p>Available for future draws and exchanges</p></div></div>
+     <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
+     <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
+     the board or in your rack are not included. The equals sign is free and
+     unlimited, so it is never drawn from the bag. Future draw order is not shown.</p>
+     </div>`,
+   [{text:'BACK TO BOARD',primary:true}]);
+ const groups=$('bag-inventory-groups');
+ for(const group of inventory.groups){
+   const section=document.createElement('section');section.className='bag-inventory-group';
+   section.setAttribute('aria-label',group.title);
+   const heading=document.createElement('div');heading.className='bag-inventory-heading';
+   const name=document.createElement('strong');name.textContent=group.title;
+   const total=document.createElement('span');total.textContent=group.total+' remaining';
+   heading.append(name,total);
+   const tiles=document.createElement('div');
+   tiles.className='bag-inventory-tiles bag-inventory-'+group.id;
+   tiles.setAttribute('role','list');
+   for(const entry of group.tiles){
+     const item=document.createElement('div');
+     item.className='bag-inventory-tile'+(entry.count===0?' is-empty':'');
+     if(group.id==='wildcards')item.classList.add('bag-inventory-wildcard');
+     item.setAttribute('role','listitem');
+     item.setAttribute('aria-label',entry.label+': '+entry.count+' remaining');
+     const face=document.createElement('span');face.className='bag-inventory-face';
+     face.textContent=entry.symbol;
+     const count=document.createElement('strong');count.className='bag-inventory-count';
+     count.textContent='×'+entry.count;
+     item.append(face,count);
+     if(group.id==='wildcards'){
+       const caption=document.createElement('small');
+       caption.textContent=entry.label.replace('Blank ','');
+       item.append(caption);
+     }
+     tiles.append(item);
+   }
+   section.append(heading,tiles);
+   groups.append(section);
+ }
+}
+$('bag-details-btn').onclick=showBagInventory;
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
