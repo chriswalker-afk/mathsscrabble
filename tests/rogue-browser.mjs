@@ -156,6 +156,13 @@ try{
  await page.locator('#swap-btn').click();
  await page.locator('#rack .tile').first().click();
  await page.locator('#swap-btn').click();
+ const freeSwapSave=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ assert.equal(freeSwapSave.turn,6,'the first single-tile swap is free');
+ assert.equal(freeSwapSave.freeSwapTurn,6,'the free swap must be saved for this turn');
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#swap-btn').click();
+ await page.locator('#rack .tile').first().click();
+ await page.locator('#swap-btn').click();
  assert.match(await page.locator('#modal-eyebrow').textContent(),/drift signal lost/i);
  const deathOptions=await page.locator('#modal-actions button').allTextContents();
  assert.ok(deathOptions.some(x=>/new drift/i.test(x)));
