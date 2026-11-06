@@ -298,3 +298,21 @@ button:disabled{cursor:not-allowed;opacity:.48}
  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
  .alien-art svg.pop,.alien-art svg.idle{animation:none!important;transform:none!important}
 }
+
+/* A permanently visible miniature preview while scrolling the mobile editor. */
+.mobile-live{display:none;align-items:center;gap:7px;min-width:0}
+.mobile-live #mobile-alien{display:grid;place-items:center;background:#2b5360;
+ border:1px solid #739b9d;border-radius:9px;width:62px;height:76px;overflow:hidden}
+.mobile-live svg{width:57px;height:auto}
+.mobile-live>span{font-size:8px;line-height:1.4;font-weight:950;color:#ace9d5;letter-spacing:.08em}
+@media(max-width:740px){
+ .workshop-heading .mobile-live{display:flex;margin-left:auto}
+ .workshop-heading .step-badge{display:none}
+ .workshop-heading h2{font-size:19px}
+}
+@media(max-width:420px){
+ .mobile-live #mobile-alien{width:48px;height:58px}
+ .mobile-live svg{width:43px}
+ .mobile-live>span{display:none}
+ .workshop-heading{min-height:68px}
+}
