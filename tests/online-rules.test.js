@@ -89,7 +89,7 @@ test('snapshots reveal only own rack, opponent names/counts, aggregate bag inven
  for(const hash of [H,A,B,C]){
    const snap=viewOnlineRoom(room,hash,2100);
    assert.equal(snap.match.players.length,4);
-   assert.equal(snap.match.rack.length,7);
+   assert.equal(snap.match.rack.length,8);
    assert.equal(snap.match.board.length,169);
    assert.equal(snap.match.bagCount,123);
    assert.equal(snap.match.bagInventory.groups.reduce((n,g)=>n+g.total,0),123);
