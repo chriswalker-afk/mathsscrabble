@@ -497,18 +497,30 @@ function showRunReport(){
  const rows=progress.completed.slice(-10).map(item=>
    `<div class="report-move"><span class="report-turn">S${item.sector}</span><strong>${item.score} / ${item.target} energy</strong><span>${item.turnsUsed} turns</span></div>`
  ).join('');
+ const upgraded=isDrift()?state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name):[];
+ const build=isDrift()?`<div class="rogue-report-build">
+ <span>AVAILABLE FLUX <strong>${state.rogue.flux}</strong></span>
+ <span>EQUIPPED <strong>${upgraded.length}</strong></span></div>
+ <p class="report-note">${upgraded.length?'Your build: '+escapeText(upgraded.join(', ')):'No upgrades bought yet.'}</p>`:'';
  const body=`<div class="sector-report"><div class="report-energy"><div><span>SECTORS CLEARED</span><strong>${progress.completed.length}</strong></div>
  <div><span>RUN ENERGY</span><strong>${progress.runPoints}</strong></div></div>
- <p class="report-note">Current sector ${state.sector}: ${state.score} / ${currentTarget()} energy. Progress saves automatically on this device.</p>
+ ${build}
+ <p class="report-note">Current sector ${state.sector}: ${state.score} / ${currentTarget()} energy. ${isDrift()?'Drift upgrades and Flux':'Sector Run progress'} save locally on this device.</p>
  <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
  const buttons=state.phase==='won'?
-   [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
-    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
+   isDrift()?
+     [{text:'SALVAGE BAY',primary:true,fn:showShop},
+      {text:'NEXT SECTOR →',fn:()=>freshSector(state.sector+1)}]:
+     [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
+      {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
    state.phase==='lost'?
-     [{text:'BACK TO REPORT',fn:showSectorOutcome},
-      {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
+     isDrift()?
+       [{text:'BACK TO REPORT',fn:showSectorOutcome},
+        {text:'NEW DRIFT',primary:true,fn:()=>freshSector(1,{newRun:true})}]:
+       [{text:'BACK TO REPORT',fn:showSectorOutcome},
+        {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
      [{text:'BACK TO GAME',primary:true}];
- showModal('CAPTAIN’S LOG','Your reactor run',body,buttons);
+ showModal('CAPTAIN’S LOG',isDrift()?'The Drift · Your build':'Your reactor run',body,buttons);
 }
 function showEnergyBurst(points){
  const burst=$('energy-burst');
@@ -550,8 +562,11 @@ function score(){
        <div><span>Completed calculation</span><b>+${points.equation}</b></div>
        <div><span>Connected to board</span><b>+${points.crossing}</b></div>
        <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
-       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
-       [{text:state.phase==='playing'?'CONTINUE →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
+       ${isDrift()?`<div><span>Roguelike upgrades</span><b>+${points.extra}</b></div>
+       <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
+       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
+       ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
+       [{text:state.phase==='playing'?'CONTINUE →':isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
          if(state.phase!=='playing')showSectorOutcome();
        }}]);
    },420);
