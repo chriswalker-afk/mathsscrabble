@@ -117,12 +117,19 @@ try{
     const geometry=await page.evaluate(()=>{
       const board=document.querySelector('.board-frame').getBoundingClientRect();
       const rack=document.querySelector('.rack-row').getBoundingClientRect();
-      return {boardWidth:board.width,rackBottom:rack.bottom,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      const scoreBtn=document.querySelector('#score-btn').getBoundingClientRect();
+      const scoreLabel=document.querySelector('#score').getBoundingClientRect();
+      return {boardWidth:board.width,rackBottom:rack.bottom,scoreButtonBottom:scoreBtn.bottom,scoreLabelTop:scoreLabel.top,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Narrow layout',size,geometry);
     assert.ok(geometry.boardWidth>=250,'board should retain readable dimensions');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'no horizontal scrolling');
-    if(size.width===390)assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
+    if(size.width===390){
+      assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
+      assert.ok(geometry.scoreButtonBottom<=size.height-20,'score command must be visible without scrolling on phones');
+      assert.ok(geometry.scoreLabelTop>=0&&geometry.scoreLabelTop<size.height,'energy readout must be visible');
+    }
+    if(size.width===768)assert.ok(geometry.boardWidth>=430,'portrait tablets need a broader board');
     await page.screenshot({path:'/tmp/equanova-'+size.width+'x'+size.height+'.png'});
   }
   assert.deepEqual(pageErrors,[]);
