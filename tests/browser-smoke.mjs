@@ -135,7 +135,9 @@ try{
   await selectRackTile('◇');
   await cell(4,9).click();
   await page.locator('#wildcard-choices button', {hasText:'+'}).first().click();
-  assert.equal(await cell(4,9).locator('.board-tile').textContent(),'+0');
+  assert.equal(await cell(4,9).locator('.board-tile').textContent(),'+');
+  assert.equal(await page.locator('#board .board-tile sup').count(),0,
+    'board glyphs should not contain tiny score overlays');
   await drag(cell(4,9),page.locator('#rack .tile').first());
   assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
   assert.ok(await page.locator('#rack .wildcard-blank-operator').count()>=1);
@@ -163,10 +165,13 @@ try{
     const geometry=await page.evaluate(()=>{
       const board=document.querySelector('.board-frame').getBoundingClientRect();
       const rack=document.querySelector('.rack-row').getBoundingClientRect();
-      return {boardWidth:board.width,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      const font=parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize);
+      return {boardWidth:board.width,boardFont:font,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Layout',size,geometry);
-    assert.ok(geometry.boardWidth>=(size.height>=768?490:455),'board should gain substantial space after moving the preview');
+    const minimum=size.height>=768?575:520;
+    assert.ok(geometry.boardWidth>=minimum,'board must be legible and enlarged on classroom laptops');
+    assert.ok(geometry.boardFont>=24,'maths glyphs should fill enough of each board cell');
     assert.ok(geometry.rackBottom<=geometry.height-20,'rack must remain on screen');
     assert.ok(geometry.scrollHeight<=geometry.height+3,'desktop should not need vertical scrolling');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'desktop should not need horizontal scrolling');
@@ -191,7 +196,7 @@ try{
       assert.ok(geometry.previewBottom<=size.height-4,'equation preview should fit on one mobile screen');
       assert.ok(geometry.scoreLabelTop>=0&&geometry.scoreLabelTop<size.height,'energy readout must be visible');
     }
-    if(size.width===768)assert.ok(geometry.boardWidth>=430,'portrait tablets need a broader board');
+    if(size.width===768)assert.ok(geometry.boardWidth>=620,'portrait tablets must give priority to the board');
     await page.screenshot({path:'/tmp/equanova-'+size.width+'x'+size.height+'.png'});
   }
   // New run replaces the current save after confirmation.
