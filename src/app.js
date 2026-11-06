@@ -409,6 +409,7 @@ function renderLocalStatus(){
  const leading=Math.max(...displayScores);
  $('local-scores').replaceChildren(...match.players.map((player,index)=>{
    const row=document.createElement('div');
+   row.dataset.playerIndex=String(index);
    row.className='local-score-row'+
      (index===scoringIndex&&match.phase!=='finished'?' is-active':'')+
      (player.score===leading&&player.score>0?' is-leader':'');
@@ -917,10 +918,15 @@ function clearCeremonyTile(removePips=false){
 function setCeremonyReadout(ctl,label){
  const shown=ctl.startScore+ctl.awarded;
  $('score').textContent=String(shown);
- $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
- $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
- $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
-   ctl.awarded+' / +'+ctl.total;
+ if(isLocal()){
+   const row=$('local-scores').querySelector('[data-player-index="'+state.localScoringPlayer+'"] .local-score-points strong');
+   if(row)row.textContent=String(shown);
+ }else{
+   $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
+   $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
+   $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
+     ctl.awarded+' / +'+ctl.total;
+ }
  $('ceremony-count').textContent=(ctl.awarded>=0?'+':'')+ctl.awarded;
  $('ceremony-step').textContent=label;
  $('ceremony-tile-count').textContent=ctl.completedTiles+' / '+ctl.tileCount+' TILES';
@@ -943,9 +949,12 @@ function showScoreResult(points,move){
    <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
    <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
    ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
-   [{text:state.phase==='playing'?'CONTINUE →':
-     isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
-     primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
+   [isLocal()?
+      {text:state.localMatch.phase==='finished'?'FINAL STANDINGS →':'HAND OVER DEVICE →',
+       primary:true,fn:finishLocalPresentation}:
+      {text:state.phase==='playing'?'CONTINUE →':
+        isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
+       primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
 }
 function finishScoringCeremony(ctl){
  if(!ctl||state.ceremony!==ctl||ctl.finished)return;
@@ -1003,7 +1012,42 @@ async function playScoringCeremony(ctl){
  if(active())finishScoringCeremony(ctl);
 }
 $('skip-ceremony').onclick=()=>finishScoringCeremony(state.ceremony);
+function scoreLocal(){
+ if(!isLocal()||state.busy||state.ended||state.swapping)return;
+ try{
+   const match=state.localMatch;
+   const oldIndex=match.current;
+   const active={...match,pending:state.pending,placementOrder:state.placementOrder,
+     players:match.players.map((p,i)=>i===oldIndex?{...p,rack:state.rack}:p)};
+   const {match:updated,points,move}=scoreLocalTurn(active,state.pending);
+   const stages=buildScoringCeremony(points);
+   const startScore=match.players[oldIndex].score;
+   // The complete shared board, the bag and this player's score are committed
+   // before any animation; reloading reveals only the next privacy handover.
+   state.localMatch=updated;state.board=updated.board;state.bag=updated.bag;
+   state.rack=[];state.pending={};state.placementOrder=[];
+   state.swapping=false;state.swapSet.clear();state.selected=null;
+   state.lockedFlash=new Set(move.indices);
+   state.busy=true;state.ended=updated.phase==='finished';
+   state.localDeferPrivacy=true;state.localScoringPlayer=oldIndex;
+   state.score=updated.players[oldIndex].score;
+   const epoch=++state.modalEpoch;
+   const ctl={startScore,awarded:0,total:points.total,points,move,stages,
+     tileCount:stages.filter(x=>x.kind==='tile').length,
+     completedTiles:0,epoch,finished:false};
+   state.ceremony=ctl;
+   announce(match.players[oldIndex].name+' scored a correct equation! Transferring +'+points.total+' points.');
+   persistRun();render();
+   setCeremonyReadout(ctl,'READY TO TRANSFER');
+   void playScoringCeremony(ctl);
+ }catch(err){
+   announce(err.message,true);
+   $('board').classList.remove('shake');void $('board').offsetWidth;
+   $('board').classList.add('shake');
+ }
+}
 function score(){
+ if(isLocal())return scoreLocal();
  if(state.ended||state.swapping||state.busy)return;
  try{
    const move=validateMove(state.board,state.pending);
@@ -1045,6 +1089,7 @@ function score(){
 }
 const escapeText=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 function swap(){
+ if(isLocal())return localSwap();
  if(state.ended||state.busy)return;
  if(!state.swapping){
    if(Object.keys(state.pending).length){
