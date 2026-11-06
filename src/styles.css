@@ -238,3 +238,76 @@ dialog{max-height:min(88dvh,720px);overflow-y:auto}
  .coach-hint{max-height:47px;margin:7px 0 2px}
  .run-overview{padding:5px 7px;gap:1px}
 }
+
+/* PASS C READABILITY — the equation itself takes priority over point numerals.
+   Board cells show only mathematical symbols; the rack and score report keep
+   the point values. Sizing tracks the actual board, not the screen width. */
+.board-frame{container-type:inline-size}
+.board-tile{
+ font-size:clamp(17px, min(2.7vw,3.8dvh),30px);
+ font-size:clamp(17px,4.6cqi,30px);
+ font-weight:850;
+ font-variant-numeric:tabular-nums;
+ letter-spacing:0;
+ text-shadow:none;
+}
+.board-tile sup{display:none!important}
+.board .cell .board-tile{overflow:hidden}
+
+/* Reclaim vertical space from chrome, not from the physical rack. The board
+   remains one square grid and every control still fits on school laptops. */
+@media(min-width:731px){
+ .topbar{height:58px}
+ .brand-icon{width:40px;height:40px}
+ .brand strong{font-size:clamp(18px,1.65vw,24px)}
+ .brand small{font-size:8px;margin-top:1px}
+ .quiet-button{padding:7px 10px}
+ .game-shell{padding:7px 0 3px}
+ .bottom-strip{height:20px;font-size:8px}
+ .board-frame{width:min(100%,calc(100dvh - 170px),720px)}
+ .rack-section{padding-top:4px}
+ .rack-heading{margin-bottom:4px}
+ .rack-row{padding:5px 10px;min-height:57px}
+ .rack .tile{width:clamp(34px,3.8vw,51px);height:47px}
+ .equals-tile{height:42px}
+}
+@media(min-width:731px) and (max-height:760px){
+ .board-frame{width:min(100%,calc(100dvh - 171px),720px)}
+}
+
+/* On portrait tablets a conventional three-column layout needlessly gives
+   half the screen to side rails. Stack them as compact instruments so the
+   grid occupies the available width, while remaining on one screen. */
+@media(min-width:731px) and (max-width:920px) and (orientation:portrait){
+ .game-shell{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:7px;padding:7px 0}
+ .left-panel{grid-column:1;grid-row:1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 13px;padding:7px 12px;min-height:65px;max-height:85px}
+ .left-panel>.panel-heading,.left-panel>.pilot-emblem,.left-panel>.pilot-name,.left-panel>.panel-divider,.left-panel>.side-footer,
+ .left-panel #coach-hint,.left-panel #history-mini{display:none}
+ .left-panel .stat-block{flex:1;min-width:180px}
+ .left-panel .stat-label{font-size:8px}
+ .left-panel .score-row{margin:1px 0 4px;gap:8px}
+ .left-panel .score-row strong{font-size:27px}
+ .left-panel .score-row span{font-size:10px}
+ .left-panel .progress-track{height:6px}
+ .left-panel .stat-note{display:none}
+ .left-panel .stat-grid{display:flex;gap:7px;margin:0}
+ .left-panel .mini-stat{padding:5px 10px;min-width:83px}
+ .left-panel .mini-stat small{font-size:8px}
+ .left-panel .mini-stat strong{font-size:15px;margin-top:2px}
+ .left-panel #log{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:14px;font-size:10px;line-height:1.4;margin:0}
+ .arena{grid-column:1;grid-row:2;justify-content:center}
+ .board-frame{width:min(100%,calc(100dvh - 330px),680px)}
+ .rack-section{max-width:680px}
+ .right-panel{grid-column:1;grid-row:3;display:grid;grid-template-columns:minmax(0,1fr) minmax(195px,245px);gap:8px;align-items:center;padding:7px 9px;min-height:72px;max-height:90px}
+ .right-panel>.panel-heading,.right-panel>.panel-divider,.right-panel>.legend,
+ .right-panel>.rules-note,.right-panel>.keys-guide{display:none}
+ .right-panel .command-group{grid-column:1;grid-row:1;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:5px;margin:0}
+ .right-panel .primary-command{font-size:9px;letter-spacing:0;padding:9px 4px}
+ .right-panel .primary-command small{display:none}
+ .right-panel .secondary-command{font-size:9px;letter-spacing:0;padding:8px 4px}
+ .right-panel .equation-preview{grid-column:2;grid-row:1;min-height:56px;margin:0;padding:6px 8px}
+ .right-panel .equation-preview #preview-status{font-size:9px;-webkit-line-clamp:2}
+ .right-panel .equation-preview .preview-points{min-width:38px}
+ .right-panel .equation-preview .preview-points strong{font-size:17px}
+ .right-panel .equation-preview .preview-label{font-size:7px;margin-bottom:2px}
+}
