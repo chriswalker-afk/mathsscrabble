@@ -348,7 +348,7 @@ function renderBoard(){
      (tile?tile.value:(bonus||'empty'))+(pending?', unscored':''));
    if(tile){
      const glyph=document.createElement('span');glyph.className='board-tile'+
-       (isBlank(tile)?' placed-wildcard':'');glyph.textContent=tile.value;
+       (isBlank(tile)?' placed-wildcard':'')+(tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'');renderTileFace(glyph,tile.value);
      node.append(glyph);
    }else if(bonus){
      const glyph=document.createElement('span');glyph.className='bonus-label';
@@ -381,10 +381,11 @@ function renderRack(){
    const button=document.createElement('button');button.type='button';
    button.className='tile'+(state.selected===tile.id?' selected':'')+
      (state.swapIds.has(tile.id)?' marked':'')+
-     (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
+     (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+      (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'');
    button.dataset.tileId=tile.id;button.dataset.rackIndex=String(index);
-   const face=document.createElement('span');face.textContent=isBlank(tile)?
-     BLANK_KINDS[tile.blank].symbol:tile.value;
+   const face=document.createElement('span');renderTileFace(face,isBlank(tile)?
+     BLANK_KINDS[tile.blank].symbol:tile.value);
    const p=document.createElement('sub');p.textContent=isBlank(tile)?
      (tile.blank==='blank-number'?'N':tile.blank==='blank-operator'?'OP':'ALL'):tile.points;
    button.append(face,p);
@@ -395,14 +396,18 @@ function renderRack(){
    button.onclick=e=>{
      if(wasDragClick(e))return;
      if(state.swapping){
-       state.swapIds.has(tile.id)?state.swapIds.delete(tile.id):state.swapIds.add(tile.id);
+       if(tile.pairId){
+         const pair=all.filter(t=>t.pairId===tile.pairId);
+         const marked=pair.every(t=>state.swapIds.has(t.id));
+         pair.forEach(t=>marked?state.swapIds.delete(t.id):state.swapIds.add(t.id));
+       }else state.swapIds.has(tile.id)?state.swapIds.delete(tile.id):state.swapIds.add(tile.id);
      }else state.selected=state.selected===tile.id?null:tile.id;
      render();
    };
    if(enabled&&!state.swapping)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
    root.append(button);
  }
- $('online-rack-count').textContent=rack.length+' / 8';
+ $('online-rack-count').textContent=rack.length+' / '+kitRackSize(v?.tileSet);
  $('equals-tile').disabled=!enabled||state.swapping;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('online-rack-label').textContent=match?'YOUR PRIVATE RACK · '+v.you.name.toUpperCase():'YOUR PRIVATE RACK';
@@ -418,7 +423,7 @@ function renderPreview(){
    (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
    myTurn()?preview.feedback:'Wait for your turn. Only the current pilot can submit.';
  $('online-potential').textContent=preview.ready&&!state.swapping?
-   '+'+scoreMove(board,state.pending,preview).total:'—';
+   '+'+scoreMove(board,state.pending,preview,{rackSize:kitRackSize(state.view?.tileSet)}).total:'—';
  const can=myTurn();
  $('online-score').disabled=!can||state.swapping||!Object.keys(state.pending).length;
  $('online-clear').disabled=!can||(!state.swapping&&!Object.keys(state.pending).length);
@@ -561,7 +566,8 @@ function showBag(){
  detail.textContent='PHYSICAL TILES LEFT IN SHARED BAG';
  count.append(total,detail);wrap.append(count);
  const pools=document.createElement('p');pools.className='bag-pool-summary';
- pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators;
+ pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators+
+    (inventory.pools.brackets!==undefined?' · BRACKET PIECES '+inventory.pools.brackets:'');
  wrap.append(pools);
  const groups=document.createElement('div');groups.className='bag-inventory-groups';
  for(const group of inventory.groups){
@@ -573,7 +579,8 @@ function showBag(){
    const tiles=document.createElement('div');tiles.className='bag-inventory-tiles bag-inventory-'+group.id;
    for(const tile of group.tiles){
      const item=document.createElement('div');item.className='bag-inventory-tile'+(!tile.count?' is-empty':'');
-     const face=document.createElement('span');face.className='bag-inventory-face';face.textContent=tile.symbol;
+     const face=document.createElement('span');face.className='bag-inventory-face';
+      renderTileFace(face,tile.symbol);
      const num=document.createElement('strong');num.className='bag-inventory-count';num.textContent='×'+tile.count;
      item.append(face,num);item.setAttribute('aria-label',tile.label+': '+tile.count+' remaining');
      tiles.append(item);
