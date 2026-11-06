@@ -8,6 +8,9 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
+import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore} from './drift-bosses.js';
+import {bossArtwork} from './boss-art.js';
+import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -23,7 +26,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -61,10 +64,10 @@ function persistRun(){
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
-const currentTarget=()=>targetForSector(state.mode,state.sector);
+const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
 const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
-const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
  (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
@@ -85,7 +88,10 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
- if(isDrift())state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0};
+ if(isDrift()){
+   state.rogue=ensureZoneBoss(state.rogue,sector,randomFloat);
+   state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0,forcedTile:null};
+ }
  state.itemTarget=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
@@ -102,8 +108,10 @@ function freshSector(sector=1,{newRun=false}={}){
  },loadOpeningPattern(storage,state.mode),
    game=>game.rack,(game,rack)=>({...game,rack}));
  state.rack=deal.rack;state.bag=deal.bag;
+ state.bossGrid=isDrift()?bossField(state.rogue,sector):null;
+ if(isDrift())state.rogue=selectForcedTile(state.rogue,sector,state.rack,randomFloat);
  rememberOpening(storage,state.mode,state.rack);
- const anomaly=isDrift()?anomalyForSector(sector):null;
+ const anomaly=isDrift()?anomalyForSector(sector,state.rogue):null;
  announce(sector===1?
    (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
      'First mission: use your shuffled tiles to create a true equation through the glowing centre. BIDMAS checks it when you submit.'):
@@ -112,6 +120,7 @@ function freshSector(sector=1,{newRun=false}={}){
      'New sector online. Use the centre to begin and aim for the new energy target.');
  $('board-frame').classList.remove('reactor-scored');
  render();
+ if(isDrift()&&isBossSector(sector))showBossEncounter();
 }
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
@@ -523,6 +532,7 @@ function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
+ renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
  // Both solo and local competition share the same scoring ceremony display.
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
@@ -544,22 +554,24 @@ function render(){
    state.ceremony.startScore+state.ceremony.awarded:state.score;
  $('score').textContent=displayedScore;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
- $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('sector-label').textContent=isDrift()?`ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()} · S${String(state.sector).padStart(2,'0')}`:
+   `SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
- $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
+ $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector,state.rogue)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
- $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector);
+ $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector,state.rogue);
  if(isDrift()){
-   const anomaly=anomalyForSector(state.sector);
+   const anomaly=anomalyForSector(state.sector,state.rogue);
    $('flux-count').textContent=String(state.rogue.flux);
    const upgrades=state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name);
    $('upgrade-summary').textContent=(upgrades.length?
      `${upgrades.slice(0,2).join(' · ')}${upgrades.length>2?' · +'+(upgrades.length-2)+' more':''}`:
      'No upgrades equipped yet')+(state.rogue.pulse?' · ⚡ '+state.rogue.pulse+' charge(s)':'');
    if(anomaly){
+     $('boss-banner-art').innerHTML=bossArtwork(anomaly.id);
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
      $('anomaly-text').textContent=anomaly.short+
        (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
@@ -1006,7 +1018,7 @@ function showSectorOutcome(){
  <div><span>SECTOR TARGET</span><strong>${report.target}</strong></div></div>
  <div class="report-meter"><div style="width:${Math.min(100,Math.round(100*report.score/report.target))}%"></div></div>
  <div class="report-facts"><div><span>Equations</span><strong>${report.equations}</strong></div>
- <div><span>Turns used</span><strong>${report.turnsUsed}/6</strong></div>
+ <div><span>Turns used</span><strong>${report.turnsUsed}/${maxTurns()}</strong></div>
  <div><span>Best move</span><strong>${report.best?report.best.points:0} pts</strong></div>
  <div><span>Free exchanges</span><strong>${report.freeExchanges}</strong></div></div>
  <p class="report-best">Best calculation: ${best}</p>
@@ -1398,11 +1410,12 @@ function restoreMode(mode,{initial=false}={}){
    state.freeSwapTurn=previous.freeSwapTurn??0;
    state.mode=mode;
    state.rogue=mode==='rogue'?previous.rogue:null;
+   state.bossGrid=mode==='rogue'?bossField(state.rogue,state.sector):null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
    state.focusedIndex=pos(CENTER,CENTER);state.itemTarget=null;
-   announce(mode='rogue'?
+   announce(mode==='rogue'?
      'Saved Drift run restored: your upgrades, Flux and rack are intact.':
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
