@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Online Signal Clash</title>
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/online.css">
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/online.css"><link rel="stylesheet" href="./src/alien/badges.css">
 <script type="module" src="./src/online-ui.js"></script></head>
 <body class="online-body">
 <div class="stars" aria-hidden="true"></div>
@@ -81,6 +81,24 @@
   <h1 id="gate-title">Play together, from anywhere.</h1>
   <p id="gate-description">Host a private room or enter a six-character code. Each player uses their own device and only sees their own rack.</p>
   <div id="online-entry" class="online-entry">
+   <div id="online-avatar-entry-slot">
+    <section id="online-pilot-picker" class="online-pilot-picker" aria-label="Choose your alien pilot">
+     <div class="alien-profile-banner">
+      <span id="online-own-alien" aria-hidden="true"></span>
+      <div class="alien-profile-copy">
+       <strong>YOUR LITTLE ALIEN PILOT</strong>
+       <small id="online-alien-subtitle">Choose a ready-made alien or make your own.</small>
+      </div>
+     </div>
+     <div id="online-alien-presets" class="alien-profile-picker" aria-label="Starter aliens"></div>
+     <div class="alien-profile-controls">
+      <button id="online-alien-random" type="button">✧ SURPRISE ME</button>
+      <button id="online-alien-saved" type="button">↶ USE MY SAVED ALIEN</button>
+      <a class="alien-editor-link" href="./alien-lab.html" target="_blank" rel="noopener noreferrer">✳ MAKE MY ALIEN ↗</a>
+     </div>
+     <small id="online-alien-note" class="alien-profile-help" role="status">Your alien is cosmetic and won't affect your score.</small>
+    </section>
+   </div>
    <div class="online-gate-forms">
     <form id="online-create-form" class="online-form">
      <strong>CREATE A ROOM</strong>
@@ -106,6 +124,7 @@
     <button id="lobby-copy" type="button" class="secondary-command">⧉ COPY INVITE LINK</button></div>
    <div class="online-lobby-head"><span>PILOTS CONNECTED</span><span id="online-lobby-count">1 / 4</span></div>
    <div id="online-lobby-players" class="online-lobby-players"></div>
+   <div id="online-avatar-lobby-slot"></div>
    <p id="online-lobby-note">At least two pilots are needed before starting.</p>
    <button id="online-start-match" type="button" class="primary-command">START MATCH →</button>
    <button id="online-leave-lobby" type="button" class="online-restore">LEAVE LOBBY</button>

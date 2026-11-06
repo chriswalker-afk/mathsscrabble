@@ -1,0 +1,146 @@
+/* Shared Alien Lab pilot badges, scoped to competitive modes.
+   The board keeps exactly the same width/height and tile dimensions. */
+.alien-player-avatar{
+ display:inline-grid!important;place-items:center;position:relative;flex:none;
+ width:35px!important;height:35px!important;min-width:35px;
+ overflow:hidden;border-radius:9px!important;
+ border:1px solid #83c7b6!important;
+ background:radial-gradient(ellipse at 50% 70%,#4f7b78,#214754)!important;
+ color:#f8e4b7;font-size:18px;line-height:1!important;
+ box-shadow:inset 0 1px #ddffee30;
+}
+.alien-player-avatar svg{display:block;width:100%;height:100%;object-fit:contain;
+ overflow:visible;max-width:100%;max-height:100%}
+.alien-avatar-fallback{font-size:19px;font-weight:950;color:#f6dcad}
+.local-score-row:has(.alien-player-avatar),.online-app .local-score-row:has(.alien-player-avatar){gap:7px}
+.local-score-row .local-score-name{min-width:0}
+.local-score-row.is-active .alien-player-avatar{border-color:#fbe4ab!important;box-shadow:0 0 0 2px #f1d79b55}
+.alien-handover-avatar{width:104px!important;height:108px!important;min-width:104px;
+ border-radius:22px!important;border:2px solid #b3dfb8!important;
+ background:radial-gradient(circle,#4f7b82,#244758)!important;
+ box-shadow:inset 0 0 0 5px #2e5661,0 5px 26px #7fe2c144}
+.alien-handover-avatar svg{max-width:100%;max-height:100%}
+.alien-setup-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;
+ align-items:center;padding:6px 0}
+.alien-setup-row label{font-size:11px;font-weight:900;color:#a9e4d6;letter-spacing:.07em}
+.alien-setup-choice{display:flex;align-items:center;gap:6px;min-width:0;
+ flex-wrap:wrap}
+.alien-setup-choice .alien-player-avatar{width:47px!important;height:47px!important;min-width:47px}
+.alien-setup-choice select{min-width:130px;flex:1;height:38px;
+ border:1px solid #658b8c;border-radius:6px;padding:6px;background:#153b4a;color:#f9e6c5;font:inherit}
+.alien-setup-choice button,.alien-profile-controls button{
+ border:1px solid #83b6a9;border-radius:7px;background:#255263;color:#e4f2df;
+ padding:8px 10px;min-height:38px;font-size:11px;font-weight:850;cursor:pointer}
+.alien-setup-choice button:hover,.alien-profile-controls button:hover{
+ background:#376b6a;border-color:#dfedbd}
+.alien-editor-link{display:inline-flex;align-items:center;gap:3px;
+ font-weight:900;color:#dff4dc;text-decoration:underline;text-underline-offset:3px;font-size:11px;
+ padding:6px;border-radius:5px}
+.alien-editor-link:hover{color:#ffe2b1}
+.alien-profile-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.alien-profile-help{color:#a5cecd;font-size:10px;line-height:1.4;margin:4px 0}
+.alien-result-avatar{width:40px!important;height:40px!important;min-width:40px}
+.local-result-row.alien-result-row{
+ grid-template-columns:22px 40px minmax(0,1fr) 62px 52px 55px;gap:6px;min-height:48px}
+.online-result.alien-online-result{grid-template-columns:25px 40px minmax(0,1fr) auto auto}
+.alien-result-rank{text-align:center}
+.alien-profile-banner{display:flex;align-items:center;gap:11px;
+ margin:9px 0;padding:9px;border:1px solid #668f87;border-radius:9px;
+ background:linear-gradient(90deg,#214c53,#183748)}
+.alien-profile-banner .alien-player-avatar{width:64px!important;height:64px!important;min-width:64px}
+.alien-profile-banner .alien-profile-copy{display:grid;gap:4px;flex:1;min-width:0}
+.alien-profile-banner strong{color:#f9e5b9;font-size:12px}
+.alien-profile-banner small{color:#b2d8cf;font-size:10px}
+.alien-profile-picker{display:flex;flex-wrap:wrap;gap:6px}
+.alien-profile-picker button{
+ display:flex;align-items:center;gap:5px;border:1px solid #547b82;border-radius:8px;
+ background:#1c4050;color:#e2f2e4;padding:5px 9px;min-height:43px;
+ font-size:11px;font-weight:800;cursor:pointer}
+.alien-profile-picker button[aria-pressed="true"]{border:2px solid #f6dca4;background:#365e5c}
+.alien-profile-picker button .alien-player-avatar{width:31px!important;height:31px!important;min-width:31px}
+.alien-profile-picker button:focus-visible,.alien-setup-choice button:focus-visible{
+ outline:3px solid #ffe2ac;outline-offset:2px}
+.online-lobby-player .alien-player-avatar{width:48px!important;height:48px!important;min-width:48px}
+.alien-lobby-you{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ padding:8px 0;border-top:1px solid #446b78}
+.alien-lobby-you .alien-player-avatar{width:62px!important;height:62px!important;min-width:62px}
+.alien-lobby-you .alien-profile-copy{display:grid;flex:1;gap:3px;min-width:100px}
+.alien-lobby-you .alien-profile-copy strong{font-size:12px;color:#f4deb0}
+.alien-lobby-you .alien-profile-copy small{font-size:10px;color:#bed8d0}
+@media(max-width:730px){
+ #app[data-mode="local"] .left-panel .alien-player-avatar,
+ .online-app .left-panel .alien-player-avatar{
+   display:none!important;
+ }
+ .local-result-row.alien-result-row{grid-template-columns:18px 34px minmax(0,1fr) 44px 42px 45px}
+ .local-result-row.alien-result-row .alien-result-avatar{width:34px!important;height:34px!important;min-width:34px}
+ .online-result.alien-online-result{grid-template-columns:20px 32px minmax(0,1fr) auto auto;gap:5px}
+ .online-result.alien-online-result .alien-result-avatar{width:32px!important;height:32px!important;min-width:32px}
+}
+@media(max-width:410px){
+ .alien-setup-row{grid-template-columns:1fr}
+ .alien-profile-picker{gap:4px}
+ .alien-profile-picker button{padding:5px}
+}
+@media(prefers-reduced-motion:reduce){
+ .alien-player-avatar,.alien-player-avatar *{animation:none!important;transition:none!important}
+}
+
+/* Online entry/lobby avatar picker (above forms, never on the board). */
+.online-pilot-picker{margin:7px 0 13px;padding:10px;border:1px solid #658c89;
+ border-radius:11px;background:linear-gradient(145deg,#204b53,#163546)}
+.online-pilot-picker .alien-profile-banner{margin:0 0 8px;padding:3px 4px;border:0;
+ background:transparent}
+.online-pilot-picker .alien-profile-picker{margin:5px 0 9px}
+.online-pilot-picker .alien-profile-controls{gap:6px}
+.online-pilot-picker .alien-profile-help{display:block;min-height:15px;margin:7px 2px 0}
+.online-pilot-picker .alien-profile-picker button{flex:1;min-width:106px;justify-content:center}
+.online-pilot-picker .alien-profile-picker button .alien-player-avatar{border-color:#83bbac!important}
+.online-lobby #online-avatar-lobby-slot .online-pilot-picker{margin:12px 0 5px}
+.online-current:has(.alien-player-avatar){display:flex;gap:8px;align-items:center}
+.online-current .alien-player-avatar{width:31px!important;height:31px!important;min-width:31px;
+ border-radius:7px!important}
+.online-current>span:last-child{min-width:0}
+.local-pilot-setup{padding:8px 10px;background:#193b4c;border:1px solid #4d7580;
+ border-radius:9px;margin-bottom:4px}
+.local-pilot-setup[hidden]{display:none!important}
+.local-setup-names .alien-setup-row{margin:2px 0 0}
+.local-setup-names .alien-setup-note{color:#bed5cf!important;font-size:11px!important;
+ line-height:1.5!important;margin:8px 0 0}
+.local-setup-names .alien-editor-link{width:max-content;max-width:100%}
+.local-result-legend.alien-result-legend{
+ grid-template-columns:22px 40px minmax(0,1fr) 62px 52px 55px;gap:6px}
+.alien-result-legend>span:nth-child(n+4){text-align:right}
+#local-handover-avatar.alien-handover-avatar{font-size:0;animation:none!important}
+#local-handover-avatar.alien-handover-avatar svg{overflow:visible}
+@media(max-width:730px){
+ .local-result-legend.alien-result-legend{
+  grid-template-columns:18px 34px minmax(0,1fr) 44px 42px 45px;gap:5px}
+ .local-setup-names .alien-setup-row{grid-template-columns:1fr;gap:5px}
+ .local-setup-names .alien-setup-choice{justify-content:start}
+ .online-pilot-picker .alien-profile-picker button{min-width:calc(50% - 4px)}
+}
+@media(max-width:410px){
+ .online-pilot-picker{padding:7px}
+ .online-pilot-picker .alien-profile-picker button{font-size:10px}
+ .online-pilot-picker .alien-profile-controls button{padding:7px}
+}
+
+/* Keep creature identity visible even in the compact mobile score strips,
+   using miniature 18px portraits instead of spending an extra screen row. */
+@media(max-width:730px){
+ #app[data-mode="local"] .left-panel .local-score-row{
+  grid-template-columns:18px minmax(0,1fr) auto!important;gap:2px!important
+ }
+ #app[data-mode="local"] .left-panel .alien-player-avatar{
+  display:grid!important;width:18px!important;height:19px!important;min-width:18px;
+  border-radius:5px!important
+ }
+ .online-app .left-panel #online-scores .local-score-row{
+  position:relative;padding-right:20px!important
+ }
+ .online-app .left-panel #online-scores .alien-player-avatar{
+  display:grid!important;position:absolute;top:4px;right:2px;
+  width:18px!important;height:18px!important;min-width:18px;border-radius:5px!important
+ }
+}

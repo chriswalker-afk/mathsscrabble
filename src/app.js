@@ -7,6 +7,9 @@ import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
 import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
+import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
+ nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
+import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -17,6 +20,17 @@ const state={
  localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+let localSetupAliens=[];
+let localSetupBadges=()=>{};
+function prepareLocalArtwork(){
+ void loadPilotArtwork().then(()=>{
+   if(isLocal()&&state.localMatch){
+     renderLocalStatus();
+     if(state.localMatch.phase==='handover')showLocalHandover();
+   }
+   localSetupBadges();
+ });
+}
 function persistRun(){
   if(state.mode==='local'&&state.localMatch){
     if(state.localMatch.phase==='playing'){
@@ -361,6 +375,9 @@ function showLocalHandover(){
  $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
  if(!hidden)return;
  const player=match.players[match.current];
+ paintPilotAvatar($('local-handover-avatar'),player.avatar,match.current,
+   {size:108,framing:'bust'});
+ $('local-handover-avatar').classList.add('alien-handover-avatar');
  $('local-handover-title').textContent=player.name+' · YOUR TURN';
  $('local-handover-description').textContent=
    'Pass the device to '+player.name+' first. Tap Ready to reveal this player’s private rack.';
@@ -421,7 +438,8 @@ function renderLocalStatus(){
    row.className='local-score-row'+
      (index===scoringIndex&&match.phase!=='finished'?' is-active':'')+
      (player.score===leading&&player.score>0?' is-leader':'');
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=index+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,player.avatar,index,{size:38,framing:'portrait'});
    const name=document.createElement('span');name.className='local-score-name';name.textContent=player.name;
    const points=document.createElement('span');points.className='local-score-points';
    const total=document.createElement('strong');total.textContent=displayScores[index];
@@ -578,6 +596,7 @@ function showBagInventory(){
 }
 $('bag-details-btn').onclick=showBagInventory;
 function localStateFromMatch(match,{privateTurn=true}={}){
+ prepareLocalArtwork();
  state.mode='local';state.localMatch=match;
  state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
  state.localDeferPrivacy=false;state.focusedIndex=pos(CENTER,CENTER);
@@ -603,6 +622,7 @@ function startNewLocalMatch(config){
        i===0?{...player,rack}:player)})
    );
    rememberOpening(storage,'local',match.players[0].rack);
+   localSetupBadges=()=>{};
    localStateFromMatch(match);
  }catch(err){
    showModal('MATCH SETUP ERROR','Please check the player settings',
@@ -614,7 +634,9 @@ function showLocalSetup(){
  const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
  const count=saved?.players.length||2;
  const seconds=saved?.turnSeconds||0;
- showModal('PASS E · LOCAL MULTIPLAYER','Set up a local match',
+ localSetupAliens=Array.from({length:4},(_,i)=>safePilotAlien(saved?.players?.[i]?.avatar,i));
+ prepareLocalArtwork();
+ showModal('ALIEN CREW · LOCAL MULTIPLAYER','Set up a local match',
    `<div class="local-setup-grid">
     <div class="local-setup-row"><label for="local-player-count">PLAYERS</label>
      <select id="local-player-count" aria-label="Number of players">
@@ -634,23 +656,78 @@ function showLocalSetup(){
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
-     startNewLocalMatch({names,turnSeconds});
+     startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds});
    }}]);
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
  const wrapper=$('local-setup-names');
- const inputs=[];
+ const groups=[],portraits=[];
+ const labels={bloop:'Bloop',orbit:'Orbit',niblet:'Niblet',glimmer:'Glimmer'};
+ const paint=()=>portraits.forEach((element,i)=>
+   paintPilotAvatar(element,localSetupAliens[i],i,{size:52,framing:'bust'}));
+ localSetupBadges=()=>{
+   if($('local-setup-names')===wrapper)paint();
+ };
  for(let i=0;i<4;i++){
+   const group=document.createElement('div');group.className='local-pilot-setup';
+   group.dataset.seat=String(i);
    const row=document.createElement('div');row.className='local-setup-row';
    const label=document.createElement('label');label.textContent='PILOT '+(i+1);
    label.htmlFor='local-player-name-'+i;
-   const input=document.createElement('input');
-   input.id='local-player-name-'+i;
-   input.type='text';input.maxLength=20;input.autocomplete='off';input.value=players[i]||'Pilot '+(i+1);
-   row.append(label,input);wrapper.append(row);inputs.push(row);
+   const input=document.createElement('input');input.id='local-player-name-'+i;
+   input.type='text';input.maxLength=20;input.autocomplete='off';
+   input.value=players[i]||'Pilot '+(i+1);
+   row.append(label,input);group.append(row);
+   const alienRow=document.createElement('div');alienRow.className='alien-setup-row';
+   const caption=document.createElement('label');caption.htmlFor='local-alien-'+i;
+   caption.textContent='THEIR ALIEN';
+   const controls=document.createElement('div');controls.className='alien-setup-choice';
+   const portrait=document.createElement('span');portraits.push(portrait);
+   const select=document.createElement('select');select.id='local-alien-'+i;
+   select.setAttribute('aria-label','Choose alien for pilot '+(i+1));
+   for(const id of PILOT_PRESET_NAMES){
+     const opt=document.createElement('option');opt.value=id;opt.textContent=labels[id];
+     select.append(opt);
+   }
+   const unique=document.createElement('option');unique.value='custom';unique.textContent='Custom alien';
+   select.append(unique);
+   const chooseOption=()=>{
+     const matched=PILOT_PRESET_NAMES.find((id,k)=>
+       JSON.stringify(localSetupAliens[i])===JSON.stringify(defaultPilotAlien(k)));
+     select.value=matched||'custom';
+   };
+   chooseOption();
+   select.addEventListener('change',()=>{
+     if(select.value==='custom')return;
+     localSetupAliens[i]=defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(select.value));
+     paint();
+   });
+   const random=document.createElement('button');random.type='button';
+   random.textContent='✧ RANDOM';random.setAttribute('aria-label','Random alien for pilot '+(i+1));
+   random.onclick=()=>{localSetupAliens[i]=nextRandomPilotAlien(localSetupAliens[i]);chooseOption();paint();};
+   const savedButton=document.createElement('button');savedButton.type='button';
+   savedButton.textContent='USE SAVED';savedButton.title='Use the design saved in Alien Lab';
+   savedButton.onclick=()=>{
+     const savedAlien=getSavedPilotAlien(storage);
+     if(!savedAlien){
+       const tip=wrapper.querySelector('.alien-setup-note');
+       if(tip)tip.textContent='No saved alien yet. Open Alien Lab and save one, then press USE SAVED.';
+       return;
+     }
+     localSetupAliens[i]=savedAlien;chooseOption();paint();
+   };
+   controls.append(portrait,select,random,savedButton);
+   alienRow.append(caption,controls);group.append(alienRow);
+   wrapper.append(group);groups.push(group);
  }
+ const link=document.createElement('a');link.className='alien-editor-link';
+ link.href='./alien-lab.html';link.target='_blank';link.rel='noopener noreferrer';
+ link.textContent='✳ CREATE A CUSTOM ALIEN IN ALIEN LAB ↗';
+ const tip=document.createElement('p');tip.className='alien-setup-note';
+ tip.textContent='Choose a preset, randomise each pilot, or save a unique alien in Alien Lab then press USE SAVED.';
+ wrapper.append(link,tip);paint();
  const updateCount=()=>{const amount=Number($('local-player-count').value);
-   inputs.forEach((row,i)=>{row.hidden=i>=amount;});};
+   groups.forEach((group,i)=>{group.hidden=i>=amount;});};
  $('local-player-count').addEventListener('change',updateCount);
  updateCount();
 }
@@ -726,18 +803,25 @@ function showLocalResults(){
    'Two full circuits of passes or paid exchanges ended the match.':
    'A player emptied their rack with no tiles left in the bag.';
  const rows=standing.map(entry=>
-  `<div class="local-result-row${entry.winner?' is-winner':''}">
-    <span>${entry.winner?'★':entry.rank}</span><strong>${escapeText(entry.name)}</strong>
+  `<div class="local-result-row alien-result-row${entry.winner?' is-winner':''}">
+    <span class="alien-result-rank">${entry.winner?'★':entry.rank}</span>
+    <span class="alien-result-portrait" data-pilot-index="${entry.index}"></span>
+    <strong>${escapeText(entry.name)}</strong>
     <span>${entry.gross}</span><span>−${entry.penalty}</span><span>${entry.net}</span>
    </div>`).join('');
  showModal('MATCH COMPLETE',winners.length===1?
    escapeText(winners[0])+' wins!':'Shared victory!',
    `<p class="local-match-note">${summary}</p>
-    <div class="local-result-legend"><span>#</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
+    <div class="local-result-legend alien-result-legend"><span>#</span><span>ALIEN</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
     <div class="local-result-table">${rows}</div>
     <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>`,
    [{text:'CHOOSE MODE',fn:showModeMenu},
     {text:'NEW LOCAL MATCH →',primary:true,fn:showLocalSetup}]);
+ $('modal-body').querySelectorAll('.alien-result-portrait').forEach(node=>{
+   const i=Number(node.dataset.pilotIndex);
+   paintPilotAvatar(node,match.players[i]?.avatar,i,{size:40,framing:'bust'});
+   node.classList.add('alien-result-avatar');
+ });
 }
 function showLocalReport(){
  if(!isLocal()||!state.localMatch)return;

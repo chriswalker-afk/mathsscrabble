@@ -3,6 +3,9 @@ import {SIZE,CENTER,coords,pos,bonusAt,inspectPlacement,scoreMove,
   BLANK_KINDS,isBlank,reorderRack,freeExchangeReason} from './engine.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
+  nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
+import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 
 const $=id=>document.getElementById(id);
 const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
@@ -14,6 +17,62 @@ const state={
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
+state.alienDraft=alienFromStorage(storage,0);
+function renderPilotPicker(){
+ const alien=state.alienDraft;
+ paintPilotAvatar($('online-own-alien'),alien,me()?.index??0,{size:68,framing:'bust'});
+ const lobby=state.view?.phase==='lobby';
+ $('online-alien-subtitle').textContent=lobby?
+  (pilotProfileEqual(alien,state.view.you.avatar)?
+   'Your alien is visible to everyone in this room.':'Choose an alien to update your seat.') :
+   'Your alien joins the room with you. You can edit it first.';
+ for(const button of $('online-alien-presets').querySelectorAll('button[data-preset]')){
+  const id=button.dataset.preset;
+  const i=PILOT_PRESET_NAMES.indexOf(id);
+  paintPilotAvatar(button.querySelector('.alien-player-avatar'),
+    defaultPilotAlien(i),i,{size:35,framing:'portrait'});
+  button.setAttribute('aria-pressed',String(pilotProfileEqual(alien,
+   defaultPilotAlien(i))));
+  button.disabled=state.busy;
+ }
+ for(const id of ['online-alien-random','online-alien-saved'])$(id).disabled=state.busy;
+}
+async function selectOnlineAlien(profile){
+ if(state.busy)return;
+ state.alienDraft=safePilotAlien(profile,me()?.index??0);
+ renderPilotPicker();
+ if(state.view?.phase==='lobby'){
+  const result=await mutate('profile',{avatar:state.alienDraft});
+  if(!result){
+   state.alienDraft=safePilotAlien(state.view.you.avatar,me()?.index??0);
+   $('online-alien-note').textContent='Room update failed. Your previous alien is still selected.';
+  }else $('online-alien-note').textContent='Your alien is now visible to the other pilots!';
+  renderPilotPicker();
+ }else $('online-alien-note').textContent='Alien chosen! You can now create or join a room.';
+}
+function initOnlineAlienPicker(){
+ const region=$('online-alien-presets');
+ for(const [i,id] of PILOT_PRESET_NAMES.entries()){
+  const button=document.createElement('button');button.type='button';
+  button.dataset.preset=id;button.setAttribute('aria-label','Choose '+id+' alien');
+  const portrait=document.createElement('span');
+  paintPilotAvatar(portrait,defaultPilotAlien(i),i,{size:35,framing:'portrait'});
+  const title=document.createElement('span');title.textContent=id[0].toUpperCase()+id.slice(1);
+  button.append(portrait,title);
+  button.onclick=()=>void selectOnlineAlien(defaultPilotAlien(i));
+  region.append(button);
+ }
+ $('online-alien-random').onclick=()=>void selectOnlineAlien(nextRandomPilotAlien(state.alienDraft));
+ $('online-alien-saved').onclick=()=>{
+  const saved=getSavedPilotAlien(storage);
+  if(!saved){
+   $('online-alien-note').textContent='No saved alien yet. Save one in Alien Lab then use this button.';
+   return;
+  }
+  void selectOnlineAlien(saved);
+ };
+ renderPilotPicker();
+}
 const safeText=value=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const codes=/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
@@ -95,6 +154,7 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
    }
  }
  state.view=view;state.code=view.code;state.lastRevision=view.revision;
+ if(view.you?.avatar)state.alienDraft=safePilotAlien(view.you.avatar,view.you.index);
  if(!state.ceremony)render();
  if(view.phase==='finished'&&!state.shownResults&&!state.ceremony&&!state.busy){
    state.shownResults=true;queueMicrotask(showResults);
@@ -174,6 +234,9 @@ async function refreshRoom(){
  }finally{state.refreshing=false;}
 }
 function showEntry(){
+ if($('online-pilot-picker').parentElement!==$('online-avatar-entry-slot'))
+  $('online-avatar-entry-slot').append($('online-pilot-picker'));
+ renderPilotPicker();
  $('online-gate').hidden=false;
  $('online-entry').hidden=false;
  $('online-lobby').hidden=true;
@@ -183,6 +246,9 @@ function showEntry(){
 }
 function showLobby(){
  if(!state.view)return;
+ if($('online-pilot-picker').parentElement!==$('online-avatar-lobby-slot'))
+  $('online-avatar-lobby-slot').append($('online-pilot-picker'));
+ renderPilotPicker();
  const v=state.view;
  $('online-gate').hidden=false;
  $('online-entry').hidden=true;
@@ -194,7 +260,8 @@ function showLobby(){
  const players=$('online-lobby-players');
  players.replaceChildren(...v.people.map((p,i)=>{
    const node=document.createElement('div');node.className='online-lobby-player';
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=i+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,p.avatar,i,{size:52,framing:'bust'});
    const name=document.createElement('strong');name.textContent=p.name;
    const badge=document.createElement('small');badge.textContent=p.host?'HOST':'PILOT';
    node.append(avatar,name,badge);return node;
@@ -219,7 +286,8 @@ function renderStandings(){
    row.className='local-score-row'+(p.index===match.current&&v.phase==='playing'?' is-active':'')+
      (p.displayScore===top&&p.displayScore>0?' is-leader':'');
    row.dataset.playerIndex=String(p.index);
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=p.index+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,p.avatar,p.index,{size:38,framing:'portrait'});
    const name=document.createElement('span');name.className='local-score-name';name.textContent=p.name+
      (p.index===v.you.index?' · YOU':'');
    const score=document.createElement('span');score.className='local-score-points';
@@ -345,9 +413,18 @@ function render(){
    'SIGNAL CLASH · ROOM '+v.code:'SIGNAL CLASH · ONLINE';
  $('online-clock').textContent=match?.deadline?formatTime(match.deadline-Date.now()):
    v?.turnSeconds?v.turnSeconds+'s':'NO TIMER';
- $('online-current').textContent=v?.phase==='finished'?'Match finished. Check the final standings.':
+ $('online-current').replaceChildren();
+ const currentText=document.createElement('span');
+ currentText.textContent=v?.phase==='finished'?'Match finished. Check the final standings.':
    match?(myTurn()?'Your turn: build a correct BIDMAS equation.':
       match.players[match.current].name+' is choosing their move.'):'Waiting for pilots to join.';
+ if(match&&v.phase==='playing'){
+   const portrait=document.createElement('span');
+   paintPilotAvatar(portrait,match.players[match.current].avatar,match.current,
+     {size:35,framing:'portrait'});
+   $('online-current').append(portrait);
+ }
+ $('online-current').append(currentText);
  $('online-bag-count').textContent=match?.bagCount??'—';
  $('online-bag').disabled=!match;
  $('app').dataset.onlineTurn=String(myTurn());
@@ -487,10 +564,13 @@ function showResults(){
    const row=document.createElement('div');
    row.className='online-result'+(p.winner?' is-winner':'');
    const rank=document.createElement('strong');rank.textContent=p.winner?'★':String(p.rank);
+   const portrait=document.createElement('span');portrait.className='alien-result-avatar';
+   paintPilotAvatar(portrait,state.view.people[p.index]?.avatar,p.index,{size:40,framing:'bust'});
    const name=document.createElement('strong');name.textContent=p.name;
    const gross=document.createElement('span');gross.textContent=p.gross+' pts';
    const net=document.createElement('span');net.textContent='−'+p.penalty+' = '+p.net;
-   row.append(rank,name,gross,net);table.append(row);
+   row.classList.add('alien-online-result');
+   row.append(rank,portrait,name,gross,net);table.append(row);
  }
  content.append(table);
  const note=document.createElement('p');
@@ -714,7 +794,8 @@ $('online-create-form').onsubmit=async e=>{
    const data=await requestApi('/api/rooms',{method:'POST',body:{
      name:$('online-host-name').value,
      maxPlayers:Number($('online-player-limit').value),
-     turnSeconds:Number($('online-timer-settings').value)
+     turnSeconds:Number($('online-timer-settings').value),
+     avatar:state.alienDraft
    }});
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
@@ -729,7 +810,7 @@ $('online-join-form').onsubmit=async e=>{
  $('online-join-button').disabled=true;
  try{
    const data=await requestApi('/api/rooms/'+code+'/join',{
-     method:'POST',body:{name:$('online-join-name').value}
+     method:'POST',body:{name:$('online-join-name').value,avatar:state.alienDraft}
    });
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
@@ -792,6 +873,11 @@ window.addEventListener('keydown',event=>{
    const tiles=visibleRack().filter(t=>!used.has(t.id));
    if(tiles[i-1]){state.selected=tiles[i-1].id;render();}
  }
+});
+initOnlineAlienPicker();
+void loadPilotArtwork().then(()=>{
+ renderPilotPicker();
+ if(state.view)render();
 });
 render();
 void restore();

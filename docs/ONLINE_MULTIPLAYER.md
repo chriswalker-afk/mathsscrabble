@@ -2,6 +2,14 @@
 
 Online Rooms is the fourth EQUA//NOVA mode. From the existing ◈ MODE menu, open online.html. One player creates a room; one to three other pilots join with a six-character code or invitation link, each on their own device. The host sets a limit of two, three or four players and an optional 60-, 90- or 120-second timer (or Off). The host may begin once at least two pilots have joined.
 
+## Alien Lab pilot identities (Pass B)
+
+Before hosting or joining, choose a friendly alien on the Online Rooms entry screen: select a starter, **SURPRISE ME**, or **USE MY SAVED ALIEN** (from [Alien Lab](../alien-lab.html)). The same picker moves into the waiting lobby, where each player can change **only their own** creature. All connected players see the approved public design; after the host starts, profiles are locked for the match. Reconnecting with the original private access key restores the identical character, without any request to repeat setup.
+
+The client sends \`avatar\` as a small, strictly versioned data object of allowlisted head, eyes, mouth, body, arms, legs, optional accessory and skin/outfit/accent palette IDs. The Worker shares the validation contract in [\`src/alien/profiles.js\`](../src/alien/profiles.js) and stores the validated values on the authenticated seat in its SQLite-backed Durable Object. The server never accepts raw SVG, custom CSS, arbitrary image URLs or remote files. Other players receive the **public avatar IDs and scoreboard**, but never another player's rack or bearer key. SVGs are assembled locally from the already approved, same-origin artwork.
+
+**New authenticated endpoint:** \`POST /api/rooms/:CODE/profile\`, with the existing \`Authorization: Bearer <private-token>\` header, JSON \`{ "id": "<unique-action-id>", "revision": <current-revision>, "type": "profile", "avatar": <approved-config> }\`. Only the seat owning the bearer key can update its avatar; retrying an acknowledged action ID is idempotent, stale revisions are rejected, and updates after a match starts receive HTTP 409. Invalid profiles receive HTTP 400. The create/join endpoints accept optional \`avatar\` data; if omitted (older clients), a stable default alien is assigned without changing the current protocol or requiring a reset of existing rooms.
+
 ## Rules and security
 
 All turns are processed by a Cloudflare Worker and one SQLite-backed Durable Object per room. The browser cannot choose whose turn it is, award itself points, forge a tile, inspect another player's rack or change the timer. The server uses the same BIDMAS parser, premium squares, wildcards, finite bag, free equals and final rack penalties as Local Match.
@@ -60,11 +68,11 @@ The online Chromium test still uses a simulated API. The Cloudflare runtime inte
 2. Create a two-player room with a 60-second timer. Share the invitation URL and join from another browser/device.
 3. Confirm that the two racks are different and private, and both clients see the same board and public scores.
 4. Try a mathematically incorrect but well-formed equation; confirm no points or turns are consumed. Submit a correct BIDMAS equation and check that both boards update.
-5. Refresh each device and verify that its rack and pilot identity are recovered without revealing an opponent's tiles.
+5. Before creating/joining, choose different Alien Lab characters. In the waiting lobby, update the guest's alien and verify both browsers show the change without altering the host's creature. Start the match and verify edits are locked. Refresh each device and verify its avatar and rack are recovered without revealing an opponent's tiles.
 6. Let a timer expire while the pages are closed; reopen them and verify the turn was advanced by the server alarm.
 7. Exercise passing, free and paid exchanges, zero bag refill and final leftover-tile deductions.
 8. Check phone/tablet accessibility and verify that the main commands remain visible without horizontal scrolling.
 
 ## Future work
 
-The Origin whole-number tile set is still the only implemented mathematics pack. Polarity, Fraction Field and Quantum need separate mathematical tile/token design and rigorous parsing. Fully reusable Critter Lab avatar customization is also outside E2; online pilots currently have lightweight coloured markers. These are subsequent gameplay/visual passes, not prerequisites for online room correctness.
+The Origin whole-number tile set is still the only implemented mathematics pack. Polarity, Fraction Field and Quantum need separate mathematical tile/token design and rigorous parsing. Pass B now provides original Alien Lab character creation and multiplayer portraits; room players receive safe, versioned identities instead of numerical markers. These are subsequent gameplay/visual passes, not prerequisites for online room correctness.
