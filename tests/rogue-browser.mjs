@@ -26,7 +26,7 @@ try{
  await page.locator('#mode-btn').click();
  assert.match(await page.locator('#modal-title').textContent(),/reactor mission/i);
  assert.match(await page.locator('.mode-choice-grid').textContent(),/THE DRIFT/i);
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(1).click();
  assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
  await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'rogue');
@@ -142,7 +142,7 @@ try{
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(1).click();
  assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
 
