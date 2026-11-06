@@ -718,3 +718,19 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
  #app[data-mode="local"] .right-panel .secondary-command{padding:8px 2px;font-size:9px;letter-spacing:0;white-space:nowrap}
  #app[data-mode="local"] .right-panel .local-pass-btn{grid-column:auto}
 }
+
+/* Alien Lab is discoverable from the mode picker, without taking any room
+   on the board or changing the mode action ordering. */
+.alien-lab-modal-link{display:flex;align-items:center;gap:10px;padding:10px 12px;
+ margin-top:12px;border:1px solid #87b99e;border-radius:9px;
+ color:#e9ebd7;text-decoration:none;background:linear-gradient(100deg,#25574f,#284855);
+ transition:background .15s,border-color .15s}
+.alien-lab-modal-link:hover,.alien-lab-modal-link:focus-visible{
+ border-color:#e9d6a9;background:#356a5e}
+.alien-lab-modal-link .alien-lab-modal-icon{display:grid;place-items:center;
+ width:37px;height:37px;border:1px solid #bae1ad;border-radius:50%;
+ background:#4e8b75;color:#ffe2af;font-size:22px;flex-shrink:0}
+.alien-lab-modal-link>span:nth-child(2){display:grid;gap:2px;flex:1;min-width:0}
+.alien-lab-modal-link strong{font-size:12px;color:#fff0c9;letter-spacing:.09em}
+.alien-lab-modal-link small{font-size:10px;line-height:1.35;color:#b7e5d9}
+.alien-lab-modal-link>span:last-child{font-size:19px;color:#f8dfac}

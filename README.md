@@ -42,11 +42,13 @@ The animation runs only while the current view is active. Use **SKIP** in the co
 
 The game remembers the most recent opening rack pattern separately for Sector Run, The Drift and Local Match; if a new opening would look identical to the previous one, it is reshuffled (and if necessary rearranged). **No physical tiles are invented, duplicated or removed to avoid repetition.** A new game also creates an independent bag order, so later draws are not locked into a tutorial sequence. The opening pattern history is local to this browser and is not a competitive seed, server record or cross-device guarantee.
 
-## Alien Lab — Pass A1 original creature library
+## Alien Lab — A1 artwork + A2 interactive creator
 
 The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **30 original, interchangeable SVG components** (four each for heads, eyes, mouths, bodies, arms and legs/movement; six optional accessories) plus **six independent colour palettes**. The shared transparent **320×360** canvas and anatomical anchors let all **28,672 base combinations** connect cleanly. Face elements, shoulder seams, neck seams and hip seams are independently tested, and the renderer keeps high-contrast outlines at small scoreboard sizes.
 
-Open the [A1 Specimen Vault](alien-preview.html) to review four curated aliens (**Bloop, Orbit, Niblet, Glimmer**), small-size examples and the full part atlas. This is **not yet an interactive editor**: selectable thumbnails, saved edits and randomisation UI are in **Pass A2**; Local Match / Online Rooms integration is a later pass. The underlying safe `src/alien/model.js` already supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art.
+**Build your own alien:** open [Alien Lab](alien-lab.html), or choose **ALIEN LAB** from the game's **Mode** popup without changing your active match. Pass A2 now provides live previews, clickable SVG thumbnails for **heads, faces (eyes and mouth), bodies, arms, movement, extras** and **three independently selectable colours**; the four curated starters, **Surprise Me**, reset, undo/redo, browser-only save/restore and a fully transparent **SVG export**. The editor works on desktop/tablet and stacks with a compact sticky preview on phones. Art remains in the reviewable [A1 Specimen Vault](alien-preview.html).
+
+The underlying safe `src/alien/model.js` supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art. **A2 does not yet attach the alien to a multiplayer seat**; Local Match / Online Rooms avatar integration remains Pass B, after the A3 art and usability review.
 
 See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The existing standalone animal **Critter Lab** and the EQUA//NOVA game modes are unchanged.
 

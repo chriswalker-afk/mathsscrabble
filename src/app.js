@@ -1294,7 +1294,12 @@ function showModeMenu(){
      <p>Compete from separate devices. Share a six-character code, with private racks and server-validated turns.</p>
      <small>SERVER-COORDINATED MULTIPLAYER</small>
     </div>
-   </div>`,
+   </div>
+   <a class="alien-lab-modal-link" href="./alien-lab.html" aria-label="Open Alien Lab to build your own cute alien">
+    <span class="alien-lab-modal-icon" aria-hidden="true">✳</span>
+    <span><strong>ALIEN LAB</strong><small>Design your own space creature · Saved separately from your games</small></span>
+    <span aria-hidden="true">↗</span>
+   </a>`,
    [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
     {text:'THE DRIFT',fn:()=>chooseMode('rogue')},
     {text:'LOCAL 2–4',fn:()=>chooseMode('local')},
