@@ -261,7 +261,7 @@ function tileButton(tile, rackIndex){
    const direction=event.key==='ArrowRight'?1:-1;
    const hidden=Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id);
    state.rack=reorderRack(state.rack,tile.id,rackIndex+direction+(direction>0?1:0),hidden);
-   renderRack();
+   renderRack();persistRun();
    const next=$('rack').querySelector('[data-tile-id="'+tile.id+'"]');
    next?.focus({preventScroll:true});
  });
@@ -535,18 +535,49 @@ enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
-   '<p>This will reset your current sector and score.</p>',
-   [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1)}]);
+   '<p>A new run replaces your current local save, including your sector and accumulated run points. Your completed sector history will be lost.</p>',
+   [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1,{newRun:true})}]);
 };
-$('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',
- `<p>Create a complete horizontal or vertical equation, using <strong>BIDMAS</strong> to check the arithmetic. Drag tiles by mouse, touch or pen, or tap a tile then its square. The <strong>=</strong> tile beside your rack is unlimited and free.</p>
- <p>Your first equation must cross the centre. Later equations must reuse a locked tile. Each move must make one continuous equation.</p>
- <p>Double and triple squares multiply tile or equation points. You earn 3 extra points per square beyond five, plus 20 for placing all seven physical rack tiles. Exchanging tiles uses a turn. Reach the energy target in six turns to advance.</p>
- <p>Move an unscored tile by dragging it. Tap it to pick it up, or use the <strong>Undo Tile</strong> control. Keyboard: <strong>1–7</strong> selects a rack tile, <strong>=</strong> selects the free equals sign, arrow keys navigate the board and Backspace undoes the last placed tile.</p>
- <p>The equation preview in the command panel shows potential points but does not check whether your mathematics is correct until you submit.</p>
- <p><strong>A calculation is required:</strong> 3=3 is not accepted. A completed equation earns +5 points, and reusing a locked board tile earns another +5. Blank number (#), blank operator (◇) and flexible (✦) tiles score zero tile points; choose their symbol when you place them.</p>
- <p>If your rack contains only numbers or only operators, you may exchange tiles without losing your turn. Drag unscored tiles back to the rack to remove them, or drag rack tiles to rearrange their order.</p>`,
- [{text:'LET’S PLAY',primary:true}]);
+$('run-report-btn').onclick=()=>{if(!state.busy)showRunReport();};
+function rememberIntro(){
+ try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
+}
+function showTraining(firstVisit=false){
+ const message=`<div class="training-steps">
+  <div class="training-step"><span>01</span><div><strong>Build one real calculation</strong>
+    <p>Try <em>8 + 4 = 12</em> through the centre. Use <strong>BIDMAS</strong>: brackets, indices, division/multiplication, then addition/subtraction. An identity like 3 = 3 does not score.</p></div></div>
+  <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
+    <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
+  <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
+    <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can exchange an all-number or all-operation rack for free.</p></div></div>
+ </div>
+ <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–7 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
+ showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
+   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
+   message,firstVisit?
+    [{text:'SKIP GUIDE',fn:rememberIntro},
+     {text:'START MISSION →',primary:true,fn:rememberIntro}]:
+    [{text:'BACK TO GAME',primary:true}]);
+}
+$('help-btn').onclick=()=>showTraining();
+function startSolo(){
+ const previous=loadRun(storage);
+ if(previous){
+   Object.assign(state,previous);
+   state.ended=state.phase!=='playing';state.busy=false;
+   state.swapping=false;state.swapSet.clear();state.selected=null;
+   state.recentlyPlaced=null;state.lockedFlash.clear();
+   state.focusedIndex=pos(CENTER,CENTER);
+   announce('Saved run restored. Your board, rack, and unfinished placements are ready.');
+   render();
+   if(state.ended)showSectorOutcome();
+ }else{
+   freshSector(1,{newRun:true});
+   let seen=false;
+   try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
+   if(!seen)showTraining(true);
+ }
+}
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
@@ -566,6 +597,14 @@ document.addEventListener('keydown',event=>{
    if(tile){event.preventDefault();selectTile(tile.id);}
  }
 });
-$('modal-close').onclick=()=>{if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){$('modal-actions').querySelector('button')?.click();}else if(!state.ended){$('modal').close();}};
+$('modal-close').onclick=()=>{
+ if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){
+   $('modal-actions').querySelector('button')?.click();
+ }else if($('modal-eyebrow').textContent==='WELCOME TO THE REACTOR'){
+   rememberIntro();$('modal').close();
+ }else if(!state.ended){
+   $('modal').close();
+ }
+};
 $('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
-freshSector();
+startSolo();
