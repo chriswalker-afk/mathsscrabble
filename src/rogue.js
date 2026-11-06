@@ -45,9 +45,10 @@ export const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function turnLimit(rogue){return 6+Number(owns(rogue,'extra-turn'));}
 export function rackSlots(rogue){return 8+Number(owns(rogue,'wide-rack'));}
 export function shopTemperatures(sector){
- const rotations=TEMP_ITEMS.filter(item=>item.id!=='pulse-charge');
- const start=(sector-1)*2%rotations.length;
- return [PULSE_ITEM,rotations[start],rotations[(start+1)%rotations.length]];
+ // Every Salvage Bay offers a score boost and a tile manipulation choice.
+ const boosts=TEMP_ITEMS.filter(item=>item.action==='score'&&item.id!==PULSE_ITEM.id);
+ const swaps=TEMP_ITEMS.filter(item=>item.action==='tile');
+ return [PULSE_ITEM,boosts[(sector-1)%boosts.length],swaps[(sector-1)%swaps.length]];
 }
 // A pre-upgrade save may only contain the old Pulse counter. Its charges
 // remain usable, but new purchases obey the two-slot maximum.
