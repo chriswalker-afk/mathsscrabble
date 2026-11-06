@@ -344,7 +344,8 @@ function renderRack(){
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
  const eligible=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
-   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
+   (isLocal()?!state.localMatch?.freeExchangeUsed:
+     isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:state.freeSwapTurn!==state.turn);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
    eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
@@ -361,7 +362,8 @@ function renderPreview(){
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
  const freeReason=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
-   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
+   (isLocal()?!state.localMatch?.freeExchangeUsed:
+     isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:state.freeSwapTurn!==state.turn);
  $('preview-status').textContent=state.swapping?
    (freeReason?'Choose exactly one tile for your free swap; multiple tiles cost a turn.':
      'Choose tiles to replace — this uses a turn.'):
@@ -1209,7 +1211,11 @@ function score(){
    const startScore=state.score;
    // Consume single-use charges and commit the whole score atomically before
    // a timer, animation, tab switch or reload can interrupt the presentation.
-   if(isDrift())state.rogue=consumePulse(state.rogue);
+   if(isDrift()){
+     state.rogue=consumeBoardEcho(state.rogue,points.echoedIndices);
+     state.rogue=earnMoveFlux(state.rogue,state.pending).rogue;
+     if(points.tempApplied)state.rogue=consumeTemporary(state.rogue,points.tempApplied);
+   }
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
@@ -1242,6 +1248,7 @@ const escapeText=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').repla
 function swap(){
  if(isLocal())return localSwap();
  if(state.ended||state.busy)return;
+ if(state.itemTarget){announce('Finish or cancel your selected power-up first.',true);return;}
  if(!state.swapping){
    if(Object.keys(state.pending).length){
      announce('Clear your equation before swapping tiles.',true);return;
@@ -1254,7 +1261,9 @@ function swap(){
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
- const free=state.swapSet.size===1&&state.freeSwapTurn!==state.turn;
+ const free=state.swapSet.size===1&&(isDrift()?
+   freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
+   state.freeSwapTurn!==state.turn);
  const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
@@ -1271,6 +1280,7 @@ function swap(){
  }
  if(free){
    state.stats.freeExchanges++;
+   if(isDrift())state.rogue=markFreeSwap(state.rogue,state.turn,state.freeSwapTurn);
    state.freeSwapTurn=state.turn;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
