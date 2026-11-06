@@ -88,9 +88,11 @@ export function restrictedDraws(rogue,sector){
 export function selectForcedTile(rogue,sector,rack,random=Math.random){
  if(bossForSector(rogue,sector)?.kind!=='forced')return {...rogue,forcedTile:null};
  const digits=rack.filter(t=>!t.blank&&/^[0-9]$/.test(t.value));
- if(!digits.length)return {...rogue,forcedTile:null};
- const index=Math.max(0,Math.min(digits.length-1,Math.floor(random()*digits.length)));
- return {...rogue,forcedTile:digits[index].id};
+ const physical=rack.filter(t=>!t.blank);
+ const eligible=digits.length?digits:physical.length?physical:rack;
+ if(!eligible.length)return {...rogue,forcedTile:null};
+ const index=Math.max(0,Math.min(eligible.length-1,Math.floor(random()*eligible.length)));
+ return {...rogue,forcedTile:eligible[index].id};
 }
 export function validateBossMove(board,pending,move,rogue,sector){
  const boss=bossForSector(rogue,sector);
