@@ -688,7 +688,7 @@ function showBagInventory(){
       ${isDrift()&&restrictedDraws(state.rogue,state.sector).length?
        '<p class="bag-seal-notice">BOSS EMBARGO · '+restrictedDraws(state.rogue,state.sector).join(', ')+
        ' tiles are sealed from draws during this sector. They remain in the physical inventory.</p>':''}
-     <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong></p>
+     <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong>${inventory.pools.brackets!==undefined?' · BRACKETS <strong>'+inventory.pools.brackets+'</strong>':''}</p>
      <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
      <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
      the board or in your rack are not included. The equals sign is free and
@@ -1020,7 +1020,7 @@ function showShop(){
    <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Ship Systems offered in the Salvage Bay"></div>
    <div class="salvage-section-heading">MISSION GADGETS <small>USE ONCE · UP TO TWO HELD</small></div>
    <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Mission Gadgets offered in the Salvage Bay"></div>
-   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap equipped artwork during play for details or activation.</p>`;
+   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap installed Ship Systems for details or activate Mission Gadgets while playing.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
    {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
@@ -1459,7 +1459,7 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector uses the same BIDMAS rules and premium grid. Normally there are six turns and an eight-tile rack; equipment can extend either.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators. Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
        <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
