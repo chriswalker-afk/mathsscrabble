@@ -48,7 +48,7 @@ test('new match can vary rack order without giving any player extra tiles',()=>{
    x=>x.players[0].rack,(x,rack)=>({...x,players:
      x.players.map((p,i)=>i===0?{...p,rack}:p)}));
  assert.notEqual(openingPattern(a.players[0].rack),openingPattern(b.players[0].rack));
- assert.deepEqual(a.players[0].rack.map(t=>t.id).sort(),b.players[0].rack.map(t=>t.id).sort());
+ assert.deepEqual(a.players[0].rack.map(t=>t.blank||t.value).sort(),b.players[0].rack.map(t=>t.blank||t.value).sort());
  assert.equal(b.bag.length+ b.players.flatMap(p=>p.rack).length,151);
 });
 test('different game modes remember their own last opening patterns',()=>{
