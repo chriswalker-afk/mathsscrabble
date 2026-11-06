@@ -3,6 +3,7 @@ import {SIZE,CENTER,coords,pos,bonusAt,inspectPlacement,scoreMove,
   BLANK_KINDS,isBlank,reorderRack,freeExchangeReason} from './engine.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {initBoardZoom} from './board-zoom.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
   nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
@@ -359,7 +360,7 @@ function renderBoard(){
      const keys={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0]};
      if(keys[e.key]){
        e.preventDefault();const [dr,dc]=keys[e.key];
-       state.focusIndex=pos(Math.max(0,Math.min(12,r+dr)),Math.max(0,Math.min(12,c+dc)));
+       state.focusIndex=pos(Math.max(0,Math.min(SIZE-1,r+dr)),Math.max(0,Math.min(SIZE-1,c+dc)));
        $('#board').querySelector('[data-index="'+state.focusIndex+'"]')?.focus({preventScroll:true});
      }else if((e.key==='Delete'||e.key==='Backspace')&&state.pending[i]){
        e.preventDefault();removePending(i);
@@ -627,7 +628,7 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 13×13 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
+  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 19×19 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
   ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
   ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
   ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
@@ -939,3 +940,5 @@ void loadPilotArtwork().then(()=>{
 });
 render();
 void restore();
+
+initBoardZoom();

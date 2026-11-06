@@ -1,5 +1,6 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,tilePool,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {initBoardZoom} from './board-zoom.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  MAX_PERMANENT_SLOTS,MAX_TEMPORARY_SLOTS,makeRogueState,anomalyForSector,targetForSector,
@@ -1652,3 +1653,5 @@ $('modal').addEventListener('cancel',e=>{
  if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
 });
 startSolo();
+
+initBoardZoom();
