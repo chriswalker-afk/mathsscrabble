@@ -1,6 +1,6 @@
 // Solo-sector rules and local save validation. This module has no DOM dependencies.
 import {
- SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget
+ SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState} from './rogue.js';
 
@@ -18,7 +18,7 @@ const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator
  * >=1 operator-capable tile, and >=1 blank. These roles may overlap.
  * The source bag's physical IDs and combined tile total are preserved.
  */
-export function dealPlayableRack(held,sourceBag,options={}){
+export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
   const minBlanks=options.minBlanks===2?2:1;
   const minOperators=options.minOperators===2?2:1;
   const rack=[...held],bag=[...sourceBag];
@@ -39,7 +39,14 @@ export function dealPlayableRack(held,sourceBag,options={}){
     if(rack.filter(numberCapable).length<4 && choose(numberCapable))continue;
     rack.push(bag.pop());
   }
-  return {rack,bag};
+  // A balanced draw must not imply a fixed visual pattern. Randomise newly
+  // drawn tiles while preserving the positions of any tiles the player kept.
+  const newTiles=rack.slice(held.length);
+  for(let i=newTiles.length-1;i>0;i--){
+    const j=Math.min(i,Math.floor(random()*(i+1)));
+    [newTiles[i],newTiles[j]]=[newTiles[j],newTiles[i]];
+  }
+  return {rack:[...held,...newTiles],bag};
 }
 export const freshStats=()=>({attempts:0,freeExchanges:0,paidExchanges:0,moves:[]});
 export const freshProgress=()=>({startedAt:Date.now(),completed:[],runPoints:0});
