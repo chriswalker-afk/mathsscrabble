@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Cloudflare CLI
-        run: npm install --no-save --no-package-lock cf@latest
+      - name: Install Cloudflare Vite build tool and CLI
+        run: npm install --no-package-lock
       - name: Validate Durable Object Worker without deploying
         run: npx cf deploy --dry-run
   browser:
