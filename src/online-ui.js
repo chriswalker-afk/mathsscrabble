@@ -373,7 +373,7 @@ function renderRack(){
    if(enabled&&!state.swapping)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
    root.append(button);
  }
- $('online-rack-count').textContent=rack.length+' / 7';
+ $('online-rack-count').textContent=rack.length+' / 8';
  $('equals-tile').disabled=!enabled||state.swapping;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('online-rack-label').textContent=match?'YOUR PRIVATE RACK · '+v.you.name.toUpperCase():'YOUR PRIVATE RACK';
@@ -386,7 +386,7 @@ function renderPreview(){
  $('ceremony-readout').hidden=!state.ceremony;
  $('online-expression').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
  $('online-preview-status').textContent=state.swapping?
-   (eligible?'Free rescue swap. Choose tiles to replace.':'Choose tiles to replace; exchanging uses the turn.'):
+   (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
    myTurn()?preview.feedback:'Wait for your turn. Only the current pilot can submit.';
  $('online-potential').textContent=preview.ready&&!state.swapping?
    '+'+scoreMove(board,state.pending,preview).total:'—';
@@ -585,7 +585,7 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private seven-tile rack and shares the same 13×13 board.'],
+  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private eight-tile rack and shares the same 13×13 board.'],
   ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
   ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
   ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
@@ -770,14 +770,14 @@ $('online-swap').onclick=async()=>{
  if(!state.swapping){
    if(Object.keys(state.pending).length){showNotice('Clear unscored tiles before swapping.',true);return;}
    state.swapping=true;state.selected=null;render();
-   showNotice('Select your tiles, then press CONFIRM. A number-only or operation-only rack may swap free once.');
+   showNotice('Select exactly one tile to swap free once per turn. Multiple tiles cost the turn.');
    return;
  }
  if(!state.swapIds.size){showNotice('Select at least one tile from your rack.',true);return;}
  const result=await mutate('action',{type:'exchange',ids:[...state.swapIds]});
  if(result){
    showNotice(result.event?.type==='free-exchange'?
-     'Free exchange complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
+     'Free tile swap complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
    if(state.view?.phase==='finished')showResults();
  }
 };
@@ -868,7 +868,7 @@ window.addEventListener('keydown',event=>{
    event.preventDefault();removePending(state.order.at(-1));return;
  }
  const i=Number(event.key);
- if(i>=1&&i<=7&&String(i)===event.key){
+ if(i>=1&&i<=8&&String(i)===event.key){
    const used=new Set(Object.values(state.pending).map(t=>t.id));
    const tiles=visibleRack().filter(t=>!used.has(t.id));
    if(tiles[i-1]){state.selected=tiles[i-1].id;render();}
