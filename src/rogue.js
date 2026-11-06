@@ -11,7 +11,7 @@ export const ROGUE_ITEMS=Object.freeze([
  {id:'operator-core',name:'Operator Core',cost:5,kind:'TILE UPGRADE',icon:'×',description:'Newly placed, nonblank × and ÷ tiles earn +3 tile points.'},
  {id:'amplifier',name:'Amplifier Array',cost:7,kind:'BOARD UPGRADE',icon:'3T',description:'Every 2T square behaves like a 3T square for your new tiles.'},
  {id:'echo',name:'Echo Generator',cost:6,kind:'EQUATION UPGRADE',icon:'∞',description:'Score +2 for every newly placed physical tile after the fourth.'},
- {id:'operator-reserve',name:'Operator Reserve',cost:5,kind:'RACK UPGRADE',icon:'◇',description:'New racks seek two operator-capable tiles whenever possible.'},
+ {id:'operator-reserve',name:'Operator Reserve',cost:5,kind:'RACK UPGRADE',icon:'◇',description:'New operator draws favour × and ÷ while the operator bag permits.'},
  {id:'flux-recycler',name:'Flux Recycler',cost:7,kind:'ECONOMY UPGRADE',icon:'◈',description:'Receive three extra Flux whenever you stabilise a sector.'},
  {id:'leak-shield',name:'Leak Shield',cost:7,kind:'DEFENCE UPGRADE',icon:'⬡',description:'Neutralise the Power Leak anomaly on its next appearance.'}
 ]);
@@ -77,7 +77,7 @@ export function consumePulse(rogue){
 }
 export function rogueRackOptions(rogue){
  return {minBlanks:owns(rogue,'wild-beacon')?2:1,
-         minOperators:owns(rogue,'operator-reserve')?2:1};
+         preferAdvancedOperators:owns(rogue,'operator-reserve')};
 }
 export function fluxReward(score,turn,rogue){
  const base=4+Math.floor(score/30)+Math.max(0,TURNS_PER_SECTOR-turn);
