@@ -10,8 +10,10 @@ const page=await browser.newPage({viewport:{width:1366,height:850},deviceScaleFa
 const errors=[];page.on('pageerror',err=>errors.push(err.message));
 try{
  await page.goto('http://127.0.0.1:4173/alien-preview.html',{waitUntil:'networkidle'});
- await page.waitForFunction(()=>document.querySelector('#gallery-status')?.dataset.status==='ready',
-  {timeout:25000});
+ await page.waitForFunction(()=>['ready','error'].includes(
+   document.querySelector('#gallery-status')?.dataset.status),null,{timeout:18000});
+ assert.equal(await page.locator('#gallery-status').getAttribute('data-status'),
+   'ready',await page.locator('#gallery-status').textContent());
  assert.match(await page.locator('#gallery-status').textContent(),/30 ORIGINAL SVG ASSETS/);
  assert.equal(await page.locator('#presets .specimen-card').count(),4);
  assert.equal(await page.locator('.category-section').count(),7);
