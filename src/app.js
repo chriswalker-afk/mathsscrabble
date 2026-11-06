@@ -1,12 +1,23 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
- lockedFlash:new Set(),preview:null,modalEpoch:0
+ lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false
 };
+const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+function persistRun(){
+  state.saveAvailable=saveRun(storage,state);
+  $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
+  $('save-status').classList.toggle('unavailable',!state.saveAvailable);
+  $('save-status').title=state.saveAvailable?
+    'Your current run, rack and unscored tiles are saved on this device.':
+    'Your browser could not save this run. Keep this tab open to avoid losing progress.';
+}
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 function announce(message,isError=false){
  $('log').textContent=message;
@@ -17,34 +28,31 @@ function announce(message,isError=false){
    $('preview-status').textContent=message;
  }
 }
-function freshSector(sector=1){
-  state.modalEpoch++;
-  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
-  state.turn=1;state.score=0;state.ended=false;state.busy=false;
-  state.selected=null;state.swapping=false;state.swapSet.clear();
-  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
-  state.focusedIndex=pos(CENTER,CENTER);
-  state.bag=makeBag();
-  if(sector===1){
-    const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
-    state.rack=required.map(v=>{
-      const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
-      return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
-    });
-  }else{
-    const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;
-    // A sector always begins with at least one flexible tile where stock permits.
-    if(!state.rack.some(isBlank)){
-      const blankIndex=state.bag.findIndex(isBlank);
-      if(blankIndex>=0){
-        const wildcard=state.bag.splice(blankIndex,1)[0];
-        state.bag.push(state.rack.pop());state.rack.push(wildcard);
-      }
-    }
-  }
-  announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');
-  $('board-frame').classList.remove('reactor-scored');
-  render();
+function freshSector(sector=1,{newRun=false}={}){
+ state.modalEpoch++;
+ if(newRun||sector===1||!state.progress)state.progress=freshProgress();
+ state.stats=freshStats();state.phase='playing';
+ state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
+ state.turn=1;state.score=0;state.ended=false;state.busy=false;
+ state.selected=null;state.swapping=false;state.swapSet.clear();
+ state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
+ state.focusedIndex=pos(CENTER,CENTER);
+ state.bag=makeBag();
+ if(sector===1){
+   const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
+   state.rack=required.map(v=>{
+     const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
+     return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
+   });
+ }else{
+   const deal=dealPlayableRack([],state.bag);
+   state.rack=deal.rack;state.bag=deal.bag;
+ }
+ announce(sector===1?
+   'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.':
+   'New sector online. Use the centre to begin and aim for the new energy target.');
+ $('board-frame').classList.remove('reactor-scored');
+ render();
 }
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
