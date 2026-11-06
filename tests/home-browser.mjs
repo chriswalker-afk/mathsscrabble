@@ -75,6 +75,10 @@ try{
  assert.match(await page.locator('#home-sector').getAttribute('href'),/&tiles=rational$/);
  await page.locator('#home-sector').click();
  await page.waitForURL(/play\.html\?mode=sector&tiles=rational$/);
+ // An existing Launchpad save requires explicit consent before switching kits.
+ if(await page.locator('#modal[open]').count()&&
+    /CHANGE PHYSICAL TILE KIT/.test(await page.locator('#modal-eyebrow').textContent()))
+   await page.locator('#modal-actions button').last().click();
  assert.equal(await page.locator('#rack .bracket-tile').count(),2);
  assert.equal(await page.locator('#rack-count').textContent(),'10 / 10');
  assert.equal(await page.locator('#board .cell').count(),169);
