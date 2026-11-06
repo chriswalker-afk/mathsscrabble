@@ -629,7 +629,7 @@ function startNewLocalMatch(config){
      '<p>'+escapeText(err.message)+'</p>',[{text:'EDIT SETTINGS',primary:true,fn:showLocalSetup}]);
  }
 }
-function showLocalSetup(){
+function showLocalSetup({fromHome=false}={}){
  const saved=state.localMatch||loadLocalMatch(storage,{privateOnResume:false});
  const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
  const count=saved?.players.length||2;
@@ -650,9 +650,9 @@ function showLocalSetup(){
         <option value="90">90 seconds</option>
         <option value="120">120 seconds</option>
       </select></div>
-    <p class="local-setup-tip">One shared 13×13 board, independent 7-tile racks, and a private handover between turns. A match ends when a player goes out with an empty bag, or after two full circuits without a scoring move. Remaining rack points are deducted at the end.</p>
+    <p class="local-setup-tip">One shared 13×13 board, independent 8-tile racks (5 numbers and 3 operators), and a private handover between turns. A match ends when a player goes out with an empty bag, or after two full circuits without a scoring move. Remaining rack points are deducted at the end.</p>
    </div>`,
-   [{text:'CANCEL'},{text:'START MATCH →',primary:true,fn:()=>{
+   [{text:fromHome?'BACK TO HOME':'CANCEL',fn:fromHome?showModeMenu:undefined},{text:'START MATCH →',primary:true,fn:()=>{
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
@@ -1345,72 +1345,30 @@ function restoreMode(mode,{initial=false}={}){
    }
  }
 }
-function chooseMode(mode){
- if(!['sector','rogue','local'].includes(mode))return;
- if(state.busy&&!isLocal())return;
- if(mode==='local'){
-   if(isLocal()){if(state.localMatch?.phase==='finished')showLocalResults();return;}
-   const previous=loadLocalMatch(storage);
-   if(previous)localStateFromMatch(previous);
-   else showLocalSetup();
-   return;
- }
- if(mode===state.mode){
-   if(state.ended)showSectorOutcome();
-   return;
- }
- // Private local racks are already persisted; returning requires a new Ready tap.
- state.localDeferPrivacy=false;
- restoreMode(mode);
-}
+// Mode selection now lives on the dedicated home page, not a duplicate dialog.
 function showModeMenu(){
- if(state.busy&&!isLocal())return;
- showModal('SELECT MODE','Choose your reactor mission',
-   `<div class="mode-choice-grid">
-    <div class="mode-choice">
-     <span class="mode-crest">◈</span><strong>SECTOR RUN</strong>
-     <p>Independent classroom practice with rising targets and retries. Your progress is saved separately.</p>
-     <small>${state.mode==='sector'?'CURRENT MODE':'SEPARATE SAVE'}</small>
-    </div>
-    <div class="mode-choice">
-     <span class="mode-crest">✧</span><strong>THE DRIFT</strong>
-     <p>Win Flux, equip upgrades between sectors, survive anomalies and build a long roguelike run.</p>
-     <small>${isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
-    </div>
-    <div class="mode-choice local-mode-choice">
-     <span class="mode-crest">♙</span><strong>LOCAL MATCH</strong>
-     <p>Two to four pilots, one shared board and private racks. Compete on the same device.</p>
-     <small>${isLocal()?'CURRENT MODE':'SEPARATE SAVE'}</small>
-    </div>
-    <div class="mode-choice">
-     <span class="mode-crest">✧</span><strong>ONLINE ROOMS</strong>
-     <p>Compete from separate devices. Share a six-character code, with private racks and server-validated turns.</p>
-     <small>SERVER-COORDINATED MULTIPLAYER</small>
-    </div>
-   </div>
-   <a class="alien-lab-modal-link" href="./alien-lab.html" aria-label="Open Alien Lab to build your own cute alien">
-    <span class="alien-lab-modal-icon" aria-hidden="true">✳</span>
-    <span><strong>ALIEN LAB</strong><small>Design your own space creature · Saved separately from your games</small></span>
-    <span aria-hidden="true">↗</span>
-   </a>`,
-   [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
-    {text:'THE DRIFT',fn:()=>chooseMode('rogue')},
-    {text:'LOCAL 2–4',fn:()=>chooseMode('local')},
-    {text:'ONLINE ROOMS →',primary:true,fn:()=>{window.location.href='./online.html';}}]);
+ window.location.assign('./index.html');
 }
 $('mode-btn').onclick=showModeMenu;
 $('local-switch-btn').onclick=showModeMenu;
+
 function startSolo(){
- let mode='sector';
- try{const m=storage?.getItem(ACTIVE_MODE_KEY);
-   if(['sector','rogue','local'].includes(m))mode=m;
- }catch{/* no storage */}
+ const requested=new URLSearchParams(window.location.search).get('mode');
+ let mode=['sector','rogue','local'].includes(requested)?requested:'sector';
+ if(!['sector','rogue','local'].includes(requested)){
+   try{
+     const previous=storage?.getItem(ACTIVE_MODE_KEY);
+     if(['sector','rogue','local'].includes(previous))mode=previous;
+   }catch{/* optional browser storage */}
+ }
  if(mode==='local'){
    const saved=loadLocalMatch(storage);
    if(saved){localStateFromMatch(saved);return;}
-   mode='sector';
+   // The first Local Match visit starts in setup; backing out returns home.
+   showLocalSetup({fromHome:true});
+   return;
  }
- restoreMode(mode,{initial:true});
+ restoreMode(mode,{initial:mode==='sector'});
 }
 window.setInterval(()=>{
  if(!isLocal()||!state.localMatch||state.localMatch.phase!=='playing'||state.busy||state.ended)return;
