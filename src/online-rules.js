@@ -195,7 +195,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
    match=passLocalTurn(room.match);
    result={type:'passed',by:index};
  }else if(request.type==='exchange'){
-   if(!Array.isArray(request.ids)||request.ids.length<1||request.ids.length>7||
+   if(!Array.isArray(request.ids)||request.ids.length<1||request.ids.length>8||
      request.ids.some(id=>typeof id!=='string'))
      throw new OnlineError('Choose up to eight tiles in your rack to exchange.');
    try{
