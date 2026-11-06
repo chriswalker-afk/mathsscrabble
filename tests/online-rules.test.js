@@ -91,8 +91,8 @@ test('snapshots reveal only own rack, opponent names/counts, aggregate bag inven
    assert.equal(snap.match.players.length,4);
    assert.equal(snap.match.rack.length,8);
    assert.equal(snap.match.board.length,169);
-   assert.equal(snap.match.bagCount,123);
-   assert.equal(snap.match.bagInventory.groups.reduce((n,g)=>n+g.total,0),123);
+   assert.equal(snap.match.bagCount,119);
+   assert.equal(snap.match.bagInventory.groups.reduce((n,g)=>n+g.total,0),119);
    assert.equal(JSON.stringify(snap).includes('tokenHash'),false);
    assert.equal(JSON.stringify(snap).includes(H),false);
    assert.equal(JSON.stringify(snap).includes(A),false);
@@ -165,7 +165,7 @@ test('false equations, forged values, duplicates, wrong owner and stale revision
  assert.equal(room.match.players[0].score,0);
  assert.equal(room.match.current,0);
 });
-test('a free rescue exchange does not advance a turn, but a paid exchange does',()=>{
+test('one free single-tile exchange does not advance a turn, but repeating does',()=>{
  let room=started();
  const rack=room.match.players[0].rack;
  const bag=[...room.match.bag],converted=[];
