@@ -4,7 +4,7 @@ import {SIZE,CENTER,pos,makeTile,makeBag,checkEquation,validateMove,scoreMove,ti
 import {TILE_SETS,FRACTION_VALUES,hasBracketPair,tileValueAllowed} from '../src/tile-sets.js';
 import {dealPlayableRack,freshStats,freshProgress,saveRun,loadRun} from '../src/solo.js';
 import {summarizeBag} from '../src/bag-inventory.js';
-import {makeRogueState,rogueRackOptions,rackSlots,scoreRogueMove} from '../src/rogue.js';
+import {makeRogueState,rogueRackOptions,rackSlots,scoreRogueMove,useTileTemporary} from '../src/rogue.js';
 const random=()=>.31;
 const pairs=bag=>{
  const grouped=new Map();
@@ -130,5 +130,22 @@ test('rational and quantum solo saves survive an exact local validation round tr
   state.mode='rogue';state.rogue=rogue;
   assert.equal(saveRun(storage,state),true,id+' Drift should save');
   assert.equal(loadRun(storage,'rogue').tileSet,id);
+ }
+});
+
+test('Step Up is kit-safe: negative and fractional tiles exchange exact physical values',()=>{
+ for(const [from,to,kit] of [['−3','−2','integer'],['1/2','3/2','rational'],['−1/2','1/2','advanced']]){
+  const bag=makeBag(random,kit),i=bag.findIndex(t=>t.value===from);
+  const rack=[bag.splice(i,1)[0]];
+  assert.equal(i>=0,true);
+  const original=bag.length+1;
+  const rogue={...makeRogueState(kit),tempBought:['step-up'],tempSlots:['step-up'],
+    earned:3,spent:3,flux:0};
+  const result=useTileTemporary(rogue,rack,bag,'step-up',rack[0].id,random);
+  assert.equal(result.ok,true,from+' -> '+to);
+  assert.equal(result.rack[0].value,to);
+  assert.equal(result.bag.length+result.rack.length,original);
+  assert.equal(new Set([...result.rack,...result.bag].map(t=>t.id)).size,original);
+  assert.equal(result.rogue.tempSlots.length,0);
  }
 });
