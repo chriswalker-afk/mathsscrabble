@@ -1,5 +1,6 @@
 // The Drift: self-contained roguelike economy, anomalies and scoring.
 import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat} from './engine.js';
+import {BOSS_BY_ID,zoneBoss,bossForSector,bossField,restrictedDraws,validateBossMove} from './drift-bosses.js';
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
@@ -79,19 +80,19 @@ export const ROGUE_ANOMALIES=Object.freeze([
  {id:'critical',name:'CRITICAL REACTOR',icon:'!',description:'The sector needs 20% more energy to stabilise.',short:'+20% energy target'},
  {id:'tile-static',name:'TILE STATIC',icon:'∿',description:'Triple-tile (3T) squares only count double this sector.',short:'3T squares act as 2T'}
 ]);
-export function anomalyForSector(sector){
- if(!Number.isInteger(sector)||sector<1||sector%3!==0)return null;
- return ROGUE_ANOMALIES[(sector/3-1)%ROGUE_ANOMALIES.length];
+export function anomalyForSector(sector,rogue){
+ const boss=bossForSector(rogue,sector);
+ return boss?{id:boss.id,name:boss.name,icon:boss.icon,short:boss.short,description:boss.description}:null;
 }
-export function targetForSector(mode,sector){
+export function targetForSector(mode,sector,rogue){
  const base=nextTarget(sector);
- return mode==='rogue'&&anomalyForSector(sector)?.id==='critical'?
+ return mode==='rogue'&&anomalyForSector(sector,rogue)?.id==='critical'?
    Math.ceil(base*1.2):base;
 }
 export function makeRogueState(){
  return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,
    pulse:0,pulseBought:0,pulseUsed:0,tempSlots:[],tempBought:[],tempUsed:[],
-   armed:null,swapTurn:0,swapsUsed:0,echoed:[]};
+   armed:null,swapTurn:0,swapsUsed:0,echoed:[],zoneBosses:[],forcedTile:null};
 }
 export function shopOffers(sector,rogue){
  const unowned=ROGUE_ITEMS.filter(item=>!owns(rogue,item.id));
@@ -160,10 +161,11 @@ export function consumeTemporary(rogue,id){
      {tempUsed:[...(rogue.tempUsed||[]),id]})};
 }
 export function consumePulse(rogue){return consumeTemporary(rogue,PULSE_ITEM.id);}
-export function rogueRackOptions(rogue){
+export function rogueRackOptions(rogue,sector){
  return {minBlanks:owns(rogue,'wild-beacon')?2:1,
          preferAdvancedOperators:owns(rogue,'operator-reserve'),
-         numberSlots:owns(rogue,'wide-rack')?6:5};
+         numberSlots:owns(rogue,'wide-rack')?6:5,
+         forbiddenValues:restrictedDraws(rogue,sector)};
 }
 export function consumeBoardEcho(rogue,used=[]){
  if(!used.length)return rogue;
@@ -237,7 +239,9 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
  let adjustedBase=base.base,multiplier=base.multiplier,additional=0,boost=0;
  const tileScores=base.tileScores.map(tile=>({...tile}));
  const effects=[],echoedIndices=[];
- const anomaly=anomalyForSector(sector);
+ const anomaly=anomalyForSector(sector,rogue);
+ validateBossMove(board,pending,move,rogue,sector);
+ const encounter=bossField(rogue,sector);
  const isJam=anomaly?.id==='signal-jam',isStatic=anomaly?.id==='tile-static';
  for(const index of move.indices){
    const tile=pending[index]||board[index];
@@ -261,7 +265,8 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
      continue;
    }
    const originalFactor=bonus==='2T'?2:bonus==='3T'?3:1;
-   const newFactor=bonus==='2T'&&owns(rogue,'amplifier')?3:
+   const newFactor=anomaly?.id==='multiplier-leech'&&bonus==='2T'?1:
+     bonus==='2T'&&owns(rogue,'amplifier')?3:
      bonus==='3T'&&isStatic?2:originalFactor;
    const tileAward=tileScores.find(entry=>entry.index===index);
    const squareDelta=(newFactor-originalFactor)*tile.points;
@@ -275,6 +280,11 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
        (odd&&owns(rogue,'odd-charge')?2:0);
      const powered=extra*newFactor;
      adjustedBase+=powered;tileAward.points+=powered;boost+=powered;
+   }
+   if(anomaly?.id==='seven-thief'&&!tile.blank&&tile.value==='7'){
+     adjustedBase-=tileAward.points;
+     tileAward.points=0;
+     effects.push('Seven Thief drained a 7 tile');
    }
  }
  if(isJam){
@@ -316,6 +326,13 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
    effects.push('Power Leak −'+anomalyPenalty);
  }else if(anomaly?.id==='power-leak'){
    effects.push('Leak Shield protected your energy');
+ }
+ if(anomaly?.id==='curse-weaver'){
+   const struck=Object.entries(pending).filter(([index,tile])=>
+     tile.value!=='='&&encounter.rifts.has(Number(index))).length;
+   const drain=Math.min(Math.max(0,prePenalty-anomalyPenalty),struck*6);
+   anomalyPenalty+=drain;
+   if(struck)effects.push('Rift squares −'+drain+' ('+struck+' new tiles)');
  }
  const originalTotal=Math.max(0,prePenalty-anomalyPenalty);
  let total=originalTotal;
@@ -362,6 +379,10 @@ export function validRogueState(rogue,sector,phase){
  if(rogue.armed!=null&&(!expected.includes(rogue.armed)||
     TEMP_ITEM_BY_ID[rogue.armed]?.action!=='score'))return false;
  if(!integer(rogue.swapTurn??0,0,7)||!integer(rogue.swapsUsed??0,0,2))return false;
+ if(rogue.zoneBosses!==undefined&&(!Array.isArray(rogue.zoneBosses)||
+     rogue.zoneBosses.length>33||!rogue.zoneBosses.every(id=>Boolean(BOSS_BY_ID[id]))))return false;
+ if(rogue.forcedTile!==undefined&&rogue.forcedTile!==null&&
+    (typeof rogue.forcedTile!=='string'||rogue.forcedTile.length>100))return false;
  const echoed=rogue.echoed||[];
  if(!Array.isArray(echoed)||echoed.length>169||
     new Set(echoed).size!==echoed.length||!echoed.every(x=>integer(x,0,168)))return false;
