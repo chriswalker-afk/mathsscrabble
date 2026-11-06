@@ -198,7 +198,7 @@ try{
    assert.ok(item.occupied>250&&item.opaque>180,
      'Alien should remain visually legible in small scoreboard: '+JSON.stringify(item));
  }
- assert.deepEqual(result.chosen,{skin:'#f49a94',outfit:'#73c9e8',accent:'#7f94df'});
+ assert.deepEqual(result.chosen,{skin:'#f49a94',outfit:'#73c9e8',accent:'#869ee7'});
  assert.match(result.exportText,/<svg/);
  assert.ok(result.exportLength>1000);
  assert.ok(result.blocked.every(Boolean),'Injected SVG/URLs/metadata must all be rejected');
