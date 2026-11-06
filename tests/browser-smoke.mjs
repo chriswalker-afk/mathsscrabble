@@ -33,7 +33,7 @@ try{
   await page.locator('.cell').first().waitFor();
   assert.equal(await page.locator('.cell').count(),169);
   assert.equal(await page.locator('#rack .tile').count(),7);
-  assert.equal(await page.locator('#bag-count').textContent(),String(146));
+  assert.equal(await page.locator('#bag-count').textContent(),String(141));
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
 
   // Enter an intentionally incorrect equation; preview must never reveal its truth.
