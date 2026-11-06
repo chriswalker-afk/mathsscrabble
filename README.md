@@ -28,9 +28,27 @@ Drag tiles to the 13 × 13 board with a mouse, finger or pen; or click/tap a til
 - Responsive board sizing keeps the larger board, physical rack and primary controls visible together on standard laptop screens. On portrait phones secondary panels may sit below the play area.
 - First-time players see a short three-step guide. The left-hand panel provides context-sensitive placement tips, remaining-points-per-turn guidance, the last three scored equations, and a **Run Summary** button. Sector reports include a progress bar, best move, equations scored, turns used, exchanges and a per-turn record.
 
+## Game modes
+
+Use **◈ MODE** in the header to switch without deleting the other mode's save.
+
+**Sector Run** remains the straightforward classroom practice mode: BIDMAS equation building, six-turn sectors, balanced racks, free exchanges for homogeneous racks, and a regular cumulative run report. You can retry a failed sector.
+
+**The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
+
+The current Salvage Bay offers:
+- **Tile upgrades** — Ionised Sevens (+3 points for new sevens) and Operator Core (+3 for new multiplication/division tiles).
+- **Equation upgrades** — Crosslink Circuit (+5 for connected equations), Longwave Coil (+7 for equations at least seven cells long) and Echo Generator (+2 per newly played physical tile after the fourth).
+- **Board upgrade** — Amplifier Array upgrades fresh 2T squares to 3T.
+- **Rack upgrades** — Wildcard Beacon requests two blanks and Operator Reserve requests two operator-capable tiles per refill, when the remaining bag permits.
+- **Economy and defence** — Flux Recycler adds three Flux per cleared sector; Leak Shield neutralises the Power Leak anomaly.
+- **Single-use equipment** — Pulse Capacitor, cost 3 Flux, provides +12 on the next correct submission; maximum three charges carried.
+
+The shop presents four rotating permanent choices plus the capacitor. Prices, purchases, upgrades, unspent Flux and charge usage are saved automatically. Flux rewards happen only once per cleared sector, even if a player refreshes during the score animation. See [The Drift rules and QA guide](docs/DRIFT_RULES.md) for the exact economy and anomaly schedule.
+
 ## Scope and planned work
 
-This is an initial **Origin** (non-negative integer digits, +, −, ×, ÷) **Sector Run** test build. Brackets, signed/fraction tiles, the roguelike shop, remote multiplayer, room codes, reusable Critter Lab avatar art, audio, achievements, and persistent saves are not yet implemented. The illustrative pilot emblem is a placeholder.
+This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run and The Drift** fully wired for local solo play. Brackets, signed/fraction tile sets, online multiplayer, room codes, reusable Critter Lab avatars, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
 
 **Rule prototype note:** A single submitted complete equation scores each turn. Unrelated adjacent perpendicular fragments are not checked, and this should be playtested before locking the full game rules.
 
@@ -42,7 +60,7 @@ npm run check
 
 The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover both modes, separate saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 
@@ -50,11 +68,11 @@ Try a first equation such as **8 + 4 = 12** crossing the centre. Before scoring,
 
 **Pass C — Core solo gameplay** adds balanced rack replenishment, autosave/restore, sector reports, persistent cumulative run progress, a first-visit guide and contextual hints. The target curve is a prototype calibration; before locking the difficulty, collect classroom playtest observations as described in [docs/SOLO_BALANCE.md](docs/SOLO_BALANCE.md).
 
-**Next planned pass: D — Roguelike sector progression.** Add between-sector shop/upgrades, richer anomalies and run-specific decisions without changing the validated BIDMAS engine. The existing six-turn Sector Run is an initial version to be developed further.
+**Pass D — Roguelike progression** adds The Drift: separate mode selection, Salvage Bay purchases, permanent and one-use upgrades, real tile/rack/board multipliers, rotating boss-sector anomalies, run-specific Flux and death/restart rules. **Next planned pass: E — 2–4 player multiplayer**, starting with private hot-seat rack handovers and then room-code online play, while retaining the same validated mathematical core. Calibrate shop and anomaly difficulty with real students before fixing the final economy.
 
 ## Saved games and privacy
 
-Saving uses only this browser's `localStorage` (key `equa-nova.sector-run.v1`). No server account, external data service or login is involved. The small `AUTOSAVED` indicator is visible on desktop. If storage is blocked, the game still works in the current tab but **progress will not survive a reload**. Clearing browser site data or switching devices removes access to the saved game. Every new run overwrites the previous local saved run after confirmation.
+Saving uses only this browser's `localStorage`. Sector Run uses `equa-nova.sector-run.v1`, The Drift uses `equa-nova.drift.v1`, and the most recently chosen mode is remembered using `equa-nova.last-mode.v1`. Existing Sector Run saves remain compatible with the new mode switch. No server account, external data service or login is involved. The small `AUTOSAVED` indicator is visible on desktop. If storage is blocked, the game still works in the current tab but **progress will not survive a reload**. Clearing browser site data or switching devices removes access to the saved game. Starting a new run overwrites **only that mode's** previous local save after confirmation; switching modes keeps the other run intact.
 
 ## Hosting
 
