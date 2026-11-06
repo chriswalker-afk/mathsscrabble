@@ -306,14 +306,45 @@ function renderPreview(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
- $('score').textContent=state.score;$('target').textContent=nextTarget(state.sector);
+ const target=nextTarget(state.sector),remaining=Math.max(0,target-state.score);
+ const turnsAvailable=state.phase==='playing'?
+   Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
+ $('score').textContent=state.score;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('bag-count').textContent=state.bag.length;
- $('remaining-label').textContent=state.score>=nextTarget(state.sector)?
-   'TARGET ACHIEVED':`${nextTarget(state.sector)-state.score} points to stabilise`;
- $('progress').style.width=Math.min(100,state.score/nextTarget(state.sector)*100)+'%';
- 
+ $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
+   state.phase==='lost'?(`${remaining} energy short · try again`):
+   `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
+ $('progress').style.width=Math.min(100,state.score/target*100)+'%';
+ $('progress').setAttribute('aria-label',`${state.score} of ${target} energy collected`);
+ $('run-summary').textContent=`${state.progress.completed.length} sector${state.progress.completed.length===1?'':'s'} · ${state.progress.runPoints} energy`;
+ const history=$('history-mini');
+ history.replaceChildren();
+ if(state.stats.moves.length){
+   const heading=document.createElement('div');heading.className='history-heading';heading.textContent='SCORED EQUATIONS';
+   history.append(heading);
+   for(const move of state.stats.moves.slice(-3).reverse()){
+     const row=document.createElement('div');row.className='history-row';
+     const equation=document.createElement('span');equation.textContent=move.equation;
+     const points=document.createElement('strong');points.textContent='+'+move.points;
+     row.append(equation,points);history.append(row);
+   }
+ }
+ const coach=$('coach-hint');
+ const placed=Object.keys(state.pending).length;
+ if(state.phase==='won')coach.textContent='Reactor stabilised. Open the sector report to advance.';
+ else if(state.phase==='lost')coach.textContent='Review your moves and retry this sector.';
+ else if(state.swapping)coach.textContent=freeExchangeReason(state.rack)?
+   'All numbers or all operations? You can exchange tiles without spending a turn.':
+   'Select your exchange tiles. This will use one turn.';
+ else if(state.board.every(t=>!t)&&!placed)coach.textContent=
+   state.sector===1?'TRAINING · Try 8 + 4 = 12 through the glowing centre.':'START · Your first equation must cross the centre.';
+ else if(placed&&state.preview.ready)coach.textContent=
+   'CHECK · A complete equation is in place. Submit it when you trust your BIDMAS calculation.';
+ else if(placed)coach.textContent='BUILD · Arrange one unbroken equation, then add your free equals sign.';
+ else coach.textContent='EXPAND · Connect a fresh equation to any locked tile. Reused tiles score again.';
+ if(!state.busy)persistRun();
 }
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
