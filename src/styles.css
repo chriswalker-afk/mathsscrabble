@@ -455,3 +455,8 @@ dialog:has(.salvage-grid) .modal-content{padding:20px}
  .top-actions #help-btn{font-size:0;min-width:29px}
  .top-actions #help-btn::after{content:"?";font-size:10px}
 }
+
+/* Physical tile upgrades alter the border, never the mathematical glyph. */
+.tile.charged-rack-tile{border-color:#d2a758;box-shadow:inset 1px 2px #fff7df,0 4px 0 #aa8551,0 0 11px #f5c67985,0 6px 10px #0008}
+.cell.pending .board-tile.charged-tile{border-color:#d2a758;box-shadow:inset 1px 1px #fff4e1,0 0 0 1px #e5c278,0 0 11px #e6bd697a}
+#app[data-mode="rogue"] .charged-rack-tile.selected{outline-color:#ffdda0}
