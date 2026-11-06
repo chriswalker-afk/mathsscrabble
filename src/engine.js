@@ -84,7 +84,6 @@ export function validateMove(board,pending) {
   if(!added.length)throw Error('Place some tiles on the grid first.');
   if(!added.some(x=>x.tile.value!=='='))throw Error('At least one tile must come from your rack.');
   if(added.some(x=>board[x.index]))throw Error('A locked tile cannot be replaced.');
-  const occupied=[...board.map((tile,index)=>tile?index:-1).filter(i=>i>=0),...added.map(x=>x.index)];
   const rows=new Set(added.map(x=>coords(x.index)[0])),cols=new Set(added.map(x=>coords(x.index)[1]));
   if(rows.size>1&&cols.size>1)throw Error('Place new tiles in one row or one column.');
   const orientations=(rows.size===1&&cols.size===1)?['h','v']:[rows.size===1?'h':'v'];
@@ -92,10 +91,12 @@ export function validateMove(board,pending) {
   for(const orientation of orientations){
     try{
       const line=orientation==='h'?coords(added[0].index)[0]:coords(added[0].index)[1];
-      const onLine=occupied.filter(i=>orientation==='h'?coords(i)[0]===line:coords(i)[1]===line);
-      const axes=onLine.map(i=>orientation==='h'?coords(i)[1]:coords(i)[0]);
-      const min=Math.min(...axes),max=Math.max(...axes);
-      const indices=Array.from({length:max-min+1},(_,k)=>orientation==='h'?pos(line,min+k):pos(min+k,line));
+      const axes=added.map(x=>orientation==='h'?coords(x.index)[1]:coords(x.index)[0]);
+      let min=Math.min(...axes),max=Math.max(...axes);
+      const at=axis=>orientation==='h'?pos(line,axis):pos(axis,line);
+      while(min>0&&board[at(min-1)])min--;
+      while(max<SIZE-1&&board[at(max+1)])max++;
+      const indices=Array.from({length:max-min+1},(_,k)=>at(min+k));
       if(indices.some(i=>!board[i]&&!pending[i]))throw Error('The equation cannot contain empty gaps.');
       const isFirst=board.every(x=>!x);
       if(isFirst&&!indices.includes(pos(CENTER,CENTER)))throw Error('Your first equation must pass through the central reactor.');
