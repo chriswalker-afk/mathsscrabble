@@ -8,6 +8,12 @@ Choose **◈ MODE → LOCAL 2–4**, then configure 2–4 distinct player names 
 
 All three modes have **different random initial hands and a different draw order** each fresh game. Local Match, Sector Run and The Drift each remember only their own last starting pattern so back-to-back new games do not produce the same visible opening sequence. There is **no forced tutorial equation**, and neither the rack balancing nor the randomisation creates or duplicates a physical tile.
 
+## Pilot aliens (Pass B)
+
+Each participant has their own **Alien Lab character**. During **LOCAL MATCH** setup, choose an alien for each player using a Bloop/Orbit/Niblet/Glimmer preset, a random combination, or **USE SAVED**. For a custom look, open **CREATE A CUSTOM ALIEN IN ALIEN LAB** in a separate tab, assemble and save the alien, return to the local setup, then press USE SAVED for that participant. Players can share one device and still have different looks.
+
+The creature is visible at **hot-seat handovers**, on each active turn's **scoreboard**, and next to the player's name in the **final podium**. Handovers remain private: only the incoming player's avatar and name are shown on the overlay, not their tiles. The save format permits historical matches without avatars and assigns them a stable default; it rejects tampered profile IDs. All avatar choices are cosmetic: the 151-tile bag, scoring, equations, timers and racks remain unchanged.
+
 ## Private turn handover
 
 - After match setup, after every scored turn, and after every paid swap or pass, the current rack **disappears** and a full-screen handover names the next player.
@@ -67,6 +73,6 @@ Wildcards have zero physical tile points even when programmed to represent a mor
 
 The Node suite verifies all player counts, drawing and ownership, passes, free/paid exchanges, timer transition logic, scoring, penalty calculations, corrupted saves and independent progress. The Chromium suite exercises three-player hot-seat handovers, scoring, mid-turn reload, two-rotation game end, random new matches, mode switching and small screens.
 
-## Pass E2 — Online multiplayer
+## Online Rooms
 
-The next pass should reuse the pure rules module for 2–4 player rooms with **short room codes, host settings, private hands, connected player identities, server-validated moves, turn timers, reconnection and room expiry**. A room authority such as a Cloudflare Durable Object can sequence turns without allowing clients to see opponents' racks or manipulate authoritative scores. The local UI must not be treated as a substitute for server privacy or validation.
+Online Signal Clash has been implemented separately with a Cloudflare Durable Object authority, short room codes, private racks, authenticated player profiles and server-validated turns. The local hot-seat privacy overlay is not a substitute for online server validation. See [ONLINE_MULTIPLAYER.md](ONLINE_MULTIPLAYER.md) for deployment, avatar identity and live testing.
