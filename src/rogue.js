@@ -35,8 +35,8 @@ export const TEMP_ITEMS=Object.freeze([
  {id:'pulse-charge',name:'Pulse Capacitor',cost:3,kind:'SCORE BOOST',icon:'⚡',description:'Arm for +12 flat energy on your next valid equation.',action:'score'},
  {id:'double-score',name:'Double Reactor',cost:7,kind:'SCORE BOOST',icon:'×2',description:'Arm to double the total energy of your next valid equation.',action:'score'},
  {id:'power-surge',name:'Power Surge',cost:5,kind:'SCORE BOOST',icon:'+50%',description:'Arm to add 50% more energy to your next valid equation.',action:'score'},
- {id:'step-up',name:'Step Up',cost:3,kind:'TILE SWAP',icon:'↑1',description:'Choose a number tile; swap it for one numbered 1 higher from the bag.',action:'tile'},
- {id:'step-down',name:'Step Down',cost:3,kind:'TILE SWAP',icon:'↓1',description:'Choose a number tile; swap it for one numbered 1 lower from the bag.',action:'tile'},
+ {id:'step-up',name:'Step Up',cost:3,kind:'TILE SWAP',icon:'↑1',description:'Exchange an integer or fraction for a physical number exactly 1 greater, if available in the bag.',action:'tile'},
+ {id:'step-down',name:'Step Down',cost:3,kind:'TILE SWAP',icon:'↓1',description:'Exchange an integer or fraction for a physical number exactly 1 smaller, if available in the bag.',action:'tile'},
  {id:'operator-shift',name:'Operator Shift',cost:3,kind:'TILE SWAP',icon:'⇆',description:'Choose a physical operator; exchange + for × or − for ÷ (and reverse) if available.',action:'tile'},
  {id:'wildcard-hunt',name:'Wildcard Hunt',cost:5,kind:'TILE SWAP',icon:'◇',description:'Choose a rack tile; swap it for a wildcard from its own bag.',action:'tile'},
  {id:'recycle-tile',name:'Recycle Tile',cost:2,kind:'TILE SWAP',icon:'↻',description:'Choose one tile; replace it with a different tile from the same bag.',action:'tile'}
@@ -186,6 +186,12 @@ export function earnMoveFlux(rogue,pending){
  if(!earned)return {rogue,amount:0};
  return {rogue:{...rogue,flux:rogue.flux+earned,earned:rogue.earned+earned},amount:earned};
 }
+// Compare physical signed integers and fractions by exact integer arithmetic.
+const physicalRational=value=>{
+ if(typeof value!=='string'||!/^−?\d+(?:\/\d+)?$/.test(value))return null;
+ const [n,d='1']=value.replace('−','-').split('/');
+ return {n:BigInt(n),d:BigInt(d)};
+};
 export function useTileTemporary(rogue,rack,bag,id,tileId,random=randomFloat){
  const item=TEMP_ITEM_BY_ID[id];
  if(item?.action!=='tile'||!heldConsumables(rogue).includes(id))
@@ -195,13 +201,16 @@ export function useTileTemporary(rogue,rack,bag,id,tileId,random=randomFloat){
  if(tilePool(tile)==='brackets')
    return {ok:false,reason:'Bracket halves are linked. Play both together; gadgets cannot split them.',rogue,rack,bag};
  const samePool=t=>tilePool(t)===tilePool(tile);
- const plainDigit=/^[0-9]$/.test(tile.value)&&!tile.blank;
  let match=()=>false;
  if(id==='step-up'||id==='step-down'){
-   if(!plainDigit)return {ok:false,reason:'Choose a physical number tile.',rogue,rack,bag};
-   const next=Number(tile.value)+(id==='step-up'?1:-1);
-   if(next<0||next>9)return {ok:false,reason:'The number must stay between 0 and 9.',rogue,rack,bag};
-   match=t=>!t.blank&&t.value===String(next);
+   const value=tile.blank?null:physicalRational(tile.value);
+   if(!value)return {ok:false,reason:'Choose a physical integer or fraction tile.',rogue,rack,bag};
+   const next=value.n+(id==='step-up'?value.d:-value.d);
+   match=t=>{
+     if(t.blank||tilePool(t)!=='numbers')return false;
+     const other=physicalRational(t.value);
+     return Boolean(other)&&other.n*value.d===next*other.d;
+   };
  }else if(id==='operator-shift'){
    const map={'+':'×','×':'+','−':'÷','÷':'−'};
    if(tile.blank||!map[tile.value])
