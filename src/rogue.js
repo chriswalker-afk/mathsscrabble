@@ -94,6 +94,7 @@ export function rewardSector(rogue,sector,score,turn){
 export function scoreRogueMove(board,pending,move,rogue,sector){
  const base=scoreMove(board,pending,move);
  let adjustedBase=base.base, multiplier=base.multiplier;
+ const tileScores=base.tileScores.map(tile=>({...tile}));
  let additional=0,boost=0;
  const effects=[];
  const anomaly=anomalyForSector(sector);
@@ -105,14 +106,17 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
    const originalFactor=bonus==='2T'?2:bonus==='3T'?3:1;
    const newFactor=bonus==='2T'&&owns(rogue,'amplifier')?3:
      bonus==='3T'&&isStatic?2:originalFactor;
-   adjustedBase+=(newFactor-originalFactor)*tile.points;
+   const tileAward=tileScores.find(entry=>entry.index===index);
+   const squareDelta=(newFactor-originalFactor)*tile.points;
+   adjustedBase+=squareDelta;tileAward.points+=squareDelta;
    if(newFactor!==originalFactor){
      effects.push(newFactor>originalFactor?'Amplified tile square':'Static reduced triple tile');
    }
    if(!tile.blank){
      const extra=(tile.value==='7'&&owns(rogue,'ion-seven')?3:0)+
        (['×','÷'].includes(tile.value)&&owns(rogue,'operator-core')?3:0);
-     adjustedBase+=extra*newFactor;boost+=extra*newFactor;
+     const powered=extra*newFactor;
+     adjustedBase+=powered;tileAward.points+=powered;boost+=powered;
    }
  }
  if(isJam){
@@ -143,7 +147,7 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
  }else if(anomaly?.id==='power-leak'){
    effects.push('Leak Shield protected your energy');
  }
- return {...base,base:adjustedBase,multiplier,extra:additional,
+ return {...base,base:adjustedBase,tileScores,multiplier,extra:additional,
    anomalyPenalty,anomaly:anomaly?.id||null,
    upgrades:effects,total:Math.max(0,prePenalty-anomalyPenalty)};
 }

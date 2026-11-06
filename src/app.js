@@ -2,13 +2,15 @@ import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeB
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
+import {summarizeBag} from './bag-inventory.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
@@ -44,7 +46,7 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
- state.stats=freshStats();state.phase='playing';
+ state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.ended=false;state.busy=false;
  state.selected=null;state.swapping=false;state.swapSet.clear();
@@ -333,7 +335,9 @@ function render(){
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
- $('score').textContent=state.score;$('target').textContent=target;
+ const displayedScore=state.ceremony?
+   state.ceremony.startScore+state.ceremony.awarded:state.score;
+ $('score').textContent=displayedScore;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
@@ -356,11 +360,16 @@ function render(){
    }
  }
  $('bag-count').textContent=state.bag.length;
+ $('bag-details-btn').disabled=state.busy;
+ $('bag-details-btn').setAttribute('aria-label',
+   'Show remaining tiles in the bag: '+state.bag.length+' physical tiles');
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
    `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
- $('progress').style.width=Math.min(100,state.score/target*100)+'%';
- $('progress').setAttribute('aria-label',`${state.score} of ${target} energy collected`);
+ $('progress').style.width=Math.min(100,displayedScore/target*100)+'%';
+ $('progress').setAttribute('aria-label',`${displayedScore} of ${target} energy displayed`);
+ $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
+ $('ceremony-readout').hidden=!state.ceremony;
  $('run-summary').textContent=`${state.progress.completed.length} sector${state.progress.completed.length===1?'':'s'} · ${state.progress.runPoints} energy`;
  const history=$('history-mini');
  history.replaceChildren();
@@ -394,6 +403,53 @@ function showModal(eyebrow,title,body,buttons){
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  if(!$('modal').open)$('modal').showModal();
 }
+function showBagInventory(){
+ if(state.busy)return;
+ const inventory=summarizeBag(state.bag);
+ showModal('TILE BAG · SCAN','Tiles remaining in the bag',
+   `<div class="bag-overview"><div class="bag-overview-total">
+     <strong>${inventory.total}</strong><div><span>PHYSICAL TILES</span>
+     <p>Available for future draws and exchanges</p></div></div>
+     <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
+     <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
+     the board or in your rack are not included. The equals sign is free and
+     unlimited, so it is never drawn from the bag. Future draw order is not shown.</p>
+     </div>`,
+   [{text:'BACK TO BOARD',primary:true}]);
+ const groups=$('bag-inventory-groups');
+ for(const group of inventory.groups){
+   const section=document.createElement('section');section.className='bag-inventory-group';
+   section.setAttribute('aria-label',group.title);
+   const heading=document.createElement('div');heading.className='bag-inventory-heading';
+   const name=document.createElement('strong');name.textContent=group.title;
+   const total=document.createElement('span');total.textContent=group.total+' remaining';
+   heading.append(name,total);
+   const tiles=document.createElement('div');
+   tiles.className='bag-inventory-tiles bag-inventory-'+group.id;
+   tiles.setAttribute('role','list');
+   for(const entry of group.tiles){
+     const item=document.createElement('div');
+     item.className='bag-inventory-tile'+(entry.count===0?' is-empty':'');
+     if(group.id==='wildcards')item.classList.add('bag-inventory-wildcard');
+     item.setAttribute('role','listitem');
+     item.setAttribute('aria-label',entry.label+': '+entry.count+' remaining');
+     const face=document.createElement('span');face.className='bag-inventory-face';
+     face.textContent=entry.symbol;
+     const count=document.createElement('strong');count.className='bag-inventory-count';
+     count.textContent='×'+entry.count;
+     item.append(face,count);
+     if(group.id==='wildcards'){
+       const caption=document.createElement('small');
+       caption.textContent=entry.label.replace('Blank ','');
+       item.append(caption);
+     }
+     tiles.append(item);
+   }
+   section.append(heading,tiles);
+   groups.append(section);
+ }
+}
+$('bag-details-btn').onclick=showBagInventory;
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
@@ -556,13 +612,116 @@ function showEnergyBurst(points){
  burst.classList.add('burst-active');
  $('board-frame').classList.add('reactor-scored');
 }
+const ceremonyDelay=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
+function clearCeremonyTile(removePips=false){
+ $('board').querySelectorAll('.scoring-lift,.scoring-settled').forEach(cell=>{
+   cell.classList.remove('scoring-lift','scoring-settled');
+   cell.style.removeProperty('--ceremony-speed');
+ });
+ // Old point floaters are allowed to finish rising while the next tile lifts.
+ // Skip/end removes them immediately so no decoration survives the ceremony.
+ if(removePips)$('board').querySelectorAll('.score-pip').forEach(pip=>pip.remove());
+}
+function setCeremonyReadout(ctl,label){
+ const shown=ctl.startScore+ctl.awarded;
+ $('score').textContent=String(shown);
+ $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
+ $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
+ $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
+   ctl.awarded+' / +'+ctl.total;
+ $('ceremony-count').textContent=(ctl.awarded>=0?'+':'')+ctl.awarded;
+ $('ceremony-step').textContent=label;
+ $('ceremony-tile-count').textContent=ctl.completedTiles+' / '+ctl.tileCount+' TILES';
+ $('ceremony-meter-fill').style.width=
+   Math.min(100,Math.max(0,100*ctl.awarded/Math.max(1,ctl.total)))+'%';
+ const ticker=$('score');ticker.classList.remove('energy-tick');
+ void ticker.offsetWidth;ticker.classList.add('energy-tick');
+}
+function showScoreResult(points,move){
+ showModal('EQUATION VERIFIED',`+${points.total} energy`,
+   `<p class="equation-result">${escapeText(move.text)}</p>
+   <div class="score-breakdown">
+   <div><span>Tile points</span><b>${points.base}</b></div>
+   <div><span>Equation multiplier</span><b>×${points.multiplier}</b></div>
+   <div><span>Equation length</span><b>+${points.length}</b></div>
+   <div><span>Completed calculation</span><b>+${points.equation}</b></div>
+   <div><span>Connected to board</span><b>+${points.crossing}</b></div>
+   <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
+   ${isDrift()?`<div><span>Roguelike upgrades</span><b>+${points.extra}</b></div>
+   <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
+   <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
+   ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
+   [{text:state.phase==='playing'?'CONTINUE →':
+     isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
+     primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
+}
+function finishScoringCeremony(ctl){
+ if(!ctl||state.ceremony!==ctl||ctl.finished)return;
+ ctl.finished=true;ctl.awarded=ctl.total;
+ clearCeremonyTile(true);
+ $('board-frame').classList.remove('ceremony-bonus');
+ state.ceremony=null;state.busy=false;state.lockedFlash.clear();
+ render();
+ showEnergyBurst(ctl.total);
+ showScoreResult(ctl.points,ctl.move);
+}
+async function playScoringCeremony(ctl){
+ const active=()=>state.ceremony===ctl&&!ctl.finished&&state.modalEpoch===ctl.epoch;
+ if(document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+   finishScoringCeremony(ctl);return;
+ }
+ const duration=ceremonyDurationMs(ctl.tileCount);
+ for(const stage of ctl.stages){
+   if(!active())return;
+   clearCeremonyTile();
+   if(stage.kind==='tile'){
+     const cell=$('board').querySelector('.cell[data-index="'+stage.index+'"]');
+     if(cell){
+       cell.style.setProperty('--ceremony-speed',duration+'ms');
+       cell.classList.add('scoring-lift');
+     }
+     setCeremonyReadout(ctl,stage.label+(stage.premium?' · '+stage.premium:''));
+     await ceremonyDelay(Math.round(duration*.72));
+     if(!active())return;
+     if(cell){
+       cell.classList.add('scoring-settled');
+       const pip=document.createElement('span');pip.className='score-pip';
+       pip.textContent=stage.amount?'+'+stage.amount:'+0';
+       pip.setAttribute('aria-hidden','true');
+       if(stage.amount===0)pip.classList.add('score-pip-zero');
+       pip.addEventListener('animationend',()=>pip.remove(),{once:true});
+       cell.append(pip);
+     }
+     ctl.awarded+=stage.amount;ctl.completedTiles++;
+     setCeremonyReadout(ctl,stage.amount?
+       (stage.existing?'REUSED TILE':'TILE')+' +'+stage.amount:
+       stage.label);
+     await ceremonyDelay(Math.max(80,Math.round(duration*.28)));
+   }else{
+     $('board-frame').classList.remove('ceremony-bonus');
+     void $('board-frame').offsetWidth;
+     $('board-frame').classList.add('ceremony-bonus');
+     ctl.awarded+=stage.amount;
+     setCeremonyReadout(ctl,stage.label+' '+(stage.amount>0?'+':'')+stage.amount);
+     await ceremonyDelay(155);
+   }
+ }
+ if(!active())return;
+ await ceremonyDelay(180);
+ if(active())finishScoringCeremony(ctl);
+}
+$('skip-ceremony').onclick=()=>finishScoringCeremony(state.ceremony);
 function score(){
  if(state.ended||state.swapping||state.busy)return;
  try{
    const move=validateMove(state.board,state.pending);
    const points=calculateMove(move);
-   // The capacitor triggers only on a mathematically valid scored move. Charge
-   // is deducted alongside the turn, before the animation or any page reload.
+   // Build the presentation before changing any game state, so a visual
+   // breakdown problem cannot turn a verified equation into a lost move.
+   const stages=buildScoringCeremony(points);
+   const startScore=state.score;
+   // Consume single-use charges and commit the whole score atomically before
+   // a timer, animation, tab switch or reload can interrupt the presentation.
    if(isDrift())state.rogue=consumePulse(state.rogue);
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
@@ -575,29 +734,15 @@ function score(){
    state.busy=true;
    state.lockedFlash=new Set(changed);
    const epoch=++state.modalEpoch;
+   const ctl={startScore,awarded:0,total:points.total,points,move,stages,
+     tileCount:stages.filter(stage=>stage.kind==='tile').length,
+     completedTiles:0,epoch,finished:false};
+   state.ceremony=ctl;
    completeTurn();
-   announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
-   render();showEnergyBurst(points.total);
-   window.setTimeout(()=>{
-     if(epoch!==state.modalEpoch)return;
-     state.busy=false;state.lockedFlash.clear();render();
-     showModal('EQUATION VERIFIED',`+${points.total} energy`,
-       `<p class="equation-result">${escapeText(move.text)}</p>
-       <div class="score-breakdown">
-       <div><span>Tile points</span><b>${points.base}</b></div>
-       <div><span>Equation multiplier</span><b>×${points.multiplier}</b></div>
-       <div><span>Equation length</span><b>+${points.length}</b></div>
-       <div><span>Completed calculation</span><b>+${points.equation}</b></div>
-       <div><span>Connected to board</span><b>+${points.crossing}</b></div>
-       <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
-       ${isDrift()?`<div><span>Roguelike upgrades</span><b>+${points.extra}</b></div>
-       <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
-       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
-       ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
-       [{text:state.phase==='playing'?'CONTINUE →':isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
-         if(state.phase!=='playing')showSectorOutcome();
-       }}]);
-   },420);
+   announce('Equation verified. Transferring '+points.total+' energy tile by tile.');
+   render();
+   setCeremonyReadout(ctl,'READY TO TRANSFER');
+   void playScoringCeremony(ctl);
  }catch(err){
    state.stats.attempts++;
    persistRun();
