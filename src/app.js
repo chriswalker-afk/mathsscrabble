@@ -1,4 +1,4 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,tilePool,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
@@ -11,6 +11,8 @@ import {renderDriftHud} from './drift-hud.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
+import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair} from './tile-sets.js';
+import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -26,7 +28,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural'
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -66,14 +68,14 @@ const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
-const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
-const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):undefined;
+const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE+(hasBracketPair(state.tileSet)?2:0);
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):{bracketPairs:hasBracketPair(state.tileSet)?1:0};
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
  (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
 const calculateMove=move=>isDrift()?
   scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
-  scoreMove(state.board,state.pending,move);
+  scoreMove(state.board,state.pending,move,{rackSize:rackCapacity()});
 function announce(message,isError=false){
  $('log').textContent=message;
  $('log').classList.toggle('error',isError);
@@ -86,7 +88,8 @@ function announce(message,isError=false){
 function freshSector(sector=1,{newRun=false}={}){
  state.modalEpoch++;
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
- if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
+ if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState(state.tileSet);
+ if(isDrift())state.rogue.tileSet=state.tileSet;
  if(!isDrift())state.rogue=null;
  if(isDrift()){
    state.rogue=ensureZoneBoss(state.rogue,sector,randomFloat);
@@ -347,7 +350,7 @@ function tileButton(tile, rackIndex){
  if(isDrift()&&state.rogue.forcedTile===tile.id)
    button.setAttribute('aria-label',button.getAttribute('aria-label')+'. REQUIRED BY BOSS in your next equation.');
  button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
- const main=document.createElement('span');main.textContent=isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value;
+ const main=document.createElement('span');renderTileFace(main,isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value);
  const points=document.createElement('sub');
  points.textContent=isBlank(tile)?({[BLANK_NUMBER]:'N',[BLANK_OPERATOR]:'OP',[BLANK_ANY]:'ALL'})[tile.blank]:tile.points;
  button.append(main,points);
@@ -588,6 +591,10 @@ function render(){
  $('sector-label').textContent=isDrift()?`THE DRIFT ${String(state.sector).padStart(2,'0')} · ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()}`:
    `SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
+ $('app').dataset.tileSet=state.tileSet;
+ $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
+ $('tile-set-btn').textContent='◇ '+TILE_SET_BY_ID[state.tileSet].short.toUpperCase();
+ $('tile-set-btn').setAttribute('aria-label','Select maths tile set, currently '+TILE_SET_BY_ID[state.tileSet].title);
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector,state.rogue)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
@@ -1338,6 +1345,9 @@ function swap(){
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
+ if(state.rack.some(t=>state.swapSet.has(t.id)&&t.pairId)){
+   announce('Bracket halves stay linked. Play both together instead of exchanging them.',true);return;
+ }
  if(isDrift()&&state.rogue.forcedTile&&state.swapSet.has(state.rogue.forcedTile)){
    announce('The boss demands that tile. Use it in a correct equation before swapping.',true);return;
  }
@@ -1345,7 +1355,7 @@ function swap(){
  const free=state.swapSet.size===1&&(isDrift()?
    freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
    state.freeSwapTurn!==state.turn);
- const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
+ const kind=t=>tilePool(t);
  const sealed=new Set(isDrift()?restrictedDraws(state.rogue,state.sector):[]);
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
@@ -1465,6 +1475,7 @@ function restoreMode(mode,{initial=false}={}){
    state.freeSwapTurn=previous.freeSwapTurn??0;
    state.mode=mode;
    state.rogue=mode==='rogue'?previous.rogue:null;
+   state.tileSet=normalizeTileSet(previous.tileSet);
    state.bossGrid=mode==='rogue'?bossField(state.rogue,state.sector):null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
@@ -1476,7 +1487,8 @@ function restoreMode(mode,{initial=false}={}){
    render();
    if(state.ended)showSectorOutcome();
  }else{
-   state.rogue=mode==='rogue'?makeRogueState():null;
+   state.tileSet=normalizeTileSet(new URLSearchParams(location.search).get('tiles')||storage?.getItem(TILE_SET_STORAGE_KEY));
+   state.rogue=mode==='rogue'?makeRogueState(state.tileSet):null;
    freshSector(1,{newRun:true});
    if(mode==='rogue')showDriftIntro();
    else if(initial){
