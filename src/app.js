@@ -1,17 +1,19 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
+import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
   state.saveAvailable=saveRun(storage,state);
+  if(state.saveAvailable){try{storage?.setItem(ACTIVE_MODE_KEY,state.mode);}catch{/* storage unavailable */}}
   $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
   $('save-status').classList.toggle('unavailable',!state.saveAvailable);
   $('save-status').title=state.saveAvailable?
@@ -19,6 +21,12 @@ function persistRun(){
     'Your browser could not save this run. Keep this tab open to avoid losing progress.';
 }
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
+const isDrift=()=>state.mode==='rogue';
+const currentTarget=()=>targetForSector(state.mode,state.sector);
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
+const calculateMove=move=>isDrift()?
+  scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
+  scoreMove(state.board,state.pending,move);
 function announce(message,isError=false){
  $('log').textContent=message;
  $('log').classList.toggle('error',isError);
@@ -31,6 +39,8 @@ function announce(message,isError=false){
 function freshSector(sector=1,{newRun=false}={}){
  state.modalEpoch++;
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
+ if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
+ if(!isDrift())state.rogue=null;
  state.stats=freshStats();state.phase='playing';
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.ended=false;state.busy=false;
@@ -45,12 +55,16 @@ function freshSector(sector=1,{newRun=false}={}){
      return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
    });
  }else{
-   const deal=dealPlayableRack([],state.bag);
+   const deal=dealPlayableRack([],state.bag,currentRackOptions());
    state.rack=deal.rack;state.bag=deal.bag;
  }
+ const anomaly=isDrift()?anomalyForSector(sector):null;
  announce(sector===1?
-   'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.':
-   'New sector online. Use the centre to begin and aim for the new energy target.');
+   (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
+     'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.'):
+   anomaly?
+     `Sector anomaly: ${anomaly.name}. ${anomaly.short}. Build carefully.`:
+     'New sector online. Use the centre to begin and aim for the new energy target.');
  $('board-frame').classList.remove('reactor-scored');
  render();
 }
@@ -298,7 +312,7 @@ function renderPreview(){
      'Choose tiles to replace — this uses a turn.'):
    freeReason&&!Object.keys(state.pending).length?
      `Only ${freeReason} in your rack. Free exchange available.`:preview.feedback;
- const points=(!state.swapping&&preview.ready)?scoreMove(state.board,state.pending,preview):null;
+ const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
    `Potential score ${points.total} if the equation is mathematically correct`:
