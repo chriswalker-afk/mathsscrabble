@@ -661,18 +661,73 @@ function showLocalSetup(){
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
  const wrapper=$('local-setup-names');
- const inputs=[];
+ const groups=[],portraits=[];
+ const labels={bloop:'Bloop',orbit:'Orbit',niblet:'Niblet',glimmer:'Glimmer'};
+ const paint=()=>portraits.forEach((element,i)=>
+   paintPilotAvatar(element,localSetupAliens[i],i,{size:52,framing:'bust'}));
+ localSetupBadges=()=>{
+   if($('local-setup-names')===wrapper)paint();
+ };
  for(let i=0;i<4;i++){
+   const group=document.createElement('div');group.className='local-pilot-setup';
+   group.dataset.seat=String(i);
    const row=document.createElement('div');row.className='local-setup-row';
    const label=document.createElement('label');label.textContent='PILOT '+(i+1);
    label.htmlFor='local-player-name-'+i;
-   const input=document.createElement('input');
-   input.id='local-player-name-'+i;
-   input.type='text';input.maxLength=20;input.autocomplete='off';input.value=players[i]||'Pilot '+(i+1);
-   row.append(label,input);wrapper.append(row);inputs.push(row);
+   const input=document.createElement('input');input.id='local-player-name-'+i;
+   input.type='text';input.maxLength=20;input.autocomplete='off';
+   input.value=players[i]||'Pilot '+(i+1);
+   row.append(label,input);group.append(row);
+   const alienRow=document.createElement('div');alienRow.className='alien-setup-row';
+   const caption=document.createElement('label');caption.htmlFor='local-alien-'+i;
+   caption.textContent='THEIR ALIEN';
+   const controls=document.createElement('div');controls.className='alien-setup-choice';
+   const portrait=document.createElement('span');portraits.push(portrait);
+   const select=document.createElement('select');select.id='local-alien-'+i;
+   select.setAttribute('aria-label','Choose alien for pilot '+(i+1));
+   for(const id of PILOT_PRESET_NAMES){
+     const opt=document.createElement('option');opt.value=id;opt.textContent=labels[id];
+     select.append(opt);
+   }
+   const unique=document.createElement('option');unique.value='custom';unique.textContent='Custom alien';
+   select.append(unique);
+   const chooseOption=()=>{
+     const matched=PILOT_PRESET_NAMES.find((id,k)=>
+       JSON.stringify(localSetupAliens[i])===JSON.stringify(defaultPilotAlien(k)));
+     select.value=matched||'custom';
+   };
+   chooseOption();
+   select.addEventListener('change',()=>{
+     if(select.value==='custom')return;
+     localSetupAliens[i]=defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(select.value));
+     paint();
+   });
+   const random=document.createElement('button');random.type='button';
+   random.textContent='✧ RANDOM';random.setAttribute('aria-label','Random alien for pilot '+(i+1));
+   random.onclick=()=>{localSetupAliens[i]=nextRandomPilotAlien(localSetupAliens[i]);chooseOption();paint();};
+   const savedButton=document.createElement('button');savedButton.type='button';
+   savedButton.textContent='USE SAVED';savedButton.title='Use the design saved in Alien Lab';
+   savedButton.onclick=()=>{
+     const savedAlien=getSavedPilotAlien(storage);
+     if(!savedAlien){
+       const tip=wrapper.querySelector('.alien-setup-note');
+       if(tip)tip.textContent='No saved alien yet. Open Alien Lab and save one, then press USE SAVED.';
+       return;
+     }
+     localSetupAliens[i]=savedAlien;chooseOption();paint();
+   };
+   controls.append(portrait,select,random,savedButton);
+   alienRow.append(caption,controls);group.append(alienRow);
+   wrapper.append(group);groups.push(group);
  }
+ const link=document.createElement('a');link.className='alien-editor-link';
+ link.href='./alien-lab.html';link.target='_blank';link.rel='noopener noreferrer';
+ link.textContent='✳ CREATE A CUSTOM ALIEN IN ALIEN LAB ↗';
+ const tip=document.createElement('p');tip.className='alien-setup-note';
+ tip.textContent='Choose a preset, randomise each pilot, or save a unique alien in Alien Lab then press USE SAVED.';
+ wrapper.append(link,tip);paint();
  const updateCount=()=>{const amount=Number($('local-player-count').value);
-   inputs.forEach((row,i)=>{row.hidden=i>=amount;});};
+   groups.forEach((group,i)=>{group.hidden=i>=amount;});};
  $('local-player-count').addEventListener('change',updateCount);
  updateCount();
 }
