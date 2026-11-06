@@ -1,53 +1,38 @@
-# Maths tile kits and ship equipment
+# Four mathematical tile kits and multiplayer compatibility
 
-## Four selectable maths tile kits
+The same four physical tile kits are available in **Sector Run**, **The Drift**, **Local Match** and **Online Rooms**. Select a kit on Mission Control. Sector Run and The Drift also provide an in-game kit menu; Local Match has a kit selector during match setup; the Online Rooms **host** selects a kit when creating the room. All other online pilots see the host's choice in the lobby.
 
-From the EQUA//NOVA home screen, select a mathematical kit before entering **Sector Run** or **The Drift**. The choice also appears as a **◇ KIT** button in the game header. Switching an existing run requires an explicit confirmation and starts a new run; it does not silently replace an existing save. The choice is stored locally, survives reloads and remains fixed for subsequent sectors. These kits run entirely in the GitHub Pages client; no Cloudflare Worker queries are needed.
+| Kit | Number tiles | Operations | Private rack |
+| --- | --- | --- | --- |
+| **01 · Launchpad — Natural Numbers** | Digits 0–9; adjacent digits may concatenate | +, −, ×, ÷ | **8:** 5 numbers + 3 operators |
+| **02 · Orbit — Integers** | Positive digits and atomic negative integers (such as −3) | +, −, ×, ÷ | **8:** 5 numbers + 3 operators |
+| **03 · Nebula — Rational Numbers** | Positive digits and **positive-only** atomic fractions such as 1/2, 3/4, 3/2 | +, −, ×, ÷ and a matched ( ) pair | **11:** 6 numbers + 3 operators + 2 brackets |
+| **04 · Quantum — Advanced Operations** | Integers and signed rational fractions | +, −, ×, ÷, ^, √, ! and a matched ( ) pair | **11:** 6 numbers + 3 operators + 2 brackets |
 
-| Kit | Number tiles | Operator tiles | Other tiles | Sample correct equation |
-|---|---|---|---|---|
-| 01 **Launchpad — Natural Numbers** | Single digits 0–9 (adjacent digits may form integers) | +, −, ×, ÷ | 3 zero-point wildcard types; unlimited free equals | `8 + 4 = 12` |
-| 02 **Orbit — Integers** | Positive digits and physical signed tiles such as `−3` | +, −, ×, ÷ | Wildcards; free equals | `−3 + 7 = 4` |
-| 03 **Nebula — Rational Numbers** | Positive digits and atomic fractions such as `1/2`, `3/4`, `−2/3`, `3/2` | +, −, ×, ÷ | One linked pair of bracket tiles, wildcards; free equals | `(1/2 + 1/2) × 2 = 2` |
-| 04 **Quantum — Advanced Operators** | Same integers and signed fractions as Nebula | +, −, ×, ÷, exponent `^`, square root `√`, factorial `!` | One bracket pair; wildcards; free equals | `√9 + 3! = 9` |
+Examples: Launchpad **8 + 4 = 12**; Orbit **−3 + 7 = 4**; Nebula **(1/2 + 1/2) × 2 = 2**; Quantum **√9 + 3! = 9**.
 
-**Physical supplies:** Each kit has 151 unique physical tiles. Every fresh rack keeps **five number-kind tiles and three operator-kind tiles**, drawn from their respective supply categories. Nebula and Quantum hold **two extra bracket halves**, making ten physical rack pieces by default. In The Drift, the Rack Extension Ship System adds one further number tile (nine in the first two kits, eleven in Nebula/Quantum). Bag inventory shows the actual fractions, signed numbers, advanced operators and bracket supply remaining.
+## Physical supply, brackets and fair drawing
 
-### Why bracket pairs are linked
+Every kit has **151 uniquely identified physical tiles**, including its finite number, operator, wildcard and (where applicable) bracket pools. The unlimited free equals sign never consumes a physical tile. Nebula now uses **28 positive fraction pieces** (two copies of each of the 14 positive fractions in the catalog), with no negative fraction tiles in **new games**. Quantum retains signed fractions. Both advanced kits draw an extra **sixth number tile** to improve playability, while retaining all three operators and one complete bracket pair.
 
-The two physical tiles `(` and `)` belong to one bracket pair with a shared internal identifier. Both halves are drawn together from a separate pool of eight physical pairs; **both must be placed and used in the same scored equation**, not held as unmatched singles. Neither may be exchanged individually or transformed by a Mission Gadget. A partial pair is rejected without losing a turn. Existing locked brackets can still be crossed to make new calculations, but each newly used pair is atomic as a set.
+Brackets have eight linked pair IDs per supply. Each new ( and ) pair must be played together in a single scored equation. A single half cannot be submitted or individually exchanged. In multiplayer, selecting one bracket half for an exchange automatically selects both. Exchanging the two-piece pair **uses the turn** and requires another complete pair to be available in the shared bag. Scored pairs remain on the board and may be crossed in subsequent equations. A depleted bracket pool never generates counterfeit or unmatched halves.
 
-### Exact mathematical evaluation
+Every local and online player uses their own rack, drawing from **one shared** physical bag. Only the current player's rack is revealed. The Drift's Rack Extension Ship System adds one more number tile: **9 tiles** in Launchpad/Orbit and **12 tiles** in Nebula/Quantum.
 
-All validation uses exact rational arithmetic with BigInt numerators and denominators, not floating-point estimates. Each physical fraction or signed-number tile is **one number token**; `−3` is not the same physical object as the operator `−` followed by `3`. Adjacent single-digit tiles still concatenate (`1` then `2` makes twelve); a signed or fractional token cannot be accidentally concatenated with a neighbour.
+## Exact mathematical checking
 
-BIDMAS precedence: brackets → powers/roots/factorials → multiplication/division → addition/subtraction. Powers are right-associative: `2 ^ 2 ^ 3 = 256`. Negative powers are allowed through an explicit minus operator. For controlled difficulty and exact scoring:
+All four modes use the same exact rational BigInt expression engine, with the same 13 × 13 board and premium squares. Numbers on fraction or negative tiles are single atomic tokens; regular adjacent digit tiles can still form multi-digit numbers. One genuine calculation is required; simple identities are not scoreable.
 
-- **Exponents** must evaluate to an integer from −8 to 8. Non-integer powers are rejected.
-- **Square roots** must be real and exactly rational, for example `√(1/4) = 1/2` is valid and `√2 = 1` is invalid.
-- **Factorials** apply only to whole numbers from 0 to 8. `3! = 6`, `0! = 1`.
-- Division by zero, mismatched brackets, missing operators, implicit multiplication, and equalities without a genuine operation are invalid.
+BIDMAS follows brackets, powers/roots/factorials, multiplication/division, then addition/subtraction. Powers are right-associative, with integer exponents from −8 through 8; exact rational square roots are allowed, but irrational approximations are not. Factorial applies to integers 0 through 8. Division by zero, invalid expressions, mismatched brackets, implicit multiplication and false equalities are rejected without charging a turn.
 
-Correct mathematical solutions still depend on valid board placement: new tiles lie on one continuous straight line, the first equation crosses the centre, and later equations connect to locked tiles. Bracket pairs and fraction tiles never change the board's original dimensions or its symmetric bonus pattern.
+## Multiplayer rules and privacy
 
-### Drift upgrade vocabulary
+- **Local Match:** choose the kit before starting a 2–4 player hot-seat match. Players retain private racks, timers, passing, one free *single-piece* exchange per turn, shared scoring and net-score rack penalties. Choosing a different kit for an existing saved match requires explicitly starting a new one.
+- **Online Rooms:** the host selects the kit at room creation. The kit is stored in the Cloudflare Durable Object and cannot be changed by guests or by subsequent turns. The server creates and owns the physical supply and validates all placements, exact tile values/points, rack ownership, bracket exchanges, scores, deadlines and room revisions. Each authenticated snapshot contains only that pilot's private tiles. The lobby advertises the shared kit to every pilot.
+- **Backwards compatibility:** an older local save or online room without a stored kit continues as Launchpad. Existing saved Nebula solo games may still include negative fractions in their previously dealt supply, rather than silently rewriting a student's completed equations. **Start a new game** to use the positive-only Nebula distribution and the larger starting rack.
 
-The old labels “permanent upgrades” and “temporary power-ups” have been replaced on player-facing screens:
+**Deployment is important:** publishing the GitHub Pages front end does not publish the room Worker. After merging this change, deploy the updated **equanova-rooms** Worker at rooms.mrwalkermaths.com from the merged commit. Until then, an older Worker may not understand the kit setting; the new frontend warns instead of silently starting a non-Launchpad room with the wrong tiles. See [Online Rooms deployment](ONLINE_MULTIPLAYER.md).
 
-- **Ship Systems** — four mounted, illustrated upgrades that remain installed for the entire run, such as Second Spark or Rack Extension.
-- **Mission Gadgets** — up to two single-use illustrated tools or score boosts, such as Double Reactor, Pulse Capacitor or Step Up.
+## Quality checks
 
-Their costs, scoring rules and equipment limits do not change. Step Up and Step Down can exchange any physical number (including signed integers and rational fractions) for a tile exactly one larger or smaller if an eligible physical tile remains in the number bag. No tile is fabricated and an unavailable exchange does not consume the gadget.
-
-### Multiplayer compatibility
-
-Local Match and Online Rooms still use the existing **Launchpad** (natural number) tile set and unchanged 151-tile shared rulebook. The expanded parser and UI are client-side for Sector Run and The Drift. This avoids accidentally offering choices that the Cloudflare multiplayer Worker does not validate yet. Extending the tile-kit protocol to multiplayer would be a separate feature with server-side rules and compatibility tests.
-
-## Quality assurance
-
-- Four physical bags each contain 151 distinct IDs and correct number/operator distributions.
-- Bracket sets have eight complete pair IDs, with an intact pair in every refill when supplies allow.
-- Correct and incorrect signed, fractional, bracketed, exponent, root and factorial equations are checked exactly.
-- All four kits save and resume without erasing current board/rack/Flux, and kit switching requires explicit confirmation.
-- Rack and board remain usable on 320–390px phones and common laptops; fraction faces are stacked and legible rather than overlaid with tiny text.
-- Legacy runs with no stored kit continue on Launchpad; The Drift's twelve boss rules and Cloudflare Worker are unaffected.
+Automated tests cover 151-tile conservation and uniqueness; all four kits with 2, 3 and 4 pilots; positive-only Nebula fractions; 8- or 11-piece starting racks; complete bracket pairs; paid pair exchange; false-equation rejection; exact rational validation and scoring; saved Local Match integrity; online room kit persistence; private hands and server-side anti-forgery checks. Existing solo, Drift, Alien Lab and Cloudflare Durable Object runtime tests remain active.

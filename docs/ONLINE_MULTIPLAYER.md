@@ -1,6 +1,6 @@
 # Pass E2 — Online Signal Clash
 
-Online Rooms is the fourth EQUA//NOVA mode. From the existing ◈ MODE menu, open online.html. One player creates a room; one to three other pilots join with a six-character code or invitation link, each on their own device. The host sets a limit of two, three or four players and an optional 60-, 90- or 120-second timer (or Off). The host may begin once at least two pilots have joined.
+Online Rooms is the fourth EQUA//NOVA mode. From Mission Control open **ONLINE ROOMS**. One player creates a room; one to three other pilots join with a six-character code or invitation link, each on their own device. The host selects one of four mathematical tile kits, a limit of two, three or four players and an optional 60-, 90- or 120-second timer (or Off). The chosen kit is fixed for the room and appears in every player's lobby. The host may begin once at least two pilots have joined.
 
 ## Alien Lab pilot identities (Pass B)
 
@@ -12,7 +12,7 @@ The client sends \`avatar\` as a small, strictly versioned data object of allowl
 
 ## Rules and security
 
-All turns are processed by a Cloudflare Worker and one SQLite-backed Durable Object per room. The browser cannot choose whose turn it is, award itself points, forge a tile, inspect another player's rack or change the timer. The server uses the same BIDMAS parser, premium squares, wildcards, finite bag, free equals and final rack penalties as Local Match.
+All turns are processed by a Cloudflare Worker and one SQLite-backed Durable Object per room. The browser cannot choose whose turn it is, award itself points, forge a tile, inspect another player's rack or change the timer. The server uses the same exact rational BIDMAS parser, premium squares, wildcards, finite bag, linked bracket pairs, free equals and final rack penalties as Local Match. Launchpad/Orbit players receive eight tiles; Nebula/Quantum receive eleven (six numbers, three operators, one bracket pair). New Nebula bags use positive fractions only.
 
 - Room codes are six random readable characters, omitting ambiguous symbols such as 0, 1, I and O.
 - Each pilot gets a private, random 32-byte access key at creation or joining. Its SHA-256 digest, rather than the key, is stored on the server.
@@ -29,7 +29,7 @@ This is anonymous classroom play rather than account-backed identity. Anyone wit
 
 ## Deployment — required before the public website can create real rooms
 
-GitHub Pages is a static website. The Cloudflare room Worker is a SEPARATE deployment and a PR does not publish it. The repository includes cloudflare.config.ts for the new Cloudflare CLI (cf), and exports the GameRoom SQLite Durable Object. There is deliberately no Wrangler configuration.
+GitHub Pages is a static website. The Cloudflare room Worker is a **SEPARATE deployment** and a PR does not publish it. **Redeploy this Worker after merging the multiplayer tile-kit change; otherwise the older Worker may ignore the host's requested kit.** The frontend refuses to proceed when an older server cannot confirm a nonstandard kit. The repository includes cloudflare.config.ts for the new Cloudflare CLI (cf), and exports the GameRoom SQLite Durable Object. There is deliberately no Wrangler configuration.
 
 1. Install the Cloudflare CLI and sign in to the Cloudflare account responsible for mrwalkermaths.com:
 
@@ -54,7 +54,7 @@ For local manual work: serve the static repo using python3 -m http.server 4173 a
 
 ## Testing
 
-The Node suite exercises 2–4 player lobbies, authentication, private snapshots, malformed and forged moves, exact BIDMAS validation, idempotency, stale revisions, free and paid swaps, timer alarms, room expiry and final scores.
+The Node suite exercises all four tile kits with 2–4 players, exact signed and fractional BIDMAS, positive-only Nebula supply, paired bracket exchanges, private snapshots, authentication, forged/invalid moves, idempotency, stale revisions, free and paid swaps, timer alarms, room expiry and final scores.
 
 The Chromium test opens two isolated browser sessions against a simulated authoritative room API. It covers creation, joining, host starting, private racks, rejected equations, scoring animations, reconnecting after a refresh, passing, finishing and mobile controls. Existing Sector Run, Drift, bag-animation and Local Match tests remain enabled.
 
@@ -66,7 +66,7 @@ The online Chromium test still uses a simulated API. The Cloudflare runtime inte
 
 1. Confirm the Worker health URL is reachable from another network.
 2. Create a two-player room with a 60-second timer. Share the invitation URL and join from another browser/device.
-3. Confirm that the two racks are different and private, and both clients see the same board and public scores.
+3. Select Nebula or Quantum in the host's create-room form. Confirm the guest lobby displays that kit, both private racks contain eleven physical pieces with intact bracket pairs, and both clients share the same board and public scores. Repeat with Launchpad/Orbit (eight pieces).
 4. Try a mathematically incorrect but well-formed equation; confirm no points or turns are consumed. Submit a correct BIDMAS equation and check that both boards update.
 5. Before creating/joining, choose different Alien Lab characters. In the waiting lobby, update the guest's alien and verify both browsers show the change without altering the host's creature. Start the match and verify edits are locked. Refresh each device and verify its avatar and rack are recovered without revealing an opponent's tiles.
 6. Let a timer expire while the pages are closed; reopen them and verify the turn was advanced by the server alarm.
@@ -75,4 +75,4 @@ The online Chromium test still uses a simulated API. The Cloudflare runtime inte
 
 ## Future work
 
-The Origin whole-number tile set is still the only implemented mathematics pack. Polarity, Fraction Field and Quantum need separate mathematical tile/token design and rigorous parsing. Pass B now provides original Alien Lab character creation and multiplayer portraits; room players receive safe, versioned identities instead of numerical markers. These are subsequent gameplay/visual passes, not prerequisites for online room correctness.
+All four mathematical tile kits are now supported on the server. Future work includes classroom calibration of competitive play across the difficulty levels, load/performance checks, and any desired classroom moderation or account-based identity features.

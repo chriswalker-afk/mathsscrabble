@@ -4,7 +4,7 @@ This pass implements **one-device, 2–4 player hot-seat competition**. This mod
 
 ## Setting up
 
-Choose **◈ MODE → LOCAL 2–4**, then configure 2–4 distinct player names and a turn timer: Off, 60, 90 or 120 seconds. Starting the match deals eight physical tiles to each player: five number-kind and three operator-kind tiles, drawn from separate finite pools of the original 151-tile supply. They all play on the same 13×13 board with the same premium squares and rigorous BIDMAS equation validator.
+From Mission Control open **LOCAL MATCH**, select Launchpad, Orbit, Nebula or Quantum, and configure 2–4 distinct player names and an optional 60-, 90- or 120-second timer (or Off). Launchpad and Orbit deal **eight physical tiles** per player (five numbers and three operators); Nebula and Quantum deal **eleven** (six numbers, three operators and a linked bracket pair). Nebula fractions are positive-only in new matches. Every kit uses one finite 151-tile supply and the same 13×13 board with exact BIDMAS validation.
 
 All three modes have **different random initial hands and a different draw order** each fresh game. Local Match, Sector Run and The Drift each remember only their own last starting pattern so back-to-back new games do not produce the same visible opening sequence. There is **no forced tutorial equation**, and neither the rack balancing nor the randomisation creates or duplicates a physical tile.
 
@@ -28,9 +28,9 @@ These are practical privacy controls for passing one shared device. Because ther
 
 - **Score** one mathematically true, connected equation each turn. The first equation must cross the centre; later equations must connect to a previously locked tile. The existing exact BIDMAS parser is unchanged. `3=3` and other identity-only statements are invalid.
 - The player receives the complete tile, multiplier, length, connection and full-rack bonuses **on their own score**. The satisfying per-tile energy animation works here too, including SKIP and reduced motion. Scoring is committed atomically to the match before the animation begins.
-- New tiles are drawn from separate number and operator supply pools, restoring five number-kind and three operator-kind tiles when supplies permit. No physical tiles are created, and the next draw order remains hidden.
+- New tiles are drawn from separate number and operator supply pools, restoring five numbers (six in Nebula/Quantum), three operators and any linked bracket pair when supplies permit. No physical tiles are created, and the next draw order remains hidden.
 - **Pass** voluntarily if the player cannot form an equation. No points are earned.
-- **Swap** one or more rack tiles with the shared bag. Swapping **exactly one tile is free once per turn**, irrespective of the rack composition. Swapping several tiles or swapping again uses the turn. Each replacement comes from its original supply pool.
+- **Swap** one or more rack tiles with the shared bag. Swapping **exactly one tile is free once per turn**, irrespective of the rack composition. Swapping several tiles or swapping again uses the turn. Each replacement comes from its original supply pool. A bracket pair is selected/exchanged as one two-piece set, uses the turn, and requires a complete replacement pair in the bag.
 - Pending placements must be cleared before passing or swapping. There are no Drift shop upgrades or boss effects in competitive play.
 
 ## End of match and final scoring
@@ -56,11 +56,11 @@ Wildcards have zero physical tile points even when programmed to represent a mor
 - Each physical tile has one unique ID. The shared board, all players' racks and the remaining bag always total **151 physical tiles**, with no duplicates.
 - The saved match is checked for consistent names, player order, current turn, rack ownership, finite supply, history and final scores before being restored.
 - Scores, private handovers and completed-game states survive refresh. A new match replaces only the local match, not Solo or Drift runs.
-- The future online version will require **server-authoritative** validation rather than trusting local browser state.
+- Online Rooms now uses the same kits with **server-authoritative** tile, bracket, turn and score validation rather than trusting browser state.
 
 ## Classroom and automated checks
 
-1. Start games with 2, 3 and 4 players. Check distinct racks of eight, 151 total physical tiles and genuinely different opening patterns on successive new games.
+1. Start games with 2, 3 and 4 players. Check distinct racks of eight (Launchpad/Orbit) or eleven (Nebula/Quantum), 151 total physical tiles and genuinely different opening patterns on successive new games.
 2. Verify the **handover** fully obscures the previous player's rack, cannot be bypassed via Tab, and does not start the timer until Ready.
 3. Score an opening equation, confirm the points credit only the active player, and check that a second player can connect an equation to a locked tile.
 4. Test a wrong BIDMAS equation. The player must be able to revise without consuming their turn or points.

@@ -66,7 +66,7 @@ See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The 
 
 ## Pass E2 — Online Signal Clash
 
-**Online Rooms** extends multiplayer to two to four people on **different devices**. One pilot creates a six-character room code, others join with the link, and the host starts the match. Players see one shared 13×13 board, their **own private eight-tile rack**, live scoreboards and optional server-enforced turn timers. All completed equations are checked using BIDMAS and scored **by the Cloudflare server**, not the player's browser. Passes, free/paid swaps, finite bag, final rack-point deductions, tie handling, reconnection and the existing satisfying tile-scoring animation are supported.
+**Online Rooms** extends multiplayer to two to four people on **different devices**. One pilot creates a six-character room code, others join with the link, and the host starts the match. Players see one shared 13×13 board, their **own private 8- or 11-tile rack**, live scoreboards and optional server-enforced turn timers. All completed equations are checked using BIDMAS and scored **by the Cloudflare server**, not the player's browser. Passes, free/paid swaps, finite bag, final rack-point deductions, tie handling, reconnection and the existing satisfying tile-scoring animation are supported.
 
 The online experience lives in [online.html](online.html), uses [server/worker.js](server/worker.js) with one SQLite-backed Cloudflare Durable Object per game and leaves Sector Run, The Drift and Local Match entirely independent. WebSockets announce room revisions, but each player retrieves only their own authorised state.
 
@@ -78,17 +78,17 @@ Select any of the **four full-size, keyboard-accessible mode cards** on the home
 
 **Sector Run** remains the straightforward classroom practice mode: BIDMAS equation building, six-turn sectors, balanced racks, one free tile swap each turn, and a regular cumulative run report. You can retry a failed sector.
 
-**Local Match (Pass E1)** is a 2–4 player pass-and-play mode on one device. Players have private eight-tile racks refilled to **five numbers and three operators** from two shared finite supply pools, share the 13×13 board and score equations using the identical BIDMAS engine. A full-screen privacy handover hides the rack while the device changes hands; the next player explicitly presses **Ready** before their turn timer begins. Timers can be Off, 60, 90 or 120 seconds. Players may pass or exchange tiles, with one free single-tile swap on any turn. The match ends when the bag is empty and someone empties their rack, or after two full rotations without scoring. Every remaining physical rack tile's point value is **deducted** from that player's accumulated score; highest final net score wins, and ties share the win. Local Match has its own private, validated browser save. No online room or account is required. See [Local multiplayer rules and QA](docs/LOCAL_MULTIPLAYER.md).
+**Local Match (Pass E1)** is a 2–4 player pass-and-play mode on one device. Players have private **eight-tile Launchpad/Orbit** or **eleven-tile Nebula/Quantum** racks refilled from a shared finite supply, share the 13×13 board and score equations using the identical BIDMAS engine. A full-screen privacy handover hides the rack while the device changes hands; the next player explicitly presses **Ready** before their turn timer begins. Timers can be Off, 60, 90 or 120 seconds. Players may pass or exchange tiles, with one free single-tile swap on any turn. The match ends when the bag is empty and someone empties their rack, or after two full rotations without scoring. Every remaining physical rack tile's point value is **deducted** from that player's accumulated score; highest final net score wins, and ties share the win. Local Match has its own private, validated browser save. No online room or account is required. See [Local multiplayer rules and QA](docs/LOCAL_MULTIPLAYER.md).
 
 **The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
 
 ### Choose a mathematical tile kit
 
-Before entering **Sector Run** or **The Drift**, choose one of four classroom tile kits: **Launchpad** (natural numbers and + − × ÷), **Orbit** (positive and negative integers), **Nebula** (positive/negative fractions, four basic operators and a matched bracket pair), or **Quantum** (rational numbers and extra ^, √, ! operators). Every kit still has five number-kind tiles and three operator-kind tiles; bracket kits also hold two linked bracket tiles. An already-started run keeps its kit unless the player explicitly confirms a new run. See [Tile Sets and exact mathematics](docs/TILE_SETS.md).
+Before starting any of the four modes, choose one of four classroom tile kits: **Launchpad** (natural numbers and + − × ÷), **Orbit** (positive and negative integers), **Nebula** (positive-only fractions, four basic operators and a matched bracket pair), or **Quantum** (rational numbers and extra ^, √, ! operators). Launchpad and Orbit use five numbers and three operators; Nebula and Quantum use **six numbers, three operators and a matched bracket pair (11 physical pieces)**. An already-started run keeps its kit unless the player explicitly confirms a new run. See [Tile Sets and exact mathematics](docs/TILE_SETS.md).
 
 Drift upgrade names are now **Ship Systems** (four installed slots per run) and **Mission Gadgets** (two one-use slots). The distinction is thematic while retaining all existing upgrade effects, purchase costs and limited inventory.
 
-Local Match and Online Rooms remain on the original natural-number kit while multiplayer protocol support is developed.
+Local Match supports the same four kits during setup. Online Rooms lets the host choose a single kit for the room; Cloudflare validates every move against that kit, including exact fractions and linked brackets. **The Worker must be redeployed after merging this change.**
 
 ### The Drift: Galactic Zones and Bosses
 
@@ -116,7 +116,7 @@ The shop presents four rotating permanent choices plus the capacitor. Prices, pu
 
 ## Scope and planned work
 
-This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift, Local Match and Online Rooms**. Online Rooms uses a separately deployed Cloudflare Worker for multiplayer. Returning to the static homepage does not send a Worker request. Brackets, signed/fraction tile sets, reusable Critter Lab avatars, signed/fraction/advanced tile sets, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
+This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift, Local Match and Online Rooms**. Online Rooms uses a separately deployed Cloudflare Worker for multiplayer. Returning to the static homepage does not send a Worker request. Audio and achievements are not yet implemented; all four mathematical tile kits and the separate Alien Lab are playable. The illustrative pilot emblem remains a placeholder.
 
 **Rule prototype note:** A single submitted complete equation scores each turn. Unrelated adjacent perpendicular fragments are not checked, and this should be playtested before locking the full game rules.
 
