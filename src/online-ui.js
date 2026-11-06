@@ -6,6 +6,8 @@ import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
   nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
+import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize} from './tile-sets.js';
+import {renderTileFace,tileFaceClass} from './tile-face.js';
 
 const $=id=>document.getElementById(id);
 const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
@@ -18,6 +20,18 @@ const state={
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 state.alienDraft=alienFromStorage(storage,0);
+const requestedKit=new URLSearchParams(location.search).get('tiles');
+$('online-tile-kit').value=normalizeTileSet(requestedKit||storage?.getItem(TILE_SET_STORAGE_KEY));
+const describeSelectedKit=()=>{
+ const kit=TILE_SET_BY_ID[$('online-tile-kit').value];
+ $('online-create-kit-info').textContent=kit.short+' · '+kit.desc+
+   ' The host locks this kit for all players when the room is created.';
+};
+$('online-tile-kit').addEventListener('change',()=>{
+ try{storage?.setItem(TILE_SET_STORAGE_KEY,$('online-tile-kit').value);}catch{}
+ describeSelectedKit();
+});
+describeSelectedKit();
 function renderPilotPicker(){
  const alien=state.alienDraft;
  paintPilotAvatar($('online-own-alien'),alien,me()?.index??0,{size:68,framing:'bust'});
@@ -255,7 +269,7 @@ function showEntry(){
  $('online-lobby').hidden=true;
  $('gate-title').textContent='Play together, from anywhere.';
  $('gate-description').textContent=
-   'Host a room or enter a six-character code. Only your own seven tiles appear on this device.';
+   'Host a room or enter a six-character code. The host selects the mathematical kit; each player sees only their own private rack.';
 }
 function showLobby(){
  if(!state.view)return;
@@ -263,6 +277,8 @@ function showLobby(){
   $('online-avatar-lobby-slot').append($('online-pilot-picker'));
  renderPilotPicker();
  const v=state.view;
+ const kit=TILE_SET_BY_ID[normalizeTileSet(v.tileSet)];
+ $('online-lobby-kit').textContent='MATHEMATICAL KIT · '+kit.short.toUpperCase()+' — '+kit.title+' · '+kitRackSize(kit.id)+' tiles per rack';
  $('online-gate').hidden=false;
  $('online-entry').hidden=true;
  $('online-lobby').hidden=false;
@@ -332,7 +348,7 @@ function renderBoard(){
      (tile?tile.value:(bonus||'empty'))+(pending?', unscored':''));
    if(tile){
      const glyph=document.createElement('span');glyph.className='board-tile'+
-       (isBlank(tile)?' placed-wildcard':'');glyph.textContent=tile.value;
+       (isBlank(tile)?' placed-wildcard':'')+(tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'');renderTileFace(glyph,tile.value);
      node.append(glyph);
    }else if(bonus){
      const glyph=document.createElement('span');glyph.className='bonus-label';
@@ -365,10 +381,11 @@ function renderRack(){
    const button=document.createElement('button');button.type='button';
    button.className='tile'+(state.selected===tile.id?' selected':'')+
      (state.swapIds.has(tile.id)?' marked':'')+
-     (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
+     (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+      (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'');
    button.dataset.tileId=tile.id;button.dataset.rackIndex=String(index);
-   const face=document.createElement('span');face.textContent=isBlank(tile)?
-     BLANK_KINDS[tile.blank].symbol:tile.value;
+   const face=document.createElement('span');renderTileFace(face,isBlank(tile)?
+     BLANK_KINDS[tile.blank].symbol:tile.value);
    const p=document.createElement('sub');p.textContent=isBlank(tile)?
      (tile.blank==='blank-number'?'N':tile.blank==='blank-operator'?'OP':'ALL'):tile.points;
    button.append(face,p);
@@ -379,14 +396,18 @@ function renderRack(){
    button.onclick=e=>{
      if(wasDragClick(e))return;
      if(state.swapping){
-       state.swapIds.has(tile.id)?state.swapIds.delete(tile.id):state.swapIds.add(tile.id);
+       if(tile.pairId){
+         const pair=all.filter(t=>t.pairId===tile.pairId);
+         const marked=pair.every(t=>state.swapIds.has(t.id));
+         pair.forEach(t=>marked?state.swapIds.delete(t.id):state.swapIds.add(t.id));
+       }else state.swapIds.has(tile.id)?state.swapIds.delete(tile.id):state.swapIds.add(tile.id);
      }else state.selected=state.selected===tile.id?null:tile.id;
      render();
    };
    if(enabled&&!state.swapping)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
    root.append(button);
  }
- $('online-rack-count').textContent=rack.length+' / 8';
+ $('online-rack-count').textContent=rack.length+' / '+kitRackSize(v?.tileSet);
  $('equals-tile').disabled=!enabled||state.swapping;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('online-rack-label').textContent=match?'YOUR PRIVATE RACK · '+v.you.name.toUpperCase():'YOUR PRIVATE RACK';
@@ -402,7 +423,7 @@ function renderPreview(){
    (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
    myTurn()?preview.feedback:'Wait for your turn. Only the current pilot can submit.';
  $('online-potential').textContent=preview.ready&&!state.swapping?
-   '+'+scoreMove(board,state.pending,preview).total:'—';
+   '+'+scoreMove(board,state.pending,preview,{rackSize:kitRackSize(state.view?.tileSet)}).total:'—';
  const can=myTurn();
  $('online-score').disabled=!can||state.swapping||!Object.keys(state.pending).length;
  $('online-clear').disabled=!can||(!state.swapping&&!Object.keys(state.pending).length);
@@ -417,6 +438,9 @@ function render(){
  if(!v){showEntry();}
  else if(v.phase==='lobby'){showLobby();}
  else {$('online-gate').hidden=true;gateError('');}
+ $('app').dataset.bracketKit=String(hasBracketPair(v?.tileSet));
+ $('app').dataset.tileSet=normalizeTileSet(v?.tileSet);
+ $('online-active-kit').textContent='KIT · '+TILE_SET_BY_ID[normalizeTileSet(v?.tileSet)].short.toUpperCase();
  $('online-room-code').textContent=v?.code||'······';
  $('online-room-code').title=v?.code?'Room '+v.code:'';
  $('online-share').disabled=!v;
@@ -542,7 +566,8 @@ function showBag(){
  detail.textContent='PHYSICAL TILES LEFT IN SHARED BAG';
  count.append(total,detail);wrap.append(count);
  const pools=document.createElement('p');pools.className='bag-pool-summary';
- pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators;
+ pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators+
+    (inventory.pools.brackets!==undefined?' · BRACKET PIECES '+inventory.pools.brackets:'');
  wrap.append(pools);
  const groups=document.createElement('div');groups.className='bag-inventory-groups';
  for(const group of inventory.groups){
@@ -554,7 +579,8 @@ function showBag(){
    const tiles=document.createElement('div');tiles.className='bag-inventory-tiles bag-inventory-'+group.id;
    for(const tile of group.tiles){
      const item=document.createElement('div');item.className='bag-inventory-tile'+(!tile.count?' is-empty':'');
-     const face=document.createElement('span');face.className='bag-inventory-face';face.textContent=tile.symbol;
+     const face=document.createElement('span');face.className='bag-inventory-face';
+      renderTileFace(face,tile.symbol);
      const num=document.createElement('strong');num.className='bag-inventory-count';num.textContent='×'+tile.count;
      item.append(face,num);item.setAttribute('aria-label',tile.label+': '+tile.count+' remaining');
      tiles.append(item);
@@ -601,7 +627,7 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private eight-tile rack and shares the same 13×13 board.'],
+  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 13×13 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
   ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
   ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
   ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
@@ -817,8 +843,13 @@ $('online-create-form').onsubmit=async e=>{
      name:$('online-host-name').value,
      maxPlayers:Number($('online-player-limit').value),
      turnSeconds:Number($('online-timer-settings').value),
+     tileSet:$('online-tile-kit').value,
      avatar:state.alienDraft
    }});
+   if($('online-tile-kit').value!=='natural'&&data.room?.tileSet!==$('online-tile-kit').value){
+     gateError('The online room server needs the updated maths-kit Worker deployment before it can host this tile set.');
+     return;
+   }
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
    connectSocket();showNotice('Room created. Share the code and invite your pilots.');

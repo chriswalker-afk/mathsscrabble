@@ -11,7 +11,7 @@ import {renderDriftHud} from './drift-hud.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
-import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
+import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitNumberSlots,kitRackSize,kitRackOptions} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
@@ -68,7 +68,7 @@ const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
-const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE+(hasBracketPair(state.tileSet)?2:0);
+const rackCapacity=()=>isDrift()?rackSlots(state.rogue):kitRackSize(state.tileSet);
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):kitRackOptions(state.tileSet);
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
@@ -360,7 +360,11 @@ function tileButton(tile, rackIndex){
    if(wasDragClick(event))return;
    if(state.itemTarget){applyTileTemporary(tile.id);return;}
    if(state.swapping){
-     state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);
+     if(tile.pairId){
+       const pair=state.rack.filter(t=>t.pairId===tile.pairId);
+       const marked=pair.every(t=>state.swapSet.has(t.id));
+       pair.forEach(t=>marked?state.swapSet.delete(t.id):state.swapSet.add(t.id));
+     }else state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);
      renderRack();return;
    }
    selectTile(tile.id);
@@ -466,10 +470,10 @@ function renderLocalStatus(){
  $('anomaly-banner').hidden=true;
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
- $('sector-label').textContent=match.phase==='finished'?'LOCAL MATCH · FINAL SCORES':
+ $('sector-label').textContent=match.phase==='finished'?'LOCAL MATCH · '+TILE_SET_BY_ID[state.tileSet].short.toUpperCase()+' · FINAL SCORES':
    state.ceremony&&state.localScoringPlayer!==null?
      'LOCAL MATCH · SCORING':
-     'LOCAL MATCH · '+match.players[match.current].name.toUpperCase();
+     'LOCAL MATCH · '+TILE_SET_BY_ID[state.tileSet].short.toUpperCase()+' · '+match.players[match.current].name.toUpperCase();
  $('target').textContent='—';
  $('turn').textContent=String(match.turnNumber);
  $('bag-count').textContent=match.bag.length;
@@ -566,6 +570,13 @@ function applyTileTemporary(tileId){
 }
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
+ $('app').dataset.tileSet=state.tileSet;
+ $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
+ $('operator-rules-note').textContent=state.tileSet==='advanced'?
+   'Use +, −, ×, ÷, powers (^), roots (√) or factorials (!). Brackets are linked pairs; equals is unlimited.':
+   hasBracketPair(state.tileSet)?
+     'Use +, −, × or ÷ with positive fractions and linked bracket pairs. Equals is unlimited.':
+     'Use +, −, × or ÷. Equals signs are unlimited and free.';
  renderBoard();renderRack();renderPreview();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
@@ -731,7 +742,7 @@ function showBagInventory(){
 $('bag-details-btn').onclick=showBagInventory;
 function localStateFromMatch(match,{privateTurn=true}={}){
  prepareLocalArtwork();
- state.mode='local';state.localMatch=match;
+ state.mode='local';state.localMatch=match;state.tileSet=normalizeTileSet(match.tileSet);
  state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
  state.localDeferPrivacy=false;state.focusedIndex=pos(CENTER,CENTER);
  state.board=match.board;state.bag=match.bag;state.pending={};
@@ -756,6 +767,7 @@ function startNewLocalMatch(config){
        i===0?{...player,rack}:player)})
    );
    rememberOpening(storage,'local',match.players[0].rack);
+   try{storage?.setItem(TILE_SET_STORAGE_KEY,match.tileSet);}catch{/* storage optional */}
    localSetupBadges=()=>{};
    localStateFromMatch(match);
  }catch(err){
@@ -768,6 +780,8 @@ function showLocalSetup({fromHome=false}={}){
  const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
  const count=saved?.players.length||2;
  const seconds=saved?.turnSeconds||0;
+ const queryKit=new URLSearchParams(location.search).get('tiles');
+ const selectedKit=TILE_SET_BY_ID[queryKit]?queryKit:normalizeTileSet(saved?.tileSet||storage?.getItem(TILE_SET_STORAGE_KEY));
  localSetupAliens=Array.from({length:4},(_,i)=>safePilotAlien(saved?.players?.[i]?.avatar,i));
  prepareLocalArtwork();
  showModal('ALIEN CREW · LOCAL MULTIPLAYER','Set up a local match',
@@ -776,7 +790,9 @@ function showLocalSetup({fromHome=false}={}){
      <select id="local-player-count" aria-label="Number of players">
        <option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option>
      </select></div>
-    <div id="local-setup-names" class="local-setup-names"></div>
+    <div class="local-setup-row"><label for="local-tile-set">MATHEMATICAL KIT</label>
+      <select id="local-tile-set">${TILE_SETS.map(kit=>'<option value="'+kit.id+'">'+kit.tier+' · '+kit.short.toUpperCase()+' — '+kit.title+'</option>').join('')}</select></div>
+     <div id="local-setup-names" class="local-setup-names"></div>
     <div class="local-setup-row"><label for="local-turn-seconds">TURN TIMER</label>
       <select id="local-turn-seconds">
         <option value="0">Off · take your time</option>
@@ -784,16 +800,24 @@ function showLocalSetup({fromHome=false}={}){
         <option value="90">90 seconds</option>
         <option value="120">120 seconds</option>
       </select></div>
-    <p class="local-setup-tip">One shared 13×13 board, independent 8-tile racks (5 numbers and 3 operators), and a private handover between turns. A match ends when a player goes out with an empty bag, or after two full circuits without a scoring move. Remaining rack points are deducted at the end.</p>
+    <p class="local-setup-tip" id="local-kit-description" aria-live="polite"></p>
    </div>`,
    [{text:fromHome?'BACK TO HOME':'CANCEL',fn:fromHome?showModeMenu:undefined},{text:'START MATCH →',primary:true,fn:()=>{
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
-     startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds});
+     startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds,tileSet:$('local-tile-set').value});
    }}]);
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
+ $('local-tile-set').value=selectedKit;
+ const describeKit=()=>{
+   const kit=TILE_SET_BY_ID[$('local-tile-set').value];
+   $('local-kit-description').textContent=kit.short+' · '+kit.desc+' Each private rack has '+
+     kitNumberSlots(kit.id)+' number tiles and 3 operators'+(kit.brackets?' plus one linked ( ) bracket pair':'')+
+     '. Players share one board. One free single-tile swap per turn; remaining rack points count against the final score.';
+ };
+ $('local-tile-set').addEventListener('change',describeKit);describeKit();
  const wrapper=$('local-setup-names');
  const groups=[],portraits=[];
  const labels={bloop:'Bloop',orbit:'Orbit',niblet:'Niblet',glimmer:'Glimmer'};
@@ -1561,7 +1585,18 @@ function startSolo(){
  }
  if(mode==='local'){
    const saved=loadLocalMatch(storage);
-   if(saved){localStateFromMatch(saved);return;}
+   if(saved){
+      localStateFromMatch(saved);
+      const requestedKit=new URLSearchParams(location.search).get('tiles');
+      if(TILE_SET_BY_ID[requestedKit]&&normalizeTileSet(saved.tileSet)!==requestedKit){
+        showModal('DIFFERENT MATCH KIT','Start with '+TILE_SET_BY_ID[requestedKit].short+'?',
+          '<p>Your saved match uses '+TILE_SET_BY_ID[normalizeTileSet(saved.tileSet)].short+
+          '. The selected '+TILE_SET_BY_ID[requestedKit].short+
+          ' kit requires a new local match; the current match can still be resumed.</p>',
+          [{text:'KEEP SAVED MATCH'},{text:'SET UP NEW MATCH →',primary:true,fn:()=>showLocalSetup({fromHome:true})}]);
+      }
+      return;
+    }
    // The first Local Match visit starts in setup; backing out returns home.
    showLocalSetup({fromHome:true});
    return;

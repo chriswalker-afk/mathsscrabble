@@ -33,6 +33,14 @@ test('four levels each produce exactly 151 unique, playable physical tile IDs',(
    }
  }
 });
+test('Nebula supplies only positive fractions while Quantum keeps signed fractions',()=>{
+ const nebula=makeBag(random,'rational'),quantum=makeBag(random,'advanced');
+ const nebulaFractions=nebula.filter(t=>t.value?.includes('/'));
+ assert.equal(nebulaFractions.length,28);
+ assert.ok(nebulaFractions.every(t=>!t.value.startsWith('−')));
+ assert.equal(new Set(nebulaFractions.map(t=>t.value)).size,14);
+ assert.ok(quantum.some(t=>t.value?.startsWith('−')&&t.value.includes('/')));
+});
 test('integer kit contains signed whole-number tiles but only basic operations',()=>{
  const bag=makeBag(random,'integer');
  for(let digit=1;digit<=9;digit++)assert.equal(bag.filter(t=>t.value==='−'+digit).length,3);
@@ -42,27 +50,27 @@ test('integer kit contains signed whole-number tiles but only basic operations',
  assert.equal(hand.rack.filter(t=>tilePool(t)==='numbers').length,5);
  assert.equal(hand.rack.filter(t=>tilePool(t)==='operators').length,3);
 });
-test('rational and quantum kits draw exactly one complete bracket pair in ten slots',()=>{
+test('rational and quantum kits draw six numbers, three operators and a complete bracket pair in eleven slots',()=>{
  for(const kit of ['rational','advanced']){
    const bag=makeBag(random,kit);
-   const initial=dealPlayableRack([],bag,{bracketPairs:1},random);
-   assert.equal(initial.rack.length,10);
-   assert.equal(initial.rack.filter(t=>tilePool(t)==='numbers').length,5);
+   const initial=dealPlayableRack([],bag,kitRackOptions(kit),random);
+   assert.equal(initial.rack.length,11);
+   assert.equal(initial.rack.filter(t=>tilePool(t)==='numbers').length,6);
    assert.equal(initial.rack.filter(t=>tilePool(t)==='operators').length,3);
    const brackets=initial.rack.filter(t=>tilePool(t)==='brackets');
    assert.deepEqual(brackets.map(t=>t.value).sort(),['(',')']);
    assert.equal(brackets[0].pairId,brackets[1].pairId);
    assert.equal(new Set([...initial.rack,...initial.bag].map(t=>t.id)).size,151);
    // Retaining a complete pair does not add a second pair.
-   const held=dealPlayableRack(initial.rack,initial.bag,{bracketPairs:1},random);
+   const held=dealPlayableRack(initial.rack,initial.bag,kitRackOptions(kit),random);
    assert.equal(held.rack.filter(t=>tilePool(t)==='brackets').length,2);
-   assert.equal(held.rack.length,10);
+   assert.equal(held.rack.length,11);
  }
  const r=makeRogueState('rational');
- assert.equal(rackSlots(r),10);
+ assert.equal(rackSlots(r),11);
  assert.equal(rogueRackOptions(r,1).bracketPairs,1);
  r.upgrades=['wide-rack'];
- assert.equal(rackSlots(r),11);
+ assert.equal(rackSlots(r),12);
 });
 test('special kit identities are guaranteed in the first rack whenever supply exists',()=>{
  const orbit=dealPlayableRack([],makeBag(random,'integer'),kitRackOptions('integer'),random);
@@ -107,7 +115,7 @@ test('advanced operations use exact BIDMAS: powers, roots and factorials',()=>{
  ])assert.throws(()=>checkEquation(values));
 });
 test('a scored bracket equation requires both linked physical halves in one turn',()=>{
- const rack=dealPlayableRack([],makeBag(random,'rational'),{bracketPairs:1},random).rack;
+ const rack=dealPlayableRack([],makeBag(random,'rational'),kitRackOptions('rational'),random).rack;
  const open=rack.find(t=>t.value==='('),close=rack.find(t=>t.value===')');
  const tiles=[open,makeTile('1/2'),makeTile('+'),makeTile('1/2'),close,
   makeTile('×'),makeTile('2'),makeTile('='),makeTile('2')];
@@ -115,7 +123,7 @@ test('a scored bracket equation requires both linked physical halves in one turn
  for(let i=0;i<tiles.length;i++)pending[pos(CENTER,2+i)]=tiles[i];
  const valid=validateMove(board,pending);
  assert.equal(valid.text,'(1/2+1/2)×2=2');
- assert.ok(scoreMove(board,pending,valid,{rackSize:10}).total>0);
+ assert.ok(scoreMove(board,pending,valid,{rackSize:11}).total>0);
  delete pending[pos(CENTER,2)];
  assert.throws(()=>validateMove(board,pending),/bracket|gap/i);
 });
@@ -130,7 +138,7 @@ test('bag scan groups fractions and linked brackets without hiding physical coun
 });
 test('rational and quantum solo saves survive an exact local validation round trip',()=>{
  for(const id of ['rational','advanced']){
-  const hand=dealPlayableRack([],makeBag(random,id),{bracketPairs:1},random);
+  const hand=dealPlayableRack([],makeBag(random,id),kitRackOptions(id),random);
   const map=new Map(),storage={setItem:(k,v)=>map.set(k,v),getItem:k=>map.get(k)};
   const state={mode:'sector',tileSet:id,rogue:null,sector:1,score:0,turn:1,freeSwapTurn:0,
     phase:'playing',board:Array(169).fill(null),rack:hand.rack,bag:hand.bag,

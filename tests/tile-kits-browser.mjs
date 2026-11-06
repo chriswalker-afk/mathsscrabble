@@ -24,8 +24,9 @@ try{
   assert.equal(new Set([...saved.bag,...saved.rack].map(t=>t.id)).size,151);
   assert.equal(await page.locator('#board .cell').count(),169);
   const pairExpected=['rational','advanced'].includes(kit);
-  assert.equal(saved.rack.length,pairExpected?10:8);
-  assert.equal(await page.locator('#rack-count').textContent(),(pairExpected?'10 / 10':'8 / 8'));
+  if(kit==='rational')assert.ok([...saved.bag,...saved.rack].every(t=>!(t.value?.startsWith('−')&&t.value?.includes('/'))),'Nebula supplies positive fractions only');
+  assert.equal(saved.rack.length,pairExpected?11:8);
+  assert.equal(await page.locator('#rack-count').textContent(),(pairExpected?'11 / 11':'8 / 8'));
   assert.equal(await page.locator('#rack .bracket-tile').count(),pairExpected?2:0);
   const width=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
   if(standardWidth)assert.equal(width,standardWidth,'Kit must not shrink original board');

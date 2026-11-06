@@ -108,6 +108,7 @@ try{
  await host.goto('http://127.0.0.1:4173/online.html',{waitUntil:'domcontentloaded'});
  assert.equal(await host.locator('#online-gate').isVisible(),true);
  assert.equal(await host.locator('#online-alien-presets button').count(),4);
+  assert.equal(await host.locator('#online-tile-kit option').count(),4);
  await host.locator('#online-alien-presets [data-preset="glimmer"]').click();
  assert.equal(await host.locator('#online-alien-presets [data-preset="glimmer"]').getAttribute('aria-pressed'),'true');
  await host.locator('#online-host-name').fill('Ari');
@@ -159,6 +160,7 @@ try{
  await host.locator('#online-start-match').click();
  await host.locator('#online-gate').waitFor({state:'hidden'});
  assert.equal(backend.room.phase,'playing');
+  assert.equal(backend.room.tileSet,'natural');
  assert.deepEqual(backend.room.match.players.map(p=>p.avatar),
   [defaultPilotAlien(3),defaultPilotAlien(2)]);
  assert.equal(await host.locator('#online-scores .alien-player-avatar svg').count(),2);
