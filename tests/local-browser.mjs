@@ -41,12 +41,12 @@ async function handover(expected){
  assert.equal(await page.locator('#rack .tile').count(),0,'no hand should be visible between turns');
  assert.equal(await page.locator('#local-ready-btn').isVisible(),true);
 }
-async function ready(expected){
+async function ready(expected,visibleTiles=7){
  await handover(expected);
  await page.locator('#local-ready-btn').click();
  assert.equal(await page.locator('#local-privacy').isVisible(),false);
  assert.equal(await page.locator('#app').getAttribute('inert'),null);
- assert.equal(await page.locator('#rack .tile').count(),7);
+ assert.equal(await page.locator('#rack .tile').count(),visibleTiles);
 }
 try{
  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
@@ -112,7 +112,7 @@ try{
      assert.equal(await cell(5,10).getAttribute('data-locked'),'false');
      assert.match(await cell(5,10).getAttribute('class'),/pending/);
      await page.reload({waitUntil:'networkidle'});
-     await ready(name);
+     await ready(name,6); // one of seven physical tiles is still on the pending board
      assert.match(await cell(5,10).getAttribute('class'),/pending/);
      await page.locator('#undo-btn').click();
      assert.doesNotMatch(await cell(5,10).getAttribute('class'),/pending/);
