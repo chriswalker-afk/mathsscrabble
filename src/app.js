@@ -563,6 +563,185 @@ function showBagInventory(){
  }
 }
 $('bag-details-btn').onclick=showBagInventory;
+function localStateFromMatch(match,{privateTurn=true}={}){
+ state.mode='local';state.localMatch=match;
+ state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
+ state.localDeferPrivacy=false;state.focusedIndex=pos(CENTER,CENTER);
+ state.board=match.board;state.bag=match.bag;state.pending={};
+ state.rack=[];state.placementOrder=[];state.selected=null;
+ state.swapping=false;state.swapSet.clear();state.recentlyPlaced=null;
+ state.lockedFlash.clear();state.ended=match.phase==='finished';
+ state.busy=match.phase!=='finished';
+ if(match.phase==='finished')state.busy=false;
+ announce(match.phase==='finished'?'Local match complete. Review the final standings.':
+   privateTurn?'Hot-seat privacy enabled. Hand the device to the next player.':
+   'Local multiplayer match ready.');
+ persistRun();render();
+ if(match.phase==='finished')showLocalResults();
+}
+function startNewLocalMatch(config){
+ try{
+   const match=makeLocalMatch(config);
+   localStateFromMatch(match);
+ }catch(err){
+   showModal('MATCH SETUP ERROR','Please check the player settings',
+     '<p>'+escapeText(err.message)+'</p>',[{text:'EDIT SETTINGS',primary:true,fn:showLocalSetup}]);
+ }
+}
+function showLocalSetup(){
+ const saved=state.localMatch||loadLocalMatch(storage,{privateOnResume:false});
+ const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
+ const count=saved?.players.length||2;
+ const seconds=saved?.turnSeconds||0;
+ showModal('PASS E · LOCAL MULTIPLAYER','Set up a local match',
+   `<div class="local-setup-grid">
+    <div class="local-setup-row"><label for="local-player-count">PLAYERS</label>
+     <select id="local-player-count" aria-label="Number of players">
+       <option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option>
+     </select></div>
+    <div id="local-setup-names" class="local-setup-names"></div>
+    <div class="local-setup-row"><label for="local-turn-seconds">TURN TIMER</label>
+      <select id="local-turn-seconds">
+        <option value="0">Off · take your time</option>
+        <option value="60">60 seconds</option>
+        <option value="90">90 seconds</option>
+        <option value="120">120 seconds</option>
+      </select></div>
+    <p class="local-setup-tip">One shared 13×13 board, independent 7-tile racks, and a private handover between turns. A match ends when a player goes out with an empty bag, or after two full circuits without a scoring move. Remaining rack points are deducted at the end.</p>
+   </div>`,
+   [{text:'CANCEL'},{text:'START MATCH →',primary:true,fn:()=>{
+     const amount=Number($('local-player-count').value);
+     const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
+     const turnSeconds=Number($('local-turn-seconds').value);
+     startNewLocalMatch({names,turnSeconds});
+   }}]);
+ $('local-player-count').value=String(count);
+ $('local-turn-seconds').value=String(seconds);
+ const wrapper=$('local-setup-names');
+ const inputs=[];
+ for(let i=0;i<4;i++){
+   const row=document.createElement('div');row.className='local-setup-row';
+   const label=document.createElement('label');label.textContent='PILOT '+(i+1);
+   label.htmlFor='local-player-name-'+i;
+   const input=document.createElement('input');
+   input.id='local-player-name-'+i;
+   input.type='text';input.maxLength=20;input.autocomplete='off';input.value=players[i]||'Pilot '+(i+1);
+   row.append(label,input);wrapper.append(row);inputs.push(row);
+ }
+ const updateCount=()=>{const amount=Number($('local-player-count').value);
+   inputs.forEach((row,i)=>{row.hidden=i>=amount;});};
+ $('local-player-count').addEventListener('change',updateCount);
+ updateCount();
+}
+function readyLocalPlayer(){
+ if(!isLocal()||state.localMatch?.phase!=='handover')return;
+ try{
+   const match=readyLocalTurn(state.localMatch,Date.now());
+   state.localMatch=match;state.board=match.board;state.bag=match.bag;
+   state.rack=match.players[match.current].rack;
+   state.pending={...match.pending};state.placementOrder=[...match.placementOrder];
+   state.selected=null;state.swapping=false;state.swapSet.clear();
+   state.recentlyPlaced=null;state.localScoringPlayer=null;
+   state.ended=false;state.busy=false;state.localDeferPrivacy=false;
+   announce(match.players[match.current].name+
+     ' is on the board. Build one valid BIDMAS equation or exchange/pass.');
+   render();
+   $('board').querySelector('[tabindex="0"]')?.focus({preventScroll:true});
+ }catch(err){announce(err.message,true);}
+}
+$('local-ready-btn').onclick=readyLocalPlayer;
+function finishLocalTurn(match,message){
+ state.localMatch=match;state.board=match.board;state.bag=match.bag;
+ state.pending={};state.rack=[];state.placementOrder=[];
+ state.selected=null;state.swapping=false;state.swapSet.clear();
+ state.recentlyPlaced=null;state.lockedFlash.clear();
+ state.localDeferPrivacy=false;state.localScoringPlayer=null;
+ state.busy=match.phase!=='finished';state.ended=match.phase==='finished';
+ announce(message);persistRun();render();
+ if(match.phase==='finished')showLocalResults();
+}
+function localPass(reason='pass'){
+ if(!isLocal()||state.busy||state.ended)return;
+ if(Object.keys(state.pending).length){
+   announce('Return unscored tiles to the rack before passing.',true);return;
+ }
+ try{
+   const match=passLocalTurn({...state.localMatch,pending:{},placementOrder:[]},reason);
+   const previous=state.localMatch.players[state.localMatch.current].name;
+   finishLocalTurn(match,reason==='timeout'?previous+' ran out of time.':
+     previous+' passed without scoring.');
+ }catch(err){announce(err.message,true);}
+}
+$('local-pass-btn').onclick=()=>localPass('pass');
+function localSwap(){
+ if(!isLocal()||state.busy||state.ended)return;
+ if(!state.swapping){
+   if(Object.keys(state.pending).length){announce('Clear your equation before swapping.',true);return;}
+   if(!state.bag.length){announce('No tiles remain in the bag.',true);return;}
+   state.swapping=true;state.selected=null;
+   announce('Select the rack tiles to exchange. An all-number or all-operator rack gets one free rescue exchange per turn.');
+   render();return;
+ }
+ if(!state.swapSet.size){announce('Select at least one tile for exchange.',true);return;}
+ try{
+   const oldMatch={...state.localMatch,pending:{},placementOrder:[],
+     players:state.localMatch.players.map((p,i)=>i===state.localMatch.current?{...p,rack:state.rack}:p)};
+   const {match,free}=exchangeLocalTiles(oldMatch,[...state.swapSet]);
+   if(free){
+     state.localMatch=match;state.rack=match.players[match.current].rack;
+     state.bag=match.bag;state.swapping=false;state.swapSet.clear();state.selected=null;
+     announce('Free rescue exchange complete. Your turn continues.');render();
+   }else{
+     finishLocalTurn(match,'Tiles exchanged. Turn passed to the next player.');
+   }
+ }catch(err){announce(err.message,true);}
+}
+function showLocalResults(){
+ if(!isLocal()||state.localMatch?.phase!=='finished')return;
+ const match=state.localMatch;
+ const standing=match.finalScores||localStandings(match);
+ const winners=standing.filter(p=>p.winner).map(p=>p.name);
+ const summary=match.finishedReason==='stalled'?
+   'Two full circuits of passes or paid exchanges ended the match.':
+   'A player emptied their rack with no tiles left in the bag.';
+ const rows=standing.map(entry=>
+  `<div class="local-result-row${entry.winner?' is-winner':''}">
+    <span>${entry.winner?'★':entry.rank}</span><strong>${escapeText(entry.name)}</strong>
+    <span>${entry.gross}</span><span>−${entry.penalty}</span><span>${entry.net}</span>
+   </div>`).join('');
+ showModal('MATCH COMPLETE',winners.length===1?
+   escapeText(winners[0])+' wins!':'Shared victory!',
+   `<p class="local-match-note">${summary}</p>
+    <div class="local-result-legend"><span>#</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
+    <div class="local-result-table">${rows}</div>
+    <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>`,
+   [{text:'CHOOSE MODE',fn:showModeMenu},
+    {text:'NEW LOCAL MATCH →',primary:true,fn:showLocalSetup}]);
+}
+function showLocalReport(){
+ if(!isLocal()||!state.localMatch)return;
+ const match=state.localMatch;
+ if(match.phase==='finished'){showLocalResults();return;}
+ const rows=match.players.map((p,i)=>
+   `<div class="report-move"><span class="report-turn">P${i+1}</span>
+   <strong>${escapeText(p.name)}</strong><span>${p.score} pts</span></div>`).join('');
+ const moves=match.history.filter(x=>x.type==='score').slice(-5).reverse().map(x=>
+   `<div class="report-move"><span class="report-turn">T${x.turn}</span>
+   <strong>${escapeText(x.equation||'Equation')}</strong><span>+${x.points}</span></div>`).join('');
+ showModal('LOCAL SCOREBOARD','Match standings',
+   `<div class="report-moves">${rows}</div><p class="local-match-note">Scores are provisional. Remaining rack points are subtracted when the game ends.</p>
+    <div class="history-heading">RECENT EQUATIONS</div>
+    <div class="report-moves">${moves||'<p>No equations scored yet.</p>'}</div>`,
+   [{text:'BACK TO MATCH',primary:true}]);
+}
+function finishLocalPresentation(){
+ if(!isLocal())return;
+ state.localDeferPrivacy=false;state.localScoringPlayer=null;
+ const match=state.localMatch;
+ state.busy=match.phase!=='finished';state.ended=match.phase==='finished';
+ render();
+ if(match.phase==='finished')showLocalResults();
+}
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
