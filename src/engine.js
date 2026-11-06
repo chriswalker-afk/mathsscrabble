@@ -4,6 +4,39 @@ export const CENTER = 6;
 export const HAND_SIZE = 7;
 export const TURNS_PER_SECTOR = 6;
 export const TARGETS = [45, 60, 75, 95, 115, 140, 170, 205];
+export const BLANK_NUMBER = 'blank-number';
+export const BLANK_OPERATOR = 'blank-operator';
+export const BLANK_ANY = 'blank-any';
+export const BLANK_KINDS = Object.freeze({
+ [BLANK_NUMBER]:{label:'NUMBER',symbol:'#',choices:'0123456789'.split('')},
+ [BLANK_OPERATOR]:{label:'OPERATOR',symbol:'◇',choices:['+','−','×','÷']},
+ [BLANK_ANY]:{label:'ANY TILE',symbol:'✦',choices:[...'0123456789','+','−','×','÷']}
+});
+export const isBlank = tile => Boolean(tile?.blank && BLANK_KINDS[tile.blank]);
+export const isDigit = value => typeof value==='string' && /^[0-9]$/.test(value);
+export const isOperator = value => ['+','−','×','÷'].includes(value);
+export function resolveBlank(tile,value){
+ if(!isBlank(tile)||!BLANK_KINDS[tile.blank].choices.includes(value))throw Error('That symbol cannot be assigned to this blank tile.');
+ return {...tile,value,points:0};
+}
+export function freeExchangeReason(availableRack){
+ if(!availableRack.length)return null;
+ const numbers=availableRack.every(tile=>isDigit(tile.value)||tile.blank===BLANK_NUMBER);
+ const operators=availableRack.every(tile=>isOperator(tile.value)||tile.blank===BLANK_OPERATOR);
+ return numbers?'numbers':operators?'operators':null;
+}
+/** Reorder visible physical tiles while retaining any unscored board tiles in hand. */
+export function reorderRack(rack,sourceId,index,hiddenIds=[]){
+ const hidden=new Set(hiddenIds);
+ const visible=rack.filter(tile=>!hidden.has(tile.id));
+ const source=rack.find(tile=>tile.id===sourceId);
+ if(!source)return rack;
+ const sourceIndex=visible.findIndex(tile=>tile.id===sourceId);
+ const without=visible.filter(tile=>tile.id!==sourceId);
+ const insert=Math.min(without.length,Math.max(0,index-(sourceIndex>=0&&sourceIndex<index?1:0)));
+ without.splice(insert,0,source);
+ return [...without,...rack.filter(tile=>hidden.has(tile.id)&&tile.id!==sourceId)];
+}
 export const POINTS = Object.freeze({'0':1,'1':1,'2':2,'3':2,'4':2,'5':3,'6':3,'7':3,'8':4,'9':4,'+':2,'−':2,'×':3,'÷':4,'(':0,')':0,'=':0});
 export const pos = (r,c) => r * SIZE + c;
 export const coords = index => [Math.floor(index / SIZE), index % SIZE];
@@ -20,11 +53,18 @@ export function bonusAt(r,c) {
   return '';
 }
 let nextId = 0;
-export const makeTile = (value) => ({id:'tile-'+(++nextId),value,points:POINTS[value]??0});
+export const makeTile = value => ({
+ id:'tile-'+(++nextId),
+ value:BLANK_KINDS[value]?null:value,
+ points:BLANK_KINDS[value]?0:(POINTS[value]??0),
+ ...(BLANK_KINDS[value]?{blank:value}:{})
+});
 export function makeBag(random=Math.random) {
   const values=[];
   for(let digit=0;digit<=9;digit++) for(let i=0;i<(digit<=4?9:7);i++) values.push(String(digit));
-  for(const [value,count] of [['+',23],['−',17],['×',15],['÷',13]]) for(let i=0;i<count;i++) values.push(value);
+  for(const [value,count] of [['+',18],['−',14],['×',12],['÷',10]]) for(let i=0;i<count;i++) values.push(value);
+ // Wildcards increase playable equation choices without creating high-value tiles.
+ for(const [value,count] of [[BLANK_NUMBER,7],[BLANK_OPERATOR,5],[BLANK_ANY,5]]) for(let i=0;i<count;i++) values.push(value);
   for(let i=values.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}
   return values.map(makeTile);
 }
@@ -46,7 +86,7 @@ const mul=(a,b)=>fraction(a.n*b.n,a.d*b.d);
 const div=(a,b)=>fraction(a.n*b.d,a.d*b.n);
 function parseExpression(source){
   const text=source.replaceAll('×','*').replaceAll('÷','/').replaceAll('−','-').replace(/\s/g,'');
-  let p=0;
+  let p=0,binaryCount=0;
   const fail=()=>{throw Error('Use a complete equation with valid BIDMAS order.');};
   function primary(){
     if(text[p]==='+'){p++;return primary();}
@@ -57,18 +97,18 @@ function parseExpression(source){
   }
   function product(){
     let x=primary();
-    while(text[p]==='*'||text[p]==='/'){const op=text[p++],y=primary();x=op==='*'?mul(x,y):div(x,y);}
+    while(text[p]==='*'||text[p]==='/'){const op=text[p++],y=primary();binaryCount++;x=op==='*'?mul(x,y):div(x,y);}
     return x;
   }
   function expression(){
     let x=product();
-    while(text[p]==='+'||text[p]==='-'){const op=text[p++],y=product();x=op==='+'?add(x,y):sub(x,y);}
+    while(text[p]==='+'||text[p]==='-'){const op=text[p++],y=product();binaryCount++;x=op==='+'?add(x,y):sub(x,y);}
     return x;
   }
   if(!text)fail();
   const result=expression();
   if(p!==text.length)fail();
-  return result;
+  return {result,binaryCount};
 }
 export function checkEquation(values){
   const symbols=values.join('');
@@ -76,8 +116,9 @@ export function checkEquation(values){
   const [left,right]=symbols.split('=');
   if(!left||!right)throw Error('Put a mathematical expression on both sides of =.');
   const a=parseExpression(left),b=parseExpression(right);
-  if(a.n*b.d!==b.n*a.d)throw Error('That equation is not balanced. Check both sides using BIDMAS.');
-  return {left:a,right:b,text:symbols};
+  if(a.binaryCount+b.binaryCount===0)throw Error('Build a calculation using at least one operation. A number equalling itself is too simple.');
+  if(a.result.n*b.result.d!==b.result.n*a.result.d)throw Error('That equation is not balanced. Check both sides using BIDMAS.');
+  return {left:a.result,right:b.result,text:symbols};
 }
 /**
  * Non-judgemental placement inspection for the board UI. It intentionally does
@@ -168,6 +209,8 @@ export function scoreMove(board,pending,move){
   const length=Math.max(0,move.indices.length-5)*3;
   const physicalCount=Object.values(pending).filter(t=>t.value!=='=').length;
   const sweep=physicalCount===HAND_SIZE?20:0;
-  return {base,multiplier,length,sweep,total:base*multiplier+length+sweep,bonuses};
+  const equation=5; // each genuinely calculated equality earns energy
+  const crossing=move.indices.some(index=>Boolean(board[index]))?5:0;
+  return {base,multiplier,length,sweep,equation,crossing,total:base*multiplier+length+sweep+equation+crossing,bonuses};
 }
 export function nextTarget(sector){return TARGETS[sector-1]??Math.round(205*Math.pow(1.18,sector-8));}
