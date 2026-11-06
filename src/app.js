@@ -123,6 +123,6 @@ $('equals-tile').onclick=()=>{selectTile('equals');renderBoard();};
 $('equals-tile').addEventListener('dragstart',e=>{state.selected='equals';e.dataTransfer.setData('text/plain','equals');});
 $('new-btn').onclick=()=>showModal('RESTART','Start a new run?', '<p>This will reset your current sector and score.</p>',[{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1)}]);
 $('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',`<p>Use your rack to create a mathematically correct equation. BIDMAS applies. Drag tiles to the board, or select a tile and then a square. Choose an unlimited <strong>=</strong> sign from the end of your rack.</p><p>Start through the centre. Later equations must intersect a locked tile. New tiles in a move must form a single continuous horizontal or vertical equation.</p><p>Score tile values and multipliers. Get +3 points for each square beyond five, or +20 for using all seven rack tiles in one turn. Spend a turn to exchange tiles. Reach the target within six turns to progress.</p><p>Click a pending tile to return it to the rack. This initial prototype contains the Origin tile set and solo Sector Run.</p>`,[{text:'LET’S PLAY',primary:true}]);
-$('modal-close').onclick=()=>$('modal').close();
-$('modal').addEventListener('cancel',e=>{if(state.ended)e.preventDefault();});
+$('modal-close').onclick=()=>{if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){$('modal-actions').querySelector('button')?.click();}else if(!state.ended){$('modal').close();}};
+$('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
 freshSector();
