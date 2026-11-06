@@ -322,11 +322,37 @@ export function validRogueState(rogue,sector,phase){
  if(!integer(rogue.flux,0,100000000)||!integer(rogue.earned,0,100000000)||
     !integer(rogue.spent,0,100000000)||rogue.flux!==rogue.earned-rogue.spent)return false;
  if(!integer(rogue.shopSector,0,99)||rogue.shopSector>sector||!integer(rogue.lastReward,0,10000))return false;
- if(!integer(rogue.pulse,0,3)||!integer(rogue.pulseBought,0,10000)||!integer(rogue.pulseUsed,0,10000)||rogue.pulse!==rogue.pulseBought-rogue.pulseUsed)return false;
+ // Old saves can still carry up to three capacitors; no new shop purchases
+ // may ever exceed two temporary slots.
+ if(!integer(rogue.pulse,0,3)||!integer(rogue.pulseBought,0,10000)||
+    !integer(rogue.pulseUsed,0,10000)||rogue.pulse!==rogue.pulseBought-rogue.pulseUsed)return false;
  if(!Array.isArray(rogue.upgrades)||rogue.upgrades.length>ROGUE_ITEMS.length ||
     new Set(rogue.upgrades).size!==rogue.upgrades.length||
     !rogue.upgrades.every(id=>Boolean(ROGUE_ITEM_BY_ID[id])))return false;
- if(rogue.spent!==rogue.upgrades.reduce((sum,id)=>sum+ROGUE_ITEM_BY_ID[id].cost,0)+rogue.pulseBought*PULSE_ITEM.cost)return false;
+ const bought=rogue.tempBought||[],used=rogue.tempUsed||[];
+ if(!Array.isArray(bought)||!Array.isArray(used)||bought.length>10000||used.length>10000||
+    ![...bought,...used].every(id=>id!=='pulse-charge'&&Boolean(TEMP_ITEM_BY_ID[id])))return false;
+ const available=new Map();
+ for(const id of bought)available.set(id,(available.get(id)||0)+1);
+ for(const id of used)available.set(id,(available.get(id)||0)-1);
+ if([...available.values()].some(n=>n<0))return false;
+ const expected=[...Array.from({length:rogue.pulse},()=>PULSE_ITEM.id)];
+ for(const [id,count] of available)for(let i=0;i<count;i++)expected.push(id);
+ if(rogue.tempSlots!==undefined){
+   if(!Array.isArray(rogue.tempSlots)||rogue.tempSlots.length>MAX_TEMPORARY_SLOTS||
+      !rogue.tempSlots.every(id=>Boolean(TEMP_ITEM_BY_ID[id])))return false;
+   const tally=list=>Object.entries(list.reduce((m,id)=>(m[id]=(m[id]||0)+1,m),{}))
+     .sort((a,b)=>a[0].localeCompare(b[0]));
+   if(JSON.stringify(tally(rogue.tempSlots))!==JSON.stringify(tally(expected)))return false;
+ }else if(bought.length||used.length)return false;
+ if(rogue.armed!=null&&(!expected.includes(rogue.armed)||
+    TEMP_ITEM_BY_ID[rogue.armed]?.action!=='score'))return false;
+ if(!integer(rogue.swapTurn??0,0,7)||!integer(rogue.swapsUsed??0,0,2))return false;
+ const echoed=rogue.echoed||[];
+ if(!Array.isArray(echoed)||echoed.length>169||
+    new Set(echoed).size!==echoed.length||!echoed.every(x=>integer(x,0,168)))return false;
+ if(rogue.spent!==rogue.upgrades.reduce((sum,id)=>sum+ROGUE_ITEM_BY_ID[id].cost,0)+
+    rogue.pulseBought*PULSE_ITEM.cost+bought.reduce((sum,id)=>sum+TEMP_ITEM_BY_ID[id].cost,0))return false;
  if(phase==='won'&&rogue.shopSector!==sector)return false;
  if(phase==='playing'&&rogue.shopSector>=sector)return false;
  return true;
