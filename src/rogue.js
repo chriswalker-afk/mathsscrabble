@@ -52,7 +52,9 @@ export function shopTemperatures(sector){
 // A pre-upgrade save may only contain the old Pulse counter. Its charges
 // remain usable, but new purchases obey the two-slot maximum.
 export function heldConsumables(rogue){
- return rogue?.tempSlots?[...rogue.tempSlots]:
+ // A legacy/manual state can still carry Pulse charges without an item array.
+ const slots=rogue?.tempSlots;
+ return Array.isArray(slots)&&(slots.length||!rogue.pulse)?[...slots]:
    Array.from({length:rogue?.pulse||0},()=>PULSE_ITEM.id);
 }
 export function armedConsumable(rogue){
@@ -312,6 +314,7 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
    total+=Math.floor(total*.5);effects.push('Power Surge +50% (single-use)');
  }
  return {...base,base:adjustedBase,tileScores,multiplier,sweep,extra:additional,
+   temporaryBoost:total-originalTotal,
    anomalyPenalty,anomaly:anomaly?.id||null,
    upgrades:effects,total,echoedIndices,
    tempApplied:TEMP_ITEM_BY_ID[tempApplied]?.action==='score'?tempApplied:null};
