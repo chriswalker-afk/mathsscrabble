@@ -653,6 +653,22 @@ function showModal(eyebrow,title,body,buttons){
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  if(!$('modal').open)$('modal').showModal();
 }
+function showZoneMap(){
+ if(!isDrift())return;
+ const returnAction=state.phase==='won'?showShop:
+   state.phase==='lost'?showSectorOutcome:undefined;
+ showModal('GALACTIC ROUTE','The Drift · Zone Map',
+   zoneMapMarkup(state.rogue,state.sector,state.phase),
+   [{text:'BACK TO '+(state.phase==='won'?'SALVAGE BAY':state.phase==='lost'?'REPORT':'BOARD'),primary:true,fn:returnAction}]);
+}
+function showBossEncounter(){
+ if(!isDrift()||!isBossSector(state.sector))return;
+ const info=zoneInfo(state.rogue,state.sector);
+ showModal('BOSS APPROACH · ZONE '+info.number,
+   info.boss.name,
+   bossIntroMarkup(state.rogue,state.sector),
+   [{text:'VIEW ZONE MAP',fn:showZoneMap},{text:'ENGAGE BOSS →',primary:true}]);
+}
 function showBagInventory(){
  if(state.busy)return;
  const inventory=summarizeBag(state.bag);
@@ -660,6 +676,9 @@ function showBagInventory(){
    `<div class="bag-overview"><div class="bag-overview-total">
      <strong>${inventory.total}</strong><div><span>PHYSICAL TILES</span>
      <p>Available for future draws and exchanges</p></div></div>
+      ${isDrift()&&restrictedDraws(state.rogue,state.sector).length?
+       '<p class="bag-seal-notice">BOSS EMBARGO · '+restrictedDraws(state.rogue,state.sector).join(', ')+
+       ' tiles are sealed from draws during this sector. They remain in the physical inventory.</p>':''}
      <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong></p>
      <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
      <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
@@ -981,7 +1000,7 @@ function showShop(){
  const offers=shopOffers(state.sector,state.rogue);
  const consumables=shopTemperatures(state.sector);
  const occupied=heldConsumables(state.rogue).length;
- const intro=`<div class="salvage-intro">
+ const intro=`${isBossSector(state.sector)?zoneVictoryMarkup(state.rogue,state.sector):''}<div class="salvage-intro">
    <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
    <div><strong>SECTOR ${state.sector} STABILISED</strong>
    <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
@@ -1432,7 +1451,7 @@ function showDriftIntro(){
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
        <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
-       <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
+       <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
    [{text:'BEGIN THE DRIFT →',primary:true}]);
 }
