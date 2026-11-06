@@ -129,7 +129,7 @@ try{
      assert.equal(await cell(5,10).getAttribute('data-locked'),'false');
      assert.match(await cell(5,10).getAttribute('class'),/pending/);
      await page.reload({waitUntil:'networkidle'});
-     await ready(name,6); // one of seven physical tiles is still on the pending board
+     await ready(name,7); // one of eight physical tiles is still on the pending board
      assert.match(await cell(5,10).getAttribute('class'),/pending/);
      await page.locator('#undo-btn').click();
      assert.doesNotMatch(await cell(5,10).getAttribute('class'),/pending/);
