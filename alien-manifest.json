@@ -1,0 +1,271 @@
+{
+  "name": "Alien Lab — EQUA//NOVA pilot species",
+  "version": 1,
+  "assetVersion": 1,
+  "canvas": {
+    "width": 320,
+    "height": 360,
+    "viewBox": [
+      0,
+      0,
+      320,
+      360
+    ]
+  },
+  "drawOrder": [
+    "rear-accessory",
+    "legs",
+    "arms",
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "front-accessory"
+  ],
+  "anchors": {
+    "centerX": 160,
+    "neckY": 154,
+    "hipY": 260,
+    "face": {
+      "eyesCenter": [
+        160,
+        101
+      ],
+      "mouthCenter": [
+        160,
+        143
+      ],
+      "eyesSafe": [
+        103,
+        56,
+        217,
+        130
+      ],
+      "mouthSafe": [
+        135,
+        129,
+        185,
+        164
+      ]
+    },
+    "shoulders": {
+      "left": [
+        113,
+        190
+      ],
+      "right": [
+        207,
+        190
+      ]
+    },
+    "accessories": {
+      "head": [
+        160,
+        53
+      ],
+      "chest": [
+        192,
+        225
+      ],
+      "rear": [
+        160,
+        207
+      ]
+    }
+  },
+  "parts": {
+    "heads": [
+      "orb",
+      "pear",
+      "jelly",
+      "facet"
+    ],
+    "eyes": [
+      "twin",
+      "cyclops",
+      "trio",
+      "visor"
+    ],
+    "mouths": [
+      "smile",
+      "surprised",
+      "toothy",
+      "zigzag"
+    ],
+    "bodies": [
+      "bean",
+      "puff",
+      "suit",
+      "jelly"
+    ],
+    "arms": [
+      "mittens",
+      "noodles",
+      "claws",
+      "tentacles"
+    ],
+    "legs": [
+      "stubs",
+      "spindles",
+      "tentacles",
+      "hover"
+    ],
+    "accessories": [
+      "none",
+      "antennae",
+      "horns",
+      "helmet",
+      "jetpack",
+      "badge",
+      "companion"
+    ]
+  },
+  "accessoryLayers": {
+    "none": "none",
+    "antennae": "rear",
+    "horns": "rear",
+    "helmet": "front",
+    "jetpack": "rear",
+    "badge": "front",
+    "companion": "front"
+  },
+  "colourRoles": {
+    "head": "skin",
+    "eyes": null,
+    "mouth": null,
+    "body": "outfit",
+    "arms": "skin",
+    "legs": "skin",
+    "accessory": "accent"
+  },
+  "colorTokens": [
+    "primary",
+    "light",
+    "dark",
+    "belly",
+    "accent",
+    "spot",
+    "blush"
+  ],
+  "palettes": {
+    "mint": {
+      "primary": "#77d9b7",
+      "light": "#c0f9df",
+      "dark": "#3b9e8b",
+      "belly": "#e7fff5",
+      "accent": "#ffe097",
+      "spot": "#47b797",
+      "blush": "#f5a7a9"
+    },
+    "lavender": {
+      "primary": "#af95ea",
+      "light": "#dfd0ff",
+      "dark": "#7967ba",
+      "belly": "#f7efff",
+      "accent": "#ffdc9b",
+      "spot": "#9274c8",
+      "blush": "#f9a9b9"
+    },
+    "coral": {
+      "primary": "#f49a94",
+      "light": "#ffd0ba",
+      "dark": "#c96679",
+      "belly": "#ffede4",
+      "accent": "#ffe4a2",
+      "spot": "#df7b86",
+      "blush": "#f6a1ae"
+    },
+    "aqua": {
+      "primary": "#73c9e8",
+      "light": "#c4f1fd",
+      "dark": "#418dad",
+      "belly": "#e3faff",
+      "accent": "#f5d693",
+      "spot": "#53aecf",
+      "blush": "#eaa8c5"
+    },
+    "saffron": {
+      "primary": "#f0c86d",
+      "light": "#fff0b4",
+      "dark": "#c6954e",
+      "belly": "#fff8db",
+      "accent": "#f995a2",
+      "spot": "#dba953",
+      "blush": "#ef999e"
+    },
+    "cosmic-blue": {
+      "primary": "#7f94df",
+      "light": "#c3d4ff",
+      "dark": "#5169ad",
+      "belly": "#e8edff",
+      "accent": "#b2f5d6",
+      "spot": "#667abf",
+      "blush": "#efb4d2"
+    }
+  },
+  "presets": {
+    "bloop": {
+      "version": 1,
+      "head": "orb",
+      "eyes": "twin",
+      "mouth": "smile",
+      "body": "bean",
+      "arms": "mittens",
+      "legs": "stubs",
+      "accessory": "antennae",
+      "colours": {
+        "skin": "mint",
+        "outfit": "lavender",
+        "accent": "saffron"
+      }
+    },
+    "orbit": {
+      "version": 1,
+      "head": "facet",
+      "eyes": "visor",
+      "mouth": "zigzag",
+      "body": "suit",
+      "arms": "noodles",
+      "legs": "hover",
+      "accessory": "helmet",
+      "colours": {
+        "skin": "cosmic-blue",
+        "outfit": "aqua",
+        "accent": "saffron"
+      }
+    },
+    "niblet": {
+      "version": 1,
+      "head": "pear",
+      "eyes": "trio",
+      "mouth": "surprised",
+      "body": "puff",
+      "arms": "claws",
+      "legs": "spindles",
+      "accessory": "badge",
+      "colours": {
+        "skin": "coral",
+        "outfit": "mint",
+        "accent": "lavender"
+      }
+    },
+    "glimmer": {
+      "version": 1,
+      "head": "jelly",
+      "eyes": "cyclops",
+      "mouth": "toothy",
+      "body": "jelly",
+      "arms": "tentacles",
+      "legs": "tentacles",
+      "accessory": "companion",
+      "colours": {
+        "skin": "lavender",
+        "outfit": "coral",
+        "accent": "aqua"
+      }
+    }
+  },
+  "allowAllCombinations": true,
+  "artworkPolicy": "Original same-origin, fixed-viewBox SVGs only. Safe color attributes use data-color-slot/data-stroke-slot; faces and outlines stay high-contrast.",
+  "security": "Only allowlisted versioned part/palette identifiers are stored or sent. Never accept uploaded SVG, CSS or arbitrary URL."
+}

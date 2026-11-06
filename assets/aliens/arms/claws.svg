@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="arms" data-part-id="claws" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Soft claws - Alien Lab</title><desc>Friendly mitten claws with three rounded tips.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M129 185 Q105 180 91 200 Q77 211 64 214 Q54 198 45 207 Q41 214 53 225 Q38 221 36 235 Q36 244 57 246 Q50 258 62 261 Q70 263 78 250 Q95 249 103 238 L132 221Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M191 185 Q215 180 229 200 Q243 211 256 214 Q266 198 275 207 Q279 214 267 225 Q282 221 284 235 Q284 244 263 246 Q270 258 258 261 Q250 263 242 250 Q225 249 217 238 L188 221Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M58 235 Q69 232 78 237" fill="none" stroke="#3b9e8b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M262 235 Q251 232 242 237" fill="none" stroke="#3b9e8b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+</g></svg>

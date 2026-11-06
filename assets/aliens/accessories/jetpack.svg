@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="jetpack" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Mini jetpack - Alien Lab</title><desc>Two compact rear thrusters with tiny golden sparks.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M88 183 Q75 183 74 200 L74 264 Q83 279 100 263 L105 193Z" fill="#c6954e" data-color-slot="dark" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M232 183 Q245 183 246 200 L246 264 Q237 279 220 263 L215 193Z" fill="#c6954e" data-color-slot="dark" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="80" y="202" width="21" height="43" rx="8" fill="#f0c86d" data-color-slot="primary" stroke="#26344e" stroke-width="2.8"/>
+<rect x="219" y="202" width="21" height="43" rx="8" fill="#f0c86d" data-color-slot="primary" stroke="#26344e" stroke-width="2.8"/>
+<path d="M81 267 L91 291 L101 267Z" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M219 267 L229 291 L239 267Z" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="90" cy="216" r="3.5" fill="#fff8db" data-color-slot="belly" />
+<circle cx="230" cy="216" r="3.5" fill="#fff8db" data-color-slot="belly" />
+</g></svg>

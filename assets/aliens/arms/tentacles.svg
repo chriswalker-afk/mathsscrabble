@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="arms" data-part-id="tentacles" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Wave tentacle arms - Alien Lab</title><desc>Loose curling tentacles with round suction dots.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M126 187 Q93 182 83 203 Q72 226 56 220 Q40 214 51 195 Q58 186 70 192" fill="none" stroke="#26344e" stroke-width="25" stroke-linecap="round"/>
+<path d="M194 187 Q227 182 237 203 Q248 226 264 220 Q280 214 269 195 Q262 186 250 192" fill="none" stroke="#26344e" stroke-width="25" stroke-linecap="round"/>
+<path d="M126 187 Q93 182 83 203 Q72 226 56 220 Q40 214 51 195 Q58 186 70 192" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="18" stroke-linecap="round"/>
+<path d="M194 187 Q227 182 237 203 Q248 226 264 220 Q280 214 269 195 Q262 186 250 192" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="18" stroke-linecap="round"/>
+<circle cx="68" cy="219" r="4.8" fill="#c0f9df" data-color-slot="light" />
+<circle cx="252" cy="219" r="4.8" fill="#c0f9df" data-color-slot="light" />
+<circle cx="82" cy="203" r="3" fill="#47b797" data-color-slot="spot" />
+<circle cx="238" cy="203" r="3" fill="#47b797" data-color-slot="spot" />
+</g></svg>

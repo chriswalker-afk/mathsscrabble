@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="horns" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Tiny moon horns - Alien Lab</title><desc>Two soft little horns pointing away from the forehead.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M116 78 Q88 65 88 22 Q105 38 137 58Z" fill="#fff0b4" data-color-slot="light" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M204 78 Q232 65 232 22 Q215 38 183 58Z" fill="#fff0b4" data-color-slot="light" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M98 43 Q106 51 113 55" fill="none" stroke="#fffdf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".66"/>
+<path d="M222 43 Q214 51 207 55" fill="none" stroke="#fffdf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".66"/>
+</g></svg>

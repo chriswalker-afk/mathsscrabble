@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="bodies" data-part-id="puff" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Fluffy puff body - Alien Lab</title><desc>Round plush fluffy alien body with tiny pillowy tufts.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M137 152 Q161 141 187 153 Q210 153 220 174 L235 184 Q228 198 232 211 Q237 229 222 235 Q229 255 213 267 Q210 284 191 283 Q176 299 161 286 Q143 300 128 283 Q109 286 104 268 Q85 261 97 242 Q83 232 95 216 Q86 197 100 184 L115 176 Q117 157 137 152Z" fill="#af95ea" data-color-slot="primary" stroke="#26344e" stroke-width="4.3" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="162" cy="226" rx="51" ry="47" fill="#f7efff" data-color-slot="belly" />
+<ellipse cx="119" cy="184" rx="15" ry="22" fill="#dfd0ff" data-color-slot="light" transform="rotate(-22 119 184)" opacity=".6"/>
+<circle cx="119" cy="260" r="4.5" fill="#9274c8" data-color-slot="spot" />
+<circle cx="203" cy="255" r="4" fill="#9274c8" data-color-slot="spot" />
+<ellipse cx="159" cy="277" rx="32" ry="6" fill="#7967ba" data-color-slot="dark" opacity=".22"/>
+</g></svg>

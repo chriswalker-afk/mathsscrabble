@@ -42,6 +42,14 @@ The animation runs only while the current view is active. Use **SKIP** in the co
 
 The game remembers the most recent opening rack pattern separately for Sector Run, The Drift and Local Match; if a new opening would look identical to the previous one, it is reshuffled (and if necessary rearranged). **No physical tiles are invented, duplicated or removed to avoid repetition.** A new game also creates an independent bag order, so later draws are not locked into a tutorial sequence. The opening pattern history is local to this browser and is not a competitive seed, server record or cross-device guarantee.
 
+## Alien Lab — Pass A1 original creature library
+
+The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **30 original, interchangeable SVG components** (four each for heads, eyes, mouths, bodies, arms and legs/movement; six optional accessories) plus **six independent colour palettes**. The shared transparent **320×360** canvas and anatomical anchors let all **28,672 base combinations** connect cleanly. Face elements, shoulder seams, neck seams and hip seams are independently tested, and the renderer keeps high-contrast outlines at small scoreboard sizes.
+
+Open the [A1 Specimen Vault](alien-preview.html) to review four curated aliens (**Bloop, Orbit, Niblet, Glimmer**), small-size examples and the full part atlas. This is **not yet an interactive editor**: selectable thumbnails, saved edits and randomisation UI are in **Pass A2**; Local Match / Online Rooms integration is a later pass. The underlying safe `src/alien/model.js` already supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art.
+
+See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The existing standalone animal **Critter Lab** and the EQUA//NOVA game modes are unchanged.
+
 ## Pass E2 — Online Signal Clash
 
 **Online Rooms** extends multiplayer to two to four people on **different devices**. One pilot creates a six-character room code, others join with the link, and the host starts the match. Players see one shared 13×13 board, their **own private seven-tile rack**, live scoreboards and optional server-enforced turn timers. All completed equations are checked using BIDMAS and scored **by the Cloudflare server**, not the player's browser. Passes, free/paid swaps, finite bag, final rack-point deductions, tie handling, reconnection and the existing satisfying tile-scoring animation are supported.

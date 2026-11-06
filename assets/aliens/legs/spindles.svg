@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="legs" data-part-id="spindles" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Springy legs - Alien Lab</title><desc>Two long narrow bouncing legs with chunky little boots.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M133 252 Q147 250 151 260 L147 313 Q141 319 132 312 L126 260Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M171 252 Q185 250 191 260 L193 312 Q181 319 174 311 L167 260Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M132 305 Q147 309 156 324 Q161 335 145 337 L102 337 Q93 334 102 319Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M187 305 Q173 309 164 324 Q159 335 175 337 L218 337 Q227 334 218 319Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M118 327 L143 327" fill="none" stroke="#3b9e8b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M202 327 L177 327" fill="none" stroke="#3b9e8b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+</g></svg>

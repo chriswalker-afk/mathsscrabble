@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="eyes" data-part-id="twin" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Twin eyes - Alien Lab</title><desc>Two big gleaming pupils that look gently curious.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<ellipse cx="134" cy="102" rx="20.5" ry="21" fill="#fffdf6" stroke="#26344e" stroke-width="3.8"/>
+<ellipse cx="186" cy="102" rx="20.5" ry="21" fill="#fffdf6" stroke="#26344e" stroke-width="3.8"/>
+<ellipse cx="140" cy="106" rx="9" ry="12" fill="#26344e"/>
+<ellipse cx="180" cy="106" rx="9" ry="12" fill="#26344e"/>
+<circle cx="136.5" cy="101" r="4" fill="white"/>
+<circle cx="176.5" cy="101" r="4" fill="white"/>
+<circle cx="143" cy="112" r="1.8" fill="white" opacity=".75"/>
+<circle cx="183" cy="112" r="1.8" fill="white" opacity=".75"/>
+</g></svg>

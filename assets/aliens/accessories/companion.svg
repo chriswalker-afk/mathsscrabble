@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="companion" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Orbit buddy - Alien Lab</title><desc>A tiny friendly moonlet floating by the alien pilot.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<ellipse cx="268" cy="110" rx="29" ry="10" transform="rotate(-25 268 110)" fill="none" stroke="#f995a2" data-stroke-slot="accent" stroke-width="3.4" opacity=".9"/>
+<circle cx="269" cy="107" r="22" fill="#f0c86d" data-color-slot="primary" stroke="#26344e" stroke-width="3.6"/>
+<ellipse cx="257" cy="96" rx="10" ry="6" fill="#fff0b4" data-color-slot="light" transform="rotate(-24 257 96)" opacity=".8"/>
+<circle cx="263" cy="111" r="3.5" fill="#26344e"/>
+<circle cx="277" cy="111" r="3.5" fill="#26344e"/>
+<path d="M263 120 Q270 126 276 120" fill="none" stroke="#26344e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="246" cy="94" r="4" fill="#fff6c9"/>
+<path d="M293 74 L295 81 L302 83 L295 85 L293 92 L291 85 L284 83 L291 81Z" fill="#ffe2a1"/>
+</g></svg>

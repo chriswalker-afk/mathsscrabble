@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="bodies" data-part-id="jelly" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Jellybean body - Alien Lab</title><desc>A soft translucent-looking body with gently wobbling sides.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M136 154 Q160 144 185 154 Q207 162 214 189 Q225 224 213 251 Q220 269 210 278 Q194 288 178 281 Q159 296 142 283 Q126 289 112 278 Q102 267 109 251 Q96 229 105 194 Q112 166 136 154Z" fill="#af95ea" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="160" cy="223" rx="42" ry="47" fill="#f7efff" data-color-slot="belly" opacity=".54"/>
+<ellipse cx="133" cy="187" rx="13" ry="24" fill="#dfd0ff" data-color-slot="light" transform="rotate(-20 133 187)" opacity=".6"/>
+<circle cx="119" cy="251" r="4.5" fill="#9274c8" data-color-slot="spot" opacity=".65"/>
+<circle cx="198" cy="241" r="3.5" fill="#9274c8" data-color-slot="spot" opacity=".65"/>
+<path d="M130 269 Q160 281 192 269" fill="none" stroke="#7967ba" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
+</g></svg>

@@ -37,6 +37,30 @@ jobs:
           done
           curl -fsS http://127.0.0.1:8787/api/health || (cat /tmp/equanova-cf-dev.log && exit 1)
           node tests/online-worker-runtime.mjs
+  alien-art:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install SVG artwork browser checks
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Raster-check all alien SVGs and anatomical combinations
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/equanova-alien-server.log 2>&1 &
+          sleep 2
+          node tests/alien-art-browser.mjs
+      - name: Upload specimen vault screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: equanova-alien-gallery
+          path: /tmp/equanova-alien-*.png
+          if-no-files-found: ignore
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15

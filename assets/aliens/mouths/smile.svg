@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="mouths" data-part-id="smile" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Tiny smile - Alien Lab</title><desc>A content little curved smile with dimples.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M144 138 Q160 154 176 138" fill="none" stroke="#26344e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="141" cy="138" r="2.8" fill="#26344e"/>
+<circle cx="179" cy="138" r="2.8" fill="#26344e"/>
+</g></svg>

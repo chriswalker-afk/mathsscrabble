@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="heads" data-part-id="facet" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Facet head - Alien Lab</title><desc>Rounded kite-shaped head with large geometric facets.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M142 144 Q160 145 178 144 L185 176 Q159 184 137 176Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M152 18 Q160 12 168 18 L246 94 Q255 103 249 116 L220 162 Q211 179 192 178 L128 178 Q109 179 100 162 L71 116 Q65 105 74 94Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M151 28 L102 108 L115 151 L141 169 Q119 140 123 106Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
+<path d="M174 31 L226 105 L209 150 Q210 112 174 31Z" fill="#3b9e8b" data-color-slot="dark" stroke="#26344e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".17"/>
+<path d="M133 49 L153 31" fill="none" stroke="#fffdf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
+<ellipse cx="95" cy="124" rx="10" ry="6" fill="#f5a7a9" data-color-slot="blush" opacity=".44"/>
+<ellipse cx="225" cy="124" rx="10" ry="6" fill="#f5a7a9" data-color-slot="blush" opacity=".44"/>
+</g></svg>

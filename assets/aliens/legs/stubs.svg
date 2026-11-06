@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="legs" data-part-id="stubs" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Stubby feet - Alien Lab</title><desc>Short sturdy legs and oversize rounded slippers.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M124 249 Q137 243 151 250 L158 305 Q153 318 136 319 Q120 317 117 300Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M169 250 Q185 244 197 250 L203 299 Q200 317 184 319 Q167 320 162 306Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M121 296 Q142 297 154 308 Q165 317 152 331 Q134 337 100 329 Q93 322 100 312Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M199 296 Q178 297 166 308 Q155 317 168 331 Q186 337 220 329 Q227 322 220 312Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="117" cy="319" rx="12" ry="4" fill="#e7fff5" data-color-slot="belly" opacity=".65"/>
+<ellipse cx="203" cy="319" rx="12" ry="4" fill="#e7fff5" data-color-slot="belly" opacity=".65"/>
+</g></svg>

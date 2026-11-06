@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="heads" data-part-id="orb" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Orb head - Alien Lab</title><desc>A round friendly planet-like head with bright oval highlights.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M143 145 Q160 140 177 145 L182 177 Q160 187 138 177Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M160 19 C209 19 243 55 243 101 C243 149 207 182 160 181 C113 182 77 149 77 101 C77 55 111 19 160 19Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="129" cy="56" rx="38" ry="20" fill="#c0f9df" data-color-slot="light" transform="rotate(-30 129 56)" opacity=".58"/>
+<ellipse cx="211" cy="139" rx="14" ry="19" fill="#3b9e8b" data-color-slot="dark" opacity=".2"/>
+<ellipse cx="98" cy="133" rx="13" ry="7" fill="#f5a7a9" data-color-slot="blush" opacity=".55"/>
+<ellipse cx="222" cy="133" rx="13" ry="7" fill="#f5a7a9" data-color-slot="blush" opacity=".55"/>
+<circle cx="216" cy="60" r="5" fill="#47b797" data-color-slot="spot" opacity=".55"/>
+</g></svg>
