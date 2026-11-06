@@ -96,7 +96,7 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
  }
  state.view=view;state.code=view.code;state.lastRevision=view.revision;
  if(!state.ceremony)render();
- if(view.phase==='finished'&&!state.shownResults&&!state.ceremony){
+ if(view.phase==='finished'&&!state.shownResults&&!state.ceremony&&!state.busy){
    state.shownResults=true;queueMicrotask(showResults);
  }
 };
@@ -476,6 +476,7 @@ function showBag(){
 }
 function showResults(){
  const match=current();if(!match?.standings)return;
+ state.shownResults=true;
  const content=document.createElement('div');
  const intro=document.createElement('p');
  intro.textContent=match.reason==='stalled'?
@@ -554,6 +555,8 @@ async function mutate(endpoint,payload){
  }catch(err){
    showNotice(err.message,true);
    if(err.status===409||err.status===403)state.pendingRequest=null;
+   // Allow the conflict recovery request while the action spinner is active.
+   state.busy=false;
    await refreshRoom();
    if(!err.status){
      showDialog('CONNECTION INTERRUPTED','Confirm your last action',
@@ -677,7 +680,10 @@ $('online-pass').onclick=async()=>{
  if(!myTurn())return;
  if(Object.keys(state.pending).length){showNotice('Return your unscored tiles before passing.',true);return;}
  const result=await mutate('action',{type:'pass'});
- if(result)showNotice('Turn passed. Waiting for the next pilot.');
+ if(result){
+   showNotice('Turn passed. Waiting for the next pilot.');
+   if(state.view?.phase==='finished')showResults();
+ }
 };
 $('online-swap').onclick=async()=>{
  if(!myTurn())return;
@@ -689,8 +695,11 @@ $('online-swap').onclick=async()=>{
  }
  if(!state.swapIds.size){showNotice('Select at least one tile from your rack.',true);return;}
  const result=await mutate('action',{type:'exchange',ids:[...state.swapIds]});
- if(result)showNotice(result.event?.type==='free-exchange'?
-   'Free exchange complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
+ if(result){
+   showNotice(result.event?.type==='free-exchange'?
+     'Free exchange complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
+   if(state.view?.phase==='finished')showResults();
+ }
 };
 $('online-start-match').onclick=async()=>{
  if(!state.view?.you.host||state.view.people.length<2)return;
@@ -729,9 +738,15 @@ $('online-join-form').onsubmit=async e=>{
  finally{$('online-join-button').disabled=false;}
 };
 $('online-leave-lobby').onclick=async()=>{
- if(!state.view||state.view.phase!=='lobby')return;
- try{await mutate('leave',{});}catch{}
- clearSession();
+ if(!state.view||state.view.phase!=='lobby'||state.busy)return;
+ state.busy=true;render();
+ try{
+   await requestApi(roomPath()+'/leave',{method:'POST',auth:true,
+     body:{id:requestId(),revision:state.view.revision}});
+   clearSession();
+ }catch(err){
+   gateError(err.message);
+ }finally{state.busy=false;render();}
 };
 async function restore(){
  let previous;
