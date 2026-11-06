@@ -19,10 +19,13 @@ const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator
  */
 export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
  const bag=[...sourceBag],rack=[...held];
+ const minBlanks=options.minBlanks===2?2:1;
  for(const [pool,target] of [['numbers',NUMBER_SLOTS],['operators',OPERATOR_SLOTS]]){
    let count=rack.filter(t=>tilePool(t)===pool).length;
    while(count<target){
-     const at=bag.findLastIndex(t=>tilePool(t)===pool);
+     let at=rack.filter(isBlank).length<minBlanks?
+       bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)):-1;
+     if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool);
      if(at<0)break;
      rack.push(bag.splice(at,1)[0]);count++;
    }
