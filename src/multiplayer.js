@@ -1,6 +1,6 @@
 // Local 2–4 player match rules. Pure state transitions shared with future
 // server-authoritative room logic. No DOM; the UI controls rack privacy.
-import {SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isDigit,isOperator,makeBag,validateMove,scoreMove} from './engine.js';
+import {SIZE,HAND_SIZE,tilePool,POINTS,BLANK_KINDS,isDigit,isOperator,makeBag,validateMove,scoreMove} from './engine.js';
 import {dealPlayableRack} from './solo.js';
 import {acceptPilotAlien,isValidPilotAlien} from './alien/profiles.js';
 
@@ -113,9 +113,12 @@ export function exchangeLocalTiles(match,selectedIds,rng=Math.random){
  const player=currentPlayer(match);
  if(selectedIds.some(id=>!player.rack.some(tile=>tile.id===id)))throw Error('Choose tiles from your own rack.');
  if(selectedIds.length>match.bag.length)throw Error('Not enough tiles remain in the bag.');
- const numbers=player.rack.every(tile=>isDigit(tile.value)||tile.blank==='blank-number');
- const operators=player.rack.every(tile=>isOperator(tile.value)||tile.blank==='blank-operator');
- const free=(numbers||operators)&&!match.freeExchangeUsed;
+ const free=selectedIds.length===1&&!match.freeExchangeUsed;
+ for(const pool of ['numbers','operators']){
+   if(selectedIds.filter(id=>tilePool(player.rack.find(t=>t.id===id))===pool).length>
+      match.bag.filter(t=>tilePool(t)===pool).length)
+     throw Error('Not enough '+pool+' remain in that tile bag.');
+ }
  const removed=new Set(selectedIds);
  const exchanged=player.rack.filter(tile=>removed.has(tile.id));
  // Draw replacements before shuffling exchanged tiles back into the bag.
