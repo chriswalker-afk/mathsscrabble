@@ -2,13 +2,14 @@ import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeB
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
@@ -44,7 +45,7 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
- state.stats=freshStats();state.phase='playing';
+ state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.ended=false;state.busy=false;
  state.selected=null;state.swapping=false;state.swapSet.clear();
@@ -333,7 +334,9 @@ function render(){
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
- $('score').textContent=state.score;$('target').textContent=target;
+ const displayedScore=state.ceremony?
+   state.ceremony.startScore+state.ceremony.awarded:state.score;
+ $('score').textContent=displayedScore;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
@@ -359,8 +362,10 @@ function render(){
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
    `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
- $('progress').style.width=Math.min(100,state.score/target*100)+'%';
- $('progress').setAttribute('aria-label',`${state.score} of ${target} energy collected`);
+ $('progress').style.width=Math.min(100,displayedScore/target*100)+'%';
+ $('progress').setAttribute('aria-label',`${displayedScore} of ${target} energy displayed`);
+ $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
+ $('ceremony-readout').hidden=!state.ceremony;
  $('run-summary').textContent=`${state.progress.completed.length} sector${state.progress.completed.length===1?'':'s'} · ${state.progress.runPoints} energy`;
  const history=$('history-mini');
  history.replaceChildren();
