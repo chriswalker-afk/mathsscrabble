@@ -105,7 +105,6 @@ try{
  assert.match(await page.locator('#log').textContent(),/not balanced/i);
  assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulse,1);
  await cell(6,8).click();
- await page.locator('#rack .wildcard-blank-any').click();
  await cell(6,8).click();
  await page.locator('#wildcard-choices button',{hasText:'2'}).first().click();
  await page.locator('#score-btn').click();
