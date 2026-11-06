@@ -3,6 +3,7 @@ import {
  SIZE,HAND_SIZE,NUMBER_SLOTS,OPERATOR_SLOTS,tilePool,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
+import {bossField,bossForSector} from './drift-bosses.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -150,6 +151,14 @@ function validSnapshot(data){
  if(!Array.isArray(data.placementOrder)||data.placementOrder.length>maxRack+3)return false;
  if(!entries.every(([i,t])=>/^(0|[1-9]\d*)$/.test(i)&&
       Number(i)<SIZE*SIZE&&data.board[Number(i)]===null&&validTile(t,'placed')))return false;
+ if(mode==='rogue'){
+   const boss=bossForSector(data.rogue,data.sector);
+   if(boss){
+     const field=bossField(data.rogue,data.sector);
+     if(entries.some(([i])=>field.blocked.has(Number(i))))return false;
+     if(data.rogue.forcedTile&&!data.rack.some(t=>t.id===data.rogue.forcedTile))return false;
+   }
+ }
  if(!data.placementOrder.every(i=>validInteger(i,0,SIZE*SIZE-1)&&
       Object.hasOwn(data.pending,String(i))))return false;
  if(new Set(data.placementOrder).size!==data.placementOrder.length)return false;
