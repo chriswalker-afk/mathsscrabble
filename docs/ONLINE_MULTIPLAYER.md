@@ -21,7 +21,7 @@ All turns are processed by a Cloudflare Worker and one SQLite-backed Durable Obj
 - Correct equations use the existing tile-by-tile score animation only AFTER the authoritative server awards points; wrong equations can be corrected without losing a turn.
 - Automatic Durable Object alarms enforce timed turns even while no browsers are connected. A timeout cancels pending local placement and passes the turn.
 - A match ends when a rack empties with the bag empty, or after two complete cycles without scoring. Remaining tile points are deducted; highest net score wins. Equal highest net scores tie.
-- Room revisions are broadcast over hibernating WebSockets without secrets, tiles or personalised data. Clients fetch their own protected snapshot after each notification. Polling is a fallback.
+- Room revisions are broadcast over hibernating WebSockets without secrets, tiles or personalised data. Clients fetch their own protected snapshot after each notification. While the WebSocket is healthy, clients do **not poll**. During disconnection they poll every 30 seconds while visible, reconnect with bounded backoff (up to 60 seconds), and stop unnecessary background-tab reconnects.
 - Room lifetime is six hours while waiting in the lobby, 24 hours of inactivity during play and six hours after finishing.
 - Private access keys are stored in the player's browser storage for reload/reconnection. The invitation link includes only the room code, never the access key.
 
