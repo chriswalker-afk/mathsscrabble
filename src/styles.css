@@ -128,3 +128,7 @@ body{overscroll-behavior:none}
 }
 .equation-preview[data-state="error"] .preview-led{background:#f2a6a4;box-shadow:0 0 10px #f2a6a47a}
 .equation-preview[data-state="error"] #preview-status{color:#ffbbb5}
+
+/* Keep the rack physically attached to its board, even on tall tablets. */
+.arena{justify-content:center}
+.rack-section{margin-top:0}
