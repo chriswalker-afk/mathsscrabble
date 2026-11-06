@@ -316,3 +316,33 @@ button:disabled{cursor:not-allowed;opacity:.48}
  .mobile-live>span{display:none}
  .workshop-heading{min-height:68px}
 }
+
+/* Narrowest mobile widths: compact navigation and prevent long labels from
+   dictating the page width. The control panels themselves may scroll inside. */
+@media(max-width:360px){
+ .topbar{padding-inline:8px;gap:7px}
+ .brand{gap:5px;min-width:0}
+ .brand-symbol{width:30px;height:30px}
+ .brand-text strong{font-size:14px}
+ .brand-text small{display:none}
+ .header-actions{gap:0;flex-shrink:0}
+ .header-actions .exit-link{padding:7px 8px;font-size:0}
+ .header-actions .exit-link:before{content:"← GAME";font-size:10px}
+ .header-actions .exit-link>span{display:none}
+ .mission-bar{gap:6px;padding-inline:8px}
+ .mission-heading{min-width:0;flex:1;gap:5px}
+ .mission-heading h1{font-size:16px;overflow-wrap:anywhere}
+ .status-orb{width:27px;height:27px;flex:none;font-size:15px}
+ .mission-counter{width:36px;max-width:36px;text-align:center;padding:5px 2px}
+ .lab-shell{padding:8px}
+ .specimen-panel,.workshop-panel{padding:9px}
+ .scale-strip{grid-template-columns:minmax(0,1fr) auto;gap:4px}
+ .scale-title{min-width:0}
+ .scale-title strong{font-size:9px;overflow-wrap:anywhere}
+ .scale-samples{gap:3px}
+ .size-image{width:42px;height:49px}
+ .size-image svg{max-width:41px;height:auto}
+ .part-choices{gap:6px}
+ .option-group-header{flex-wrap:wrap}
+ .workshop-footer .action-button,.workshop-footer .icon-control{padding-inline:7px}
+}
