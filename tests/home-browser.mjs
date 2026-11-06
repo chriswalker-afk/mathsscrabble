@@ -49,6 +49,8 @@ try{
  await page.locator('#home-rogue').click();
  await page.waitForURL(/play\.html\?mode=rogue$/);
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT/);
+ if(await page.locator('#modal[open]').count())
+   await page.locator('#modal-actions button').last().click();
  await page.locator('#mode-btn').click();
  await page.locator('#home-local').click();
  await page.waitForURL(/play\.html\?mode=local$/);
@@ -59,7 +61,7 @@ try{
  await page.locator('#home-online').click();
  await page.waitForURL(/online\.html$/);
  assert.equal(await page.locator('#online-gate').count(),1);
- await page.locator('a[href="./index.html"]').click();
+ await page.locator('#online-gate .online-back').click();
  await page.waitForURL(/index\.html$/);
  await page.locator('.alien-lab-card').click();
  await page.waitForURL(/alien-lab\.html$/);
