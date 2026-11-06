@@ -28,7 +28,7 @@ function freshSector(sector=1){
   if(sector===1){
     const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
     state.rack=required.map(v=>{
-      const i=state.bag.findIndex(t=>t.value===v);
+      const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
       return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
     });
   }else{
