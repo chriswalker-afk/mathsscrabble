@@ -317,7 +317,8 @@ function renderRack(){
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
- const eligible=freeExchangeReason(state.rack);
+ const eligible=freeExchangeReason(state.rack)&&
+   !(isLocal()&&state.localMatch?.freeExchangeUsed);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
    eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
@@ -1145,13 +1146,20 @@ $('equals-tile').onclick=event=>{
 };
 enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
+ if(isLocal()){
+   if(state.busy)return;
+   showModal('NEW LOCAL MATCH','Replace the current local match?',
+     '<p>A new local match replaces this match and its scores, but does not affect Sector Run or The Drift saves.</p>',
+     [{text:'KEEP MATCH'},{text:'SET UP NEW MATCH →',primary:true,fn:showLocalSetup}]);
+   return;
+ }
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
    '<p>A new run replaces your current local save, including your sector and accumulated run points. Your completed sector history will be lost.</p>',
    [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1,{newRun:true})}]);
 };
-$('run-report-btn').onclick=()=>{if(!state.busy)showRunReport();};
-$('run-report-header').onclick=()=>{if(!state.busy)showRunReport();};
+$('run-report-btn').onclick=()=>{if(!state.busy)(isLocal()?showLocalReport():showRunReport());};
+$('run-report-header').onclick=()=>{if(!state.busy)(isLocal()?showLocalReport():showRunReport());};
 function rememberIntro(){
  try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
 }
@@ -1172,7 +1180,19 @@ function showTraining(firstVisit=false){
      {text:'START MISSION →',primary:true,fn:rememberIntro}]:
     [{text:'BACK TO GAME',primary:true}]);
 }
-$('help-btn').onclick=()=>isDrift()?showDriftIntro():showTraining();
+$('help-btn').onclick=()=>isLocal()?showLocalHelp():isDrift()?showDriftIntro():showTraining();
+function showLocalHelp(){
+ showModal('LOCAL MULTIPLAYER · FLIGHT MANUAL','Build together, compete separately',
+   `<div class="training-steps">
+   <div class="training-step"><span>01</span><div><strong>Your rack is private</strong>
+     <p>Choose 2–4 players. Every turn begins on a secure handover screen. Tap Ready only when the named player holds the device. Never pass the screen while your rack is visible.</p></div></div>
+   <div class="training-step"><span>02</span><div><strong>Score on the same board</strong>
+     <p>The first correct equation crosses the centre; later ones must join a locked tile. BIDMAS and the free equals sign work as in Solo mode. A wrong equation is not scored. Use Pass Turn if you cannot play.</p></div></div>
+   <div class="training-step"><span>03</span><div><strong>Finish on net points</strong>
+     <p>Players alternate scoring, exchanging or passing. The match finishes when the bag is empty and a player empties their rack, or after two complete circuits without scoring. Remaining tile points are deducted from each score. The highest net score wins.</p></div></div>
+   </div><p class="training-footnote">Timers can be Off, 60, 90 or 120 seconds. Timers begin only when the next player presses Ready, and an expired turn counts as a pass. No online room or login is needed.</p>`,
+   [{text:'BACK TO MATCH',primary:true}]);
+}
 function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
@@ -1214,37 +1234,75 @@ function restoreMode(mode,{initial=false}={}){
  }
 }
 function chooseMode(mode){
- if(!['sector','rogue'].includes(mode)||state.busy)return;
+ if(!['sector','rogue','local'].includes(mode))return;
+ if(state.busy&&!isLocal())return;
+ if(mode==='local'){
+   if(isLocal()){if(state.localMatch?.phase==='finished')showLocalResults();return;}
+   const previous=loadLocalMatch(storage);
+   if(previous)localStateFromMatch(previous);
+   else showLocalSetup();
+   return;
+ }
  if(mode===state.mode){
    if(state.ended)showSectorOutcome();
    return;
  }
+ // Private local racks are already persisted; returning requires a new Ready tap.
+ state.localDeferPrivacy=false;
  restoreMode(mode);
 }
 function showModeMenu(){
- if(state.busy)return;
+ if(state.busy&&!isLocal())return;
  showModal('SELECT MODE','Choose your reactor mission',
    `<div class="mode-choice-grid">
     <div class="mode-choice">
      <span class="mode-crest">◈</span><strong>SECTOR RUN</strong>
-     <p>Pure equation building, escalating targets and infinite retries. Your classroom practice progress is saved separately.</p>
-     <small>${!isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+     <p>Independent classroom practice with rising targets and retries. Your progress is saved separately.</p>
+     <small>${state.mode==='sector'?'CURRENT MODE':'SEPARATE SAVE'}</small>
     </div>
     <div class="mode-choice">
      <span class="mode-crest">✧</span><strong>THE DRIFT</strong>
-     <p>A finite run. Win Flux, buy upgrades between sectors, adapt to anomalies every third sector and survive as long as you can.</p>
+     <p>Win Flux, equip upgrades between sectors, survive anomalies and build a long roguelike run.</p>
      <small>${isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+    <div class="mode-choice local-mode-choice">
+     <span class="mode-crest">♙</span><strong>LOCAL MATCH</strong>
+     <p>Two to four pilots, one shared board and private racks. Compete on the same device.</p>
+     <small>${isLocal()?'CURRENT MODE':'SEPARATE SAVE'}</small>
     </div>
    </div>`,
    [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
-    {text:'THE DRIFT →',primary:true,fn:()=>chooseMode('rogue')}]);
+    {text:'THE DRIFT',fn:()=>chooseMode('rogue')},
+    {text:'LOCAL 2–4 →',primary:true,fn:()=>chooseMode('local')}]);
 }
 $('mode-btn').onclick=showModeMenu;
+$('local-switch-btn').onclick=showModeMenu;
 function startSolo(){
  let mode='sector';
- try{if(storage?.getItem(ACTIVE_MODE_KEY)==='rogue')mode='rogue';}catch{/* no storage */}
+ try{const m=storage?.getItem(ACTIVE_MODE_KEY);
+   if(['sector','rogue','local'].includes(m))mode=m;
+ }catch{/* no storage */}
+ if(mode==='local'){
+   const saved=loadLocalMatch(storage);
+   if(saved){localStateFromMatch(saved);return;}
+   mode='sector';
+ }
  restoreMode(mode,{initial:true});
 }
+window.setInterval(()=>{
+ if(!isLocal()||!state.localMatch||state.localMatch.phase!=='playing'||state.busy||state.ended)return;
+ const match=state.localMatch;
+ if(match.turnSeconds===0)return;
+ $('local-time-remaining').textContent=formatLocalClock(match.deadline);
+ $('local-time-remaining').classList.toggle('local-time-urgent',match.deadline-Date.now()<15000);
+ if(!isLocalTimerExpired(match,Date.now()))return;
+ const name=match.players[match.current].name;
+ // A timeout cancels unscored placement and exchanges without discarding
+ // physical rack tiles, then immediately activates the privacy handover.
+ const updated={...match,pending:{},placementOrder:[],
+   players:match.players.map((p,i)=>i===match.current?{...p,rack:state.rack}:p)};
+ finishLocalTurn(passLocalTurn(updated,'timeout'),name+' ran out of time. The turn was passed.');
+},250);
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
