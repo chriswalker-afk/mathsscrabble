@@ -88,7 +88,11 @@ export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now()){
  return {...room,people,revision:room.revision+1,updatedAt:now,expiresAt:now+LOBBY_LIFETIME};
 }
 export function leaveOnlineLobby(room,hash,request,now=Date.now()){
- requireRoom(room,now);
+ requireRoom(room,now);requireHash(hash);
+ // An acknowledged departure remains idempotent even after its player seat
+ // is removed; only the same private credential may replay that response.
+ const completed=room.receipts.find(r=>r.id===request?.id&&r.departedHash===hash);
+ if(completed)return {room,replayed:true,result:completed.result};
  const index=identity(room,hash),replay=validateMutation(room,index,request);
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='lobby')throw new OnlineError('Players cannot leave a match in progress. Reconnect or wait for a turn.',409);
@@ -97,6 +101,7 @@ export function leaveOnlineLobby(room,hash,request,now=Date.now()){
  const result={type:'left'};
  const updated=addReceipt({...room,people,revision:room.revision+1,updatedAt:now,
    phase:people.length?'lobby':'closed',expiresAt:people.length?now+LOBBY_LIFETIME:now+60_000},index,request,result);
+ updated.receipts[updated.receipts.length-1].departedHash=hash;
  return {room:updated,result};
 }
 export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloat){
