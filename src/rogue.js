@@ -1,5 +1,5 @@
 // The Drift: self-contained roguelike economy, anomalies and scoring.
-import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR} from './engine.js';
+import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat} from './engine.js';
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
@@ -221,28 +221,45 @@ export function rewardSector(rogue,sector,score,turn){
 }
 export function scoreRogueMove(board,pending,move,rogue,sector){
  const base=scoreMove(board,pending,move);
- let adjustedBase=base.base, multiplier=base.multiplier;
+ let adjustedBase=base.base,multiplier=base.multiplier,additional=0,boost=0;
  const tileScores=base.tileScores.map(tile=>({...tile}));
- let additional=0,boost=0;
- const effects=[];
+ const effects=[],echoedIndices=[];
  const anomaly=anomalyForSector(sector);
- const isJam=anomaly?.id==='signal-jam';
- const isStatic=anomaly?.id==='tile-static';
+ const isJam=anomaly?.id==='signal-jam',isStatic=anomaly?.id==='tile-static';
  for(const index of move.indices){
-   const tile=pending[index];if(!tile||tile.value==='=')continue;
-   const [r,c]=coords(index),bonus=bonusAt(r,c);
+   const tile=pending[index]||board[index];
+   if(!tile||tile.value==='=')continue;
+   const [r,c]=coords(index),bonus=bonusAt(r,c),newTile=Boolean(pending[index]);
+   if(!newTile){
+     // Second Spark reactivates a covered premium space once (not repeatedly).
+     if(owns(rogue,'bonus-echo')&&['2T','3T','2E','3E'].includes(bonus)&&
+        !(rogue.echoed||[]).includes(index)){
+       echoedIndices.push(index);
+       if(bonus==='2T'||bonus==='3T'){
+         const factor=bonus==='2T'&&owns(rogue,'amplifier')?3:bonus==='3T'&&!isStatic?3:2;
+         const extra=(factor-1)*tile.points;
+         adjustedBase+=extra;
+         const item=tileScores.find(x=>x.index===index);item.points+=extra;
+       }else if(!(isJam&&bonus==='2E')){
+         multiplier*=bonus==='2E'?2:3;
+       }
+       effects.push('Second Spark reused a premium square');
+     }
+     continue;
+   }
    const originalFactor=bonus==='2T'?2:bonus==='3T'?3:1;
    const newFactor=bonus==='2T'&&owns(rogue,'amplifier')?3:
      bonus==='3T'&&isStatic?2:originalFactor;
    const tileAward=tileScores.find(entry=>entry.index===index);
    const squareDelta=(newFactor-originalFactor)*tile.points;
    adjustedBase+=squareDelta;tileAward.points+=squareDelta;
-   if(newFactor!==originalFactor){
+   if(newFactor!==originalFactor)
      effects.push(newFactor>originalFactor?'Amplified tile square':'Static reduced triple tile');
-   }
    if(!tile.blank){
+     const odd=/^[13579]$/.test(tile.value);
      const extra=(tile.value==='7'&&owns(rogue,'ion-seven')?3:0)+
-       (['×','÷'].includes(tile.value)&&owns(rogue,'operator-core')?3:0);
+       (['×','÷'].includes(tile.value)&&owns(rogue,'operator-core')?3:0)+
+       (odd&&owns(rogue,'odd-charge')?2:0);
      const powered=extra*newFactor;
      adjustedBase+=powered;tileAward.points+=powered;boost+=powered;
    }
@@ -265,9 +282,21 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
  if(owns(rogue,'echo')&&placed>4){
    const amount=(placed-4)*2;additional+=amount;effects.push('Echo +'+amount);
  }
+ if(owns(rogue,'length-matrix')&&move.indices.length>5){
+   const amount=(move.indices.length-5)*2;
+   additional+=amount;effects.push('Stretch Matrix +'+amount);
+ }
+ if(owns(rogue,'starter-spark')&&board.every(t=>!t)){
+   additional+=6;effects.push('Core Igniter +6');
+ }
  if(boost)effects.push('Powered tiles +'+boost);
- if(rogue.pulse>0){additional+=12;effects.push('Pulse Capacitor +12 (single-use)');}
- let prePenalty=adjustedBase*multiplier+base.length+base.sweep+base.equation+base.crossing+additional;
+ const tempApplied=armedConsumable(rogue);
+ if(tempApplied==='pulse-charge'){
+   additional+=12;effects.push('Pulse Capacitor +12 (single-use)');
+ }
+ const sweep=placed===rackSlots(rogue)?20:0;
+ let prePenalty=adjustedBase*multiplier+base.length+sweep+
+   base.equation+base.crossing+additional;
  let anomalyPenalty=0;
  if(anomaly?.id==='power-leak'&&!owns(rogue,'leak-shield')){
    anomalyPenalty=Math.floor(prePenalty*.15);
@@ -275,9 +304,17 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
  }else if(anomaly?.id==='power-leak'){
    effects.push('Leak Shield protected your energy');
  }
- return {...base,base:adjustedBase,tileScores,multiplier,extra:additional,
+ const originalTotal=Math.max(0,prePenalty-anomalyPenalty);
+ let total=originalTotal;
+ if(tempApplied==='double-score'){
+   total*=2;effects.push('Double Reactor ×2 (single-use)');
+ }else if(tempApplied==='power-surge'){
+   total+=Math.floor(total*.5);effects.push('Power Surge +50% (single-use)');
+ }
+ return {...base,base:adjustedBase,tileScores,multiplier,sweep,extra:additional,
    anomalyPenalty,anomaly:anomaly?.id||null,
-   upgrades:effects,total:Math.max(0,prePenalty-anomalyPenalty)};
+   upgrades:effects,total,echoedIndices,
+   tempApplied:TEMP_ITEM_BY_ID[tempApplied]?.action==='score'?tempApplied:null};
 }
 export function validRogueState(rogue,sector,phase){
  const integer=(x,min,max)=>Number.isSafeInteger(x)&&x>=min&&x<=max;
