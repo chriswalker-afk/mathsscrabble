@@ -182,23 +182,44 @@ function tileButton(tile){
  return button;
 }
 function renderRack(){
- const used=new Set(Object.values(state.pending).map(t=>t.id));
- const rack=$('rack');rack.replaceChildren(...state.rack.filter(t=>!used.has(t.id)).map(t=>tileButton(t)));
- $('rack-count').textContent=`${state.rack.length-used.size} / ${HAND_SIZE}`;
+ const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
+ const available=state.rack.filter(t=>!used.has(t.id));
+ $('rack').replaceChildren(...available.map(tileButton));
+ $('rack-count').textContent=`${available.length} / ${HAND_SIZE}`;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
+ $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
+ $('equals-tile').disabled=state.ended||state.swapping||state.busy;
  $('swap-btn').textContent=state.swapping?`⇄ CONFIRM SWAP (${state.swapSet.size})`:'⇄ SWAP TILES';
- $('score-btn').disabled=state.ended||state.swapping;
+ $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
  $('undo-btn').textContent=state.swapping?'× CANCEL SWAP':'↶ CLEAR PLACEMENT';
+ $('undo-last-btn').disabled=state.ended||state.busy||!state.placementOrder.length;
+ $('new-btn').disabled=state.busy;
+}
+function renderPreview(){
+ const preview=state.preview;
+ const box=$('equation-preview');
+ box.dataset.state=state.swapping?'swap':preview.status;
+ $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
+ $('preview-status').textContent=state.swapping?
+   'Choose the rack tiles to replace. This will use one turn.':preview.feedback;
+ const points=(!state.swapping&&preview.ready)?scoreMove(state.board,state.pending,preview):null;
+ $('potential-score').textContent=points?'+'+points.total:'—';
+ $('potential-score').setAttribute('aria-label',points?
+   `Potential score ${points.total} if the equation is mathematically correct`:
+   'No potential score yet');
 }
 function render(){
- renderBoard();renderRack();
+ state.preview=inspectPlacement(state.board,state.pending);
+ renderBoard();renderRack();renderPreview();
  $('score').textContent=state.score;$('target').textContent=nextTarget(state.sector);
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('bag-count').textContent=state.bag.length;
- $('remaining-label').textContent=state.score>=nextTarget(state.sector)?'TARGET ACHIEVED':`${nextTarget(state.sector)-state.score} points to stabilise`;
+ $('remaining-label').textContent=state.score>=nextTarget(state.sector)?
+   'TARGET ACHIEVED':`${nextTarget(state.sector)-state.score} points to stabilise`;
  $('progress').style.width=Math.min(100,state.score/nextTarget(state.sector)*100)+'%';
- $('board-hint').textContent=state.swapping?'SELECT TILES TO EXCHANGE':'DRAG TILES TO FORM AN EQUATION';
+ $('board-hint').textContent=state.swapping?'SELECT TILES TO EXCHANGE':
+   state.selected?'CHOOSE A LANDING SQUARE':'DRAG OR SELECT YOUR TILES';
 }
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
@@ -207,48 +228,138 @@ function showModal(eyebrow,title,body,buttons){
 }
 function turnCompleted(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
+ state.placementOrder=[];state.recentlyPlaced=null;state.busy=false;
  if(state.score>=nextTarget(state.sector)){
-  state.ended=true;render();showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,`<p>You generated <strong>${state.score} energy points</strong> against a target of ${nextTarget(state.sector)}.</p><p>The next reactor will demand more energy.</p>`,[{text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]);return;
+  state.ended=true;render();
+  showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,
+    `<p>You generated <strong>${state.score} energy points</strong> against a target of ${nextTarget(state.sector)}.</p><p>The next reactor will demand more energy.</p>`,
+    [{text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]);
+  return;
  }
  if(state.turn>=TURNS_PER_SECTOR){
-  state.ended=true;render();showModal('REACTOR OFFLINE','Sector failed',`<p>You scored <strong>${state.score}</strong> of the required <strong>${nextTarget(state.sector)}</strong> points.</p><p>Try a new rack, different placements and bonus multipliers.</p>`,[{text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)},{text:'START OVER',fn:()=>freshSector(1)}]);return;
+  state.ended=true;render();
+  showModal('REACTOR OFFLINE','Sector failed',
+    `<p>You scored <strong>${state.score}</strong> of the required <strong>${nextTarget(state.sector)}</strong> points.</p><p>Try a new rack, different placements and bonus multipliers.</p>`,
+    [{text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)},
+     {text:'START OVER',fn:()=>freshSector(1)}]);
+  return;
  }
  state.turn++;render();
 }
+function showEnergyBurst(points){
+ const burst=$('energy-burst');
+ burst.textContent='+'+points+' ENERGY';
+ burst.classList.remove('burst-active');
+ $('board-frame').classList.remove('reactor-scored');
+ void burst.offsetWidth;
+ burst.classList.add('burst-active');
+ $('board-frame').classList.add('reactor-scored');
+}
 function score(){
- if(state.ended||state.swapping)return;
+ if(state.ended||state.swapping||state.busy)return;
  try{
-  const move=validateMove(state.board,state.pending),points=scoreMove(state.board,state.pending,move);
+  const move=validateMove(state.board,state.pending);
+  const points=scoreMove(state.board,state.pending,move);
+  const changed=Object.keys(state.pending).map(Number);
   const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
   for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
   state.rack=state.rack.filter(t=>!used.has(t.id));
-  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;state.score+=points.total;
+  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
+  state.score+=points.total;
+  state.busy=true;
+  state.pending={};state.placementOrder=[];state.selected=null;state.recentlyPlaced=null;
+  state.lockedFlash=new Set(changed);
   announce(`${move.text} · +${points.total} points! ${points.bonuses.join(', ')}`);
-  render();
-  showModal('EQUATION VERIFIED',`+${points.total} energy`,`<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,[{text:'CONTINUE →',primary:true,fn:turnCompleted}]);
- }catch(err){announce(err.message,true);$('board').classList.remove('shake');void $('board').offsetWidth;$('board').classList.add('shake');}
+  render();showEnergyBurst(points.total);
+  const epoch=++state.modalEpoch;
+  window.setTimeout(()=>{
+    if(epoch!==state.modalEpoch)return;
+    state.busy=false;state.lockedFlash.clear();
+    render();
+    showModal('EQUATION VERIFIED',`+${points.total} energy`,
+      `<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
+      [{text:'CONTINUE →',primary:true,fn:turnCompleted}]);
+  },420);
+ }catch(err){
+   announce(err.message,true);
+   $('board').classList.remove('shake');void $('board').offsetWidth;
+   $('board').classList.add('shake');
+ }
 }
 const escapeText=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 function swap(){
- if(state.ended)return;
- if(!state.swapping){if(Object.keys(state.pending).length){announce('Clear your equation before swapping tiles.',true);return;}if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}state.swapping=true;announce('Choose one or more rack tiles, then press Confirm Swap.');renderRack();return;}
+ if(state.ended||state.busy)return;
+ if(!state.swapping){
+   if(Object.keys(state.pending).length){
+     announce('Clear your equation before swapping tiles.',true);return;
+   }
+   if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}
+   state.swapping=true;state.selected=null;
+   announce('Choose one or more rack tiles, then press Confirm Swap.');render();return;
+ }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
  state.bag.push(...exchanged);
- for(let i=state.bag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[state.bag[i],state.bag[j]]=[state.bag[j],state.bag[i]];}
+ for(let i=state.bag.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [state.bag[i],state.bag[j]]=[state.bag[j],state.bag[i]];
+ }
  announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);turnCompleted();
 }
 function clear(){
- if(state.swapping){state.swapping=false;state.swapSet.clear();announce('Swap cancelled.');}else{state.pending={};state.selected=null;announce('Unscored tiles returned to your rack.');}render();
+ if(state.ended||state.busy)return;
+ if(state.swapping){
+   state.swapping=false;state.swapSet.clear();announce('Tile exchange cancelled.');
+ }else{
+   state.pending={};state.selected=null;state.placementOrder=[];state.recentlyPlaced=null;
+   announce('Unscored tiles returned to the rack.');
+ }
+ render();
 }
-$('score-btn').onclick=score;$('swap-btn').onclick=swap;$('undo-btn').onclick=clear;
-$('equals-tile').onclick=()=>{selectTile('equals');renderBoard();};
-$('equals-tile').addEventListener('dragstart',e=>{state.selected='equals';e.dataTransfer.setData('text/plain','equals');});
-$('new-btn').onclick=()=>showModal('RESTART','Start a new run?', '<p>This will reset your current sector and score.</p>',[{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1)}]);
-$('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',`<p>Use your rack to create a mathematically correct equation. BIDMAS applies. Drag tiles to the board, or select a tile and then a square. Choose an unlimited <strong>=</strong> sign from the end of your rack.</p><p>Start through the centre. Later equations must intersect a locked tile. New tiles in a move must form a single continuous horizontal or vertical equation.</p><p>Score tile values and multipliers. Get +3 points for each square beyond five, or +20 for using all seven rack tiles in one turn. Spend a turn to exchange tiles. Reach the target within six turns to progress.</p><p>Click a pending tile to return it to the rack. This initial prototype contains the Origin tile set and solo Sector Run.</p>`,[{text:'LET’S PLAY',primary:true}]);
+$('score-btn').onclick=score;
+$('swap-btn').onclick=swap;
+$('undo-btn').onclick=clear;
+$('undo-last-btn').onclick=undoLast;
+$('equals-tile').onclick=event=>{
+ if(wasDragClick(event))return;
+ selectTile('equals');
+};
+enableTileDrag($('equals-tile'),{kind:'equals'},placePayload);
+$('new-btn').onclick=()=>{
+ if(state.busy)return;
+ showModal('RESTART','Start a new run?',
+   '<p>This will reset your current sector and score.</p>',
+   [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1)}]);
+};
+$('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',
+ `<p>Create a complete horizontal or vertical equation, using <strong>BIDMAS</strong> to check the arithmetic. Drag tiles by mouse, touch or pen, or tap a tile then its square. The <strong>=</strong> tile beside your rack is unlimited and free.</p>
+ <p>Your first equation must cross the centre. Later equations must reuse a locked tile. Each move must make one continuous equation.</p>
+ <p>Double and triple squares multiply tile or equation points. You earn 3 extra points per square beyond five, plus 20 for placing all seven physical rack tiles. Exchanging tiles uses a turn. Reach the energy target in six turns to advance.</p>
+ <p>Move an unscored tile by dragging it. Tap it to pick it up, or use the <strong>Undo Tile</strong> control. Keyboard: <strong>1–7</strong> selects a rack tile, <strong>=</strong> selects the free equals sign, arrow keys navigate the board and Backspace undoes the last placed tile.</p>
+ <p>The equation preview shows potential points but does not check whether your mathematics is correct until you submit.</p>`,
+ [{text:'LET’S PLAY',primary:true}]);
+document.addEventListener('keydown',event=>{
+ if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
+ if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
+   event.preventDefault();undoLast();return;
+ }
+ if(event.key==='Escape'&&state.selected){
+   state.selected=null;render();return;
+ }
+ if(state.swapping)return;
+ if(event.key==='='){
+   event.preventDefault();selectTile('equals');return;
+ }
+ if(/^[1-7]$/.test(event.key)){
+   const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
+   const available=state.rack.filter(t=>!used.has(t.id));
+   const tile=available[Number(event.key)-1];
+   if(tile){event.preventDefault();selectTile(tile.id);}
+ }
+});
 $('modal-close').onclick=()=>{if($('modal-eyebrow').textContent==='EQUATION VERIFIED'){$('modal-actions').querySelector('button')?.click();}else if(!state.ended){$('modal').close();}};
 $('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
 freshSector();
