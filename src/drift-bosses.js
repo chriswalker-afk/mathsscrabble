@@ -1,6 +1,6 @@
 // Standalone, seeded-by-run Drift zone and boss rules.
 // Nothing here contacts a server or changes normal Solo / multiplayer rules.
-import {pos} from './engine.js';
+import {pos,CENTER} from './engine.js';
 
 export const ZONE_LENGTH=3;
 export const BOSS_POOL=Object.freeze([
@@ -77,8 +77,8 @@ const RIFTS=[
 export function bossField(rogue,sector){
  const boss=bossForSector(rogue,sector);
  const layout=(zoneNumber(sector)-1)%BLOCKS.length;
- return {boss,blocked:new Set(boss?.kind==='blocked'?BLOCKS[layout].map(([r,c])=>pos(r,c)):[]),
-  rifts:new Set(boss?.kind==='hazard'?RIFTS[layout].map(([r,c])=>pos(r,c)):[])};
+ return {boss,blocked:new Set(boss?.kind==='blocked'?BLOCKS[layout].map(([r,c])=>pos(r+CENTER-6,c+CENTER-6)):[]),
+  rifts:new Set(boss?.kind==='hazard'?RIFTS[layout].map(([r,c])=>pos(r+CENTER-6,c+CENTER-6)):[])};
 }
 export function blockedAt(rogue,sector,index){return bossField(rogue,sector).blocked.has(index);}
 export function restrictedDraws(rogue,sector){
