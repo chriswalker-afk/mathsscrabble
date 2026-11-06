@@ -1542,9 +1542,9 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators. Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators (six numbers in Nebula/Quantum). Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
+       <p>After each cleared sector, review your energy, Flux reward and zone route. You can <strong>continue immediately</strong> or visit the illustrated <strong>Salvage Bay</strong> to buy upgrades. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,

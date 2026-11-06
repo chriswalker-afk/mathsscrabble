@@ -4,7 +4,7 @@ The Drift is a self-contained, single-device roguelike, distinct from Sector Run
 
 ## The loadout (Pass F)
 
-**Permanent equipment:** four large illustrated slots in the existing *left-side Mission Telemetry* panel; these items remain installed through the run. The 13×13 board is unchanged in size, bonus pattern and location. Each slot can be inspected by mouse or keyboard; its tooltip and details show the complete rule. A legacy saved run with more than four upgrades can finish, but cannot install another.
+**Permanent equipment:** four large illustrated slots in the existing *left-side Mission Telemetry* panel; these items remain installed through the run. The playing board now uses 19×19 squares, with a fixed-size zoomable, scrollable viewport so its footprint in the layout stays compact. Existing saved 13×13 layouts are centred in the new grid. Each slot can be inspected by mouse or keyboard; its tooltip and details show the complete rule. A legacy saved run with more than four upgrades can finish, but cannot install another.
 
 **Temporary power-ups:** two independent illustrated slots in the *right-side Command Console*. Tap or select a score booster to **arm** it for the next correctly scored equation, or select a tile tool and tap a physical tile in your rack. A tile tool is only consumed if a matching physical replacement exists in the finite bag. None of these transformations spends a turn. A rejected mathematical equation does not consume a score booster. Existing older saves with multiple Pulse Capacitors can be resumed.
 
@@ -57,7 +57,7 @@ The legacy Pulse Capacitor's automatic next-equation activation remains supporte
 
 ## Salvage Bay shop
 
-The shop opens only on completing a sector. It shows **four rotating permanent offers** and **three temporary offers** (always Pulse Capacitor plus two rotating other powers), grouped into their own sections with visible categories and costs. Buying does not use a turn. Bought permanent modules leave the pool. You may buy several upgrades per shop as long as there are free slots and enough Flux. The normal scoring engine, unchanged 13×13 board and original four-room / Solo modes remain compatible.
+The game first opens an **after-action results screen**, not the shop: it shows score versus target, equations, turns, best move, Flux earned and the current zone map. The player can **continue immediately without shopping** or enter the **Salvage Bay**. The Bay has a dedicated, larger layout, original orbital repair-hangar illustration, visible Flux and installed inventory, clear equipment categories, and sticky bottom navigation back to the report or ahead to the next sector. The shop is accessible after completing a sector. It shows **four rotating permanent offers** and **three temporary offers** (always Pulse Capacitor plus two rotating other powers), grouped into their own sections with visible categories and costs. Buying does not use a turn. Bought permanent modules leave the pool. You may buy several upgrades per shop as long as there are free slots and enough Flux. The normal scoring engine, unchanged 19×19 board and original four-room / Solo modes remain compatible.
 
 On clearing a sector, Flux reward is
 
@@ -78,4 +78,4 @@ Boss anomalies still occur every third sector: Power Leak (−15%), Signal Jam (
 - Verify a score booster is unchanged by a mathematically incorrect submission, consumed after an accepted score, and restored after a page reload.
 - Verify Second Spark cannot repeatedly harvest one premium square in a sector, and resets in the next sector.
 - Verify no more than four permanent purchases or two temporary power-ups; check zero-cost/malformed purchases, replay safety, and save corruption validation.
-- Verify the existing scoring animation, shop navigation on narrow screens, Sector Run and multiplayer regression tests.
+- Verify the existing scoring animation, results-first intermission, direct-continue path without shopping, Salvage Bay artwork, sticky shop navigation on narrow screens, Sector Run and multiplayer regression tests.

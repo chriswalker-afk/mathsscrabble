@@ -1,5 +1,5 @@
 /* DRIFT: ZONE ROUTE, BOSS ENCOUNTERS & BATTLEFIELDS
-   Layout uses the existing side rails; the original 13x13 board is untouched. */
+   Layout uses the existing side rails; the original 19x19 board is untouched. */
 #drift-zone-map[hidden],#zone-map-btn[hidden]{display:none!important}
 .drift-zone-strip{
  --zone-accent:#e3bd8e;

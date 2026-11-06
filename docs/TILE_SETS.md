@@ -13,7 +13,7 @@ Examples: Launchpad **8 + 4 = 12**; Orbit **−3 + 7 = 4**; Nebula **(1/2 + 1/2)
 
 ## Physical supply, brackets and fair drawing
 
-Every kit has **151 uniquely identified physical tiles**, including its finite number, operator, wildcard and (where applicable) bracket pools. The unlimited free equals sign never consumes a physical tile. Nebula now uses **28 positive fraction pieces** (two copies of each of the 14 positive fractions in the catalog), with no negative fraction tiles in **new games**. Quantum retains signed fractions. Both advanced kits draw an extra **sixth number tile** to improve playability, while retaining all three operators and one complete bracket pair.
+Every kit has **151 uniquely identified physical tiles**, including its finite number, operator, wildcard and (where applicable) bracket pools. The unlimited free equals sign never consumes a physical tile. Nebula now uses **28 positive fraction pieces** (four copies of each of seven positive fractions), with no negative fraction tiles in **new games**. The only Nebula fraction faces are **1/2, 1/4, 3/4, 5/4, 3/2, 1/3, and 2/3**. Quantum retains signed fractions. Both advanced kits draw an extra **sixth number tile** to improve playability, while retaining all three operators and one complete bracket pair.
 
 Brackets have eight linked pair IDs per supply. Each new ( and ) pair must be played together in a single scored equation. A single half cannot be submitted or individually exchanged. In multiplayer, selecting one bracket half for an exchange automatically selects both. Exchanging the two-piece pair **uses the turn** and requires another complete pair to be available in the shared bag. Scored pairs remain on the board and may be crossed in subsequent equations. A depleted bracket pool never generates counterfeit or unmatched halves.
 
@@ -21,7 +21,7 @@ Every local and online player uses their own rack, drawing from **one shared** p
 
 ## Exact mathematical checking
 
-All four modes use the same exact rational BigInt expression engine, with the same 13 × 13 board and premium squares. Numbers on fraction or negative tiles are single atomic tokens; regular adjacent digit tiles can still form multi-digit numbers. One genuine calculation is required; simple identities are not scoreable.
+All four modes use the same exact rational BigInt expression engine, with the same 19 × 19 board and premium squares. Numbers on fraction or negative tiles are single atomic tokens; regular adjacent digit tiles can still form multi-digit numbers. One genuine calculation is required; simple identities are not scoreable.
 
 BIDMAS follows brackets, powers/roots/factorials, multiplication/division, then addition/subtraction. Powers are right-associative, with integer exponents from −8 through 8; exact rational square roots are allowed, but irrational approximations are not. Factorial applies to integers 0 through 8. Division by zero, invalid expressions, mismatched brackets, implicit multiplication and false equalities are rejected without charging a turn.
 
@@ -29,7 +29,7 @@ BIDMAS follows brackets, powers/roots/factorials, multiplication/division, then 
 
 - **Local Match:** choose the kit before starting a 2–4 player hot-seat match. Players retain private racks, timers, passing, one free *single-piece* exchange per turn, shared scoring and net-score rack penalties. Choosing a different kit for an existing saved match requires explicitly starting a new one.
 - **Online Rooms:** the host selects the kit at room creation. The kit is stored in the Cloudflare Durable Object and cannot be changed by guests or by subsequent turns. The server creates and owns the physical supply and validates all placements, exact tile values/points, rack ownership, bracket exchanges, scores, deadlines and room revisions. Each authenticated snapshot contains only that pilot's private tiles. The lobby advertises the shared kit to every pilot.
-- **Backwards compatibility:** an older local save or online room without a stored kit continues as Launchpad. Existing saved Nebula solo games may still include negative fractions in their previously dealt supply, rather than silently rewriting a student's completed equations. **Start a new game** to use the positive-only Nebula distribution and the larger starting rack.
+- **Backwards compatibility:** an older local save or online room without a stored kit continues as Launchpad. Existing saved Nebula solo games may still include previously dealt fractions outside this new seven-value selection (including older negative fractions), rather than silently rewriting a student's completed equations. **Start a new game** to use the positive-only Nebula distribution and the larger starting rack.
 
 **Deployment is important:** publishing the GitHub Pages front end does not publish the room Worker. After merging this change, deploy the updated **equanova-rooms** Worker at rooms.mrwalkermaths.com from the merged commit. Until then, an older Worker may not understand the kit setting; the new frontend warns instead of silently starting a non-Launchpad room with the wrong tiles. See [Online Rooms deployment](ONLINE_MULTIPLAYER.md).
 
