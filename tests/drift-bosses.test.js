@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeBag,makeTile,pos,validateMove} from '../src/engine.js';
 import {makeRogueState,scoreRogueMove,anomalyForSector,targetForSector,rogueRackOptions} from '../src/rogue.js';
-import {dealPlayableRack,saveRun,loadRun,freshStats,freshProgress,ROGUE_SAVE_KEY} from '../src/solo.js';
+import {dealPlayableRack} from '../src/solo.js';
 import {buildScoringCeremony} from '../src/score-ceremony.js';
 import {
  BOSS_POOL,BOSS_BY_ID,zoneNumber,sectorInZone,isBossSector,zoneInfo,
