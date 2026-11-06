@@ -7,7 +7,7 @@
 <div id="app">
 <header class="topbar"><div class="brand"><div class="brand-icon" aria-hidden="true"><img src="./assets/reactor-mark.svg" alt="" width="46" height="46"></div><div><strong>EQUA<span>//</span>NOVA</strong><small>THE EQUATION REACTOR</small></div></div>
 <div class="top-readout"><span class="status-dot"></span><span id="sector-label">SECTOR 01 · ORIGIN</span></div>
-<div class="top-actions"><button id="help-btn" class="quiet-button" type="button">? HOW TO PLAY</button><button id="new-btn" class="quiet-button" type="button">↻ NEW RUN</button></div></header>
+<div class="top-actions"><span id="save-status" class="save-status" role="status" aria-live="polite">LOCAL SAVE</span><button id="help-btn" class="quiet-button" type="button">? HOW TO PLAY</button><button id="new-btn" class="quiet-button" type="button">↻ NEW RUN</button></div></header>
 <main class="game-shell">
 <aside class="side-panel left-panel" aria-label="Sector information">
 <div class="panel-heading">MISSION TELEMETRY</div>
@@ -16,7 +16,9 @@
 <div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div class="progress-track"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><div class="mini-stat"><small>IN BAG</small><strong id="bag-count">0</strong></div></div>
 <div class="panel-divider"></div><div class="panel-heading">REACTOR LOG</div><div id="log" role="status" aria-live="polite">Place your first equation through the glowing centre tile.</div>
-<div class="side-footer">SECTOR RUN · BIDMAS VALIDATION</div>
+<div id="coach-hint" class="coach-hint" role="note"></div>
+<div id="history-mini" class="history-mini" aria-label="Recent equations"></div>
+<div class="side-footer"><button id="run-report-btn" type="button" class="run-overview" aria-label="View the overall solo run report"><span>RUN SUMMARY</span><strong id="run-summary">0 sectors · 0 energy</strong></button></div>
 </aside>
 <section class="arena" aria-label="Equation playing area">
 <div class="board-frame" id="board-frame"><div id="board" class="board" role="grid" aria-label="13 by 13 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
