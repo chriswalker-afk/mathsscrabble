@@ -662,24 +662,78 @@ function showTraining(firstVisit=false){
      {text:'START MISSION →',primary:true,fn:rememberIntro}]:
     [{text:'BACK TO GAME',primary:true}]);
 }
-$('help-btn').onclick=()=>showTraining();
-function startSolo(){
- const previous=loadRun(storage);
+$('help-btn').onclick=()=>isDrift()?showDriftIntro():showTraining();
+function showDriftIntro(){
+ showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
+   `<div class="training-steps">
+     <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
+       <p>Every sector still uses the same BIDMAS rules, physical tile rack and premium grid. Reach the energy target within six turns.</p></div></div>
+     <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Choose permanent upgrades for this run: strengthen sevens, boost crossings, attract wildcards or power up board multipliers.</p></div></div>
+     <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
+       <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
+   </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
+   [{text:'BEGIN THE DRIFT →',primary:true}]);
+}
+function restoreMode(mode,{initial=false}={}){
+ state.modalEpoch++;
+ state.mode=mode;
+ const previous=loadRun(storage,mode);
  if(previous){
    Object.assign(state,previous);
+   state.mode=mode;
+   state.rogue=mode==='rogue'?previous.rogue:null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
    state.focusedIndex=pos(CENTER,CENTER);
-   announce('Saved run restored. Your board, rack, and unfinished placements are ready.');
+   announce(mode==='rogue'?
+     'Saved Drift run restored: your upgrades, Flux and rack are intact.':
+     'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
    if(state.ended)showSectorOutcome();
  }else{
+   state.rogue=mode==='rogue'?makeRogueState():null;
    freshSector(1,{newRun:true});
-   let seen=false;
-   try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
-   if(!seen)showTraining(true);
+   if(mode==='rogue')showDriftIntro();
+   else if(initial){
+     let seen=false;
+     try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
+     if(!seen)showTraining(true);
+   }
  }
+}
+function chooseMode(mode){
+ if(!['sector','rogue'].includes(mode)||state.busy)return;
+ if(mode===state.mode){
+   if(state.ended)showSectorOutcome();
+   return;
+ }
+ restoreMode(mode);
+}
+function showModeMenu(){
+ if(state.busy)return;
+ showModal('SELECT MODE','Choose your reactor mission',
+   `<div class="mode-choice-grid">
+    <div class="mode-choice">
+     <span class="mode-crest">◈</span><strong>SECTOR RUN</strong>
+     <p>Pure equation building, escalating targets and infinite retries. Your classroom practice progress is saved separately.</p>
+     <small>${!isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+    <div class="mode-choice">
+     <span class="mode-crest">✧</span><strong>THE DRIFT</strong>
+     <p>A finite run. Win Flux, buy upgrades between sectors, adapt to anomalies every third sector and survive as long as you can.</p>
+     <small>${isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+   </div>`,
+   [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
+    {text:'THE DRIFT →',primary:true,fn:()=>chooseMode('rogue')}]);
+}
+$('mode-btn').onclick=showModeMenu;
+function startSolo(){
+ let mode='sector';
+ try{if(storage?.getItem(ACTIVE_MODE_KEY)==='rogue')mode='rogue';}catch{/* no storage */}
+ restoreMode(mode,{initial:true});
 }
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
@@ -705,9 +759,11 @@ $('modal-close').onclick=()=>{
    $('modal-actions').querySelector('button')?.click();
  }else if($('modal-eyebrow').textContent==='WELCOME TO THE REACTOR'){
    rememberIntro();$('modal').close();
- }else if(!state.ended){
+ }else{
    $('modal').close();
  }
 };
-$('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
+$('modal').addEventListener('cancel',e=>{
+ if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
+});
 startSolo();
