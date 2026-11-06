@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,inspectPlacement,scoreMove,bonusAt,nextTarget} from '../src/engine.js';
+import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,inspectPlacement,scoreMove,bonusAt,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,isBlank,resolveBlank,freeExchangeReason,reorderRack} from '../src/engine.js';
 const make=arr=>arr.map(makeTile);
 const place=(symbols,orientation='h',start=0,row=CENTER)=>{
  const pending={};make(symbols).forEach((tile,k)=>pending[orientation==='h'?pos(row,start+k):pos(start+k,row)]=tile);return pending;
@@ -51,7 +51,8 @@ test('score calculation respects premium squares, length and full hand',()=>{
  const score=scoreMove(board,pending,move);
  assert.equal(score.base,15); // 11 natural tile points + 4 for the Double Tile under 8
  assert.ok(score.bonuses.includes('Double tile'));assert.equal(score.length,3);assert.equal(score.sweep,0);
- assert.equal(score.total,score.base*score.multiplier+3);
+ assert.equal(score.equation,5);assert.equal(score.crossing,0);
+ assert.equal(score.total,score.base*score.multiplier+3+5);
  assert.equal(bonusAt(0,0),'3E');
 });
 test('bag refilling, turn targets and rack clear bookkeeping',()=>{
@@ -88,4 +89,56 @@ test('preview follows existing tiles when an equation is connected',()=>{
  assert.equal(preview.text,'8+3=11');
  assert.equal(preview.ready,true);
  assert.deepEqual(preview.indices,validateMove(board,second).indices);
+});
+
+test('simple identities are disallowed; meaningful equations still work',()=>{
+ for(const symbols of [['3','=','3'],['1','2','=','1','2'],['0','=','0'],['0','=','−','0']])
+   assert.throws(()=>checkEquation(symbols),/calculation/i);
+ assert.equal(checkEquation(['3','+','2','=','5']).text,'3+2=5');
+ assert.equal(checkEquation(['1','2','=','3','×','4']).text,'12=3×4');
+ assert.equal(checkEquation(['8','−','3','=','5']).text,'8−3=5');
+});
+test('the bag includes all three zero-point blanks in fair quantities',()=>{
+ const bag=makeBag(()=>0.25);
+ assert.equal(bag.length,151);
+ for(const [kind,count] of [[BLANK_NUMBER,7],[BLANK_OPERATOR,5],[BLANK_ANY,5]]){
+  const tiles=bag.filter(t=>t.blank===kind);
+  assert.equal(tiles.length,count);
+  assert.ok(tiles.every(t=>t.points===0&&t.value===null&&isBlank(t)));
+ }
+});
+test('blank number, operator and any accept only their allowed symbols',()=>{
+ const number=makeTile(BLANK_NUMBER),operation=makeTile(BLANK_OPERATOR),any=makeTile(BLANK_ANY);
+ assert.equal(resolveBlank(number,'8').value,'8');
+ assert.equal(resolveBlank(operation,'÷').value,'÷');
+ assert.equal(resolveBlank(any,'9').value,'9');
+ assert.equal(resolveBlank(any,'+').value,'+');
+ assert.throws(()=>resolveBlank(number,'+'),/cannot be assigned/i);
+ assert.throws(()=>resolveBlank(operation,'3'),/cannot be assigned/i);
+ assert.equal(resolveBlank(number,'6').points,0);
+ const pending=place(['2','+','4','=','6'],'h',4);
+ const index=pos(CENTER,6);
+ pending[index]=resolveBlank(number,'4');
+ const board=Array(SIZE*SIZE).fill(null);
+ const move=validateMove(board,pending);
+ assert.equal(move.text,'2+4=6');
+ assert.equal(scoreMove(board,pending,move).base,7); // 2 + operator 2 + blank 0 + digit 6 worth 3
+});
+test('free swaps apply to racks entirely made of numbers or operations',()=>{
+ assert.equal(freeExchangeReason(make(['1','2','4'])), 'numbers');
+ assert.equal(freeExchangeReason(make(['+','−','×'])), 'operators');
+ assert.equal(freeExchangeReason([makeTile('1'),makeTile(BLANK_NUMBER)]), 'numbers');
+ assert.equal(freeExchangeReason([makeTile('+'),makeTile(BLANK_OPERATOR)]), 'operators');
+ assert.equal(freeExchangeReason([makeTile('1'),makeTile('+')]), null);
+ assert.equal(freeExchangeReason([makeTile('1'),makeTile(BLANK_ANY)]), null);
+ assert.equal(freeExchangeReason([]), null);
+});
+test('drag reorder moves tiles among visible rack slots and back from board',()=>{
+ const rack=make(['1','2','3','4','5']);
+ const order=tiles=>tiles.map(t=>t.value).join('');
+ assert.equal(order(reorderRack(rack,rack[1].id,3)), '13245');
+ assert.equal(order(reorderRack(rack,rack[2].id,0)), '31245');
+ // The source tile is unscored on the board and hidden while determining a rack slot.
+ assert.equal(order(reorderRack(rack,rack[3].id,1,[rack[3].id])), '14235');
+ assert.equal(new Set(reorderRack(rack,rack[3].id,1,[rack[3].id]).map(t=>t.id)).size,5);
 });

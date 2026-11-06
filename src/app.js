@@ -1,4 +1,4 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 const $=id=>document.getElementById(id);
 const state={
@@ -26,13 +26,21 @@ function freshSector(sector=1){
   state.focusedIndex=pos(CENTER,CENTER);
   state.bag=makeBag();
   if(sector===1){
-    const required=['8','+','4','1','2','3','×'];
+    const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
     state.rack=required.map(v=>{
-      const i=state.bag.findIndex(t=>t.value===v);
+      const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
       return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
     });
   }else{
     const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;
+    // A sector always begins with at least one flexible tile where stock permits.
+    if(!state.rack.some(isBlank)){
+      const blankIndex=state.bag.findIndex(isBlank);
+      if(blankIndex>=0){
+        const wildcard=state.bag.splice(blankIndex,1)[0];
+        state.bag.push(state.rack.pop());state.rack.push(wildcard);
+      }
+    }
   }
   announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');
   $('board-frame').classList.remove('reactor-scored');
@@ -45,12 +53,43 @@ function selectTile(id){
  renderRack();
  renderBoard();
 }
+function availableRack(){
+ const used=new Set(Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id));
+ return state.rack.filter(tile=>!used.has(tile.id));
+}
+function chooseBlank(tile,index){
+ const config=BLANK_KINDS[tile.blank];
+ if(!config)return;
+ state.selected=null;renderRack();renderBoard();
+ showModal('PROGRAM WILDCARD',config.label==='ANY TILE'?'Choose any value':'Choose a '+config.label.toLowerCase(),
+   '<p>Pick the number or operation for this blank. It will score <strong>0 tile points</strong>, but it can still activate a premium square.</p><p>The choice stays fixed when you score the equation.</p><div id="wildcard-choices" class="wildcard-choices" role="group" aria-label="Choose a blank tile value"></div>',
+   [{text:'CANCEL'}]);
+ const chooser=$('wildcard-choices');
+ for(const value of config.choices){
+   const button=document.createElement('button');
+   button.type='button';button.className='wild-choice';button.textContent=value;
+   button.setAttribute('aria-label','Use '+value+' for blank');
+   button.onclick=()=>{
+     $('modal').close();
+     commitPending(resolveBlank(tile,value),index);
+   };
+   chooser.append(button);
+ }
+ chooser.querySelector('button')?.focus();
+}
+function commitPending(tile,index){
+ if(state.ended||state.swapping||state.busy||state.board[index])return;
+ // Replacing a pending tile returns the displaced physical tile to the rack.
+ state.pending[index]=tile;
+ state.placementOrder=state.placementOrder.filter(i=>i!==index);
+ state.placementOrder.push(index);
+ state.recentlyPlaced=index;state.selected=null;render();
+}
 function placePayload(payload,index){
  if(state.ended||state.swapping||state.busy||!Number.isInteger(index)||index<0||index>=SIZE*SIZE)return;
  if(state.board[index]){announce('This tile is locked. Choose an empty square.',true);return;}
  if(payload.kind==='pending'){
-   const from=payload.index;
-   const moving=state.pending[from];
+   const from=payload.index,moving=state.pending[from];
    if(!moving||from===index)return;
    const displaced=state.pending[index];
    delete state.pending[from];state.pending[index]=moving;
@@ -58,20 +97,40 @@ function placePayload(payload,index){
    state.placementOrder=state.placementOrder.filter(i=>i!==from&&i!==index);
    if(displaced)state.placementOrder.push(from);
    state.placementOrder.push(index);
- }else{
-   let tile;
-   if(payload.kind==='equals'){
-     tile={id:'equals-'+index,value:'=',points:0};
-   }else if(payload.kind==='rack'){
-     tile=state.rack.find(t=>t.id===payload.id);
-     if(!tile||Object.values(state.pending).some(t=>t.id===tile.id))return;
-   }else{return;}
-   state.pending[index]=tile;
-   state.placementOrder=state.placementOrder.filter(i=>i!==index);
-   state.placementOrder.push(index);
+   state.recentlyPlaced=index;state.selected=null;render();return;
  }
- state.recentlyPlaced=index;state.selected=null;
- render();
+ if(payload.kind==='equals'){
+   commitPending({id:'equals-'+index,value:'=',points:0},index);return;
+ }
+ if(payload.kind!=='rack')return;
+ const tile=state.rack.find(t=>t.id===payload.id);
+ if(!tile||Object.values(state.pending).some(t=>t.id===tile.id))return;
+ if(isBlank(tile)){chooseBlank(tile,index);return;}
+ commitPending(tile,index);
+}
+function onTileDrop(payload,target){
+ if(state.ended||state.swapping||state.busy)return;
+ if(target.kind==='board'){placePayload(payload,target.index);return;}
+ if(target.kind!=='rack')return;
+ if(payload.kind==='rack'){
+   const hidden=Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id);
+   state.rack=reorderRack(state.rack,payload.id,target.index,hidden);
+   state.selected=null;state.recentlyPlaced=null;
+   announce('Rack tiles rearranged. No turn used.');render();return;
+ }
+ if(payload.kind==='pending'){
+   const tile=state.pending[payload.index];
+   if(!tile)return;
+   delete state.pending[payload.index];
+   state.placementOrder=state.placementOrder.filter(i=>i!==payload.index);
+   if(tile.value!=='='){
+     const hidden=[tile.id,...Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id)];
+     state.rack=reorderRack(state.rack,tile.id,target.index,hidden);
+   }
+   state.selected=null;state.recentlyPlaced=null;
+   announce(tile.value==='='?'Free equals sign returned.':'Tile returned to your rack. No turn used.');
+   render();
+ }
 }
 function placeAt(index){
  if(state.ended||state.swapping||state.busy)return;
@@ -136,7 +195,7 @@ function boardCell(i){
  node.dataset.locked=String(locked);
  node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
-   const inner=document.createElement('span');inner.className='board-tile';
+   const inner=document.createElement('span');inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
    inner.textContent=tile.value;
    if(tile.value!=='='){
      const point=document.createElement('sup');point.textContent=tile.points;inner.append(point);
@@ -151,10 +210,10 @@ function boardCell(i){
    if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)){
      event.preventDefault();focusCell(i,event.key);
    }else if((event.key==='Delete'||event.key==='Backspace')&&state.pending[i]){
-     event.preventDefault();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
+     event.preventDefault();event.stopPropagation();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
    }
  });
- if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},placePayload);
+ if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},onTileDrop);
  return node;
 }
 function renderBoard(){
@@ -163,16 +222,21 @@ function renderBoard(){
  board.replaceChildren(...Array.from({length:SIZE*SIZE},(_,i)=>boardCell(i)));
  if(hadFocus)board.querySelector('[data-index="'+state.focusedIndex+'"]')?.focus({preventScroll:true});
 }
-function tileButton(tile){
+function tileButton(tile, rackIndex){
  const button=document.createElement('button');
  button.type='button';
  button.className='tile'+(state.selected===tile.id?' selected':'')+
-   (state.swapping&&state.swapSet.has(tile.id)?' marked':'');
+   (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
+   (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
  button.dataset.tileId=tile.id;
- button.setAttribute('aria-label',`Tile ${tile.value}, worth ${tile.points} points`);
+ button.dataset.rackIndex=String(rackIndex);
+ button.setAttribute('aria-label',isBlank(tile)?
+   `Blank ${BLANK_KINDS[tile.blank].label.toLowerCase()}: choose a value when placing, zero tile points`:
+   `Tile ${tile.value}, worth ${tile.points} points`);
  button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
- const main=document.createElement('span');main.textContent=tile.value;
- const points=document.createElement('sub');points.textContent=tile.points;
+ const main=document.createElement('span');main.textContent=isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value;
+ const points=document.createElement('sub');
+ points.textContent=isBlank(tile)?({[BLANK_NUMBER]:'N',[BLANK_OPERATOR]:'OP',[BLANK_ANY]:'ALL'})[tile.blank]:tile.points;
  button.append(main,points);
  button.addEventListener('click',event=>{
    if(wasDragClick(event))return;
@@ -182,18 +246,33 @@ function tileButton(tile){
    }
    selectTile(tile.id);
  });
- if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},placePayload);
+ if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
+ button.addEventListener('keydown',event=>{
+   if(!event.altKey||!['ArrowLeft','ArrowRight'].includes(event.key)||state.swapping||state.busy)return;
+   event.preventDefault();
+   const direction=event.key==='ArrowRight'?1:-1;
+   const hidden=Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id);
+   state.rack=reorderRack(state.rack,tile.id,rackIndex+direction+(direction>0?1:0),hidden);
+   renderRack();
+   const next=$('rack').querySelector('[data-tile-id="'+tile.id+'"]');
+   next?.focus({preventScroll:true});
+ });
  return button;
 }
 function renderRack(){
  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
  const available=state.rack.filter(t=>!used.has(t.id));
- $('rack').replaceChildren(...available.map(tileButton));
+ $('rack').replaceChildren(...available.map((tile,i)=>tileButton(tile,i)));
  $('rack-count').textContent=`${available.length} / ${HAND_SIZE}`;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
- $('swap-btn').textContent=state.swapping?`⇄ CONFIRM SWAP (${state.swapSet.size})`:'⇄ SWAP TILES';
+ const eligible=freeExchangeReason(state.rack);
+ $('swap-btn').textContent=state.swapping?
+   `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
+   eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
+ $('swap-btn').classList.toggle('free-exchange',Boolean(eligible));
+ $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
  $('undo-btn').textContent=state.swapping?'× CANCEL SWAP':'↶ CLEAR PLACEMENT';
  $('undo-last-btn').disabled=state.ended||state.busy||!state.placementOrder.length;
@@ -204,8 +283,12 @@ function renderPreview(){
  const box=$('equation-preview');
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
+ const freeReason=freeExchangeReason(state.rack);
  $('preview-status').textContent=state.swapping?
-   'Choose the rack tiles to replace. This will use one turn.':preview.feedback;
+   (freeReason?`Choose tiles to replace — ${freeReason}-only rack, no turn used.`:
+     'Choose tiles to replace — this uses a turn.'):
+   freeReason&&!Object.keys(state.pending).length?
+     `Only ${freeReason} in your rack. Free exchange available.`:preview.feedback;
  const points=(!state.swapping&&preview.ready)?scoreMove(state.board,state.pending,preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
@@ -222,8 +305,7 @@ function render(){
  $('remaining-label').textContent=state.score>=nextTarget(state.sector)?
    'TARGET ACHIEVED':`${nextTarget(state.sector)-state.score} points to stabilise`;
  $('progress').style.width=Math.min(100,state.score/nextTarget(state.sector)*100)+'%';
- $('board-hint').textContent=state.swapping?'SELECT TILES TO EXCHANGE':
-   state.selected?'CHOOSE A LANDING SQUARE':'DRAG OR SELECT YOUR TILES';
+ 
 }
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
@@ -281,7 +363,7 @@ function score(){
     state.busy=false;state.lockedFlash.clear();
     render();
     showModal('EQUATION VERIFIED',`+${points.total} energy`,
-      `<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
+      `<p class="equation-result">${escapeText(move.text)}</p><div class="score-breakdown"><div><span>Tile points</span><b>${points.base}</b></div><div><span>Equation multiplier</span><b>×${points.multiplier}</b></div><div><span>Equation length bonus</span><b>+${points.length}</b></div><div><span>Completed calculation</span><b>+${points.equation}</b></div><div><span>Connected to board</span><b>+${points.crossing}</b></div><div><span>Full rack bonus</span><b>+${points.sweep}</b></div><div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
       [{text:'CONTINUE →',primary:true,fn:turnCompleted}]);
   },420);
  }catch(err){
@@ -299,10 +381,13 @@ function swap(){
    }
    if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}
    state.swapping=true;state.selected=null;
-   announce('Choose one or more rack tiles, then press Confirm Swap.');render();return;
+   announce(freeExchangeReason(state.rack)?
+     'Free exchange: choose tiles to replace, then confirm. No turn used.':
+     'Choose one or more rack tiles, then confirm. This uses a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
+ const free=Boolean(freeExchangeReason(state.rack));
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
  const draw=refill(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
@@ -311,7 +396,14 @@ function swap(){
    const j=Math.floor(Math.random()*(i+1));
    [state.bag[i],state.bag[j]]=[state.bag[j],state.bag[i]];
  }
- announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);turnCompleted();
+ if(free){
+   state.swapping=false;state.swapSet.clear();state.selected=null;
+   announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
+   render();
+ }else{
+   announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);
+   turnCompleted();
+ }
 }
 function clear(){
  if(state.ended||state.busy)return;
@@ -331,7 +423,7 @@ $('equals-tile').onclick=event=>{
  if(wasDragClick(event))return;
  selectTile('equals');
 };
-enableTileDrag($('equals-tile'),{kind:'equals'},placePayload);
+enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
@@ -343,7 +435,9 @@ $('help-btn').onclick=()=>showModal('HOW TO PLAY','Build. Balance. Energise.',
  <p>Your first equation must cross the centre. Later equations must reuse a locked tile. Each move must make one continuous equation.</p>
  <p>Double and triple squares multiply tile or equation points. You earn 3 extra points per square beyond five, plus 20 for placing all seven physical rack tiles. Exchanging tiles uses a turn. Reach the energy target in six turns to advance.</p>
  <p>Move an unscored tile by dragging it. Tap it to pick it up, or use the <strong>Undo Tile</strong> control. Keyboard: <strong>1–7</strong> selects a rack tile, <strong>=</strong> selects the free equals sign, arrow keys navigate the board and Backspace undoes the last placed tile.</p>
- <p>The equation preview shows potential points but does not check whether your mathematics is correct until you submit.</p>`,
+ <p>The equation preview in the command panel shows potential points but does not check whether your mathematics is correct until you submit.</p>
+ <p><strong>A calculation is required:</strong> 3=3 is not accepted. A completed equation earns +5 points, and reusing a locked board tile earns another +5. Blank number (#), blank operator (◇) and flexible (✦) tiles score zero tile points; choose their symbol when you place them.</p>
+ <p>If your rack contains only numbers or only operators, you may exchange tiles without losing your turn. Drag unscored tiles back to the rack to remove them, or drag rack tiles to rearrange their order.</p>`,
  [{text:'LET’S PLAY',primary:true}]);
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;

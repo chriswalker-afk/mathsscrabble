@@ -132,3 +132,52 @@ body{overscroll-behavior:none}
 /* Keep the rack physically attached to its board, even on tall tablets. */
 .arena{justify-content:center}
 .rack-section{margin-top:0}
+
+/* PLAYABILITY PASS — give the reactor board its vertical space back.
+   The preview is a console instrument, not another strip below the board. */
+.arena-topline{display:none!important}
+.board-frame{width:min(100%,calc(100dvh - 248px),665px)}
+.right-panel .equation-preview{width:100%;margin:12px 0 3px;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:78px;flex-shrink:0;background:linear-gradient(145deg,#244959,#132f40);border-color:#537b83}
+.right-panel .equation-preview .preview-led{display:none}
+.right-panel .equation-preview .preview-main{min-width:0;gap:4px}
+.right-panel .equation-preview .preview-top{display:block;min-width:0}
+.right-panel .equation-preview .preview-label{display:block;font-size:8px;letter-spacing:.12em;margin-bottom:5px;color:#88b9bf}
+.right-panel .equation-preview #preview-equation{display:block;color:#ffedc9;font-size:clamp(14px,1.25vw,20px);overflow:hidden;text-overflow:ellipsis}
+.right-panel .equation-preview #preview-status{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:normal;line-height:1.35;font-size:10px;color:#b4cfd0}
+.right-panel .equation-preview .preview-points{min-width:45px;padding-left:8px}
+.right-panel .equation-preview .preview-points small{font-size:8px;white-space:normal;text-align:right}
+.right-panel .equation-preview .preview-points strong{font-size:21px}
+.tile.wildcard{border-color:#79b4b9;background:radial-gradient(ellipse at 20% 10%,#e4faff,#a9d1dc 65%,#7498ac);box-shadow:inset 1px 2px #f1ffff,0 4px 0 #5f8b9b,0 6px 9px #0009;color:#163746}
+.tile.wildcard-blank-operator{background:radial-gradient(ellipse at 20% 10%,#f7e6ff,#c6a8dc 65%,#9b75b8);border-color:#bb90d0;box-shadow:inset 1px 2px #fff6ff,0 4px 0 #81629c,0 6px 9px #0009}
+.tile.wildcard-blank-any{background:radial-gradient(ellipse at 20% 10%,#fff1c7,#eab477 65%,#be8552);border-color:#e3af64;box-shadow:inset 1px 2px #fff5db,0 4px 0 #a47c49,0 6px 9px #0009}
+.tile.wildcard sub{font-size:8px;letter-spacing:-.02em;color:#204454}
+.tile.wildcard.selected{outline-color:#ffe2a4;filter:brightness(1.1)}
+.placed-wildcard{border-color:#4eaea8!important;background:linear-gradient(135deg,#e9faf0,#abdfd2)!important}
+.wildcard-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:18px 0 2px}
+.wild-choice{aspect-ratio:1;border-radius:6px;border:1px solid #ddc698;background:linear-gradient(155deg,#fff6da,#dfc9a4);box-shadow:inset 0 1px #fff8e8,0 3px #ab9371;color:#223842;font-size:21px;font-weight:850}
+.wild-choice:hover,.wild-choice:focus-visible{background:linear-gradient(155deg,#e2f9ea,#9bdac9);border-color:#87d6c2;transform:translateY(-2px)}
+.secondary-command.free-exchange{border-color:#61c5a2;background:linear-gradient(145deg,#245c57,#194c4b);color:#b6ffe4;box-shadow:inset 0 0 0 1px #62c6b32b}
+#rack.drag-target,.rack-row.drag-target{outline:2px solid #72ebd3;outline-offset:2px;background:#325b68}
+#rack .tile.drag-target{outline:2px solid #83e9d2;outline-offset:3px}
+#rack .tile.rack-before::after,#rack .tile.rack-after::after{content:"";position:absolute;z-index:7;top:-8px;bottom:-8px;width:4px;border-radius:4px;background:#9effda;box-shadow:0 0 10px #69e7c8}
+#rack .tile.rack-before::after{left:-8px}
+#rack .tile.rack-after::after{right:-8px}
+@media(max-height:760px) and (min-width:731px){
+ .board-frame{width:min(100%,calc(100dvh - 238px),665px)}
+ .right-panel .equation-preview{min-height:66px;margin:6px 0 0;padding:7px}
+ .right-panel .equation-preview #preview-status{font-size:9px;-webkit-line-clamp:2}
+ .right-panel .equation-preview .preview-label{font-size:8px;margin-bottom:1px}
+}
+@media(max-width:730px){
+ .board-frame{width:min(100%,550px)}
+ .right-panel{display:flex;flex-direction:column}
+ .right-panel .command-group{order:0}
+ .right-panel .equation-preview{order:1;min-height:43px;margin:7px 0 0;padding:5px 8px;display:flex;gap:8px}
+ .right-panel .equation-preview .preview-top{display:flex;align-items:baseline;gap:8px}
+ .right-panel .equation-preview .preview-label{display:none}
+ .right-panel .equation-preview #preview-equation{font-size:15px}
+ .right-panel .equation-preview #preview-status{font-size:9px;-webkit-line-clamp:1}
+ .right-panel .equation-preview .preview-points small{font-size:7px}
+ .right-panel .equation-preview .preview-points strong{font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){.wild-choice:hover{transform:none}}
