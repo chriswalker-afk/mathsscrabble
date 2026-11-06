@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,inspectPlacement,scoreMove,bonusAt,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,isBlank,resolveBlank,freeExchangeReason,reorderRack} from '../src/engine.js';
+import {SIZE,CENTER,pos,makeTile,makeBag,refill,checkEquation,validateMove,inspectPlacement,scoreMove,bonusAt,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,tilePool,isBlank,resolveBlank,freeExchangeReason,reorderRack} from '../src/engine.js';
 const make=arr=>arr.map(makeTile);
 const place=(symbols,orientation='h',start=0,row=CENTER)=>{
  const pending={};make(symbols).forEach((tile,k)=>pending[orientation==='h'?pos(row,start+k):pos(start+k,row)]=tile);return pending;
@@ -57,6 +57,8 @@ test('score calculation respects premium squares, length and full hand',()=>{
 });
 test('bag refilling, turn targets and rack clear bookkeeping',()=>{
  const bag=makeBag(()=>0.5);assert.ok(bag.length>100);const draw=refill([],bag);assert.equal(draw.rack.length,8);
+ assert.equal(draw.rack.filter(t=>tilePool(t)==='numbers').length,5);
+ assert.equal(draw.rack.filter(t=>tilePool(t)==='operators').length,3);
  assert.equal(draw.rack.length+draw.bag.length,bag.length);assert.ok(nextTarget(3)>nextTarget(2));
 });
 
