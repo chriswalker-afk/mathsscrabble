@@ -53,13 +53,13 @@ try{
    await page.locator('#modal-actions button').last().click();
  await page.locator('#mode-btn').click();
  await page.locator('#home-local').click();
- await page.waitForURL(/play\.html\?mode=local$/);
+ await page.waitForURL(/play\.html\?mode=local(?:&tiles=natural)?$/);
  assert.match(await page.locator('#modal-title').textContent(),/local match/i);
  assert.equal(await page.locator('#local-player-count').count(),1);
  await page.locator('#modal-actions button').first().click();
  await page.waitForURL(/index\.html$/);
  await page.locator('#home-online').click();
- await page.waitForURL(/online\.html$/);
+ await page.waitForURL(/online\.html(?:\?tiles=natural)?$/);
  assert.equal(await page.locator('#online-gate').count(),1);
  await page.locator('#online-gate .online-back').click();
  await page.waitForURL(/index\.html$/);
@@ -80,7 +80,7 @@ try{
     /CHANGE PHYSICAL TILE KIT/.test(await page.locator('#modal-eyebrow').textContent()))
    await page.locator('#modal-actions button').last().click();
  assert.equal(await page.locator('#rack .bracket-tile').count(),2);
- assert.equal(await page.locator('#rack-count').textContent(),'10 / 10');
+ assert.equal(await page.locator('#rack-count').textContent(),'11 / 11');
  assert.equal(await page.locator('#board .cell').count(),169);
  assert.deepEqual(errors,[],'all home-page navigation must be free of script errors');
  console.log('Mission home browser passed: four full-card keyboard/click routes, save/resume, Local setup back, online and Alien Lab, 4 viewport widths.');
