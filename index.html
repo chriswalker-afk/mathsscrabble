@@ -7,7 +7,7 @@
 <div id="app">
 <header class="topbar"><div class="brand"><div class="brand-icon" aria-hidden="true"><img src="./assets/reactor-mark.svg" alt="" width="46" height="46"></div><div><strong>EQUA<span>//</span>NOVA</strong><small>THE EQUATION REACTOR</small></div></div>
 <div class="top-readout"><span class="status-dot"></span><span id="sector-label">SECTOR 01 · ORIGIN</span></div>
-<div class="top-actions"><span id="save-status" class="save-status" role="status" aria-live="polite">LOCAL SAVE</span><button id="help-btn" class="quiet-button" type="button">? HOW TO PLAY</button><button id="run-report-header" class="quiet-button run-report-header" type="button" aria-label="View run summary" title="View run summary">◈ RUN</button><button id="new-btn" class="quiet-button" type="button">↻ NEW RUN</button></div></header>
+<div class="top-actions"><button id="mode-btn" class="quiet-button mode-btn" type="button" title="Choose Sector Run or The Drift">◈ MODE</button><span id="save-status" class="save-status" role="status" aria-live="polite">LOCAL SAVE</span><button id="help-btn" class="quiet-button" type="button">? HOW TO PLAY</button><button id="run-report-header" class="quiet-button run-report-header" type="button" aria-label="View run summary" title="View run summary">◈ RUN</button><button id="new-btn" class="quiet-button" type="button">↻ NEW RUN</button></div></header>
 <main class="game-shell">
 <aside class="side-panel left-panel" aria-label="Sector information">
 <div class="panel-heading">MISSION TELEMETRY</div>
@@ -15,6 +15,10 @@
 <div class="pilot-name">PILOT // NOVA</div>
 <div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div class="progress-track"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><div class="mini-stat"><small>IN BAG</small><strong id="bag-count">0</strong></div></div>
+<div id="rogue-summary" class="rogue-summary" hidden>
+ <div class="rogue-head"><span>THE DRIFT · BUILD</span><strong id="flux-count">0 <small>FLUX</small></strong></div>
+ <div id="upgrade-summary" class="upgrade-summary">No upgrades equipped</div>
+</div>
 <div class="panel-divider"></div><div class="panel-heading">REACTOR LOG</div><div id="log" role="status" aria-live="polite">Place your first equation through the glowing centre tile.</div>
 <div id="coach-hint" class="coach-hint" role="note"></div>
 <div id="history-mini" class="history-mini" aria-label="Recent equations"></div>
@@ -27,12 +31,13 @@
 </section>
 <aside class="side-panel right-panel" aria-label="Game controls"><div class="panel-heading">COMMAND CONSOLE</div>
 <div id="equation-preview" class="equation-preview" aria-label="Equation placement preview"><div class="preview-led" aria-hidden="true"></div><div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="preview-equation" aria-label="Equation preview">—</strong></div><span id="preview-status" role="status" aria-live="polite">Choose a tile and a grid square.</span></div><div class="preview-points"><small>IF BALANCED</small><strong id="potential-score">—</strong></div></div>
+<div id="anomaly-banner" class="anomaly-banner" hidden role="note"><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
 <div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
 <button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
 <button id="swap-btn" class="secondary-command" type="button">⇄ SWAP TILES</button></div>
 <div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div><div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile</span></div><div><i class="legend-square ee">2E</i><span>Double equation</span></div><div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
 <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div><p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p><p class="rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p><div class="keys-guide">KEYS <kbd>1–7</kbd> rack <kbd>=</kbd> equals <kbd>←↑↓→</kbd> grid <kbd>⌫</kbd> undo</div></aside>
-</main><footer class="bottom-strip"><span>⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
+</main><footer class="bottom-strip"><span id="footer-mode">⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
 </div>
 <dialog id="modal"><div class="modal-content"><div class="modal-heading"><span id="modal-eyebrow">TRANSMISSION</span><button id="modal-close" class="modal-x" type="button" aria-label="Close">×</button></div><h2 id="modal-title"></h2><div id="modal-body"></div><div id="modal-actions" class="modal-actions"></div></div></dialog>
 </body></html>

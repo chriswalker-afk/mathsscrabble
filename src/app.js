@@ -1,17 +1,19 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
+import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
   state.saveAvailable=saveRun(storage,state);
+  if(state.saveAvailable){try{storage?.setItem(ACTIVE_MODE_KEY,state.mode);}catch{/* storage unavailable */}}
   $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
   $('save-status').classList.toggle('unavailable',!state.saveAvailable);
   $('save-status').title=state.saveAvailable?
@@ -19,6 +21,15 @@ function persistRun(){
     'Your browser could not save this run. Keep this tab open to avoid losing progress.';
 }
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
+const isDrift=()=>state.mode==='rogue';
+const currentTarget=()=>targetForSector(state.mode,state.sector);
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
+const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
+ ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
+ (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
+const calculateMove=move=>isDrift()?
+  scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
+  scoreMove(state.board,state.pending,move);
 function announce(message,isError=false){
  $('log').textContent=message;
  $('log').classList.toggle('error',isError);
@@ -31,6 +42,8 @@ function announce(message,isError=false){
 function freshSector(sector=1,{newRun=false}={}){
  state.modalEpoch++;
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
+ if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
+ if(!isDrift())state.rogue=null;
  state.stats=freshStats();state.phase='playing';
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.ended=false;state.busy=false;
@@ -45,12 +58,16 @@ function freshSector(sector=1,{newRun=false}={}){
      return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
    });
  }else{
-   const deal=dealPlayableRack([],state.bag);
+   const deal=dealPlayableRack([],state.bag,currentRackOptions());
    state.rack=deal.rack;state.bag=deal.bag;
  }
+ const anomaly=isDrift()?anomalyForSector(sector):null;
  announce(sector===1?
-   'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.':
-   'New sector online. Use the centre to begin and aim for the new energy target.');
+   (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
+     'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.'):
+   anomaly?
+     `Sector anomaly: ${anomaly.name}. ${anomaly.short}. Build carefully.`:
+     'New sector online. Use the centre to begin and aim for the new energy target.');
  $('board-frame').classList.remove('reactor-scored');
  render();
 }
@@ -186,7 +203,11 @@ function focusCell(currentIndex,key){
  }
 }
 function boardCell(i){
- const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],bonus=bonusAt(r,c),locked=!!state.board[i];
+ const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],locked=!!state.board[i];
+ const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector):null;
+ const bonus=isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
+   isDrift()&&rawBonus==='2E'&&anomaly?.id==='signal-jam'?'JAM':
+   isDrift()&&rawBonus==='3T'&&anomaly?.id==='tile-static'?'2T':rawBonus;
  const inPath=state.preview?.indices?.includes(i);
  const node=document.createElement('button');
  node.type='button';
@@ -204,11 +225,12 @@ function boardCell(i){
  node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
    const inner=document.createElement('span');
-   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
+   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'')+
+     (pending&&isChargedTile(tile)?' charged-tile':'');
    inner.textContent=tile.value;
    // Keep board symbols completely unobstructed. Point values remain visible
    // on the rack, in the equation breakdown, and in this accessible tooltip.
-   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points`;
+   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
    node.append(inner);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
@@ -234,7 +256,8 @@ function renderBoard(){
 function tileButton(tile, rackIndex){
  const button=document.createElement('button');
  button.type='button';
- button.className='tile'+(state.selected===tile.id?' selected':'')+
+ button.className='tile'+(isChargedTile(tile)?' charged-rack-tile':'')+
+   (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
  button.dataset.tileId=tile.id;
@@ -298,7 +321,7 @@ function renderPreview(){
      'Choose tiles to replace — this uses a turn.'):
    freeReason&&!Object.keys(state.pending).length?
      `Only ${freeReason} in your rack. Free exchange available.`:preview.feedback;
- const points=(!state.swapping&&preview.ready)?scoreMove(state.board,state.pending,preview):null;
+ const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
    `Potential score ${points.total} if the equation is mathematically correct`:
@@ -307,12 +330,31 @@ function renderPreview(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
- const target=nextTarget(state.sector),remaining=Math.max(0,target-state.score);
+ const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
  $('score').textContent=state.score;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
- $('sector-label').textContent=`SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('app').dataset.mode=state.mode;
+ $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
+ $('mode-btn').textContent=isDrift()?'◈ THE DRIFT':'◈ SECTOR RUN';
+ $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
+ $('rogue-summary').hidden=!isDrift();
+ $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector);
+ if(isDrift()){
+   const anomaly=anomalyForSector(state.sector);
+   $('flux-count').textContent=String(state.rogue.flux);
+   const upgrades=state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name);
+   $('upgrade-summary').textContent=(upgrades.length?
+     `${upgrades.slice(0,2).join(' · ')}${upgrades.length>2?' · +'+(upgrades.length-2)+' more':''}`:
+     'No upgrades equipped yet')+(state.rogue.pulse?' · ⚡ '+state.rogue.pulse+' charge(s)':'');
+   if(anomaly){
+     $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
+     $('anomaly-text').textContent=anomaly.short+
+       (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
+   }
+ }
  $('bag-count').textContent=state.bag.length;
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
@@ -334,8 +376,8 @@ function render(){
  }
  const coach=$('coach-hint');
  const placed=Object.keys(state.pending).length;
- if(state.phase==='won')coach.textContent='Reactor stabilised. Open the sector report to advance.';
- else if(state.phase==='lost')coach.textContent='Review your moves and retry this sector.';
+ if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
+ else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
  else if(state.swapping)coach.textContent=freeExchangeReason(state.rack)?
    'All numbers or all operations? You can exchange tiles without spending a turn.':
    'Select your exchange tiles. This will use one turn.';
@@ -350,15 +392,16 @@ function render(){
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
- $('modal').showModal();
+ if(!$('modal').open)$('modal').showModal();
 }
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
- if(state.score>=nextTarget(state.sector)){
+ if(state.score>=currentTarget()){
    state.phase='won';state.ended=true;
    state.progress=completeProgress(state.progress,
-     sectorReport(state.sector,state.score,state.turn,state.stats,true));
+     sectorReport(state.sector,state.score,state.turn,state.stats,true,currentTarget()));
+   if(isDrift())state.rogue=rewardSector(state.rogue,state.sector,state.score,state.turn).rogue;
  }else if(state.turn>=TURNS_PER_SECTOR){
    state.phase='lost';state.ended=true;
  }else{
@@ -374,9 +417,68 @@ function reportRows(moves){
    `<div class="report-move"><span class="report-turn">T${m.turn}</span><strong>${escapeText(m.equation)}</strong><span>+${m.points}</span></div>`
  ).join('')+'</div>';
 }
+function showShop(){
+ if(!isDrift()||state.phase!=='won')return;
+ const offers=shopOffers(state.sector,state.rogue);
+ const intro=`<div class="salvage-intro">
+ <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
+ <div><strong>SECTOR ${state.sector} STABILISED</strong>
+ <p>+${state.rogue.lastReward} Flux earned. Buy permanent upgrades, or a single-use capacitor (+12 on the next correct equation). All equipment resets at the end of the run.</p></div>
+ </div>
+ <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Available Salvage Bay upgrades"></div>
+ <p id="salvage-feedback" class="salvage-feedback">Permanent upgrades can be installed once; Pulse Capacitors are consumed by scoring and can be bought repeatedly.</p>`;
+ showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
+   {text:'RUN REPORT',fn:showRunReport},
+   {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
+ ]);
+ const grid=$('salvage-grid');
+ if(!offers.length){
+   const end=document.createElement('p');
+   end.className='salvage-empty';
+   end.textContent='All ten upgrades installed. Your build is complete—continue into the next sector.';
+   grid.append(end);
+ }
+ for(const item of offers){
+   const card=document.createElement('div');card.className='salvage-card';
+   const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
+   const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=item.icon;
+   const title=document.createElement('strong');title.textContent=item.name;
+   const description=document.createElement('p');description.textContent=item.description;
+   const buy=document.createElement('button');buy.type='button';buy.className='salvage-buy';
+   buy.textContent=item.cost+' FLUX · '+(state.rogue.flux>=item.cost?'INSTALL':'NOT ENOUGH');
+   buy.disabled=state.rogue.flux<item.cost;
+   buy.setAttribute('aria-label','Install '+item.name+' for '+item.cost+' Flux');
+   buy.onclick=()=>{
+     const purchase=purchaseUpgrade(state.rogue,item.id,state.sector);
+     if(!purchase.ok){$('salvage-feedback').textContent=purchase.reason;return;}
+     state.rogue=purchase.rogue;
+     persistRun();render();showShop();
+     $('salvage-feedback').textContent=purchase.reason+'. Upgrade equipped for the rest of this run.';
+   };
+   card.append(tag,icon,title,description,buy);grid.append(card);
+ }
+ const charge=document.createElement('div');charge.className='salvage-card salvage-consumable';
+ const type=document.createElement('span');type.className='salvage-type';type.textContent=PULSE_ITEM.kind;
+ const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=PULSE_ITEM.icon;
+ const title=document.createElement('strong');title.textContent=PULSE_ITEM.name+' · '+state.rogue.pulse+'/3';
+ const detail=document.createElement('p');detail.textContent=PULSE_ITEM.description;
+ const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
+ buy.textContent=PULSE_ITEM.cost+' FLUX · '+(state.rogue.flux>=PULSE_ITEM.cost&&state.rogue.pulse<3?'CHARGE':'UNAVAILABLE');
+ buy.disabled=state.rogue.flux<PULSE_ITEM.cost||state.rogue.pulse>=3;
+ buy.setAttribute('aria-label','Buy single-use '+PULSE_ITEM.name+' for '+PULSE_ITEM.cost+' Flux');
+ buy.onclick=()=>{
+   const p=purchasePulse(state.rogue,state.sector);
+   if(!p.ok){$('salvage-feedback').textContent=p.reason;return;}
+   state.rogue=p.rogue;
+   persistRun();render();showShop();
+   $('salvage-feedback').textContent=p.reason+'. It will activate on your next scored equation.';
+ };
+ charge.append(type,icon,title,detail,buy);
+ grid.append(charge);
+}
 function showSectorOutcome(){
  const won=state.phase==='won';
- const report=sectorReport(state.sector,state.score,state.turn,state.stats,won);
+ const report=sectorReport(state.sector,state.score,state.turn,state.stats,won,currentTarget());
  const best=report.best?`${escapeText(report.best.equation)} (+${report.best.points})`:'No scored equations';
  const message=won?
    'Target reached. Your run continues into a fresh sector.':
@@ -394,12 +496,21 @@ function showSectorOutcome(){
  <p class="report-best">Best calculation: ${best}</p>
  ${reportRows(report.moves)}
  <p class="report-note">${message}</p></div>`;
+ if(isDrift()&&won){showShop();return;}
  if(won){
    showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,body,[
     {text:'VIEW RUN',fn:showRunReport},
     {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
    ]);
- }else{
+  }else{
+   if(isDrift()){
+     showModal('DRIFT SIGNAL LOST',`Run ended in sector ${state.sector}`,body+
+       '<p class="rogue-death-note">Your upgrades and remaining Flux reset when you start a new Drift run.</p>',[
+       {text:'VIEW RUN',fn:showRunReport},
+       {text:'NEW DRIFT',primary:true,fn:()=>freshSector(1,{newRun:true})}
+     ]);
+     return;
+   }
    showModal('REACTOR OFFLINE',`Sector ${state.sector} report`,body,[
     {text:'NEW RUN',fn:()=>freshSector(1,{newRun:true})},
     {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}
@@ -411,18 +522,30 @@ function showRunReport(){
  const rows=progress.completed.slice(-10).map(item=>
    `<div class="report-move"><span class="report-turn">S${item.sector}</span><strong>${item.score} / ${item.target} energy</strong><span>${item.turnsUsed} turns</span></div>`
  ).join('');
+ const upgraded=isDrift()?state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name):[];
+ const build=isDrift()?`<div class="rogue-report-build">
+ <span>AVAILABLE FLUX <strong>${state.rogue.flux}</strong></span>
+ <span>EQUIPPED <strong>${upgraded.length}</strong></span></div>
+ <p class="report-note">${upgraded.length?'Your build: '+escapeText(upgraded.join(', ')):'No upgrades bought yet.'}</p>`:'';
  const body=`<div class="sector-report"><div class="report-energy"><div><span>SECTORS CLEARED</span><strong>${progress.completed.length}</strong></div>
  <div><span>RUN ENERGY</span><strong>${progress.runPoints}</strong></div></div>
- <p class="report-note">Current sector ${state.sector}: ${state.score} / ${nextTarget(state.sector)} energy. Progress saves automatically on this device.</p>
+ ${build}
+ <p class="report-note">Current sector ${state.sector}: ${state.score} / ${currentTarget()} energy. ${isDrift()?'Drift upgrades and Flux':'Sector Run progress'} save locally on this device.</p>
  <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
  const buttons=state.phase==='won'?
-   [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
-    {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
+   isDrift()?
+     [{text:'SALVAGE BAY',primary:true,fn:showShop},
+      {text:'NEXT SECTOR →',fn:()=>freshSector(state.sector+1)}]:
+     [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
+      {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
    state.phase==='lost'?
-     [{text:'BACK TO REPORT',fn:showSectorOutcome},
-      {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
+     isDrift()?
+       [{text:'BACK TO REPORT',fn:showSectorOutcome},
+        {text:'NEW DRIFT',primary:true,fn:()=>freshSector(1,{newRun:true})}]:
+       [{text:'BACK TO REPORT',fn:showSectorOutcome},
+        {text:'RETRY SECTOR',primary:true,fn:()=>freshSector(state.sector)}]:
      [{text:'BACK TO GAME',primary:true}];
- showModal('CAPTAIN’S LOG','Your reactor run',body,buttons);
+ showModal('CAPTAIN’S LOG',isDrift()?'The Drift · Your build':'Your reactor run',body,buttons);
 }
 function showEnergyBurst(points){
  const burst=$('energy-burst');
@@ -437,13 +560,16 @@ function score(){
  if(state.ended||state.swapping||state.busy)return;
  try{
    const move=validateMove(state.board,state.pending);
-   const points=scoreMove(state.board,state.pending,move);
+   const points=calculateMove(move);
+   // The capacitor triggers only on a mathematically valid scored move. Charge
+   // is deducted alongside the turn, before the animation or any page reload.
+   if(isDrift())state.rogue=consumePulse(state.rogue);
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
    for(const [i,tile] of Object.entries(state.pending))state.board[Number(i)]=tile;
    state.rack=state.rack.filter(t=>!used.has(t.id));
-   const draw=dealPlayableRack(state.rack,state.bag);
+   const draw=dealPlayableRack(state.rack,state.bag,currentRackOptions());
    state.rack=draw.rack;state.bag=draw.bag;
    state.score+=points.total;
    state.busy=true;
@@ -464,8 +590,11 @@ function score(){
        <div><span>Completed calculation</span><b>+${points.equation}</b></div>
        <div><span>Connected to board</span><b>+${points.crossing}</b></div>
        <div><span>Full rack bonus</span><b>+${points.sweep}</b></div>
-       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>`,
-       [{text:state.phase==='playing'?'CONTINUE →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
+       ${isDrift()?`<div><span>Roguelike upgrades</span><b>+${points.extra}</b></div>
+       <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
+       <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
+       ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
+       [{text:state.phase==='playing'?'CONTINUE →':isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',primary:true,fn:()=>{
          if(state.phase!=='playing')showSectorOutcome();
        }}]);
    },420);
@@ -495,7 +624,7 @@ function swap(){
  const free=Boolean(freeExchangeReason(state.rack));
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
- const draw=dealPlayableRack(state.rack,state.bag);state.rack=draw.rack;state.bag=draw.bag;
+ const draw=dealPlayableRack(state.rack,state.bag,currentRackOptions());state.rack=draw.rack;state.bag=draw.bag;
  state.bag.push(...exchanged);
  for(let i=state.bag.length-1;i>0;i--){
    const j=Math.floor(Math.random()*(i+1));
@@ -561,24 +690,78 @@ function showTraining(firstVisit=false){
      {text:'START MISSION →',primary:true,fn:rememberIntro}]:
     [{text:'BACK TO GAME',primary:true}]);
 }
-$('help-btn').onclick=()=>showTraining();
-function startSolo(){
- const previous=loadRun(storage);
+$('help-btn').onclick=()=>isDrift()?showDriftIntro():showTraining();
+function showDriftIntro(){
+ showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
+   `<div class="training-steps">
+     <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
+       <p>Every sector still uses the same BIDMAS rules, physical tile rack and premium grid. Reach the energy target within six turns.</p></div></div>
+     <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Choose permanent upgrades for this run: strengthen sevens, boost crossings, attract wildcards or power up board multipliers.</p></div></div>
+     <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
+       <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
+   </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
+   [{text:'BEGIN THE DRIFT →',primary:true}]);
+}
+function restoreMode(mode,{initial=false}={}){
+ state.modalEpoch++;
+ state.mode=mode;
+ const previous=loadRun(storage,mode);
  if(previous){
    Object.assign(state,previous);
+   state.mode=mode;
+   state.rogue=mode==='rogue'?previous.rogue:null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
    state.focusedIndex=pos(CENTER,CENTER);
-   announce('Saved run restored. Your board, rack, and unfinished placements are ready.');
+   announce(mode==='rogue'?
+     'Saved Drift run restored: your upgrades, Flux and rack are intact.':
+     'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
    if(state.ended)showSectorOutcome();
  }else{
+   state.rogue=mode==='rogue'?makeRogueState():null;
    freshSector(1,{newRun:true});
-   let seen=false;
-   try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
-   if(!seen)showTraining(true);
+   if(mode==='rogue')showDriftIntro();
+   else if(initial){
+     let seen=false;
+     try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
+     if(!seen)showTraining(true);
+   }
  }
+}
+function chooseMode(mode){
+ if(!['sector','rogue'].includes(mode)||state.busy)return;
+ if(mode===state.mode){
+   if(state.ended)showSectorOutcome();
+   return;
+ }
+ restoreMode(mode);
+}
+function showModeMenu(){
+ if(state.busy)return;
+ showModal('SELECT MODE','Choose your reactor mission',
+   `<div class="mode-choice-grid">
+    <div class="mode-choice">
+     <span class="mode-crest">◈</span><strong>SECTOR RUN</strong>
+     <p>Pure equation building, escalating targets and infinite retries. Your classroom practice progress is saved separately.</p>
+     <small>${!isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+    <div class="mode-choice">
+     <span class="mode-crest">✧</span><strong>THE DRIFT</strong>
+     <p>A finite run. Win Flux, buy upgrades between sectors, adapt to anomalies every third sector and survive as long as you can.</p>
+     <small>${isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+   </div>`,
+   [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
+    {text:'THE DRIFT →',primary:true,fn:()=>chooseMode('rogue')}]);
+}
+$('mode-btn').onclick=showModeMenu;
+function startSolo(){
+ let mode='sector';
+ try{if(storage?.getItem(ACTIVE_MODE_KEY)==='rogue')mode='rogue';}catch{/* no storage */}
+ restoreMode(mode,{initial:true});
 }
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
@@ -604,9 +787,11 @@ $('modal-close').onclick=()=>{
    $('modal-actions').querySelector('button')?.click();
  }else if($('modal-eyebrow').textContent==='WELCOME TO THE REACTOR'){
    rememberIntro();$('modal').close();
- }else if(!state.ended){
+ }else{
    $('modal').close();
  }
 };
-$('modal').addEventListener('cancel',e=>{if(state.ended||$('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();});
+$('modal').addEventListener('cancel',e=>{
+ if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
+});
 startSolo();

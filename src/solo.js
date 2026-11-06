@@ -2,6 +2,7 @@
 import {
  SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget
 } from './engine.js';
+import {ROGUE_SAVE_KEY,targetForSector,validRogueState} from './rogue.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -17,7 +18,9 @@ const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator
  * >=1 operator-capable tile, and >=1 blank. These roles may overlap.
  * The source bag's physical IDs and combined tile total are preserved.
  */
-export function dealPlayableRack(held,sourceBag){
+export function dealPlayableRack(held,sourceBag,options={}){
+  const minBlanks=options.minBlanks===2?2:1;
+  const minOperators=options.minOperators===2?2:1;
   const rack=[...held],bag=[...sourceBag];
   function choose(predicate){
     for(let i=bag.length-1;i>=0;i--){
@@ -26,11 +29,14 @@ export function dealPlayableRack(held,sourceBag){
     return false;
   }
   while(rack.length<HAND_SIZE && bag.length){
+    // Pick the flexible and rarer roles first. They also count towards the
+    // number/operator minimums, which avoids filling all seven slots before
+    // upgraded Wildcard Beacon and Operator Reserve can take effect.
+    if(rack.filter(isBlank).length<minBlanks && choose(isBlank))continue;
+    if(rack.filter(operatorCapable).length<minOperators && choose(operatorCapable))continue;
     if(rack.filter(numberCapable).length<4 &&
        choose(tile=>isDigit(tile.value)||tile.blank==='blank-number'))continue;
     if(rack.filter(numberCapable).length<4 && choose(numberCapable))continue;
-    if(rack.filter(operatorCapable).length<1 && choose(operatorCapable))continue;
-    if(!rack.some(isBlank) && choose(isBlank))continue;
     rack.push(bag.pop());
   }
   return {rack,bag};
@@ -42,11 +48,11 @@ export function recordMove(stats,move,points,turn,pending){
  return {...stats,moves:[...stats.moves,{
    equation:move.text,turn,points:points.total,length:move.indices.length,
    tiles:tiles.length,wildcards:tiles.filter(isBlank).length,
-   crossing:points.crossing,bonuses:[...points.bonuses]
+   crossing:points.crossing,bonuses:[...points.bonuses,...(points.upgrades||[])]
  }]};
 }
-export function sectorReport(sector,score,turn,stats,success){
- const target=nextTarget(sector),moves=stats.moves;
+export function sectorReport(sector,score,turn,stats,success,target=nextTarget(sector)){
+ const moves=stats.moves;
  const best=moves.length?moves.reduce((a,b)=>a.points>=b.points?a:b):null;
  const longest=moves.length?moves.reduce((a,b)=>a.length>=b.length?a:b):null;
  return {
@@ -87,8 +93,8 @@ function validReportMove(move){
    validInteger(move.points,0,500000)&&validInteger(move.turn,1,6)&&
    validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,7)&&
    validInteger(move.wildcards,0,7)&&validInteger(move.crossing,0,10)&&
-   Array.isArray(move.bonuses)&&move.bonuses.length<=13&&
-   move.bonuses.every(b=>typeof b==='string'&&b.length<=30);
+   Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
+   move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
 function validStats(stats){
  return stats&&typeof stats==='object'&&
@@ -120,6 +126,10 @@ function validProgress(progress){
 }
 function validSnapshot(data){
  if(!data||typeof data!=='object'||data.version!==SAVE_VERSION)return false;
+ const mode=data.mode||'sector';
+ if(!['sector','rogue'].includes(mode))return false;
+ if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
+ if(mode==='sector'&&data.rogue!=null)return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
     !validInteger(data.turn,1,6)||
@@ -150,9 +160,10 @@ function validSnapshot(data){
  }
  if(!validStats(data.stats)||!validProgress(data.progress))return false;
  if(data.progress.completed.some(x=>x.sector>data.sector||(x.sector===data.sector&&data.phase!=='won')))return false;
- if(data.phase==='won'&&data.score<nextTarget(data.sector))return false;
- if(data.phase==='lost'&&(data.score>=nextTarget(data.sector)||data.turn!==6))return false;
- if(data.phase==='playing'&&(data.score>=nextTarget(data.sector)||data.turn>6))return false;
+ const target=targetForSector(mode,data.sector);
+ if(data.phase==='won'&&data.score<target)return false;
+ if(data.phase==='lost'&&(data.score>=target||data.turn!==6))return false;
+ if(data.phase==='playing'&&(data.score>=target||data.turn>6))return false;
  if(data.phase!=='playing'&&entries.length>0)return false;
  return true;
 }
@@ -162,7 +173,8 @@ export function snapshotRun(state){
   board:state.board,pending:state.pending,rack:state.rack,bag:state.bag,
   sector:state.sector,turn:state.turn,score:state.score,
   phase:state.phase,placementOrder:state.placementOrder,
-  stats:state.stats,progress:state.progress
+  stats:state.stats,progress:state.progress,
+  mode:state.mode||'sector',rogue:state.mode==='rogue'?state.rogue:null
  };
 }
 export function saveRun(storage,state){
@@ -170,18 +182,19 @@ export function saveRun(storage,state){
    if(!storage)return false;
    const snapshot=snapshotRun(state);
    if(!validSnapshot(snapshot))return false;
-   storage.setItem(SAVE_KEY,JSON.stringify(snapshot));
+   storage.setItem(state.mode==='rogue'?ROGUE_SAVE_KEY:SAVE_KEY,JSON.stringify(snapshot));
    return true;
  }catch{return false;}
 }
-export function loadRun(storage){
+export function loadRun(storage,mode='sector'){
  try{
-   const raw=storage?.getItem(SAVE_KEY);
+   if(!['sector','rogue'].includes(mode))return null;
+   const raw=storage?.getItem(mode==='rogue'?ROGUE_SAVE_KEY:SAVE_KEY);
    if(!raw||raw.length>250000)return null;
    const data=JSON.parse(raw);
-   return validSnapshot(data)?data:null;
+   return validSnapshot(data)&&(data.mode||'sector')===mode?data:null;
  }catch{return null;}
 }
-export function clearRun(storage){
- try{storage?.removeItem(SAVE_KEY);return true;}catch{return false;}
+export function clearRun(storage,mode='sector'){
+ try{storage?.removeItem(mode==='rogue'?ROGUE_SAVE_KEY:SAVE_KEY);return true;}catch{return false;}
 }
