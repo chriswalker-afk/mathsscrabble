@@ -1,4 +1,4 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
@@ -6,6 +6,7 @@ import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
+import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -68,17 +69,16 @@ function freshSector(sector=1,{newRun=false}={}){
  state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
  state.focusedIndex=pos(CENTER,CENTER);
- state.bag=makeBag();
- if(sector===1){
-   const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
-   state.rack=required.map(v=>{
-     const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
-     return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
-   });
- }else{
-   const deal=dealPlayableRack([],state.bag,currentRackOptions());
-   state.rack=deal.rack;state.bag=deal.bag;
- }
+ // Each fresh board starts from a fully shuffled 151-tile bag. We then
+ // draw a balanced but randomly ordered hand, rather than the old fixed
+ // tutorial hand. Consecutive openings are never visibly identical.
+ const deal=distinctOpening(()=>{
+   const bag=makeBag();
+   return dealPlayableRack([],bag,currentRackOptions());
+ },loadOpeningPattern(storage,state.mode),
+   game=>game.rack,(game,rack)=>({...game,rack}));
+ state.rack=deal.rack;state.bag=deal.bag;
+ rememberOpening(storage,state.mode,state.rack);
  const anomaly=isDrift()?anomalyForSector(sector):null;
  announce(sector===1?
    (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
@@ -584,7 +584,14 @@ function localStateFromMatch(match,{privateTurn=true}={}){
 }
 function startNewLocalMatch(config){
  try{
-   const match=makeLocalMatch(config);
+   const match=distinctOpening(
+     ()=>makeLocalMatch(config,randomFloat),
+     loadOpeningPattern(storage,'local'),
+     game=>game.players[0].rack,
+     (game,rack)=>({...game,players:game.players.map((player,i)=>
+       i===0?{...player,rack}:player)})
+   );
+   rememberOpening(storage,'local',match.players[0].rack);
    localStateFromMatch(match);
  }catch(err){
    showModal('MATCH SETUP ERROR','Please check the player settings',
