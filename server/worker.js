@@ -3,7 +3,7 @@
 import {DurableObject} from 'cloudflare:workers';
 import {roomCode,cleanRoomCode,OnlineError,makeOnlineLobby,joinOnlineLobby,
   leaveOnlineLobby,startOnlineMatch,takeOnlineAction,timeOutOnlineTurn,
-  viewOnlineRoom,roomWakeAt} from '../src/online-rules.js';
+  viewOnlineRoom,roomWakeAt,updateOnlinePilot} from '../src/online-rules.js';
 
 // Set this list to the actual GitHub Pages/custom website origins. Requests
 // from unknown browser origins are refused; room tokens stay in HTTP headers.
@@ -61,7 +61,7 @@ const bearer=async request=>{
  return tokenHash(match[1]);
 };
 const allowMethods={
- join:'POST',start:'POST',action:'POST',leave:'POST',state:'GET',ws:'GET'
+ join:'POST',start:'POST',action:'POST',leave:'POST',profile:'POST',state:'GET',ws:'GET'
 };
 async function handleApi(request,ctx){
  const url=new URL(request.url);
@@ -77,7 +77,7 @@ async function handleApi(request,ctx){
      const code=roomCode(seed);
      const stub=ctx.exports.GameRoom.getByName(code);
      const created=await roomRpc(stub,'create',{
-       code,hostName:body.name,hostHash:hash,
+       code,hostName:body.name,hostHash:hash,hostAvatar:body.avatar,
        maxPlayers:body.maxPlayers,turnSeconds:body.turnSeconds
      });
      if(created.collision)continue;
@@ -103,13 +103,14 @@ async function handleApi(request,ctx){
  if(endpoint==='join'){
    const body=await readBody(request);
    const playerToken=token(),hash=await tokenHash(playerToken);
-   const joined=await roomRpc(stub,'join',body.name,hash);
+   const joined=await roomRpc(stub,'join',body.name,hash,body.avatar);
    return json({room:joined,token:playerToken},201,origin);
  }
  const hash=await bearer(request);
  if(endpoint==='state')return json({room:await roomRpc(stub,'view',hash)},200,origin);
  const action=await readBody(request);
  if(endpoint==='start')return json(await roomRpc(stub,'start',hash,action),200,origin);
+ if(endpoint==='profile')return json(await roomRpc(stub,'profile',hash,action),200,origin);
  if(endpoint==='action')return json(await roomRpc(stub,'act',hash,action),200,origin);
  if(endpoint==='leave')return json(await roomRpc(stub,'leave',hash,action),200,origin);
  throw new OnlineError('Unknown operation.',404);
@@ -191,10 +192,10 @@ export class GameRoom extends DurableObject {
      return {collision:false,state:viewOnlineRoom(room,params.hostHash)};
    });
  }
- async join(name,hash){
+ async join(name,hash,avatar){
    return this.guarded(async()=>{
      const room=await this.readAndTick();
-     const updated=joinOnlineLobby(room,name,hash);
+     const updated=joinOnlineLobby(room,name,hash,Date.now(),avatar);
      await this.store(updated);
      return viewOnlineRoom(updated,hash);
    });
@@ -209,6 +210,14 @@ export class GameRoom extends DurableObject {
    return this.guarded(async()=>{
      const room=await this.readAndTick();
      const next=startOnlineMatch(room,hash,request);
+     if(!next.replayed)await this.store(next.room);
+     return {room:viewOnlineRoom(next.room,hash),event:next.result};
+   });
+ }
+ async profile(hash,request){
+   return this.guarded(async()=>{
+     const room=await this.readAndTick();
+     const next=updateOnlinePilot(room,hash,request);
      if(!next.replayed)await this.store(next.room);
      return {room:viewOnlineRoom(next.room,hash),event:next.result};
    });
