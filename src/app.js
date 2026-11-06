@@ -409,7 +409,13 @@ function renderPreview(){
      isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
        'Two separate free single-tile swaps available this turn.':
        'One free single-tile swap available this turn.':preview.feedback;
- const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
+ let points=null;
+ if(!state.swapping&&preview.ready){
+   try{points=calculateMove(preview);}catch(error){
+     $('preview-status').textContent=error.message;
+     box.dataset.state='error';
+   }
+ }
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
    `Potential score ${points.total} if the equation is mathematically correct`:
@@ -541,8 +547,13 @@ function activateTemporary(id){
 }
 function applyTileTemporary(tileId){
  if(!isDrift()||!state.itemTarget||state.busy||state.ended)return;
+ if(state.rogue.forcedTile===tileId){announce('This tile is claimed by the boss. It must be used in an equation.',true);return;}
  const result=useTileTemporary(state.rogue,state.rack,state.bag,state.itemTarget,tileId);
  if(!result.ok){announce(result.reason,true);return;}
+ const replacement=result.rack.find(t=>!state.rack.some(old=>old.id===t.id));
+ if(replacement&&restrictedDraws(state.rogue,state.sector).includes(replacement.value)){
+   announce('That operator is sealed from the bag by the boss.',true);return;
+ }
  state.rogue=result.rogue;state.rack=result.rack;state.bag=result.bag;
  state.itemTarget=null;state.selected=null;
  announce(result.reason+'. Power-up consumed without spending a turn.');
@@ -1258,6 +1269,7 @@ function score(){
    // Consume single-use charges and commit the whole score atomically before
    // a timer, animation, tab switch or reload can interrupt the presentation.
    if(isDrift()){
+     state.rogue=resolveBossScore(state.rogue,state.sector,state.pending);
      state.rogue=consumeBoardEcho(state.rogue,points.echoedIndices);
      state.rogue=earnMoveFlux(state.rogue,state.pending).rogue;
      if(points.tempApplied)state.rogue=consumeTemporary(state.rogue,points.tempApplied);
@@ -1307,14 +1319,18 @@ function swap(){
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
+ if(isDrift()&&state.rogue.forcedTile&&state.swapSet.has(state.rogue.forcedTile)){
+   announce('The boss demands that tile. Use it in a correct equation before swapping.',true);return;
+ }
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
  const free=state.swapSet.size===1&&(isDrift()?
    freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
    state.freeSwapTurn!==state.turn);
  const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
+ const sealed=new Set(isDrift()?restrictedDraws(state.rogue,state.sector):[]);
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
-   const available=state.bag.filter(t=>kind(t)===pool).length;
+   const available=state.bag.filter(t=>kind(t)===pool&&!sealed.has(t.value)).length;
    if(needed>available){announce('Not enough '+pool+' remain in that bag.',true);return;}
  }
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
