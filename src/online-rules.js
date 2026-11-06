@@ -35,6 +35,10 @@ export function cleanPilotName(name){
  if(clean.length<1||clean.length>20)throw new OnlineError('Use a name of 1–20 characters.');
  return clean;
 }
+function cleanPilotAvatar(value,index=0){
+ try{return acceptPilotAlien(value,index);}
+ catch{throw new OnlineError('Choose a valid Alien Lab pilot. Only approved parts and colours are allowed.',400);}
+}
 function requireHash(hash){
  if(typeof hash!=='string'||!/^[a-f0-9]{64}$/.test(hash))throw new OnlineError('Invalid player credential.',401);
 }
@@ -75,7 +79,7 @@ export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlaye
   version:ONLINE_VERSION,code:cleanCode,revision:1,phase:'lobby',
   maxPlayers,turnSeconds,createdAt:now,updatedAt:now,
   expiresAt:now+LOBBY_LIFETIME,
-  people:[{id:'p1',name,tokenHash:hostHash,avatar:acceptPilotAlien(hostAvatar,0)}],
+  people:[{id:'p1',name,tokenHash:hostHash,avatar:cleanPilotAvatar(hostAvatar,0)}],
   match:null,receipts:[]
  };
 }
@@ -87,7 +91,7 @@ export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now(),avatar
  if(room.people.some(p=>p.name.toLowerCase()===name.toLowerCase()))
   throw new OnlineError('That pilot name is already taken.',409);
  const people=[...room.people,{id:'p'+(room.people.length+1),name,tokenHash,
-   avatar:acceptPilotAlien(avatar,room.people.length)}];
+   avatar:cleanPilotAvatar(avatar,room.people.length)}];
  return {...room,people,revision:room.revision+1,updatedAt:now,expiresAt:now+LOBBY_LIFETIME};
 }
 export function leaveOnlineLobby(room,hash,request,now=Date.now()){
@@ -117,9 +121,7 @@ export function updateOnlinePilot(room,hash,request,now=Date.now()){
  if(room.phase!=='lobby')throw new OnlineError('Alien designs are locked after the match starts.',409);
  if(request.avatar===undefined||request.avatar===null)
   throw new OnlineError('An alien design is required.');
- let avatar;
- try{avatar=acceptPilotAlien(request.avatar,index);}
- catch{throw new OnlineError('Choose a valid alien design from Alien Lab.');}
+ const avatar=cleanPilotAvatar(request.avatar,index);
  const people=room.people.map((p,i)=>i===index?{...p,avatar}:p);
  const result={type:'avatar-updated',by:index};
  return {room:addReceipt({...room,people,revision:room.revision+1,
