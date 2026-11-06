@@ -28,7 +28,13 @@ async function installKnownLocalRack(){
      if(at<0)throw Error('Fixture missing '+type);
      prepared.push(supply.splice(at,1)[0]);
    }
-   prepared.push(...supply.splice(0,2));
+   for(const pool of ['numbers','operators','operators']){
+     const at=supply.findIndex(t=>pool==='operators'
+       ?t.blank==='blank-operator'||['+','−','×','÷'].includes(t.value)
+       :t.blank!=='blank-operator'&&!['+','−','×','÷'].includes(t.value));
+     if(at<0)throw Error('Fixture missing '+pool+' supply');
+     prepared.push(supply.splice(at,1)[0]);
+   }
    match.players[0].rack=prepared;match.bag=supply;
    localStorage.setItem(key,JSON.stringify(match));
  });
@@ -41,7 +47,7 @@ async function handover(expected){
  assert.equal(await page.locator('#rack .tile').count(),0,'no hand should be visible between turns');
  assert.equal(await page.locator('#local-ready-btn').isVisible(),true);
 }
-async function ready(expected,visibleTiles=7){
+async function ready(expected,visibleTiles=8){
  await handover(expected);
  await page.locator('#local-ready-btn').click();
  assert.equal(await page.locator('#local-privacy').isVisible(),false);
@@ -71,7 +77,7 @@ try{
  await handover('Ari');
  let initial=await getMatch();
  assert.equal(initial.players.length,3);
- assert.equal(initial.bag.length,130);
+ assert.equal(initial.bag.length,127);
  assert.equal(initial.phase,'handover');
  assert.equal(initial.turnSeconds,60);
  assert.deepEqual(initial.players.map(p=>p.avatar.head),['jelly','facet','pear']);
@@ -79,13 +85,13 @@ try{
  assert.equal(await page.locator('#local-handover-avatar [data-layer="head"]').getAttribute('data-part-id'),'jelly');
  const firstPattern=initial.players[0].rack.map(t=>t.blank||t.value).join('|');
  const firstBagOrder=initial.bag.map(t=>t.blank||t.value).join('|');
- assert.equal(initial.players.every(p=>p.rack.length===7),true);
+ assert.equal(initial.players.every(p=>p.rack.length===8),true);
  await installKnownLocalRack();
  await ready('Ari');
  assert.match(await page.locator('#local-time-remaining').textContent(),/^\d\d:\d\d$/);
- assert.equal(await page.locator('#bag-count').textContent(),'130');
+ assert.equal(await page.locator('#bag-count').textContent(),'127');
  await page.locator('#bag-details-btn').click();
- assert.equal(await page.locator('.bag-overview-total>strong').textContent(),'130');
+ assert.equal(await page.locator('.bag-overview-total>strong').textContent(),'127');
  await page.locator('#modal-actions button').last().click();
  for(const [s,r,c] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7],['2',6,8]])
    await place(s,r,c);
@@ -153,7 +159,7 @@ try{
  await page.locator('#modal-actions button').last().click();
  await handover('Ari');
  const second=await getMatch();
- assert.equal(second.bag.length,130);
+ assert.equal(second.bag.length,127);
  assert.deepEqual(second.players.map(p=>p.avatar.head),['jelly','facet','pear']);
  assert.notEqual(second.players[0].rack.map(t=>t.blank||t.value).join('|'),firstPattern,
    'the next game should not repeat the previous visible first rack');
