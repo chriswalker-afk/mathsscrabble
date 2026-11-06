@@ -840,3 +840,11 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
  #app[data-expanded-rack="true"] .equals-bank{padding-left:3px}
  #app[data-expanded-rack="true"] .equals-tile{width:36px}
 }
+
+/* Premium reactivation is a subtle border treatment, not a symbol overlay. */
+#app[data-mode="rogue"] .cell.second-spark-ready .board-tile{
+ box-shadow:inset 0 0 0 2px #d9bc74,0 0 8px #edd28b66;
+}
+#app[data-mode="rogue"] .cell.second-spark-spent .board-tile{
+ box-shadow:inset 0 0 0 1px #637c84;
+}
