@@ -107,6 +107,9 @@ function renderPreview(animate=false){
  $('lobby-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
    width:60,height:68,accessible:false
  }));
+ $('mobile-alien').replaceChildren(renderAlienSVG(alien,state.library,{
+   width:62,height:70,accessible:false
+ }));
  renderPresets();
 }
 function sectionIndex(id){
@@ -156,7 +159,7 @@ function switchSection(id,focusTab=false){
  $('editor-options').scrollTop=0;
  renderOptions();
  const tab=$('tab-'+id);
- tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+ tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});
  if(focusTab)tab.focus({preventScroll:true});
 }
 function addPartGroup(parent,field){
