@@ -105,8 +105,10 @@ try{
  await page.locator('#modal-actions button').last().click();
  await handover('Bea');
  assert.equal(await page.locator('#local-panel .local-score-row').count(),3);
- await page.locator('#local-panel .local-score-row .alien-player-avatar svg').first().waitFor({timeout:12000});
+ await page.locator('#local-panel .local-score-row .alien-player-avatar svg').first().waitFor({state:'attached',timeout:12000});
  assert.equal(await page.locator('#local-panel .local-score-row .alien-player-avatar svg').count(),3);
+ assert.equal(await page.locator('#local-panel .local-scores').isVisible(),false,
+   'handover must conceal the previous turn scoreboard and rack');
 
  // After one scored turn, six passes in a three-player game must end the match.
  for(let i=0;i<6;i++){
