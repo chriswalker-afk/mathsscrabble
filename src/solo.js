@@ -1,6 +1,6 @@
 // Solo-sector rules and local save validation. This module has no DOM dependencies.
 import {
- SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
+ SIZE,HAND_SIZE,NUMBER_SLOTS,OPERATOR_SLOTS,tilePool,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState} from './rogue.js';
 
@@ -12,41 +12,27 @@ export const MAX_SECTORS=99;
 const numberCapable=tile=>isDigit(tile.value)||tile.blank==='blank-number'||tile.blank==='blank-any';
 const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator'||tile.blank==='blank-any';
 
-/**
- * Draw from the shuffled bag without replacing tiles the player kept.
- * Where possible the new rack contains >=4 number-capable tiles,
- * >=1 operator-capable tile, and >=1 blank. These roles may overlap.
- * The source bag's physical IDs and combined tile total are preserved.
+/** Fill the rack from two independent physical supply pools.
+ * Exactly five number-kind and three operator-kind tiles when available.
+ * Held tile positions are preserved; fresh draws are shuffled as one group.
+ * Original physical IDs are never replaced or duplicated.
  */
 export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
-  const minBlanks=options.minBlanks===2?2:1;
-  const minOperators=options.minOperators===2?2:1;
-  const rack=[...held],bag=[...sourceBag];
-  function choose(predicate){
-    for(let i=bag.length-1;i>=0;i--){
-      if(predicate(bag[i])){rack.push(bag.splice(i,1)[0]);return true;}
-    }
-    return false;
-  }
-  while(rack.length<HAND_SIZE && bag.length){
-    // Pick the flexible and rarer roles first. They also count towards the
-    // number/operator minimums, which avoids filling all seven slots before
-    // upgraded Wildcard Beacon and Operator Reserve can take effect.
-    if(rack.filter(isBlank).length<minBlanks && choose(isBlank))continue;
-    if(rack.filter(operatorCapable).length<minOperators && choose(operatorCapable))continue;
-    if(rack.filter(numberCapable).length<4 &&
-       choose(tile=>isDigit(tile.value)||tile.blank==='blank-number'))continue;
-    if(rack.filter(numberCapable).length<4 && choose(numberCapable))continue;
-    rack.push(bag.pop());
-  }
-  // A balanced draw must not imply a fixed visual pattern. Randomise newly
-  // drawn tiles while preserving the positions of any tiles the player kept.
-  const newTiles=rack.slice(held.length);
-  for(let i=newTiles.length-1;i>0;i--){
-    const j=Math.min(i,Math.floor(random()*(i+1)));
-    [newTiles[i],newTiles[j]]=[newTiles[j],newTiles[i]];
-  }
-  return {rack:[...held,...newTiles],bag};
+ const bag=[...sourceBag],rack=[...held];
+ for(const [pool,target] of [['numbers',NUMBER_SLOTS],['operators',OPERATOR_SLOTS]]){
+   let count=rack.filter(t=>tilePool(t)===pool).length;
+   while(count<target){
+     const at=bag.findLastIndex(t=>tilePool(t)===pool);
+     if(at<0)break;
+     rack.push(bag.splice(at,1)[0]);count++;
+   }
+ }
+ const drawn=rack.slice(held.length);
+ for(let i=drawn.length-1;i>0;i--){
+   const j=Math.min(i,Math.floor(random()*(i+1)));
+   [drawn[i],drawn[j]]=[drawn[j],drawn[i]];
+ }
+ return {rack:[...held,...drawn],bag};
 }
 export const freshStats=()=>({attempts:0,freeExchanges:0,paidExchanges:0,moves:[]});
 export const freshProgress=()=>({startedAt:Date.now(),completed:[],runPoints:0});
