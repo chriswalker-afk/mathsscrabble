@@ -25,6 +25,9 @@ export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
    while(count<target){
      let at=rack.filter(isBlank).length<minBlanks?
        bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)):-1;
+     // Prioritise higher-value operators when the Drift Operator Reserve is installed.
+     if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
+       at=bag.findLastIndex(t=>t.value==='×'||t.value==='÷');
      if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool);
      if(at<0)break;
      rack.push(bag.splice(at,1)[0]);count++;
