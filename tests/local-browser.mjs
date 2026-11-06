@@ -60,6 +60,10 @@ try{
  assert.match(await page.locator('#modal-title').textContent(),/local match/i);
  await page.locator('#local-player-count').selectOption('3');
  assert.equal(await page.locator('#local-setup-names input:visible').count(),3);
+ assert.equal(await page.locator('.local-pilot-setup:visible').count(),3);
+ await page.locator('#local-alien-0').selectOption('glimmer');
+ await page.locator('#local-alien-1').selectOption('orbit');
+ await page.locator('#local-alien-2').selectOption('niblet');
  const names=['Ari','Bea','Cy'];
  for(const [i,name] of names.entries())await page.locator('#local-setup-names input').nth(i).fill(name);
  await page.locator('#local-turn-seconds').selectOption('60');
@@ -70,6 +74,9 @@ try{
  assert.equal(initial.bag.length,130);
  assert.equal(initial.phase,'handover');
  assert.equal(initial.turnSeconds,60);
+ assert.deepEqual(initial.players.map(p=>p.avatar.head),['jelly','facet','pear']);
+ await page.locator('#local-handover-avatar svg').waitFor({timeout:16000});
+ assert.equal(await page.locator('#local-handover-avatar [data-layer="head"]').getAttribute('data-part-id'),'jelly');
  const firstPattern=initial.players[0].rack.map(t=>t.blank||t.value).join('|');
  const firstBagOrder=initial.bag.map(t=>t.blank||t.value).join('|');
  assert.equal(initial.players.every(p=>p.rack.length===7),true);
@@ -98,6 +105,8 @@ try{
  await page.locator('#modal-actions button').last().click();
  await handover('Bea');
  assert.equal(await page.locator('#local-panel .local-score-row').count(),3);
+ await page.locator('#local-panel .local-score-row .alien-player-avatar svg').first().waitFor({timeout:12000});
+ assert.equal(await page.locator('#local-panel .local-score-row .alien-player-avatar svg').count(),3);
 
  // After one scored turn, six passes in a three-player game must end the match.
  for(let i=0;i<6;i++){
@@ -129,6 +138,8 @@ try{
  assert.equal(final.finalScores[0].net,final.finalScores[0].gross-final.finalScores[0].penalty);
  assert.equal(await page.locator('#modal-eyebrow').textContent(),'MATCH COMPLETE');
  assert.equal(await page.locator('.local-result-row').count(),3);
+ assert.equal(await page.locator('.local-result-row .alien-player-avatar svg').count(),3);
+ assert.deepEqual(final.players.map(p=>p.avatar.head),['jelly','facet','pear']);
  assert.match(await page.locator('#modal-body').textContent(),/rack tile values are deducted/i);
  await page.reload({waitUntil:'networkidle'});
  assert.equal(await page.locator('#modal-eyebrow').textContent(),'MATCH COMPLETE');
@@ -141,6 +152,7 @@ try{
  await handover('Ari');
  const second=await getMatch();
  assert.equal(second.bag.length,130);
+ assert.deepEqual(second.players.map(p=>p.avatar.head),['jelly','facet','pear']);
  assert.notEqual(second.players[0].rack.map(t=>t.blank||t.value).join('|'),firstPattern,
    'the next game should not repeat the previous visible first rack');
  assert.notEqual(second.bag.map(t=>t.blank||t.value).join('|'),firstBagOrder,
