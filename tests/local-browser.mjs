@@ -129,7 +129,7 @@ try{
  assert.equal(final.finalScores[0].net,final.finalScores[0].gross-final.finalScores[0].penalty);
  assert.equal(await page.locator('#modal-eyebrow').textContent(),'MATCH COMPLETE');
  assert.equal(await page.locator('.local-result-row').count(),3);
- assert.match(await page.locator('#modal-body').textContent(),/Remaining rack tile values/i);
+ assert.match(await page.locator('#modal-body').textContent(),/rack tile values are deducted/i);
  await page.reload({waitUntil:'networkidle'});
  assert.equal(await page.locator('#modal-eyebrow').textContent(),'MATCH COMPLETE');
 
