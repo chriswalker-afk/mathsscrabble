@@ -1,5 +1,7 @@
 // Pure game rules. Both a future multiplayer server and this solo client can use these.
 import {normalizeTileSet,hasBracketPair,FRACTION_VALUES,BRACKET_PAIRS_PER_BAG} from './tile-sets.js';
+import {checkEquation} from './expression-parser.js';
+export {checkEquation};
 export const SIZE = 13;
 export const CENTER = 6;
 export const HAND_SIZE = 8;
@@ -146,42 +148,6 @@ const add=(a,b)=>fraction(a.n*b.d+b.n*a.d,a.d*b.d);
 const sub=(a,b)=>fraction(a.n*b.d-b.n*a.d,a.d*b.d);
 const mul=(a,b)=>fraction(a.n*b.n,a.d*b.d);
 const div=(a,b)=>fraction(a.n*b.d,a.d*b.n);
-function parseExpression(source){
-  const text=source.replaceAll('×','*').replaceAll('÷','/').replaceAll('−','-').replace(/\s/g,'');
-  let p=0,binaryCount=0;
-  const fail=()=>{throw Error('Use a complete equation with valid BIDMAS order.');};
-  function primary(){
-    if(text[p]==='+'){p++;return primary();}
-    if(text[p]==='-'){p++;const x=primary();return fraction(-x.n,x.d);}
-    if(text[p]==='('){p++;const x=expression();if(text[p++]!==')')fail();return x;}
-    const m=/^\d+/.exec(text.slice(p));
-    if(!m)fail();p+=m[0].length;return fraction(BigInt(m[0]));
-  }
-  function product(){
-    let x=primary();
-    while(text[p]==='*'||text[p]==='/'){const op=text[p++],y=primary();binaryCount++;x=op==='*'?mul(x,y):div(x,y);}
-    return x;
-  }
-  function expression(){
-    let x=product();
-    while(text[p]==='+'||text[p]==='-'){const op=text[p++],y=product();binaryCount++;x=op==='+'?add(x,y):sub(x,y);}
-    return x;
-  }
-  if(!text)fail();
-  const result=expression();
-  if(p!==text.length)fail();
-  return {result,binaryCount};
-}
-export function checkEquation(values){
-  const symbols=values.join('');
-  if(values.filter(x=>x==='=').length!==1)throw Error('Every equation needs exactly one equals sign.');
-  const [left,right]=symbols.split('=');
-  if(!left||!right)throw Error('Put a mathematical expression on both sides of =.');
-  const a=parseExpression(left),b=parseExpression(right);
-  if(a.binaryCount+b.binaryCount===0)throw Error('Build a calculation using at least one operation. A number equalling itself is too simple.');
-  if(a.result.n*b.result.d!==b.result.n*a.result.d)throw Error('That equation is not balanced. Check both sides using BIDMAS.');
-  return {left:a.result,right:b.result,text:symbols};
-}
 /**
  * Non-judgemental placement inspection for the board UI. It intentionally does
  * not evaluate the arithmetic: the student still has to submit an equation to
@@ -249,13 +215,25 @@ export function validateMove(board,pending) {
       if(isFirst&&!indices.includes(pos(CENTER,CENTER)))throw Error('Your first equation must pass through the central reactor.');
       if(!isFirst&&!indices.some(i=>board[i]))throw Error('Connect your new equation to an existing tile.');
       const tiles=indices.map(i=>pending[i]||board[i]);
+      // Newly used bracket tiles must include both physical halves of the
+      // same pair. No orphan bracket may be scored or left for a later turn.
+      const usedPairs=new Map();
+      for(const {tile} of added){
+        if(!tile.pairId)continue;
+        const faces=usedPairs.get(tile.pairId)||[];
+        faces.push(tile.value);usedPairs.set(tile.pairId,faces);
+      }
+      for(const faces of usedPairs.values()){
+        if(faces.length!==2||!faces.includes('(')||!faces.includes(')'))
+          throw Error('Bracket tiles travel in pairs. Play both ( and ) together.');
+      }
       const checked=checkEquation(tiles.map(t=>t.value));
       return {indices,tiles,orientation,...checked};
     }catch(err){lastError=err;}
   }
   throw lastError||Error('Invalid placement.');
 }
-export function scoreMove(board,pending,move){
+export function scoreMove(board,pending,move,{rackSize=HAND_SIZE}={}){
   let base=0,multiplier=1,bonuses=[];
   const tileScores=[]; // The exact score contributed by each visible equation cell.
   for(const index of move.indices){
@@ -273,7 +251,7 @@ export function scoreMove(board,pending,move){
   }
   const length=Math.max(0,move.indices.length-5)*3;
   const physicalCount=Object.values(pending).filter(t=>t.value!=='=').length;
-  const sweep=physicalCount===HAND_SIZE?20:0;
+  const sweep=physicalCount===rackSize?20:0;
   const equation=5; // each genuinely calculated equality earns energy
   const crossing=move.indices.some(index=>Boolean(board[index]))?5:0;
   return {base,multiplier,length,sweep,equation,crossing,
