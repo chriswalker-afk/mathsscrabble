@@ -399,7 +399,7 @@ function renderLocalStatus(){
  $('local-pass-btn').hidden=false;
  $('rogue-summary').hidden=true;
  $('anomaly-banner').hidden=true;
- $('mode-btn').textContent='◈ LOCAL';
+ $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
  $('sector-label').textContent=match.phase==='finished'?'LOCAL MATCH · FINAL SCORES':
    state.ceremony&&state.localScoringPlayer!==null?
@@ -487,7 +487,7 @@ function render(){
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
- $('mode-btn').textContent=isDrift()?'◈ THE DRIFT':'◈ SECTOR RUN';
+ $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
  $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector);
