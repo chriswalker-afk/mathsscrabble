@@ -87,8 +87,8 @@ function validReportMove(move){
    typeof move.equation==='string'&&move.equation.length>0&&move.equation.length<=80&&
    /^[0-9+−×÷=() ]+$/.test(move.equation)&&
    validInteger(move.points,0,500000)&&validInteger(move.turn,1,6)&&
-   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,7)&&
-   validInteger(move.wildcards,0,7)&&validInteger(move.crossing,0,10)&&
+   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE)&&
+   validInteger(move.wildcards,0,HAND_SIZE)&&validInteger(move.crossing,0,10)&&
    Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
    move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
