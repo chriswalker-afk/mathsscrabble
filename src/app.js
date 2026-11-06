@@ -803,18 +803,25 @@ function showLocalResults(){
    'Two full circuits of passes or paid exchanges ended the match.':
    'A player emptied their rack with no tiles left in the bag.';
  const rows=standing.map(entry=>
-  `<div class="local-result-row${entry.winner?' is-winner':''}">
-    <span>${entry.winner?'★':entry.rank}</span><strong>${escapeText(entry.name)}</strong>
+  `<div class="local-result-row alien-result-row${entry.winner?' is-winner':''}">
+    <span class="alien-result-rank">${entry.winner?'★':entry.rank}</span>
+    <span class="alien-result-portrait" data-pilot-index="${entry.index}"></span>
+    <strong>${escapeText(entry.name)}</strong>
     <span>${entry.gross}</span><span>−${entry.penalty}</span><span>${entry.net}</span>
    </div>`).join('');
  showModal('MATCH COMPLETE',winners.length===1?
    escapeText(winners[0])+' wins!':'Shared victory!',
    `<p class="local-match-note">${summary}</p>
-    <div class="local-result-legend"><span>#</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
+    <div class="local-result-legend alien-result-legend"><span>#</span><span>ALIEN</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
     <div class="local-result-table">${rows}</div>
     <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>`,
    [{text:'CHOOSE MODE',fn:showModeMenu},
     {text:'NEW LOCAL MATCH →',primary:true,fn:showLocalSetup}]);
+ $('modal-body').querySelectorAll('.alien-result-portrait').forEach(node=>{
+   const i=Number(node.dataset.pilotIndex);
+   paintPilotAvatar(node,match.players[i]?.avatar,i,{size:40,framing:'bust'});
+   node.classList.add('alien-result-avatar');
+ });
 }
 function showLocalReport(){
  if(!isLocal()||!state.localMatch)return;
