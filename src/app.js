@@ -8,7 +8,7 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
-import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore} from './drift-bosses.js';
+import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
@@ -156,6 +156,9 @@ function chooseBlank(tile,index){
 }
 function commitPending(tile,index){
  if(state.ended||state.swapping||state.busy||state.board[index])return;
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('The Grid Warden has blocked that square.',true);return;
+ }
  // Replacing a pending tile returns the displaced physical tile to the rack.
  state.pending[index]=tile;
  state.placementOrder=state.placementOrder.filter(i=>i!==index);
@@ -165,6 +168,9 @@ function commitPending(tile,index){
 function placePayload(payload,index){
  if(state.ended||state.swapping||state.busy||!Number.isInteger(index)||index<0||index>=SIZE*SIZE)return;
  if(state.board[index]){announce('This tile is locked. Choose an empty square.',true);return;}
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('A boss blockade prevents placing tiles on that square.',true);return;
+ }
  if(payload.kind==='pending'){
    const from=payload.index,moving=state.pending[from];
    if(!moving||from===index)return;
@@ -212,6 +218,9 @@ function onTileDrop(payload,target){
 function placeAt(index){
  if(state.ended||state.swapping||state.busy)return;
  if(state.board[index]){announce('That tile is locked. Use an empty square.',true);return;}
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('This square is blocked by the boss.',true);return;
+ }
  if(state.selected){
    placePayload(state.selected==='equals'?{kind:'equals'}:{kind:'rack',id:state.selected},index);
    return;
@@ -256,8 +265,11 @@ function focusCell(currentIndex,key){
 }
 function boardCell(i){
  const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],locked=!!state.board[i];
- const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector):null;
- const bonus=isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
+ const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector,state.rogue):null;
+ const blocked=Boolean(isDrift()&&state.bossGrid?.blocked.has(i));
+ const rift=Boolean(isDrift()&&state.bossGrid?.rifts.has(i));
+ const bonus=isDrift()&&anomaly?.id==='multiplier-leech'&&rawBonus==='2T'?'NO':
+   isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
    isDrift()&&rawBonus==='2E'&&anomaly?.id==='signal-jam'?'JAM':
    isDrift()&&rawBonus==='3T'&&anomaly?.id==='tile-static'?'2T':rawBonus;
  const inPath=state.preview?.indices?.includes(i);
@@ -269,9 +281,10 @@ function boardCell(i){
    (inPath?' path-cell':'')+
    (inPath&&!tile?' path-gap':'')+
    (i===state.recentlyPlaced?' tile-landing':'')+
-   (state.lockedFlash.has(i)?' locked-flash':'');
+   (state.lockedFlash.has(i)?' locked-flash':'')+
+   (blocked?' boss-blocked':'')+(rift?' boss-rift':'');
  node.setAttribute('role','gridcell');
- node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
+ node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${blocked?'BLOCKED':rift?'RIFT minus six energy':tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
  node.dataset.index=String(i);
  node.dataset.locked=String(locked);
  node.tabIndex=state.focusedIndex===i?0:-1;
@@ -284,6 +297,10 @@ function boardCell(i){
    // on the rack, in the equation breakdown, and in this accessible tooltip.
    if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
    node.append(inner);
+ }else if(blocked){
+   const label=document.createElement('span');label.className='boss-cell-label';label.textContent='⊠';node.append(label);
+ }else if(rift){
+   const label=document.createElement('span');label.className='boss-cell-label';label.textContent='−6';node.append(label);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
    label.textContent=bonus==='START'?'✳':bonus;node.append(label);
@@ -320,12 +337,15 @@ function tileButton(tile, rackIndex){
  button.className='tile'+(state.itemTarget?' consumable-target':'')+(isChargedTile(tile)?' charged-rack-tile':'')+
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
-   (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
+   (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+   (isDrift()&&state.rogue.forcedTile===tile.id?' boss-required':'');
  button.dataset.tileId=tile.id;
  button.dataset.rackIndex=String(rackIndex);
  button.setAttribute('aria-label',isBlank(tile)?
    `Blank ${BLANK_KINDS[tile.blank].label.toLowerCase()}: choose a value when placing, zero tile points`:
    `Tile ${tile.value}, worth ${tile.points} points`);
+ if(isDrift()&&state.rogue.forcedTile===tile.id)
+   button.setAttribute('aria-label',button.getAttribute('aria-label')+'. REQUIRED BY BOSS in your next equation.');
  button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
  const main=document.createElement('span');main.textContent=isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value;
  const points=document.createElement('sub');
