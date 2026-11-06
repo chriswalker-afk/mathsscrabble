@@ -44,18 +44,19 @@ export const POINTS = Object.freeze({'0':1,'1':1,'2':2,'3':2,'4':2,'5':3,'6':3,'
 export const pos = (r,c) => r * SIZE + c;
 export const coords = index => [Math.floor(index / SIZE), index % SIZE];
 export function bonusAt(r,c) {
-  if (r===CENTER && c===CENTER) return 'START';
-  if ((r===0||r===12)&&(c===0||c===12)) return '3E';
-  if ((r===1||r===11)&&(c===1||c===11)) return '2E';
-  if ((r===2||r===10)&&(c===5||c===7)) return '3T';
-  if ((r===3||r===9)&&(c===3||c===9)) return '2E';
-  if ((r===0||r===12)&&c===6) return '2T';
-  if ((c===0||c===12)&&r===6) return '2T';
-  if ((r===5||r===7)&&(c===5||c===7)) return '2T';
-  // Fully dihedral-symmetric secondary bonuses (all eight reflections/rotations).
-  const a=Math.abs(r-CENTER),b=Math.abs(c-CENTER);
-  if ((a===2&&b===4)||(a===4&&b===2)) return '2T';
-  return '';
+ // Design all bonuses using absolute distances from the central square.
+ // Each rule is unchanged by rotations and reflection across either axis
+ // or either diagonal. The shared source governs all game modes and scoring.
+ const a=Math.abs(r-CENTER),b=Math.abs(c-CENTER);
+ const near=Math.min(a,b),far=Math.max(a,b);
+ if(a===0 && b===0) return 'START';
+ if(near===6 && far===6) return '3E';
+ if((near===5 && far===5)||(near===3 && far===3)) return '2E';
+ if(near===1 && far===4) return '3T';
+ if((near===0 && (far===3||far===6)) ||
+    (near===1 && far===1) ||
+    (near===2 && far===4)) return '2T';
+ return '';
 }
 let nextId = 0;
 export const makeTile = value => ({
