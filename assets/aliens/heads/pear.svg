@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="heads" data-part-id="pear" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Pear head - Alien Lab</title><desc>Tapered forehead with softly bulging cheeks and a tiny curl.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M143 147 Q160 143 177 147 L181 176 Q160 185 139 176Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M157 25 C187 18 213 37 222 65 Q240 80 245 109 C253 146 229 170 199 177 Q160 187 121 177 C92 172 67 149 76 111 Q81 81 101 65 C110 39 131 25 157 25Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M149 29 Q160 10 174 26 Q167 17 159 37Z" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="115" cy="93" rx="26" ry="37" fill="#c0f9df" data-color-slot="light" transform="rotate(-29 115 93)" opacity=".42"/>
+<ellipse cx="111" cy="139" rx="20" ry="9" fill="#f5a7a9" data-color-slot="blush" opacity=".52"/>
+<ellipse cx="209" cy="139" rx="20" ry="9" fill="#f5a7a9" data-color-slot="blush" opacity=".52"/>
+<circle cx="206" cy="53" r="5" fill="#47b797" data-color-slot="spot" opacity=".5"/>
+</g></svg>

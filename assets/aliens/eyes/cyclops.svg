@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="eyes" data-part-id="cyclops" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Cyclops eye - Alien Lab</title><desc>A large sparkling single eye.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<ellipse cx="160" cy="103" rx="34" ry="28" fill="#fffdf6" stroke="#26344e" stroke-width="4.2"/>
+<circle cx="163" cy="106" r="15" fill="#26344e"/>
+<circle cx="156" cy="99" r="6.4" fill="white"/>
+<circle cx="170" cy="112" r="3" fill="white" opacity=".85"/>
+<path d="M135 84 Q155 73 175 81" fill="none" stroke="#fffdf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+</g></svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="eyes" data-part-id="visor" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Sleepy visor - Alien Lab</title><desc>A friendly glowing visor with two squinting lights.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<rect x="109" y="85" width="102" height="44" rx="21" fill="#26344e" stroke="#effcf8" stroke-width="3.6"/>
+<rect x="117" y="91" width="86" height="31" rx="14" fill="#286783"/>
+<path d="M126 105 Q139 99 149 105" fill="none" stroke="#d2fff0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M171 105 Q182 99 195 105" fill="none" stroke="#d2fff0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="134" cy="93" rx="13" ry="3" fill="#b0f9f5" opacity=".7"/>
+<circle cx="200" cy="115" r="2.5" fill="#baf3ee"/>
+</g></svg>

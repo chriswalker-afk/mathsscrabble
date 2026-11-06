@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="heads" data-part-id="jelly" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Jelly head - Alien Lab</title><desc>Soft scalloped jelly dome with rounded wobbly corners.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M143 148 Q160 145 177 148 L181 176 Q160 183 139 176Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M79 103 C75 55 104 29 160 29 C216 29 245 56 241 103 Q251 123 243 143 Q246 159 231 164 Q219 167 208 163 Q194 177 179 170 Q160 182 142 171 Q125 177 110 163 Q95 169 84 160 Q72 150 79 135 Q69 121 79 103Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="133" cy="59" rx="40" ry="16" fill="#c0f9df" data-color-slot="light" opacity=".7"/>
+<ellipse cx="215" cy="115" rx="14" ry="24" fill="#3b9e8b" data-color-slot="dark" opacity=".15"/>
+<circle cx="102" cy="145" r="7" fill="#47b797" data-color-slot="spot" opacity=".42"/>
+<circle cx="221" cy="146" r="5" fill="#47b797" data-color-slot="spot" opacity=".42"/>
+</g></svg>
