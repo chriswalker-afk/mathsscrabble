@@ -585,7 +585,7 @@ function render(){
    state.ceremony.startScore+state.ceremony.awarded:state.score;
  $('score').textContent=displayedScore;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
- $('sector-label').textContent=isDrift()?`ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()} · S${String(state.sector).padStart(2,'0')}`:
+ $('sector-label').textContent=isDrift()?`THE DRIFT ${String(state.sector).padStart(2,'0')} · ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()}`:
    `SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
