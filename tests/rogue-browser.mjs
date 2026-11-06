@@ -203,6 +203,28 @@ try{
  await page.screenshot({path:'/tmp/equanova-drift-equipment-mobile.png',fullPage:true});
  assert.ok(mobile.topActions.every(x=>x.right<=mobile.width+3&&x.width>=25),'all mode and utility buttons remain accessible');
  assert.ok(mobile.scoreBottom<mobile.width*3,'score is visible without scrolling');
+
+ // A ninth rack tile and seventh turn do not reduce the standard 13x13 board.
+ const phoneBoardBefore=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
+ await page.evaluate(()=>{
+   const key='equa-nova.drift.v1';
+   const save=JSON.parse(localStorage.getItem(key));
+   const at=save.bag.findIndex(t=>!t.blank&&/^[0-9]$/.test(t.value));
+   if(at<0)throw Error('No number tile to extend rack');
+   save.rack.push(save.bag.splice(at,1)[0]);
+   save.rogue.upgrades=['wide-rack','extra-turn'];
+   save.rogue.earned=16;save.rogue.spent=16;save.rogue.flux=0;
+   localStorage.setItem(key,JSON.stringify(save));
+ });
+ await page.reload({waitUntil:'networkidle'});
+ assert.equal(await page.locator('#rack .tile').count(),9,'expanded rack needs nine physical tiles');
+ assert.equal(await page.locator('#rack-count').textContent(),'9 / 9');
+ assert.equal(await page.locator('#turn').textContent(),'1 / 7');
+ assert.equal(await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width),
+   phoneBoardBefore,'extra rack slot must not shrink the board');
+ const widthAfter=await page.evaluate(()=>document.documentElement.scrollWidth);
+ assert.ok(widthAfter<=390+3,'expanded rack must fit on a narrow phone');
+ await page.screenshot({path:'/tmp/equanova-drift-expanded-rack-phone.png',fullPage:true});
  assert.deepEqual(errors,[]);
  console.log('Drift browser passed: mode selection, shop purchase, double-safe rewards, restore, anomaly, separate saves and permadeath.');
 }finally{
