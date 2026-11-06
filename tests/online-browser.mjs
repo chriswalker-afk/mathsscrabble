@@ -107,6 +107,9 @@ const active=page=>page.locator('#online-score').isEnabled();
 try{
  await host.goto('http://127.0.0.1:4173/online.html',{waitUntil:'domcontentloaded'});
  assert.equal(await host.locator('#online-gate').isVisible(),true);
+ assert.equal(await host.locator('#online-alien-presets button').count(),4);
+ await host.locator('#online-alien-presets [data-preset="glimmer"]').click();
+ assert.equal(await host.locator('#online-alien-presets [data-preset="glimmer"]').getAttribute('aria-pressed'),'true');
  await host.locator('#online-host-name').fill('Ari');
  await host.locator('#online-player-limit').selectOption('2');
  await host.locator('#online-timer-settings').selectOption('90');
@@ -119,17 +122,27 @@ try{
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').count(),1);
  assert.equal(await host.locator('#online-start-match').isEnabled(),false);
  assert.equal(backend.created,1);
+ assert.deepEqual(backend.room.people[0].avatar,defaultPilotAlien(3));
  const hostKey=await host.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.online-room.v1')));
  assert.equal(hostKey.code,'GHJKLM');assert.equal(hostKey.token,'A'.repeat(43));
  assert.ok(!host.url().includes(hostKey.token),'room access secret must not be in the invitation URL');
 
  await guest.goto('http://127.0.0.1:4173/online.html#GHJKLM',{waitUntil:'domcontentloaded'});
  assert.equal(await guest.locator('#online-join-code').inputValue(),'GHJKLM');
+ await guest.locator('#online-alien-presets [data-preset="orbit"]').click();
  await guest.locator('#online-join-name').fill('Bea');
  await guest.locator('#online-join-button').click();
  await guest.locator('#lobby-code').waitFor();
  assert.equal(await guest.locator('#lobby-code').textContent(),'GHJKLM');
  assert.equal(backend.joined,1);
+ assert.deepEqual(backend.room.people[1].avatar,defaultPilotAlien(1));
+ // Guest may replace their own public alien before start, without touching
+ // the host's identity, timer or private rack.
+ await guest.locator('#online-alien-presets [data-preset="niblet"]').click();
+ await guest.locator('#online-alien-note').getByText(/visible to the other pilots/i).waitFor({timeout:5000});
+ assert.deepEqual(backend.room.people[1].avatar,defaultPilotAlien(2));
+ assert.deepEqual(backend.room.people[0].avatar,defaultPilotAlien(3));
+ assert.equal(backend.room.phase,'lobby');
  const guestKey=await guest.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.online-room.v1')));
  assert.equal(guestKey.token,'B'.repeat(43));
  assert.notEqual(guestKey.token,hostKey.token);
@@ -137,10 +150,17 @@ try{
  // WebSocket server, the browser fallback poll synchronises the second player.
  await host.waitForTimeout(7600);
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').count(),2);
+ await host.locator('#online-lobby-players .alien-player-avatar svg').first().waitFor({timeout:12000});
+ assert.equal(await host.locator('#online-lobby-players .alien-player-avatar svg').count(),2);
+ assert.equal(await host.locator('#online-lobby-players .online-lobby-player').nth(1)
+   .locator('[data-layer="head"]').getAttribute('data-part-id'),'pear');
  assert.equal(await host.locator('#online-start-match').isEnabled(),true);
  await host.locator('#online-start-match').click();
  await host.locator('#online-gate').waitFor({state:'hidden'});
  assert.equal(backend.room.phase,'playing');
+ assert.deepEqual(backend.room.match.players.map(p=>p.avatar),
+  [defaultPilotAlien(3),defaultPilotAlien(2)]);
+ assert.equal(await host.locator('#online-scores .alien-player-avatar svg').count(),2);
  assert.equal(await host.locator('#rack .tile').count(),7);
  assert.equal(await host.locator('#online-bag-count').textContent(),'137');
  assert.equal(await active(host),false,'cannot score until an equation is placed');
@@ -208,6 +228,8 @@ try{
    backend.room.match.finalScores[0].gross-backend.room.match.finalScores[0].penalty);
  await host.locator('#online-dialog-title').getByText(/final standings/i).waitFor({timeout:4000}).catch(()=>{});
  assert.equal(await host.locator('.online-result').count(),2);
+ assert.equal(await host.locator('.online-result .alien-player-avatar svg').count(),2);
+ assert.equal(await host.locator('.online-result').first().locator('[data-layer="head"]').count(),1);
  await host.locator('#online-dialog-close').click();
  await host.setViewportSize({width:390,height:844});
  const mobile=await host.evaluate(()=>({
