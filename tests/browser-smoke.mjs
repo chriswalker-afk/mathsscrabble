@@ -173,7 +173,18 @@ try{
     console.log('Layout',size,geometry);
     const minimum=size.height>=768?575:520;
     assert.ok(geometry.boardWidth>=minimum,'board must be legible and enlarged on classroom laptops');
-    assert.ok(geometry.boardFont>=24,'maths glyphs should fill enough of each board cell');
+    assert.ok(geometry.boardFont>=18,'unzoomed 19×19 tiles must remain recognizable');
+    const currentBoardWidth=geometry.boardWidth;
+    await page.locator('#board-zoom-in').click();
+    await page.locator('#board-zoom-in').click();
+    const zoomed=await page.evaluate(()=>({
+      font:parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize),
+      frameWidth:document.querySelector('.board-frame').getBoundingClientRect().width
+    }));
+    assert.ok(zoomed.font>=24,'zoom controls should enlarge mathematical glyphs on demand');
+    assert.equal(zoomed.frameWidth,currentBoardWidth,'zoom must not enlarge the board frame');
+    await page.locator('#board-zoom-out').click();
+    await page.locator('#board-zoom-out').click();
     assert.ok(geometry.rackBottom<=geometry.height-20,'rack must remain on screen');
     assert.ok(geometry.scrollHeight<=geometry.height+3,'desktop should not need vertical scrolling');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'desktop should not need horizontal scrolling');
