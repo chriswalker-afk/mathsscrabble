@@ -42,8 +42,8 @@ test('2–4 player set-up uses a single finite bag and independent private racks
    const match=makeLocalMatch({names:Array.from({length:n},(_,i)=>'Pilot '+(i+1))},rng);
    assert.equal(match.players.length,n);
    assert.equal(match.phase,'handover');
-   assert.equal(match.bag.length,151-7*n);
-   assert.ok(match.players.every(p=>p.rack.length===7));
+   assert.equal(match.bag.length,151-8*n);
+   assert.ok(match.players.every(p=>p.rack.length===8));
    assert.equal(validLocalMatch(match),true);
    assert.equal(new Set([...match.bag,...match.players.flatMap(p=>p.rack)].map(t=>t.id)).size,151);
  }
@@ -65,7 +65,7 @@ test('a correct shared-board equation scores only the active player and hands ov
  assert.equal(scored.round,1);
  assert.equal(scored.board[pos(6,6)].value,'=');
  assert.equal(scored.history[0].type,'score');
- assert.equal(scored.players[0].rack.length,7);
+ assert.equal(scored.players[0].rack.length,8);
  assert.equal(validLocalMatch(scored),true);
  match=readyLocalTurn(scored);
  assert.throws(()=>scoreLocalTurn(match,{[pos(7,0)]:scored.players[0].rack[0]}),/another player/i);
@@ -103,22 +103,13 @@ test('optional turn timer starts on Ready, not during the rack privacy screen',(
  assert.equal(passed.deadline,0);
  assert.equal(passed.history[0].type,'timeout');
 });
-test('paid swaps use a turn; all-number rack can exchange free once',()=>{
+test('one tile is free each turn; a repeat or multi-tile swap costs a turn',()=>{
  let match=makeLocalMatch({names:['A','B']},rng);
- const stash=[...match.bag];
- const rack=[...match.players[0].rack];
- for(let i=0;i<rack.length;i++){
-   if(/^[0-9]$/.test(rack[i].value))continue;
-   const index=stash.findIndex(t=>/^[0-9]$/.test(t.value));
-   assert.ok(index>=0);
-   const replace=stash.splice(index,1)[0];
-   stash.push(rack[i]);rack[i]=replace;
- }
- match={...match,bag:stash,players:[{...match.players[0],rack},match.players[1]]};
+
  assert.equal(validLocalMatch(match),true);
  match=readyLocalTurn(match);
  const before=match.players[0].rack.map(t=>t.id);
- const first=exchangeLocalTiles(match,[before[0],before[1]],rng);
+ const first=exchangeLocalTiles(match,[before[0]],rng);
  assert.equal(first.free,true);
  assert.equal(first.match.current,0);
  assert.equal(first.match.freeExchangeUsed,true);
