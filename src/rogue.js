@@ -246,7 +246,7 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
    if(!newTile){
      // Second Spark reactivates a covered premium space once (not repeatedly).
      if(owns(rogue,'bonus-echo')&&['2T','3T','2E','3E'].includes(bonus)&&
-        !(rogue.echoed||[]).includes(index)){
+        !(isJam&&bonus==='2E')&&!(rogue.echoed||[]).includes(index)){
        echoedIndices.push(index);
        if(bonus==='2T'||bonus==='3T'){
          const factor=bonus==='2T'&&owns(rogue,'amplifier')?3:bonus==='3T'&&!isStatic?3:2;
