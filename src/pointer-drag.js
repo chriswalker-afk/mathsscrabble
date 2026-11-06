@@ -10,10 +10,28 @@ export function enableTileDrag(node, payload, onDrop) {
   function start(event){
     if(event.button!==0||node.disabled)return;
     const pointerId=event.pointerId,origin={x:event.clientX,y:event.clientY};
-    let dragging=false,ghost=null,hover=null;
+    let dragging=false,ghost=null,hover=null,dropTarget=null;
     function stopHover(){
-      if(hover)hover.classList.remove('drag-target','drag-invalid');
-      hover=null;
+      if(hover)hover.classList.remove('drag-target','drag-invalid','rack-before','rack-after');
+      hover=null;dropTarget=null;
+    }
+    function candidateAt(x,y){
+      const node=document.elementFromPoint(x,y)?.closest('.cell, #rack .tile, #rack, .rack-row');
+      if(!node)return null;
+      if(node.classList.contains('cell')){
+        const locked=node.dataset.locked==='true';
+        return {node,valid:!locked,target:{kind:'board',index:Number(node.dataset.index)},side:null};
+      }
+      if(node.matches('#rack .tile')){
+        const rect=node.getBoundingClientRect();
+        const after=x>rect.left+rect.width/2;
+        return {node,valid:true,target:{kind:'rack',index:Number(node.dataset.rackIndex)+(after?1:0)},side:after?'rack-after':'rack-before'};
+      }
+      const rack=document.getElementById('rack');
+      if(!rack)return null;
+      const tiles=[...rack.querySelectorAll('.tile')];
+      const index=tiles.findIndex(tile=>x<tile.getBoundingClientRect().left+tile.getBoundingClientRect().width/2);
+      return {node:rack,valid:true,target:{kind:'rack',index:index<0?tiles.length:index},side:null};
     }
     function cleanup(){
       window.removeEventListener('pointermove',move);
@@ -47,16 +65,19 @@ export function enableTileDrag(node, payload, onDrop) {
       e.preventDefault();
       ghost.style.left=e.clientX+'px';
       ghost.style.top=e.clientY+'px';
-      const candidate=document.elementFromPoint(e.clientX,e.clientY)?.closest('.cell')||null;
-      if(candidate!==hover){
-        stopHover();
-        hover=candidate;
-        if(hover)hover.classList.add(hover.dataset.locked==='true'?'drag-invalid':'drag-target');
+      const candidate=candidateAt(e.clientX,e.clientY);
+      stopHover();
+      if(candidate){
+        hover=candidate.node;
+        dropTarget=candidate.valid?candidate.target:null;
+        hover.classList.add(candidate.valid?'drag-target':'drag-invalid');
+        if(candidate.side)hover.classList.add(candidate.side);
       }
     }
     function end(e){
       if(e.pointerId!==pointerId)return;
-      const index=hover?Number(hover.dataset.index):null;
+      const destination=candidateAt(e.clientX,e.clientY);
+      const target=destination?.valid?destination.target:dropTarget;
       if(dragging){
         e.preventDefault();
         // Prevent the synthetic click fired after a touch drag from selecting
@@ -64,7 +85,7 @@ export function enableTileDrag(node, payload, onDrop) {
         node.dataset.dragSuppress=String(Date.now());
       }
       cleanup();
-      if(dragging&&index!==null)onDrop(payload,index);
+      if(dragging&&target)onDrop(payload,target);
     }
     function cancel(e){if(e.pointerId===pointerId)cleanup();}
     window.addEventListener('pointermove',move,{passive:false});
