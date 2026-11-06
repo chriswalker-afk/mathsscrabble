@@ -168,9 +168,11 @@ try{
    scoreBottom:document.querySelector('#score-btn').getBoundingClientRect().bottom,
    rackBottom:document.querySelector('.rack-row').getBoundingClientRect().bottom
  }));
+ console.log('Local phone geometry',mobile);
  assert.ok(mobile.scrollWidth<=mobile.width+3,'multiplayer should not scroll horizontally');
+ assert.equal(await page.locator('#bag-details-btn').isVisible(),true,'In Bag must stay accessible on phones');
  assert.ok(mobile.bagRight<=mobile.width);
- assert.ok(mobile.scoreBottom<1100);
+ assert.ok(mobile.scoreBottom<=844-10,'primary multiplayer controls must fit a phone screen');
  assert.ok(mobile.rackBottom<mobile.scoreBottom);
  assert.deepEqual(errors,[]);
  console.log('Local multiplayer browser passed: 3 players, private racks, shared equation, score ceremony, passes, match end, reload, random starts and mobile.');
