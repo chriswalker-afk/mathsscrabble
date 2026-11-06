@@ -29,11 +29,14 @@ export function dealPlayableRack(held,sourceBag,options={}){
     return false;
   }
   while(rack.length<HAND_SIZE && bag.length){
+    // Pick the flexible and rarer roles first. They also count towards the
+    // number/operator minimums, which avoids filling all seven slots before
+    // upgraded Wildcard Beacon and Operator Reserve can take effect.
+    if(rack.filter(isBlank).length<minBlanks && choose(isBlank))continue;
+    if(rack.filter(operatorCapable).length<minOperators && choose(operatorCapable))continue;
     if(rack.filter(numberCapable).length<4 &&
        choose(tile=>isDigit(tile.value)||tile.blank==='blank-number'))continue;
     if(rack.filter(numberCapable).length<4 && choose(numberCapable))continue;
-    if(rack.filter(operatorCapable).length<minOperators && choose(operatorCapable))continue;
-    if(rack.filter(isBlank).length<minBlanks && choose(isBlank))continue;
     rack.push(bag.pop());
   }
   return {rack,bag};
