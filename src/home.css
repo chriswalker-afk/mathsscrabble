@@ -58,3 +58,24 @@ main{flex:1;width:100%;padding:24px 0 16px}
 @media(max-width:720px){.home-shell{width:min(540px,calc(100% - 28px))}.home-header{min-height:74px}.home-brand-mark{height:43px;width:43px}.home-header-tag{font-size:8px;letter-spacing:.09em}.home-brand-text strong{font-size:20px}.home-brand-text small{font-size:8px;letter-spacing:.13em}main{padding-top:23px}.home-intro{margin-bottom:19px}.home-intro h1{font-size:clamp(29px,8vw,38px)}.home-description{font-size:13px}.mode-grid{grid-template-columns:1fr;gap:11px}.mode-card{min-height:145px;padding:13px 17px 12px;gap:3px}.mode-symbol{font-size:26px;height:30px}.mode-card-copy strong{font-size:18px}.mode-card-copy>span{font-size:12px;line-height:1.45}.mode-card-footer{padding-top:7px}.alien-lab-card{margin-top:12px;padding:12px;gap:12px}.alien-lab-mark{height:43px;width:43px;flex-basis:43px;font-size:24px}.alien-lab-copy strong{font-size:16px}.alien-lab-copy span{font-size:12px}.home-rule-strip{font-size:9px;gap:6px}.home-footer{padding:9px 0}}
 @media(max-width:380px){.home-header-tag{display:none}.mode-card-category{display:none}.home-intro h1{font-size:29px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+
+
+/* Four learner-selectable mathematics tile kits. Selecting is client-side. */
+.tile-kit-picker{margin:0 0 19px;padding:13px 15px 15px;border-radius:14px;border:1px solid #547889;background:linear-gradient(130deg,#193a49c7,#142b3de8);box-shadow:inset 0 1px #d9f9ed1d}
+.tile-kit-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:11px}
+.tile-kit-eyebrow{font-size:9px;letter-spacing:.2em;color:#8bdccf;font-weight:900}
+.tile-kit-heading h2{font-size:18px;margin:4px 0 0;color:#ffecd1;line-height:1.15}
+.tile-kit-active{font-size:10px;font-weight:900;letter-spacing:.1em;white-space:nowrap;color:#f5d6a2;background:#4c524993;border:1px solid #a2a675;padding:6px 8px;border-radius:30px}
+.tile-kit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.tile-kit-card{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:12px 10px;min-height:127px;border:1px solid #53727f;background:linear-gradient(150deg,#263f50,#1b2f40);color:#e5eaeb;border-radius:9px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s}
+.tile-kit-card:hover{border-color:#c5cfa9;transform:translateY(-2px)}
+.tile-kit-card.is-selected{border:2px solid #f8dba4;background:linear-gradient(150deg,#465b5a,#27414d);box-shadow:0 0 13px #d5be8150,inset 0 1px #f7e5ba29;padding:11px 9px}
+.tile-kit-card:focus-visible{outline:3px solid #fff4cb;outline-offset:3px}
+.tile-kit-number{font-size:9px;font-weight:900;letter-spacing:.13em;color:#a5e6d4}
+.tile-kit-card strong{font-size:12px;font-weight:900;letter-spacing:.05em;color:#fff1d8;line-height:1.25}
+.tile-kit-sample{display:block;font-weight:850;font-size:18px;line-height:1.2;color:#ffe7a9;white-space:nowrap}
+.tile-kit-card small{font-size:10px;color:#bbd4d4;line-height:1.35;margin-top:auto}
+.tile-kit-help{font-size:10px;line-height:1.5;color:#a8c5c9;margin:10px 0 0}
+@media(max-width:720px){.tile-kit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tile-kit-card{min-height:115px;padding:10px}.tile-kit-card.is-selected{padding:9px}.tile-kit-picker{padding:11px;margin-bottom:15px}.tile-kit-heading h2{font-size:17px}}
+@media(max-width:380px){.tile-kit-active{font-size:8px;padding:5px}.tile-kit-sample{font-size:15px}.tile-kit-card strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.tile-kit-card{transition:none}.tile-kit-card:hover{transform:none}}
