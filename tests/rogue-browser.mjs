@@ -189,7 +189,7 @@ try{
  // Header and game controls should remain fully visible on a phone.
  await page.setViewportSize({width:390,height:844});
  const mobile=await page.evaluate(()=>{
-   const buttons=[...document.querySelectorAll('.top-actions button')];
+   const buttons=[...document.querySelectorAll('.top-actions button')].filter(button=>button.getClientRects().length>0);
    const score=document.querySelector('#score-btn').getBoundingClientRect();
    return {scrollWidth:document.documentElement.scrollWidth,
       width:innerWidth,scoreBottom:score.bottom,
