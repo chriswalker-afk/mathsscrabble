@@ -195,6 +195,7 @@ export function validateMove(board,pending) {
 }
 export function scoreMove(board,pending,move){
   let base=0,multiplier=1,bonuses=[];
+  const tileScores=[]; // The exact score contributed by each visible equation cell.
   for(const index of move.indices){
     const tile=pending[index]||board[index];
     let points=tile.points||0;
@@ -205,12 +206,15 @@ export function scoreMove(board,pending,move){
     if(bonus==='2E'){multiplier*=2;bonuses.push('Double equation');}
     if(bonus==='3E'){multiplier*=3;bonuses.push('Triple equation');}
     base+=points;
+    tileScores.push({index,value:tile.value,points,
+      existing:Boolean(board[index]),premium:bonus||null});
   }
   const length=Math.max(0,move.indices.length-5)*3;
   const physicalCount=Object.values(pending).filter(t=>t.value!=='=').length;
   const sweep=physicalCount===HAND_SIZE?20:0;
   const equation=5; // each genuinely calculated equality earns energy
   const crossing=move.indices.some(index=>Boolean(board[index]))?5:0;
-  return {base,multiplier,length,sweep,equation,crossing,total:base*multiplier+length+sweep+equation+crossing,bonuses};
+  return {base,multiplier,length,sweep,equation,crossing,
+    total:base*multiplier+length+sweep+equation+crossing,bonuses,tileScores};
 }
 export function nextTarget(sector){return TARGETS[sector-1]??Math.round(TARGETS[TARGETS.length-1]*Math.pow(1.18,sector-TARGETS.length));}
