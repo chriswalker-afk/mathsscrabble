@@ -1,0 +1,383 @@
+/* Alien Lab A2 — browser-only, local first creature creator.
+ * The alien shape renderer is deterministic, the data model is allowlisted.
+ * No account, remote API, avatar upload or existing match data is modified.
+ */
+import {loadAlienLibrary,renderAlienSVG,serializeAlienSVG} from './renderer.js';
+import {
+ ALIEN_COLOUR_FIELDS,ALIEN_PART_FIELDS,defaultAlien,randomAlien,presetAlien,
+ serializeAlien,alienDescription
+} from './model.js';
+import {
+ EDITOR_SECTIONS,PART_COLLECTIONS,makeEditHistory,pushEdit,undoEdit,redoEdit,
+ updateAlienPart,updateAlienColour,loadSavedAlien,saveAlienToStorage
+} from './editor-state.js';
+
+const $=id=>document.getElementById(id);
+const humanize=value=>value.replace(/-/g,' ').replace(/\b[a-z]/g,c=>c.toUpperCase());
+const descriptions={
+ head:'Choose your alien’s head',face:'Mix the eyes and mouth',
+ body:'Give your alien a cosy middle',arms:'A little wave goes a long way',
+ legs:'Walking, floating or wobbling',accessory:'One special touch',
+ colours:'Three independent colour layers'
+};
+const roleLabels={skin:'SKIN · HEAD, ARMS & LEGS',
+ outfit:'OUTFIT · BODY',
+ accent:'ACCENTS · ACCESSORIES'};
+const roleHelp={
+ skin:'Head, arm and leg colours always match.',
+ outfit:'Only the torso and clothing change.',
+ accent:'Accessories change colour independently.'
+};
+const state={
+ library:null,history:null,activeSection:'head',saved:null,storageState:'empty',
+ lastNotice:'',noticeError:false,
+ ready:false
+};
+const maybeStorage=()=>{
+ try{return localStorage;}catch{return null;}
+};
+function notify(text,error=false){
+ state.lastNotice=text;
+ state.noticeError=error;
+ const element=$('alien-status');
+ element.textContent=text;
+ element.classList.toggle('is-error',error);
+}
+const current=()=>state.history?.present;
+const configJSON=alien=>serializeAlien(alien,state.library.manifest);
+const isDirty=()=>state.saved!==null&&configJSON(current())!==state.saved;
+const isFresh=()=>state.saved===null;
+function cryptoRandom(){
+ if(globalThis.crypto?.getRandomValues){
+   const bits=new Uint32Array(1);crypto.getRandomValues(bits);
+   return bits[0]/4294967296;
+ }
+ return Math.random();
+}
+function makeButton({className,text,ariaLabel,pressed=false}={}){
+ const button=document.createElement('button');
+ button.type='button';button.className=className;
+ if(text)button.textContent=text;
+ if(ariaLabel)button.setAttribute('aria-label',ariaLabel);
+ button.setAttribute('aria-pressed',String(pressed));
+ return button;
+}
+function appendSVG(target,alien,{width=105,height=119,focus='full'}={}){
+ const svg=renderAlienSVG(alien,state.library,{width,height,accessible:false});
+ if(focus==='face'){
+   svg.setAttribute('viewBox','65 48 190 145');
+   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+ }else if(focus==='head'){
+   svg.setAttribute('viewBox','42 4 236 226');
+   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+ }
+ target.append(svg);
+ return svg;
+}
+function renderPresets(){
+ const grid=$('starter-options');
+ const fragment=document.createDocumentFragment();
+ for(const [id,alien] of Object.entries(state.library.manifest.presets)){
+   const chosen=configJSON(current())===configJSON(alien);
+   const button=makeButton({
+     className:'preset-button',ariaLabel:'Choose '+humanize(id)+' starter alien',pressed:chosen
+   });
+   button.dataset.preset=id;
+   appendSVG(button,alien,{width:47,height:53});
+   const caption=document.createElement('span');caption.textContent=humanize(id);
+   button.append(caption);
+   button.addEventListener('click',()=>usePreset(id));
+   fragment.append(button);
+ }
+ grid.replaceChildren(fragment);
+}
+function renderPreview(animate=false){
+ const alien=current();
+ const art=$('alien-art');art.replaceChildren();
+ const svg=renderAlienSVG(alien,state.library,{width:270,height:304});
+ svg.classList.add(animate?'pop':'idle');
+ if(animate)svg.addEventListener('animationend',()=>{
+   svg.classList.remove('pop');svg.classList.add('idle');
+ },{once:true});
+ art.append(svg);
+ art.setAttribute('aria-label','Full size preview: '+alienDescription(alien,state.library.manifest));
+ $('tiny-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
+   width:48,height:54,accessible:false
+ }));
+ $('lobby-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
+   width:60,height:68,accessible:false
+ }));
+ renderPresets();
+}
+function sectionIndex(id){
+ return EDITOR_SECTIONS.findIndex(section=>section.id===id);
+}
+function renderTabs(){
+ const fragment=document.createDocumentFragment();
+ EDITOR_SECTIONS.forEach((section,i)=>{
+   const chosen=section.id===state.activeSection;
+   const button=document.createElement('button');
+   button.type='button';button.className='section-tab';
+   button.id='tab-'+section.id;button.setAttribute('role','tab');
+   button.setAttribute('aria-selected',String(chosen));
+   button.setAttribute('aria-controls','editor-options');
+   button.tabIndex=chosen?0:-1;
+   button.dataset.section=section.id;
+   const small=document.createElement('span');small.textContent=String(i+1).padStart(2,'0');
+   const label=document.createElement('strong');label.textContent=section.label;
+   button.append(small,label);
+   button.addEventListener('click',()=>switchSection(section.id));
+   button.addEventListener('keydown',event=>{
+     const arrow=event.key;
+     let nextIndex;
+     if(arrow==='ArrowRight')nextIndex=(i+1)%EDITOR_SECTIONS.length;
+     else if(arrow==='ArrowLeft')nextIndex=(i+EDITOR_SECTIONS.length-1)%EDITOR_SECTIONS.length;
+     else if(arrow==='Home')nextIndex=0;
+     else if(arrow==='End')nextIndex=EDITOR_SECTIONS.length-1;
+     else return;
+     event.preventDefault();
+     switchSection(EDITOR_SECTIONS[nextIndex].id,true);
+   });
+   fragment.append(button);
+ });
+ $('section-tabs').replaceChildren(fragment);
+}
+function switchSection(id,focusTab=false){
+ if(!EDITOR_SECTIONS.some(section=>section.id===id))return;
+ state.activeSection=id;
+ renderTabs();
+ const section=EDITOR_SECTIONS[sectionIndex(id)];
+ $('current-section-number').textContent=String(sectionIndex(id)+1).padStart(2,'0')+
+   ' / '+String(EDITOR_SECTIONS.length).padStart(2,'0');
+ $('design-completeness').textContent=String(sectionIndex(id)+1)+' / '+EDITOR_SECTIONS.length;
+ $('current-section-title').textContent=descriptions[id];
+ $('current-section-hint').textContent=section.hint;
+ $('editor-options').setAttribute('aria-labelledby','tab-'+id);
+ $('editor-options').scrollTop=0;
+ renderOptions();
+ const tab=$('tab-'+id);
+ tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+ if(focusTab)tab.focus({preventScroll:true});
+}
+function addPartGroup(parent,field){
+ const group=document.createElement('section');group.className='option-group';
+ group.dataset.field=field;
+ const head=document.createElement('div');head.className='option-group-header';
+ const label=document.createElement('h4');
+ label.textContent=field==='eyes'?'EYES':field==='mouth'?'MOUTH':'CHOOSE '+humanize(field).toUpperCase();
+ const caption=document.createElement('span');
+ const available=state.library.manifest.parts[PART_COLLECTIONS[field]];
+ caption.textContent=available.length+' AVAILABLE';
+ head.append(label,caption);
+ const grid=document.createElement('div');grid.className='part-choices';
+ for(const id of available){
+   const selected=current()[field]===id;
+   const button=makeButton({
+     className:'part-choice',
+     ariaLabel:'Choose '+humanize(id)+' '+(field==='accessory'?'accessory':field),
+     pressed:selected
+   });
+   button.dataset.field=field;button.dataset.option=id;
+   const scene=document.createElement('div');scene.className='option-visual';
+   const candidate=updateAlienPart(current(),state.library.manifest,field,id);
+   appendSVG(scene,candidate,{
+     width:105,height:119,
+     focus:(field==='eyes'||field==='mouth')?'face':field==='head'?'head':'full'
+   });
+   const name=document.createElement('span');name.className='option-name';name.textContent=humanize(id);
+   button.append(scene,name);
+   button.addEventListener('click',()=>selectPart(field,id));
+   grid.append(button);
+ }
+ group.append(head,grid);parent.append(group);
+}
+function addPaletteGroup(parent,role){
+ const group=document.createElement('section');group.className='palette-group';
+ group.dataset.paletteRole=role;
+ const head=document.createElement('div');head.className='option-group-header';
+ const label=document.createElement('h4');label.textContent=roleLabels[role];
+ const count=document.createElement('span');count.textContent='6 COLOUR WORLDS';
+ head.append(label,count);
+ const grid=document.createElement('div');grid.className='palette-choices';
+ for(const [id,palette] of Object.entries(state.library.manifest.palettes)){
+   const chosen=current().colours[role]===id;
+   const button=makeButton({
+     className:'palette-choice',
+     ariaLabel:'Apply '+humanize(id)+' to '+role,
+     pressed:chosen
+   });
+   button.dataset.colourRole=role;button.dataset.palette=id;
+   const dot=document.createElement('span');dot.className='palette-dot';
+   dot.style.backgroundColor=palette.primary;
+   const name=document.createElement('span');
+   name.className='palette-name';name.textContent=humanize(id);
+   button.append(dot,name);
+   button.addEventListener('click',()=>selectColour(role,id));
+   grid.append(button);
+ }
+ const description=document.createElement('p');description.className='palette-explanation';
+ description.textContent=roleHelp[role];
+ group.append(head,grid,description);parent.append(group);
+}
+function renderOptions(focusSelector=null,resetScroll=false){
+ const section=EDITOR_SECTIONS[sectionIndex(state.activeSection)];
+ const container=$('editor-options');
+ const previousY=container.scrollTop;
+ const fragment=document.createDocumentFragment();
+ for(const field of section.fields){
+   if(ALIEN_COLOUR_FIELDS.includes(field))addPaletteGroup(fragment,field);
+   else if(ALIEN_PART_FIELDS.includes(field))addPartGroup(fragment,field);
+ }
+ container.replaceChildren(fragment);
+ container.scrollTop=resetScroll?0:previousY;
+ if(focusSelector){
+   // Keep keyboard and click focus after rebuilding the cards.
+   container.querySelector(focusSelector)?.focus({preventScroll:true});
+ }
+}
+function updateSaveUI(){
+ if(!state.ready)return;
+ const saved=!isFresh()&&!isDirty();
+ const label=$('save-state');
+ label.classList.toggle('is-saved',saved);
+ label.classList.toggle('is-dirty',isDirty());
+ label.textContent=isFresh()?'NOT SAVED YET':saved?'✓ SAVED TO THIS DEVICE':'● UNSAVED CHANGES';
+ $('save-description').textContent=isFresh()?
+   'Save this alien in your browser, or export it as a transparent SVG.':
+   saved?'This design is safely stored here. Changes are never saved until you choose.':
+     'Your last saved alien is still there. Save again to keep these changes.';
+ $('alien-load').disabled=isFresh();
+ $('alien-undo').disabled=!state.history.past.length;
+ $('alien-redo').disabled=!state.history.future.length;
+}
+function renderChange(next,{focusSelector=null,message='',animate=true}={}){
+ const previous=state.history;
+ state.history=pushEdit(previous,next,state.library.manifest);
+ if(state.history===previous)return;
+ renderPreview(animate);
+ renderOptions(focusSelector);
+ updateSaveUI();
+ if(message)notify(message);
+}
+function selectPart(field,id){
+ const next=updateAlienPart(current(),state.library.manifest,field,id);
+ const selector='[data-field="'+field+'"][data-option="'+id+'"]';
+ renderChange(next,{focusSelector:selector,
+   message:humanize(id)+' selected. Your alien is looking good!'});
+}
+function selectColour(role,palette){
+ const next=updateAlienColour(current(),state.library.manifest,role,palette);
+ renderChange(next,{focusSelector:
+   '[data-colour-role="'+role+'"][data-palette="'+palette+'"]',
+   message:humanize(palette)+' '+role+' applied.'});
+}
+function usePreset(id){
+ const alien=presetAlien(state.library.manifest,id);
+ renderChange(alien,{
+   message:humanize(id)+' has arrived! You can now customise every part.'
+ });
+}
+function randomise(){
+ const next=randomAlien(state.library.manifest,current(),cryptoRandom);
+ renderChange(next,{message:'A new little alien has arrived from deep space!'});
+}
+function reset(){
+ renderChange(defaultAlien(),{message:'Back to the classic starting alien. Undo is available.'});
+}
+function performUndo(){
+ if(!state.history.past.length)return;
+ state.history=undoEdit(state.history);
+ renderPreview(true);renderOptions();updateSaveUI();
+ notify('Undid that change.');
+}
+function performRedo(){
+ if(!state.history.future.length)return;
+ state.history=redoEdit(state.history);
+ renderPreview(true);renderOptions();updateSaveUI();
+ notify('Redid that change.');
+}
+function save(){
+ const successful=saveAlienToStorage(maybeStorage(),current(),state.library.manifest);
+ if(!successful){notify('Unable to save on this device. You can still export an SVG file.',true);return;}
+ state.saved=configJSON(current());
+ updateSaveUI();notify('Saved! Your alien will still be here when you return.');
+}
+function loadSaved(){
+ const loaded=loadSavedAlien(maybeStorage(),state.library.manifest);
+ if(loaded.status!=='restored'){
+   notify(loaded.status==='unavailable'?'Browser storage is unavailable. Export the SVG instead.':
+     'No valid saved alien was found on this device.',true);
+   return;
+ }
+ state.saved=configJSON(loaded.alien);
+ state.history=pushEdit(state.history,loaded.alien,state.library.manifest);
+ renderPreview(true);renderOptions();updateSaveUI();
+ notify('Your saved alien is back!');
+}
+function exportSvg(){
+ try{
+   const text=serializeAlienSVG(current(),state.library);
+   const url=URL.createObjectURL(new Blob([text],{type:'image/svg+xml;charset=utf-8'}));
+   const a=document.createElement('a');a.href=url;a.download='equa-nova-my-alien.svg';
+   document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2000);
+   notify('Transparent SVG exported. You can use this alien as your pilot image.');
+ }catch(err){
+   notify('Unable to export this alien: '+err.message,true);
+ }
+}
+function bindButtons(){
+ $('alien-undo').onclick=performUndo;
+ $('alien-redo').onclick=performRedo;
+ $('alien-reset').onclick=reset;
+ $('alien-random').onclick=randomise;
+ $('alien-load').onclick=loadSaved;
+ $('alien-save').onclick=save;
+ $('alien-export').onclick=exportSvg;
+ document.addEventListener('keydown',event=>{
+   if(!(event.ctrlKey||event.metaKey)||event.altKey||event.key.toLowerCase()!=='z')return;
+   const target=event.target;
+   if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||
+     target?.isContentEditable||!state.ready)return;
+   event.preventDefault();
+   if(event.shiftKey)performRedo();
+   else performUndo();
+ });
+}
+function enableButtons(){
+ state.ready=true;
+ for(const id of ['alien-reset','alien-random','alien-save','alien-export'])$(id).disabled=false;
+}
+function startStatusMessage(loaded){
+ if(loaded.status==='restored')return 'Welcome back! Your saved alien is ready to edit.';
+ if(loaded.status==='invalid')return 'An invalid old save was ignored; a safe starter alien is ready.';
+ if(loaded.status==='unavailable')return 'Browser storage is unavailable. You can still design and export your alien.';
+ return 'Welcome to Alien Lab! Pick a part or choose a crew member to begin.';
+}
+async function boot(){
+ try{
+   state.library=await loadAlienLibrary('./');
+   const loaded=loadSavedAlien(maybeStorage(),state.library.manifest);
+   state.storageState=loaded.status;
+   state.history=makeEditHistory(loaded.alien,state.library.manifest);
+   state.saved=loaded.status==='restored'?configJSON(loaded.alien):null;
+   bindButtons();enableButtons();renderTabs();
+   switchSection('head');
+   renderPreview(false);
+   updateSaveUI();
+   notify(startStatusMessage(loaded),loaded.status==='invalid'||loaded.status==='unavailable');
+   $('alien-app').dataset.ready='true';
+ }catch(err){
+   const container=$('editor-options');
+   container.replaceChildren();
+   const explanation=document.createElement('p');explanation.textContent=
+     'The alien parts could not be loaded: '+err.message;
+   const retry=document.createElement('button');retry.type='button';
+   retry.className='action-button gold';retry.textContent='RETRY LOADING';
+   retry.onclick=()=>location.reload();
+   container.append(explanation,retry);
+   notify('The creature laboratory could not start. Try reloading.',true);
+   $('alien-app').dataset.ready='error';
+ }
+}
+void boot();
