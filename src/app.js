@@ -1355,7 +1355,7 @@ function showTraining(firstVisit=false){
   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
     <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can swap one tile for free each turn.</p></div></div>
  </div>
- <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
+ <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles (9 with Rack Extension), = selects equals and Backspace undoes a tile.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
    firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
    message,firstVisit?
@@ -1472,7 +1472,7 @@ document.addEventListener('keydown',event=>{
  if(event.key==='='){
    event.preventDefault();selectTile('equals');return;
  }
- if(/^[1-8]$/.test(event.key)){
+ if(/^[1-9]$/.test(event.key)){
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    const available=state.rack.filter(t=>!used.has(t.id));
    const tile=available[Number(event.key)-1];
