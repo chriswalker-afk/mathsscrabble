@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {installKnownRack} from './opening-fixture.mjs';
 
 const base='http://127.0.0.1:4173/';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -36,6 +37,7 @@ try{
   assert.match(await page.locator('#modal-title').textContent(),/first equation/i);
   assert.match(await page.locator('.training-steps').textContent(),/BIDMAS/i);
   await page.locator('#modal-actions button').last().click();
+  await installKnownRack(page,'sector');
   const initialSave=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
   assert.ok(initialSave?.length>1000,'the initial run should be saved');
   assert.match(await page.locator('#save-status').textContent(),/autosaved/i);
