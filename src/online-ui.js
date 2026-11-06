@@ -13,7 +13,7 @@ const state={
  view:null,code:null,token:null,pending:{},order:[],rackOrder:[],
  selected:null,swapping:false,swapIds:new Set(),busy:false,
  ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
- reconnectTimer:null,refreshing:false,ceremony:null,focusIndex:pos(CENTER,CENTER),
+ reconnectTimer:null,refreshing:false,wantedRevision:0,ceremony:null,focusIndex:pos(CENTER,CENTER),
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
@@ -176,7 +176,7 @@ function disconnectSockets(){
  }
 }
 function connectSocket(){
- if(!state.code||!state.token)return;
+ if(!state.code||!state.token||document.hidden)return;
  disconnectSockets();
  let ws;
  try{
@@ -195,16 +195,22 @@ function connectSocket(){
      showNotice('This room has expired. Create or join a new room.',true);
      clearSession();return;
    }
-   if(msg.type==='revision'&&msg.revision>state.lastRevision&&!state.busy)
-     void refreshRoom();
+   if(msg.type==='revision'&&msg.revision>state.lastRevision){
+     state.wantedRevision=Math.max(state.wantedRevision,msg.revision);
+     if(!state.busy&&!state.refreshing)void refreshRoom();
+   }
  };
  ws.onerror=()=>{if(state.ws===ws)setConnection('reconnecting');};
  ws.onclose=()=>{
    if(state.ws!==ws)return;
    state.ws=null;setConnection('reconnecting');
+   // Background tabs do not reconnect repeatedly while students are away.
+   if(document.hidden)return;
    state.reconnectTimer=setTimeout(()=>{
-     if(!state.code||!state.token)return;
-     connectSocket();void refreshRoom();
+     if(!state.code||!state.token||document.hidden)return;
+     // The room sends its current revision on WebSocket connection. A state
+     // fetch follows only when that revision has actually changed.
+     connectSocket();
    },state.reconnectDelay);
    state.reconnectDelay=Math.min(60000,state.reconnectDelay*1.75);
  };
@@ -212,7 +218,7 @@ function connectSocket(){
 function clearSession(){
  disconnectSockets();state.view=null;state.code=null;state.token=null;
  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
- state.busy=false;state.ceremony=null;state.shownResults=false;
+ state.busy=false;state.wantedRevision=0;state.ceremony=null;state.shownResults=false;
  history.replaceState(null,'',location.pathname);
  sessionStore();setConnection('offline');
  render();gateError('');
@@ -220,6 +226,7 @@ function clearSession(){
 async function refreshRoom(){
  if(!state.code||!state.token||state.refreshing||state.busy)return;
  state.refreshing=true;
+ let updated=false;
  try{
    const response=await requestApi(roomPath()+'/state',{auth:true});
    saveRoomFromServer(response);
@@ -231,7 +238,12 @@ async function refreshRoom(){
      $('online-join-code').value=code;
      gateError('Saved access is no longer valid. Rejoin the room using its code.');
    }else showNotice(err.message,true);
- }finally{state.refreshing=false;}
+ }finally{
+   state.refreshing=false;
+   // Only issue another request if a newer revision arrived mid-fetch.
+   if(updated&&!state.busy&&state.wantedRevision>state.lastRevision)
+     queueMicrotask(()=>void refreshRoom());
+ }
 }
 function showEntry(){
  if($('online-pilot-picker').parentElement!==$('online-avatar-entry-slot'))
@@ -645,7 +657,10 @@ async function mutate(endpoint,payload){
         {label:'RETRY SAME ACTION',action:retryPending}]);
    }
    return null;
- }finally{state.busy=false;render();}
+ }finally{
+   state.busy=false;render();
+   if(state.wantedRevision>state.lastRevision)void refreshRoom();
+ }
 }
 async function retryPending(){
  const pending=state.pendingRequest;
@@ -656,7 +671,10 @@ async function retryPending(){
    state.pendingRequest=null;saveRoomFromServer(response);
    if(response.event?.type==='scored')void playScoring(response.event);
  }catch(err){showNotice(err.message,true);await refreshRoom();}
- finally{state.busy=false;render();}
+ finally{
+   state.busy=false;render();
+   if(state.wantedRevision>state.lastRevision)void refreshRoom();
+ }
 }
 function clearCeremony(){
  const cells=$('board').querySelectorAll('.scoring-lift,.scoring-settled');
@@ -859,7 +877,9 @@ window.setInterval(()=>{
  if(state.view&&!state.busy&&!document.hidden&&state.connection!=='live')void refreshRoom();
 },30000);
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden&&state.view&&!state.busy)void refreshRoom();
+ if(document.hidden||!state.view)return;
+ if(!state.ws&&!state.reconnectTimer)connectSocket();
+ if(!state.busy)void refreshRoom();
 });
 window.addEventListener('keydown',event=>{
  if($('online-dialog').open||!$('online-gate').hidden||!myTurn())return;
