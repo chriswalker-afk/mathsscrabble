@@ -140,14 +140,11 @@ test('false equations, forged values, duplicates, wrong owner and stale revision
  assert.throws(()=>takeOnlineAction(room,H,
    request(room.revision,'score','score-invalid12345',{placements:bad}),3000),
    /tile value cannot be changed/i);
- const falseMath=good.map(x=>({...x}));
- const idx=room.match.players[0].rack.find(t=>t.value==='2'&&!t.blank);
- falseMath.at(-1).value='2';
- // Build a well-formed but false calculation by replacing the 4's actual
- // tile with another available physical 1 (if one exists).
- const one=room.match.players[0].rack.find(t=>t.value==='1'&&!t.blank);
- const fake=falseMath.map(x=>({...x}));
- fake[2]={index:fake[2].index,tileId:one.id,value:'1'};
+ // Reuse the same five owned physical tiles in a mathematically false
+ // but syntactically valid equation: 8 + 1 = 42.
+ const fake=good.map(x=>({...x}));
+ fake[2]={index:good[2].index,tileId:good[4].tileId,value:'1'};
+ fake[4]={index:good[4].index,tileId:good[2].tileId,value:'4'};
  assert.throws(()=>takeOnlineAction(room,H,
    request(room.revision,'score','score-notbalanced12',{placements:fake}),3000),
    /not balanced|calculation|equation/i);
