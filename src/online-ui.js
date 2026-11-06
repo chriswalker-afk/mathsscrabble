@@ -6,6 +6,8 @@ import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
   nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
+import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize} from './tile-sets.js';
+import {renderTileFace,tileFaceClass} from './tile-face.js';
 
 const $=id=>document.getElementById(id);
 const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
@@ -18,6 +20,18 @@ const state={
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 state.alienDraft=alienFromStorage(storage,0);
+const requestedKit=new URLSearchParams(location.search).get('tiles');
+$('online-tile-kit').value=normalizeTileSet(requestedKit||storage?.getItem(TILE_SET_STORAGE_KEY));
+const describeSelectedKit=()=>{
+ const kit=TILE_SET_BY_ID[$('online-tile-kit').value];
+ $('online-create-kit-info').textContent=kit.short+' · '+kit.desc+
+   ' The host locks this kit for all players when the room is created.';
+};
+$('online-tile-kit').addEventListener('change',()=>{
+ try{storage?.setItem(TILE_SET_STORAGE_KEY,$('online-tile-kit').value);}catch{}
+ describeSelectedKit();
+});
+describeSelectedKit();
 function renderPilotPicker(){
  const alien=state.alienDraft;
  paintPilotAvatar($('online-own-alien'),alien,me()?.index??0,{size:68,framing:'bust'});
@@ -255,7 +269,7 @@ function showEntry(){
  $('online-lobby').hidden=true;
  $('gate-title').textContent='Play together, from anywhere.';
  $('gate-description').textContent=
-   'Host a room or enter a six-character code. Only your own seven tiles appear on this device.';
+   'Host a room or enter a six-character code. The host selects the mathematical kit; each player sees only their own private rack.';
 }
 function showLobby(){
  if(!state.view)return;
@@ -263,6 +277,8 @@ function showLobby(){
   $('online-avatar-lobby-slot').append($('online-pilot-picker'));
  renderPilotPicker();
  const v=state.view;
+ const kit=TILE_SET_BY_ID[normalizeTileSet(v.tileSet)];
+ $('online-lobby-kit').textContent='MATHEMATICAL KIT · '+kit.short.toUpperCase()+' — '+kit.title+' · '+kitRackSize(kit.id)+' tiles per rack';
  $('online-gate').hidden=false;
  $('online-entry').hidden=true;
  $('online-lobby').hidden=false;
@@ -417,6 +433,9 @@ function render(){
  if(!v){showEntry();}
  else if(v.phase==='lobby'){showLobby();}
  else {$('online-gate').hidden=true;gateError('');}
+ $('app').dataset.bracketKit=String(hasBracketPair(v?.tileSet));
+ $('app').dataset.tileSet=normalizeTileSet(v?.tileSet);
+ $('online-active-kit').textContent='KIT · '+TILE_SET_BY_ID[normalizeTileSet(v?.tileSet)].short.toUpperCase();
  $('online-room-code').textContent=v?.code||'······';
  $('online-room-code').title=v?.code?'Room '+v.code:'';
  $('online-share').disabled=!v;
@@ -601,7 +620,7 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private eight-tile rack and shares the same 13×13 board.'],
+  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 13×13 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
   ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
   ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
   ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
@@ -817,8 +836,13 @@ $('online-create-form').onsubmit=async e=>{
      name:$('online-host-name').value,
      maxPlayers:Number($('online-player-limit').value),
      turnSeconds:Number($('online-timer-settings').value),
+     tileSet:$('online-tile-kit').value,
      avatar:state.alienDraft
    }});
+   if($('online-tile-kit').value!=='natural'&&data.room?.tileSet!==$('online-tile-kit').value){
+     gateError('The online room server needs the updated maths-kit Worker deployment before it can host this tile set.');
+     return;
+   }
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
    connectSocket();showNotice('Room created. Share the code and invite your pilots.');
