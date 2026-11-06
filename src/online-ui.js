@@ -852,9 +852,12 @@ window.setInterval(()=>{
  const match=current();
  if(match?.deadline)$('online-clock').textContent=formatTime(match.deadline-Date.now());
 },250);
+// Event-first syncing: hibernating room WebSockets deliver every authoritative
+// revision. Avoid repeated HTTP+Durable Object reads while the socket is live.
+// Only fall back to bounded polling while the connection is unavailable.
 window.setInterval(()=>{
- if(state.view&&!state.busy&&!document.hidden)void refreshRoom();
-},7000);
+ if(state.view&&!state.busy&&!document.hidden&&state.connection!=='live')void refreshRoom();
+},30000);
 document.addEventListener('visibilitychange',()=>{
  if(!document.hidden&&state.view&&!state.busy)void refreshRoom();
 });
