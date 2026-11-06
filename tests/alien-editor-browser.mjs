@@ -200,6 +200,17 @@ try{
    }
  }
 
+ // The maker is discoverable from the game without taking board space.
+ const launchContext=await browser.newContext({viewport:{width:1366,height:768}});
+ const gamePage=await launchContext.newPage();
+ await gamePage.goto(ORIGIN+'/index.html',{waitUntil:'domcontentloaded'});
+ await gamePage.locator('#mode-btn').click();
+ assert.equal(await gamePage.locator('.alien-lab-modal-link').count(),1);
+ await gamePage.locator('.alien-lab-modal-link').click();
+ await gamePage.waitForURL(/alien-lab\.html$/);
+ await waitReady(gamePage);
+ await launchContext.close();
+
  // Graceful storage-blocked fallback in a fresh, separate private context.
  const blocked=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true});
  await blocked.addInitScript(()=>{
