@@ -12,6 +12,10 @@ function announce(message,isError=false){
  $('log').textContent=message;
  $('log').classList.toggle('error',isError);
  $('footer-text').textContent=message.toUpperCase();
+ if(isError){
+   $('equation-preview').dataset.state='error';
+   $('preview-status').textContent=message;
+ }
 }
 function freshSector(sector=1){
   state.modalEpoch++;
