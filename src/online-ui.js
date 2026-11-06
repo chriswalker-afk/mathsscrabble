@@ -380,7 +380,7 @@ function renderRack(){
 }
 function renderPreview(){
  const board=current()?.board||EMPTY_BOARD,preview=inspectPlacement(board,state.pending);
- const eligible=Boolean(freeExchangeReason(current()?.rack||[]))&&!current()?.freeExchangeUsed;
+ const eligible=Boolean(freeExchangeReason(current()?.rack||[]))&&!current()?.freeExchangeUsed&&state.swapIds.size<=1;
  $('equation-preview').dataset.state=state.swapping?'swap':preview.status;
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
