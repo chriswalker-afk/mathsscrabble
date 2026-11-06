@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {installKnownRack} from './opening-fixture.mjs';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];
@@ -28,6 +29,7 @@ try{
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
  await page.locator('#modal-actions button').last().click();
+ await installKnownRack(page,'rogue');
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 01/i);
  assert.equal(await page.locator('#rogue-summary').isVisible(),true);
  assert.equal(await page.locator('#flux-count').textContent(),'0');
