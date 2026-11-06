@@ -90,8 +90,8 @@ function validReportMove(move){
    validInteger(move.points,0,500000)&&validInteger(move.turn,1,6)&&
    validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,7)&&
    validInteger(move.wildcards,0,7)&&validInteger(move.crossing,0,10)&&
-   Array.isArray(move.bonuses)&&move.bonuses.length<=30&&
-   move.bonuses.every(b=>typeof b==='string'&&b.length<=30);
+   Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
+   move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
 function validStats(stats){
  return stats&&typeof stats==='object'&&
