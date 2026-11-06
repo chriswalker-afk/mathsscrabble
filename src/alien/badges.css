@@ -85,3 +85,43 @@
 @media(prefers-reduced-motion:reduce){
  .alien-player-avatar,.alien-player-avatar *{animation:none!important;transition:none!important}
 }
+
+/* Online entry/lobby avatar picker (above forms, never on the board). */
+.online-pilot-picker{margin:7px 0 13px;padding:10px;border:1px solid #658c89;
+ border-radius:11px;background:linear-gradient(145deg,#204b53,#163546)}
+.online-pilot-picker .alien-profile-banner{margin:0 0 8px;padding:3px 4px;border:0;
+ background:transparent}
+.online-pilot-picker .alien-profile-picker{margin:5px 0 9px}
+.online-pilot-picker .alien-profile-controls{gap:6px}
+.online-pilot-picker .alien-profile-help{display:block;min-height:15px;margin:7px 2px 0}
+.online-pilot-picker .alien-profile-picker button{flex:1;min-width:106px;justify-content:center}
+.online-pilot-picker .alien-profile-picker button .alien-player-avatar{border-color:#83bbac!important}
+.online-lobby #online-avatar-lobby-slot .online-pilot-picker{margin:12px 0 5px}
+.online-current:has(.alien-player-avatar){display:flex;gap:8px;align-items:center}
+.online-current .alien-player-avatar{width:31px!important;height:31px!important;min-width:31px;
+ border-radius:7px!important}
+.online-current>span:last-child{min-width:0}
+.local-pilot-setup{padding:8px 10px;background:#193b4c;border:1px solid #4d7580;
+ border-radius:9px;margin-bottom:4px}
+.local-pilot-setup[hidden]{display:none!important}
+.local-setup-names .alien-setup-row{margin:2px 0 0}
+.local-setup-names .alien-setup-note{color:#bed5cf!important;font-size:11px!important;
+ line-height:1.5!important;margin:8px 0 0}
+.local-setup-names .alien-editor-link{width:max-content;max-width:100%}
+.local-result-legend.alien-result-legend{
+ grid-template-columns:22px 40px minmax(0,1fr) 62px 52px 55px;gap:6px}
+.alien-result-legend>span:nth-child(n+4){text-align:right}
+#local-handover-avatar.alien-handover-avatar{font-size:0;animation:none!important}
+#local-handover-avatar.alien-handover-avatar svg{overflow:visible}
+@media(max-width:730px){
+ .local-result-legend.alien-result-legend{
+  grid-template-columns:18px 34px minmax(0,1fr) 44px 42px 45px;gap:5px}
+ .local-setup-names .alien-setup-row{grid-template-columns:1fr;gap:5px}
+ .local-setup-names .alien-setup-choice{justify-content:start}
+ .online-pilot-picker .alien-profile-picker button{min-width:calc(50% - 4px)}
+}
+@media(max-width:410px){
+ .online-pilot-picker{padding:7px}
+ .online-pilot-picker .alien-profile-picker button{font-size:10px}
+ .online-pilot-picker .alien-profile-controls button{padding:7px}
+}
