@@ -1,7 +1,7 @@
 // The Drift: self-contained roguelike economy, anomalies and scoring.
 import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat,tilePool} from './engine.js';
 import {BOSS_BY_ID,zoneBoss,bossForSector,bossField,restrictedDraws,validateBossMove} from './drift-bosses.js';
-import {normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
+import {normalizeTileSet,hasBracketPair,kitRackSize,kitRackOptions} from './tile-sets.js';
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
@@ -45,7 +45,7 @@ export const TEMP_ITEM_BY_ID=Object.freeze(Object.fromEntries(TEMP_ITEMS.map(ite
 export const PULSE_ITEM=TEMP_ITEMS[0];
 export const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function turnLimit(rogue){return 6+Number(owns(rogue,'extra-turn'));}
-export function rackSlots(rogue){return 8+Number(owns(rogue,'wide-rack'))+(hasBracketPair(rogue?.tileSet)?2:0);}
+export function rackSlots(rogue){return kitRackSize(rogue?.tileSet)+Number(owns(rogue,'wide-rack'));}
 export function shopTemperatures(sector){
  // Every Salvage Bay offers a score boost and a tile manipulation choice.
  const boosts=TEMP_ITEMS.filter(item=>item.action==='score'&&item.id!==PULSE_ITEM.id);
@@ -165,7 +165,7 @@ export function consumePulse(rogue){return consumeTemporary(rogue,PULSE_ITEM.id)
 export function rogueRackOptions(rogue,sector){
  return {...kitRackOptions(rogue?.tileSet),minBlanks:owns(rogue,'wild-beacon')?2:1,
          preferAdvancedOperators:owns(rogue,'operator-reserve'),
-         numberSlots:owns(rogue,'wide-rack')?6:5,
+         numberSlots:kitRackOptions(rogue?.tileSet).numberSlots+Number(owns(rogue,'wide-rack')),
          forbiddenValues:restrictedDraws(rogue,sector),
          bracketPairs:hasBracketPair(rogue?.tileSet)?1:0};
 }

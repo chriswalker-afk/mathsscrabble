@@ -1,5 +1,5 @@
 // Pure game rules. Both a future multiplayer server and this solo client can use these.
-import {normalizeTileSet,hasBracketPair,FRACTION_VALUES,BRACKET_PAIRS_PER_BAG} from './tile-sets.js';
+import {normalizeTileSet,hasBracketPair,FRACTION_VALUES,POSITIVE_FRACTION_VALUES,BRACKET_PAIRS_PER_BAG} from './tile-sets.js';
 import {checkEquation} from './expression-parser.js';
 export {checkEquation};
 export const SIZE = 13;
@@ -89,14 +89,15 @@ export function randomFloat(){
 /** All kits contain 151 physical tiles; 16 digits become 8 bracket pairs. */
 export function makeBag(random=randomFloat,tileSet='natural') {
  const kit=normalizeTileSet(tileSet),values=[];
+ const fractions=kit==='rational'?[...POSITIVE_FRACTION_VALUES,...POSITIVE_FRACTION_VALUES]:FRACTION_VALUES;
  let fractionIndex=0,bracketIndex=0;
  for(let digit=0;digit<=9;digit++){
    const copies=digit<=4?9:7;
    for(let i=0;i<copies;i++){
      if(kit==='integer'&&digit>0&&i<3)values.push('−'+digit);
      else if(hasBracketPair(kit)&&i<(digit<=3?5:4)){
-       if(fractionIndex<FRACTION_VALUES.length){
-         values.push(FRACTION_VALUES[fractionIndex++]);
+       if(fractionIndex<fractions.length){
+         values.push(fractions[fractionIndex++]);
        }else{
          const pair=Math.floor(bracketIndex/2);
          values.push({value:bracketIndex%2===0?'(':')',pairId:'paren-'+pair});

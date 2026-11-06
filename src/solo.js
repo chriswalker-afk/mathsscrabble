@@ -4,7 +4,7 @@ import {
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
 import {bossField,bossForSector} from './drift-bosses.js';
-import {normalizeTileSet,hasBracketPair,tileValueAllowed} from './tile-sets.js';
+import {normalizeTileSet,hasBracketPair,kitRackSize,tileValueAllowed} from './tile-sets.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -22,7 +22,7 @@ const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator
 export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
  const bag=[...sourceBag],rack=[...held];
  const minBlanks=options.minBlanks===2?2:1;
- const numberTarget=options.numberSlots===6?6:NUMBER_SLOTS;
+ const numberTarget=[5,6,7].includes(options.numberSlots)?options.numberSlots:NUMBER_SLOTS;
  const bracketTarget=options.bracketPairs===1?2:0;
  const excluded=new Set(Array.isArray(options.forbiddenValues)?options.forbiddenValues:[]);
  const eligible=tile=>!excluded.has(tile.value);
@@ -118,10 +118,10 @@ function validTile(tile,kind){
 function validReportMove(move){
  return move&&typeof move==='object'&&
    typeof move.equation==='string'&&move.equation.length>0&&move.equation.length<=80&&
-   /^[0-9+−×÷=() ]+$/.test(move.equation)&&
+   /^[0-9+−×÷=()/^√! ]+$/.test(move.equation)&&
    validInteger(move.points,0,500000)&&validInteger(move.turn,1,7)&&
-   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE+1)&&
-   validInteger(move.wildcards,0,HAND_SIZE+1)&&validInteger(move.crossing,0,10)&&
+   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE+4)&&
+   validInteger(move.wildcards,0,HAND_SIZE+4)&&validInteger(move.crossing,0,10)&&
    Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
    move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
@@ -161,7 +161,7 @@ function validSnapshot(data){
  if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
  if(mode==='sector'&&data.rogue!=null)return false;
  const limit=mode==='rogue'?turnLimit(data.rogue):6;
- const maxRack=(mode==='rogue'?rackSlots(data.rogue):HAND_SIZE)+(hasBracketPair(tileSet)?2:0);
+ const maxRack=mode==='rogue'?rackSlots(data.rogue):kitRackSize(tileSet);
  if(!validInteger(data.freeSwapTurn??0,0,limit))return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
