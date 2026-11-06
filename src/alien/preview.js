@@ -38,7 +38,7 @@ async function start(){
    cell.append(frame,label,note);$('small-preview').append(cell);
  }
  for(const field of ALIEN_PART_FIELDS){
-   const collection=field==='head'?'heads':
+   const collection=field==='head'?'heads':field==='mouth'?'mouths':
       field==='body'?'bodies':field==='accessory'?'accessories':field;
    const heading=document.createElement('div');heading.className='parts-heading';
    const h=document.createElement('h3');h.textContent=title(field);
