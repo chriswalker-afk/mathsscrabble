@@ -58,7 +58,7 @@ try{
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
- assert.equal(await page.locator('.salvage-card').count(),5);
+ assert.equal(await page.locator('.salvage-card').count(),7);
  await page.setViewportSize({width:390,height:844});
  const shopOnPhone=await page.evaluate(()=>{
    const actions=document.querySelector('#modal-actions').getBoundingClientRect();
@@ -77,7 +77,7 @@ try{
  await page.locator('.salvage-card').first().locator('button').click();
  assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-4);
  assert.ok(fluxBefore>=7,'the early-win bonus allows buying a permanent and single-use upgrade');
- await page.locator('.salvage-consumable button').click();
+ await page.locator('.salvage-consumable button').first().click();
  assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-7);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
  const installed=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
