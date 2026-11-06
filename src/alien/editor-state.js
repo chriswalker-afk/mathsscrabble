@@ -53,6 +53,8 @@ export function redoEdit(history){
    future:history.future.slice(1)};
 }
 export function loadSavedAlien(storage,manifest){
+ if(!storage||typeof storage.getItem!=='function')
+  return {alien:defaultAlien(),status:'unavailable'};
  let raw;
  try{raw=storage?.getItem(ALIEN_STORAGE_KEY);}
  catch{return {alien:defaultAlien(),status:'unavailable'};}
