@@ -120,7 +120,7 @@ try{
  },firstDrift);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
- assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
+ assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.equal(await page.locator('#anomaly-banner').isVisible(),true);
  assert.match(await page.locator('#upgrade-summary').textContent(),/1 charge/);
  // A capacitor appears in the prediction but must not be used on a bad move.
@@ -155,7 +155,7 @@ try{
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
  await page.locator('#home-rogue').click();
- assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
+ assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
 
  // No retry with preserved upgrades: failing the last turn offers a new run.
