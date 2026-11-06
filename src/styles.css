@@ -311,3 +311,20 @@ dialog{max-height:min(88dvh,720px);overflow-y:auto}
  .right-panel .equation-preview .preview-points strong{font-size:17px}
  .right-panel .equation-preview .preview-label{font-size:7px;margin-bottom:2px}
 }
+
+/* Report access remains available after the information rail is collapsed. */
+.run-report-header{display:none}
+@media(max-width:920px){
+ .run-report-header{display:inline-flex;align-items:center;justify-content:center}
+}
+@media(max-width:460px){
+ .brand{gap:6px;flex-shrink:0}
+ .brand-icon{width:28px;height:28px}
+ .brand strong{font-size:15px;letter-spacing:.015em}
+ .brand small{display:none}
+ .topbar{gap:5px}
+ .top-actions{gap:3px}
+ .top-actions .quiet-button{padding:6px 5px;font-size:8px;white-space:nowrap}
+ .top-actions #help-btn{font-size:0}
+ .top-actions #help-btn::after{content:"? HELP";font-size:8px}
+}
