@@ -52,7 +52,9 @@ export function bonusAt(r,c) {
   if ((r===0||r===12)&&c===6) return '2T';
   if ((c===0||c===12)&&r===6) return '2T';
   if ((r===5||r===7)&&(c===5||c===7)) return '2T';
-  if ((r+c)%9===0 && r>1 && r<11 && c>1 && c<11) return '2T';
+  // Fully dihedral-symmetric secondary bonuses (all eight reflections/rotations).
+  const a=Math.abs(r-CENTER),b=Math.abs(c-CENTER);
+  if ((a===2&&b===4)||(a===4&&b===2)) return '2T';
   return '';
 }
 let nextId = 0;
