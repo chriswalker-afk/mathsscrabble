@@ -4,17 +4,32 @@ import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
+import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
+ passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
-  state.saveAvailable=saveRun(storage,state);
+  if(state.mode==='local'&&state.localMatch){
+    if(state.localMatch.phase==='playing'){
+      const players=state.localMatch.players.map((p,i)=>i===state.localMatch.current?
+        {...p,rack:state.rack}:p);
+      state.localMatch={...state.localMatch,board:state.board,bag:state.bag,
+        pending:state.pending,placementOrder:state.placementOrder,players};
+    }
+    state.saveAvailable=saveLocalMatch(storage,state.localMatch);
+  }else if(state.mode==='local'){
+    state.saveAvailable=false;
+  }else{
+    state.saveAvailable=saveRun(storage,state);
+  }
   if(state.saveAvailable){try{storage?.setItem(ACTIVE_MODE_KEY,state.mode);}catch{/* storage unavailable */}}
   $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
   $('save-status').classList.toggle('unavailable',!state.saveAvailable);
@@ -24,6 +39,7 @@ function persistRun(){
 }
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 const isDrift=()=>state.mode==='rogue';
+const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector);
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
