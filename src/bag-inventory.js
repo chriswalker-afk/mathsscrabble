@@ -17,7 +17,7 @@ export function summarizeBag(bag){
  const counts=new Map();
  for(const tile of bag){
    const value=tile.blank||tile.value;
-   if(!Object.hasOwn(POINTS,value)&&!BLANK_KINDS[value])
+   if(value==='='||(!Object.hasOwn(POINTS,value)&&!BLANK_KINDS[value]))
      throw Error('Unsupported physical tile in bag.');
    counts.set(value,(counts.get(value)||0)+1);
  }
@@ -45,7 +45,7 @@ export function summarizeBag(bag){
    total:bag.length,
    pools:{numbers:bag.filter(t=>tilePool(t)==='numbers').length,
      operators:bag.filter(t=>tilePool(t)==='operators').length,
-     brackets:bag.filter(t=>tilePool(t)==='brackets').length},
+     ...(has(brackets)?{brackets:bag.filter(t=>tilePool(t)==='brackets').length}:{})},
    groups
  };
 }
