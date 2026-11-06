@@ -1,67 +1,63 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor</title>
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#0c1b2b">
+ <meta name="description" content="Choose your EQUA//NOVA maths mission: practice, Drift, local multiplayer or online rooms.">
+ <title>EQUA//NOVA | Choose your mission</title>
+ <link rel="stylesheet" href="./src/home.css">
+ <script type="module" src="./src/home.js"></script>
+</head>
 <body>
-<div class="stars" aria-hidden="true"></div>
-<div id="app">
-<header class="topbar"><div class="brand"><div class="brand-icon" aria-hidden="true"><img src="./assets/reactor-mark.svg" alt="" width="46" height="46"></div><div><strong>EQUA<span>//</span>NOVA</strong><small>THE EQUATION REACTOR</small></div></div>
-<div class="top-readout"><span class="status-dot"></span><span id="sector-label">SECTOR 01 · ORIGIN</span></div>
-<div class="top-actions"><button id="mode-btn" class="quiet-button mode-btn" type="button" title="Choose Sector Run or The Drift">◈ MODE</button><span id="save-status" class="save-status" role="status" aria-live="polite">LOCAL SAVE</span><button id="help-btn" class="quiet-button" type="button">? HOW TO PLAY</button><button id="run-report-header" class="quiet-button run-report-header" type="button" aria-label="View run summary" title="View run summary">◈ RUN</button><button id="new-btn" class="quiet-button" type="button">↻ NEW RUN</button></div></header>
-<main class="game-shell">
-<aside class="side-panel left-panel" aria-label="Sector information">
-<div class="panel-heading">MISSION TELEMETRY</div>
-<div class="pilot-emblem" aria-hidden="true"><span>✦</span><div class="pilot-orbit"></div></div>
-<div class="pilot-name">PILOT // NOVA</div>
-<div id="local-panel" class="local-panel" hidden aria-label="Local multiplayer scoreboard">
-  <div class="local-score-header"><strong>LOCAL MATCH</strong><span id="local-time-remaining" aria-live="off">NO TIMER</span></div>
-  <div id="local-scores" class="local-scores" aria-label="Player standings"></div>
-  <div id="local-game-status" class="local-game-status">Pass the device to the next player.</div>
-</div>
-<div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div class="progress-track"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
-<div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><button id="bag-details-btn" class="mini-stat bag-stat" type="button" aria-label="Show remaining tiles in the bag" title="View which tiles remain in the bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="bag-count">0</strong></button></div>
-<div id="rogue-summary" class="rogue-summary" hidden>
- <div class="rogue-head"><span>THE DRIFT · BUILD</span><strong id="flux-count">0 <small>FLUX</small></strong></div>
- <div id="upgrade-summary" class="upgrade-summary">No upgrades equipped</div>
-</div>
-<div class="panel-divider"></div><div class="panel-heading">REACTOR LOG</div><div id="log" role="status" aria-live="polite">Place your first equation through the glowing centre tile.</div>
-<div id="coach-hint" class="coach-hint" role="note"></div>
-<div id="history-mini" class="history-mini" aria-label="Recent equations"></div>
-<div class="side-footer"><button id="run-report-btn" type="button" class="run-overview" aria-label="View the overall solo run report"><span>RUN SUMMARY</span><strong id="run-summary">0 sectors · 0 energy</strong></button></div>
-</aside>
-<section class="arena" aria-label="Equation playing area">
-<div class="board-frame" id="board-frame"><div id="board" class="board" role="grid" aria-label="13 by 13 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
-<div class="rack-section"><div class="rack-heading"><span>YOUR TILE RACK <span class="rack-sub">· MOVE TILES FREELY</span></span><div class="rack-actions"><button id="undo-last-btn" class="rack-undo" type="button" title="Undo last tile (Backspace)">↶ UNDO TILE</button><span id="rack-count">7 / 7</span></div></div>
-<div class="rack-row"><div id="rack" class="rack" aria-label="Your seven tiles"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div></div>
-</section>
-<aside class="side-panel right-panel" aria-label="Game controls"><div class="panel-heading">COMMAND CONSOLE</div>
-<div id="equation-preview" class="equation-preview" aria-label="Equation placement preview"><div class="preview-led" aria-hidden="true"></div><div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="preview-equation" aria-label="Equation preview">—</strong></div><span id="preview-status" role="status" aria-live="polite">Choose a tile and a grid square.</span></div><div class="preview-points"><small>IF BALANCED</small><strong id="potential-score">—</strong></div>
-<div id="ceremony-readout" class="ceremony-readout" hidden aria-label="Tile-by-tile energy scoring">
-  <div class="ceremony-heading"><span>ENERGY TRANSFER</span><span id="ceremony-tile-count">0 / 0</span></div>
-  <div class="ceremony-values"><strong id="ceremony-count">+0</strong><span id="ceremony-step">TILE SCORING</span></div>
-  <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
-  <button id="skip-ceremony" type="button" class="ceremony-skip" aria-label="Skip scoring animation and view results">SKIP <span aria-hidden="true">»</span></button>
-</div></div>
-<div id="anomaly-banner" class="anomaly-banner" hidden role="note"><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
-<div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
-<button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
-<button id="local-pass-btn" class="secondary-command local-pass-btn" type="button" hidden>↪ PASS TURN</button>
-<button id="swap-btn" class="secondary-command" type="button">⇄ SWAP TILES</button></div>
-<div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div><div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile</span></div><div><i class="legend-square ee">2E</i><span>Double equation</span></div><div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
-<div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div><p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p><p class="rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p><div class="keys-guide">KEYS <kbd>1–8</kbd> rack <kbd>=</kbd> equals <kbd>←↑↓→</kbd> grid <kbd>⌫</kbd> undo</div></aside>
-</main><footer class="bottom-strip"><span id="footer-mode">⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
-</div>
-<div id="local-privacy" class="local-privacy" hidden role="dialog" aria-modal="true"
-  aria-labelledby="local-handover-title" aria-describedby="local-handover-description">
-  <div class="local-privacy-card">
-    <div id="local-handover-avatar" class="local-privacy-icon" aria-hidden="true">✧</div>
-    <span class="local-privacy-eyebrow">SECURE HANDOVER · HOT SEAT</span>
-    <h2 id="local-handover-title">Your turn, Pilot</h2>
-    <p id="local-handover-description">Pass the device to this player before revealing their private tiles.</p>
-    <div id="local-handover-context" class="local-handover-context">Shared board · Private rack</div>
-    <button id="local-ready-btn" type="button" class="local-ready-btn">I'M READY · REVEAL MY TILES</button>
-    <button id="local-switch-btn" type="button" class="local-privacy-switch">SWITCH GAME MODE</button>
-  </div>
-</div>
-<dialog id="modal"><div class="modal-content"><div class="modal-heading"><span id="modal-eyebrow">TRANSMISSION</span><button id="modal-close" class="modal-x" type="button" aria-label="Close">×</button></div><h2 id="modal-title"></h2><div id="modal-body"></div><div id="modal-actions" class="modal-actions"></div></div></dialog>
-</body></html>
+ <a class="skip-link" href="#missions">Skip to game modes</a>
+ <div class="stars" aria-hidden="true"></div>
+ <div class="home-shell">
+  <header class="home-header">
+   <a class="home-brand" href="./index.html" aria-label="EQUA NOVA home">
+    <span class="home-brand-mark" aria-hidden="true"><img src="./assets/reactor-mark.svg" alt="" width="52" height="52"></span>
+    <span class="home-brand-text"><strong>EQUA<span>//</span>NOVA</strong><small>THE EQUATION REACTOR</small></span>
+   </a>
+   <span class="home-header-tag"><span class="home-signal" aria-hidden="true"></span> MISSION CONTROL</span>
+  </header>
+  <main id="missions">
+   <section class="home-intro" aria-labelledby="home-title">
+    <div>
+     <p class="home-eyebrow">WELCOME TO MISSION CONTROL <span aria-hidden="true">✦</span></p>
+     <h1 id="home-title">Choose your reactor mission</h1>
+     <p class="home-description">Build equations, light up the board and gather energy. Pick a mode below to start a new adventure or resume where you left off.</p>
+    </div>
+   </section>
+   <section class="mode-grid" aria-label="Choose a game mode">
+    <a id="home-sector" class="mode-card mode-sector" href="./play.html?mode=sector">
+     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">◈</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+     <span class="mode-card-copy"><strong>SECTOR RUN</strong><span>Independent classroom practice with rising targets and retries.</span></span>
+     <span class="mode-card-footer"><span class="mode-card-status" data-save="sector">START MISSION</span><span class="mode-card-category">SOLO PRACTICE</span></span>
+    </a>
+    <a id="home-rogue" class="mode-card mode-rogue" href="./play.html?mode=rogue">
+     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">✧</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+     <span class="mode-card-copy"><strong>THE DRIFT</strong><span>Earn Flux, equip upgrades and survive reactor anomalies in a roguelike run.</span></span>
+     <span class="mode-card-footer"><span class="mode-card-status" data-save="rogue">BEGIN THE DRIFT</span><span class="mode-card-category">SOLO ADVENTURE</span></span>
+    </a>
+    <a id="home-local" class="mode-card mode-local" href="./play.html?mode=local">
+     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">♙</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+     <span class="mode-card-copy"><strong>LOCAL MATCH</strong><span>Two to four pilots, one shared board and private racks. Play together on one device.</span></span>
+     <span class="mode-card-footer"><span class="mode-card-status" data-save="local">SET UP A MATCH</span><span class="mode-card-category">PASS & PLAY</span></span>
+    </a>
+    <a id="home-online" class="mode-card mode-online" href="./online.html">
+     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">✦</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+     <span class="mode-card-copy"><strong>ONLINE ROOMS</strong><span>Compete on separate devices. Create or join a room with a six-character code.</span></span>
+     <span class="mode-card-footer"><span class="mode-card-status" data-save="online">CREATE OR JOIN</span><span class="mode-card-category">LIVE MULTIPLAYER</span></span>
+    </a>
+   </section>
+   <a class="alien-lab-card" href="./alien-lab.html">
+    <span class="alien-lab-mark" aria-hidden="true">✳</span>
+    <span class="alien-lab-copy"><strong>ALIEN LAB</strong><span>Design your own cute space creature and bring it into your matches.</span></span>
+    <span class="alien-lab-arrow" aria-hidden="true">↗</span>
+   </a>
+   <p class="home-rule-strip"><span>5 NUMBER TILES</span><span aria-hidden="true">·</span><span>3 OPERATOR TILES</span><span aria-hidden="true">·</span><span>1 FREE SINGLE-TILE SWAP PER TURN</span></p>
+  </main>
+  <footer class="home-footer"><span>MR WALKER MATHS</span><span>ONE BOARD. ENDLESS EQUATIONS.</span></footer>
+ </div>
+</body>
+</html>
