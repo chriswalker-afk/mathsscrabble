@@ -3,6 +3,7 @@
 import {SIZE,HAND_SIZE,tilePool,POINTS,BLANK_KINDS,isDigit,isOperator,makeBag,validateMove,scoreMove} from './engine.js';
 import {dealPlayableRack} from './solo.js';
 import {acceptPilotAlien,isValidPilotAlien} from './alien/profiles.js';
+import {TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize,kitRackOptions,tileValueAllowed} from './tile-sets.js';
 
 export const LOCAL_SAVE_KEY='equa-nova.local-match.v1';
 export const LOCAL_VERSION=1;
@@ -12,7 +13,8 @@ const allowedSymbols=new Set(Object.keys(POINTS));
 const validInteger=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const nameClean=name=>String(name??'').replace(/[\r\n\t]+/g,' ').replace(/\s+/g,' ').trim().slice(0,20);
 const randomSwap=(bag,rng)=>{for(let i=bag.length-1;i>0;i--){const j=Math.min(i,Math.floor(rng()*(i+1)));[bag[i],bag[j]]=[bag[j],bag[i]];}};
-export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSeconds=0}={},rng=Math.random){
+export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSeconds=0,tileSet='natural'}={},rng=Math.random){
+ if(!Object.hasOwn(TILE_SET_BY_ID,tileSet))throw Error('Choose a supported mathematical tile set.');
  if(!Array.isArray(names)||names.length<2||names.length>4)throw Error('Choose 2–4 players.');
  if(!LOCAL_TIMER_OPTIONS.includes(turnSeconds))throw Error('Choose a supported timer.');
  if(avatars!==null&&(!Array.isArray(avatars)||avatars.length!==names.length))
@@ -20,17 +22,17 @@ export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSec
  const cleaned=names.map(nameClean);
  if(cleaned.some(name=>!name))throw Error('Every player needs a name.');
  if(new Set(cleaned.map(name=>name.toLowerCase())).size!==cleaned.length)throw Error('Player names must be different.');
- let bag=makeBag(rng);
+ let bag=makeBag(rng,tileSet);
  const players=[];
  for(let i=0;i<cleaned.length;i++){
-   const deal=dealPlayableRack([],bag);
+   const deal=dealPlayableRack([],bag,kitRackOptions(tileSet),rng);
    players.push({id:'p'+(i+1),name:cleaned[i],
      avatar:acceptPilotAlien(avatars?.[i],i),
      rack:deal.rack,score:0,scoredMoves:0});
    bag=deal.bag;
  }
  return {
-  version:LOCAL_VERSION,board:Array(SIZE*SIZE).fill(null),bag,players,
+  version:LOCAL_VERSION,tileSet,board:Array(SIZE*SIZE).fill(null),bag,players,
   current:0,round:1,turnNumber:1,turnSeconds,deadline:0,phase:'handover',
   pending:{},placementOrder:[],freeExchangeUsed:false,consecutiveStalls:0,
   history:[],lastAction:null,finishedReason:null,finalScores:null
@@ -73,7 +75,7 @@ function checkPendingRack(match,pending){
    if(original.blank){
      if(original.blank!==tile.blank||!BLANK_KINDS[original.blank].choices.includes(tile.value)||tile.points!==0)
        throw Error('Choose a valid value for your wildcard.');
-   }else if(original.value!==tile.value||original.points!==tile.points)
+   }else if(original.value!==tile.value||original.points!==tile.points||original.pairId!==tile.pairId)
      throw Error('The tile must match the one on your rack.');
  }
 }
@@ -81,13 +83,13 @@ export function scoreLocalTurn(match,pending=match.pending){
  requirePlaying(match);
  checkPendingRack(match,pending);
  const move=validateMove(match.board,pending);
- const points=scoreMove(match.board,pending,move);
+ const points=scoreMove(match.board,pending,move,{rackSize:kitRackSize(match.tileSet)});
  const before=currentPlayer(match);
  const physical=new Set(Object.values(pending).filter(t=>t.value!=='=').map(t=>t.id));
  const board=[...match.board];
  for(const [index,tile] of Object.entries(pending))board[Number(index)]=tile;
  const remaining=before.rack.filter(tile=>!physical.has(tile.id));
- const deal=dealPlayableRack(remaining,match.bag);
+ const deal=dealPlayableRack(remaining,match.bag,kitRackOptions(match.tileSet));
  const updated={...before,rack:deal.rack,score:before.score+points.total,scoredMoves:before.scoredMoves+1};
  const players=match.players.map((player,i)=>i===match.current?updated:player);
  const finishedReason=deal.bag.length===0&&deal.rack.length===0?'rack-cleared':null;
@@ -114,16 +116,30 @@ export function exchangeLocalTiles(match,selectedIds,rng=Math.random){
  if(selectedIds.some(id=>!player.rack.some(tile=>tile.id===id)))throw Error('Choose tiles from your own rack.');
  if(selectedIds.length>match.bag.length)throw Error('Not enough tiles remain in the bag.');
  const free=selectedIds.length===1&&!match.freeExchangeUsed;
- for(const pool of ['numbers','operators']){
+ for(const pool of ['numbers','operators','brackets']){
    if(selectedIds.filter(id=>tilePool(player.rack.find(t=>t.id===id))===pool).length>
       match.bag.filter(t=>tilePool(t)===pool).length)
      throw Error('Not enough '+pool+' remain in that tile bag.');
  }
  const removed=new Set(selectedIds);
  const exchanged=player.rack.filter(tile=>removed.has(tile.id));
+ const bracketTiles=exchanged.filter(t=>tilePool(t)==='brackets');
+ if(bracketTiles.length){
+   // Both halves are a single linked item and can only leave together.
+   // A swap must not strand the player without a replacement bracket pair.
+   if(bracketTiles.length!==2||bracketTiles[0].pairId!==bracketTiles[1].pairId||
+      !bracketTiles.some(t=>t.value==='(')||!bracketTiles.some(t=>t.value===')'))
+     throw Error('Exchange both halves of your bracket pair together.');
+   const available=new Map();
+   for(const t of match.bag)if(t.pairId){
+     const pair=available.get(t.pairId)||new Set();pair.add(t.value);available.set(t.pairId,pair);
+   }
+   if(![...available.values()].some(faces=>faces.has('(')&&faces.has(')'))
+     throw Error('Another complete bracket pair must remain in the bag to exchange yours.');
+ }
  // Draw replacements before shuffling exchanged tiles back into the bag.
  const retained=player.rack.filter(tile=>!removed.has(tile.id));
- const draw=dealPlayableRack(retained,match.bag);
+ const draw=dealPlayableRack(retained,match.bag,kitRackOptions(match.tileSet),rng);
  const bag=[...draw.bag,...exchanged];randomSwap(bag,rng);
  const updated={...player,rack:draw.rack};
  const players=match.players.map((p,i)=>i===match.current?updated:p);
@@ -148,48 +164,67 @@ export function localStandings(match){
  return result.map((x,i)=>({...x,rank:1+result.filter(y=>y.net>x.net).length,
    winner:x.net===top}));
 }
-function validSupply(tile){
+function validSupply(tile,kit){
  if(!tile||typeof tile!=='object'||typeof tile.id!=='string'||tile.id.length>100)return false;
- if(tile.blank)return Boolean(BLANK_KINDS[tile.blank])&&tile.value===null&&tile.points===0;
- return tile.value!=='='&&allowedSymbols.has(tile.value)&&tile.points===POINTS[tile.value];
+ if(tile.blank)return !tile.pairId&&Boolean(BLANK_KINDS[tile.blank])&&tile.value===null&&tile.points===0;
+ if(!allowedSymbols.has(tile.value)||!tileValueAllowed(kit,tile.value)||
+    tile.value==='='||tile.points!==POINTS[tile.value])return false;
+ return ['(',')'].includes(tile.value)?
+   hasBracketPair(kit)&&typeof tile.pairId==='string'&&/^paren-[0-7]$/.test(tile.pairId):
+   tile.pairId===undefined;
 }
-function validPlayed(tile){
+function validPlayed(tile,kit){
  if(!tile||typeof tile!=='object'||typeof tile.id!=='string'||tile.id.length>100)return false;
- if(tile.blank)return Boolean(BLANK_KINDS[tile.blank])&&tile.points===0&&
+ if(tile.blank)return !tile.pairId&&Boolean(BLANK_KINDS[tile.blank])&&tile.points===0&&
    BLANK_KINDS[tile.blank].choices.includes(tile.value);
- return allowedSymbols.has(tile.value)&&tile.points===POINTS[tile.value];
+ if(tile.value==='=')return tile.points===0&&!tile.pairId;
+ return validSupply(tile,kit);
 }
 function validPending(match){
  const entries=Object.entries(match.pending);
- if(entries.length>HAND_SIZE+3)return false;
+ if(entries.length>kitRackSize(match.tileSet)+3)return false;
  if(!entries.every(([k,t])=>/^(0|[1-9]\d*)$/.test(k)&&Number(k)<SIZE*SIZE&&
-   match.board[Number(k)]===null&&validPlayed(t)))return false;
+   match.board[Number(k)]===null&&validPlayed(t,match.tileSet)))return false;
  const used=entries.map(([,tile])=>tile).filter(tile=>tile.value!=='=');
  if(new Set(used.map(tile=>tile.id)).size!==used.length)return false;
  const rack=currentPlayer(match).rack;
  if(!used.every(t=>{
    const r=rack.find(item=>item.id===t.id);
-   return r&&(r.blank?(r.blank===t.blank&&BLANK_KINDS[r.blank].choices.includes(t.value)):r.value===t.value);
+   return r&&(r.blank?(r.blank===t.blank&&BLANK_KINDS[r.blank].choices.includes(t.value)):r.value===t.value&&r.points===t.points&&r.pairId===t.pairId);
  }))return false;
- return Array.isArray(match.placementOrder)&&match.placementOrder.length<=HAND_SIZE+3&&
+ return Array.isArray(match.placementOrder)&&match.placementOrder.length<=kitRackSize(match.tileSet)+3&&
    match.placementOrder.every(i=>validInteger(i,0,SIZE*SIZE-1)&&Object.hasOwn(match.pending,String(i)))&&
    new Set(match.placementOrder).size===match.placementOrder.length;
 }
 export function validLocalMatch(match){
  if(!match||typeof match!=='object'||match.version!==LOCAL_VERSION)return false;
+ const kit=normalizeTileSet(match.tileSet);
+ if(match.tileSet!==undefined&&match.tileSet!==kit)return false;
  if(!Array.isArray(match.board)||match.board.length!==SIZE*SIZE||
-    !match.board.every(tile=>tile===null||validPlayed(tile)))return false;
+    !match.board.every(tile=>tile===null||validPlayed(tile,kit)))return false;
  if(!Array.isArray(match.players)||match.players.length<2||match.players.length>4)return false;
  if(!match.players.every((p,i)=>p&&p.id==='p'+(i+1)&&
     (p.avatar===undefined||isValidPilotAlien(p.avatar))&&
     typeof p.name==='string'&&p.name.length>=1&&p.name.length<=20&&
     validInteger(p.score,0,100000000)&&validInteger(p.scoredMoves,0,1000)&&
-    Array.isArray(p.rack)&&p.rack.length<=HAND_SIZE&&p.rack.every(validSupply)))return false;
+    Array.isArray(p.rack)&&p.rack.length<=kitRackSize(kit)&&p.rack.every(tile=>validSupply(tile,kit))))return false;
  if(new Set(match.players.map(p=>p.name.toLowerCase())).size!==match.players.length)return false;
- if(!Array.isArray(match.bag)||match.bag.length>151||!match.bag.every(validSupply))return false;
+ if(!Array.isArray(match.bag)||match.bag.length>151||!match.bag.every(tile=>validSupply(tile,kit)))return false;
  const allPhysical=[...match.board.filter(t=>t&&t.value!=='='),...match.bag,
    ...match.players.flatMap(p=>p.rack)];
  if(allPhysical.length!==151||new Set(allPhysical.map(t=>t.id)).size!==151)return false;
+ // Reject corrupted saves that split a bracket pair across the bag, board,
+ // or separate players' private racks.
+ const scopes=[match.bag,match.board.filter(t=>t&&t.value!=='='),...match.players.map(p=>p.rack)];
+ const pairs=new Map();
+ for(const [scope,tiles] of scopes.entries())for(const t of tiles)if(t.pairId){
+   const members=pairs.get(t.pairId)||[];members.push({scope,value:t.value});pairs.set(t.pairId,members);
+ }
+ if(hasBracketPair(kit)){
+   if(pairs.size!==8||[...pairs.values()].some(group=>group.length!==2||
+       group[0].scope!==group[1].scope||
+       !group.some(t=>t.value==='(')||!group.some(t=>t.value===')')))return false;
+ }else if(pairs.size)return false;
  if(!validInteger(match.current,0,match.players.length-1)||
     !validInteger(match.round,1,10000)||!validInteger(match.turnNumber,1,100000)||
     !LOCAL_TIMER_OPTIONS.includes(match.turnSeconds)||!validInteger(match.deadline,0,4102444800000)||
