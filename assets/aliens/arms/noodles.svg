@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="arms" data-part-id="noodles" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Noodle arms - Alien Lab</title><desc>Curvy arms raised in a cheerful wave.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M124 192 Q92 184 76 166 Q61 148 66 133 Q70 121 81 127" fill="none" stroke="#26344e" stroke-width="22" stroke-linecap="round"/>
+<path d="M196 192 Q228 184 244 166 Q259 148 254 133 Q250 121 239 127" fill="none" stroke="#26344e" stroke-width="22" stroke-linecap="round"/>
+<path d="M124 192 Q92 184 76 166 Q61 148 66 133 Q70 121 81 127" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="15" stroke-linecap="round"/>
+<path d="M196 192 Q228 184 244 166 Q259 148 254 133 Q250 121 239 127" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="15" stroke-linecap="round"/>
+<circle cx="81" cy="127" r="11" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.6"/>
+<circle cx="239" cy="127" r="11" fill="#c0f9df" data-color-slot="light" stroke="#26344e" stroke-width="3.6"/>
+</g></svg>

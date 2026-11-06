@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="bodies" data-part-id="suit" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Space pod body - Alien Lab</title><desc>A little astronaut pod with a control belt and badge.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M137 149 Q160 143 184 149 L203 162 Q222 189 218 238 Q216 278 160 285 Q105 278 103 238 Q99 188 119 164Z" fill="#af95ea" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="160" cy="212" rx="43" ry="50" fill="#f7efff" data-color-slot="belly" opacity=".92"/>
+<path d="M124 236 Q160 246 196 236 L205 258 Q159 278 115 257Z" fill="#7967ba" data-color-slot="dark" stroke="#26344e" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="147" y="244" width="26" height="13" rx="6" fill="#ffdc9b" data-color-slot="accent" stroke="#26344e" stroke-width="3"/>
+<circle cx="131" cy="249" r="3.8" fill="#9ef2ce"/>
+<circle cx="188" cy="249" r="3.8" fill="#c6e7ff"/>
+<path d="M133 154 Q158 144 188 154 L194 170 Q161 177 127 169Z" fill="#dfd0ff" data-color-slot="light" stroke="#26344e" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M134 177 Q146 169 155 172" fill="none" stroke="#fffdf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+</g></svg>

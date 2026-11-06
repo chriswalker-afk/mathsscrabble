@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="mouths" data-part-id="toothy" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Toothy grin - Alien Lab</title><desc>A goofy grin with two harmless tiny teeth.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M139 135 Q160 141 181 135 Q178 155 160 157 Q142 155 139 135Z" fill="#793b69" stroke="#26344e" stroke-width="3.2" stroke-linejoin="round"/>
+<path d="M145 137 L152 138 L150 144 L146 143Z M169 138 L176 137 L173 143 L169 144Z" fill="white"/>
+<ellipse cx="160" cy="153" rx="8" ry="3.5" fill="#f4a6c0"/>
+</g></svg>

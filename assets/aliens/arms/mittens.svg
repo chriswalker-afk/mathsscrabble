@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="arms" data-part-id="mittens" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Mittens arms - Alien Lab</title><desc>Little outstretched arms with rounded mitten paws.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M125 187 Q103 184 90 199 Q75 210 68 211 Q58 199 50 207 Q43 216 55 226 Q45 239 57 246 Q65 252 72 243 Q87 250 94 241 Q112 226 131 218Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M195 187 Q217 184 230 199 Q245 210 252 211 Q262 199 270 207 Q277 216 265 226 Q275 239 263 246 Q255 252 248 243 Q233 250 226 241 Q208 226 189 218Z" fill="#77d9b7" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="68" cy="229" rx="11" ry="5" fill="#c0f9df" data-color-slot="light" transform="rotate(-22 68 229)" opacity=".65"/>
+<ellipse cx="252" cy="229" rx="11" ry="5" fill="#c0f9df" data-color-slot="light" transform="rotate(22 252 229)" opacity=".65"/>
+</g></svg>

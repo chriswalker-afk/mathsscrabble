@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="bodies" data-part-id="bean" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Bean body - Alien Lab</title><desc>Compact round bean torso with a contrasting belly patch.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M132 150 Q160 140 188 150 C215 165 219 198 216 228 Q216 281 166 289 Q114 291 106 240 C100 206 110 169 132 150Z" fill="#af95ea" data-color-slot="primary" stroke="#26344e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+<ellipse cx="159" cy="225" rx="43" ry="47" fill="#f7efff" data-color-slot="belly" />
+<ellipse cx="132" cy="177" rx="12" ry="19" fill="#dfd0ff" data-color-slot="light" transform="rotate(-28 132 177)" opacity=".7"/>
+<circle cx="189" cy="193" r="5.5" fill="#ffdc9b" data-color-slot="accent" opacity=".8"/>
+<path d="M137 270 Q160 281 183 271" fill="none" stroke="#7967ba" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+</g></svg>

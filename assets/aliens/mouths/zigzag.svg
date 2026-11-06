@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="mouths" data-part-id="zigzag" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Wiggly grin - Alien Lab</title><desc>A tiny wiggly sideways smile.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M140 139 L150 146 L159 139 L168 146 L179 138" fill="none" stroke="#26344e" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="138.5" cy="138.5" r="2" fill="#26344e"/>
+<circle cx="181" cy="137.5" r="2" fill="#26344e"/>
+</g></svg>
