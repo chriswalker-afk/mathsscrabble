@@ -279,6 +279,15 @@ function boardCell(i){
    const label=document.createElement('span');label.className='bonus-label';
    label.textContent=bonus==='START'?'✳':bonus;node.append(label);
  }
+ if(isDrift()&&locked&&tile.value!=='='&&state.rogue.upgrades.includes('bonus-echo')&&
+    ['2T','3T','2E','3E'].includes(rawBonus)){
+   const spent=(state.rogue.echoed||[]).includes(i);
+   node.classList.add(spent?'second-spark-spent':'second-spark-ready');
+   const note=spent?'Second Spark already used here this sector.':
+     'Second Spark ready: this premium can reactivate once when crossed.';
+   node.title=(node.title?node.title+' · ':'')+note;
+   node.setAttribute('aria-label',node.getAttribute('aria-label')+'. '+note);
+ }
  node.addEventListener('click',event=>{if(!wasDragClick(event))placeAt(i);});
  node.addEventListener('keydown',event=>{
    if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)){
