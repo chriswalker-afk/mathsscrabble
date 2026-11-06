@@ -56,7 +56,7 @@ test('score calculation respects premium squares, length and full hand',()=>{
  assert.equal(bonusAt(0,0),'3E');
 });
 test('bag refilling, turn targets and rack clear bookkeeping',()=>{
- const bag=makeBag(()=>0.5);assert.ok(bag.length>100);const draw=refill([],bag);assert.equal(draw.rack.length,7);
+ const bag=makeBag(()=>0.5);assert.ok(bag.length>100);const draw=refill([],bag);assert.equal(draw.rack.length,8);
  assert.equal(draw.rack.length+draw.bag.length,bag.length);assert.ok(nextTarget(3)>nextTarget(2));
 });
 
@@ -124,14 +124,18 @@ test('blank number, operator and any accept only their allowed symbols',()=>{
  assert.equal(move.text,'2+4=6');
  assert.equal(scoreMove(board,pending,move).base,7); // 2 + operator 2 + blank 0 + digit 6 worth 3
 });
-test('free swaps apply to racks entirely made of numbers or operations',()=>{
- assert.equal(freeExchangeReason(make(['1','2','4'])), 'numbers');
- assert.equal(freeExchangeReason(make(['+','−','×'])), 'operators');
- assert.equal(freeExchangeReason([makeTile('1'),makeTile(BLANK_NUMBER)]), 'numbers');
- assert.equal(freeExchangeReason([makeTile('+'),makeTile(BLANK_OPERATOR)]), 'operators');
- assert.equal(freeExchangeReason([makeTile('1'),makeTile('+')]), null);
- assert.equal(freeExchangeReason([makeTile('1'),makeTile(BLANK_ANY)]), null);
- assert.equal(freeExchangeReason([]), null);
+test('any non-empty rack is eligible for a once-per-turn free single-tile swap',()=>{
+ for(const values of [['1','2','4'],['+','−','×'],['1','+'],['1',BLANK_ANY]])
+   assert.equal(freeExchangeReason(make(values)),'one tile each turn');
+ assert.equal(freeExchangeReason([]),null);
+});
+test('the board has full reflection and rotation symmetry for every premium',()=>{
+ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+   const value=bonusAt(r,c);
+   for(const [y,x] of [[SIZE-1-r,c],[r,SIZE-1-c],[c,r],[SIZE-1-r,SIZE-1-c],
+     [SIZE-1-c,SIZE-1-r],[c,SIZE-1-r],[SIZE-1-c,r]])
+      assert.equal(bonusAt(y,x),value,'symmetry mismatch '+r+','+c+' -> '+y+','+x);
+ }
 });
 test('drag reorder moves tiles among visible rack slots and back from board',()=>{
  const rack=make(['1','2','3','4','5']);
