@@ -38,3 +38,12 @@ export function tileValueAllowed(id,value){
      (set==='advanced'&&ADVANCED_SYMBOLS.includes(value));
  return false;
 }
+
+/** Make every chosen kit visibly distinctive from its first rack. */
+export function kitRackOptions(id){
+ const kit=normalizeTileSet(id);
+ return {bracketPairs:hasBracketPair(kit)?1:0,
+   minNegativeNumbers:kit==='integer'?2:0,
+   minFractionNumbers:hasBracketPair(kit)?2:0,
+   minAdvancedOperators:kit==='advanced'?1:0};
+}
