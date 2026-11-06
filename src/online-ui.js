@@ -151,6 +151,7 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
    }
  }
  state.view=view;state.code=view.code;state.lastRevision=view.revision;
+ if(view.you?.avatar)state.alienDraft=safePilotAlien(view.you.avatar,view.you.index);
  if(!state.ceremony)render();
  if(view.phase==='finished'&&!state.shownResults&&!state.ceremony&&!state.busy){
    state.shownResults=true;queueMicrotask(showResults);
@@ -230,6 +231,9 @@ async function refreshRoom(){
  }finally{state.refreshing=false;}
 }
 function showEntry(){
+ if($('online-pilot-picker').parentElement!==$('online-avatar-entry-slot'))
+  $('online-avatar-entry-slot').append($('online-pilot-picker'));
+ renderPilotPicker();
  $('online-gate').hidden=false;
  $('online-entry').hidden=false;
  $('online-lobby').hidden=true;
@@ -239,6 +243,9 @@ function showEntry(){
 }
 function showLobby(){
  if(!state.view)return;
+ if($('online-pilot-picker').parentElement!==$('online-avatar-lobby-slot'))
+  $('online-avatar-lobby-slot').append($('online-pilot-picker'));
+ renderPilotPicker();
  const v=state.view;
  $('online-gate').hidden=false;
  $('online-entry').hidden=true;
@@ -250,7 +257,8 @@ function showLobby(){
  const players=$('online-lobby-players');
  players.replaceChildren(...v.people.map((p,i)=>{
    const node=document.createElement('div');node.className='online-lobby-player';
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=i+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,p.avatar,i,{size:52,framing:'bust'});
    const name=document.createElement('strong');name.textContent=p.name;
    const badge=document.createElement('small');badge.textContent=p.host?'HOST':'PILOT';
    node.append(avatar,name,badge);return node;
@@ -275,7 +283,8 @@ function renderStandings(){
    row.className='local-score-row'+(p.index===match.current&&v.phase==='playing'?' is-active':'')+
      (p.displayScore===top&&p.displayScore>0?' is-leader':'');
    row.dataset.playerIndex=String(p.index);
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=p.index+1;
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';
+   paintPilotAvatar(avatar,p.avatar,p.index,{size:38,framing:'portrait'});
    const name=document.createElement('span');name.className='local-score-name';name.textContent=p.name+
      (p.index===v.you.index?' · YOU':'');
    const score=document.createElement('span');score.className='local-score-points';
