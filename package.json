@@ -1,0 +1,11 @@
+{
+  "name": "equa-nova-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "npm test"
+  },
+  "description": "Maths Scrabble equation reactor prototype"
+}
