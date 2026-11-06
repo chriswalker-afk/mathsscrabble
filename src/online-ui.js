@@ -3,6 +3,9 @@ import {SIZE,CENTER,coords,pos,bonusAt,inspectPlacement,scoreMove,
   BLANK_KINDS,isBlank,reorderRack,freeExchangeReason} from './engine.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
+  nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
+import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 
 const $=id=>document.getElementById(id);
 const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
@@ -14,6 +17,59 @@ const state={
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
+state.alienDraft=alienFromStorage(storage,0);
+function renderPilotPicker(){
+ const alien=state.alienDraft;
+ paintPilotAvatar($('online-own-alien'),alien,me()?.index??0,{size:68,framing:'bust'});
+ const lobby=state.view?.phase==='lobby';
+ $('online-alien-subtitle').textContent=lobby?
+  (pilotProfileEqual(alien,state.view.you.avatar)?
+   'Your alien is visible to everyone in this room.':'Choose an alien to update your seat.') :
+   'Your alien joins the room with you. You can edit it first.';
+ for(const button of $('online-alien-presets').querySelectorAll('button[data-preset]')){
+  const id=button.dataset.preset;
+  button.setAttribute('aria-pressed',String(pilotProfileEqual(alien,
+   defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(id)))));
+  button.disabled=state.busy;
+ }
+ for(const id of ['online-alien-random','online-alien-saved'])$(id).disabled=state.busy;
+}
+async function selectOnlineAlien(profile){
+ if(state.busy)return;
+ state.alienDraft=safePilotAlien(profile,me()?.index??0);
+ renderPilotPicker();
+ if(state.view?.phase==='lobby'){
+  const result=await mutate('profile',{avatar:state.alienDraft});
+  if(!result){
+   state.alienDraft=safePilotAlien(state.view.you.avatar,me()?.index??0);
+   $('online-alien-note').textContent='Room update failed. Your previous alien is still selected.';
+  }else $('online-alien-note').textContent='Your alien is now visible to the other pilots!';
+  renderPilotPicker();
+ }else $('online-alien-note').textContent='Alien chosen! You can now create or join a room.';
+}
+function initOnlineAlienPicker(){
+ const region=$('online-alien-presets');
+ for(const [i,id] of PILOT_PRESET_NAMES.entries()){
+  const button=document.createElement('button');button.type='button';
+  button.dataset.preset=id;button.setAttribute('aria-label','Choose '+id+' alien');
+  const portrait=document.createElement('span');
+  paintPilotAvatar(portrait,defaultPilotAlien(i),i,{size:35,framing:'portrait'});
+  const title=document.createElement('span');title.textContent=id[0].toUpperCase()+id.slice(1);
+  button.append(portrait,title);
+  button.onclick=()=>void selectOnlineAlien(defaultPilotAlien(i));
+  region.append(button);
+ }
+ $('online-alien-random').onclick=()=>void selectOnlineAlien(nextRandomPilotAlien(state.alienDraft));
+ $('online-alien-saved').onclick=()=>{
+  const saved=getSavedPilotAlien(storage);
+  if(!saved){
+   $('online-alien-note').textContent='No saved alien yet. Save one in Alien Lab then use this button.';
+   return;
+  }
+  void selectOnlineAlien(saved);
+ };
+ renderPilotPicker();
+}
 const safeText=value=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const codes=/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
