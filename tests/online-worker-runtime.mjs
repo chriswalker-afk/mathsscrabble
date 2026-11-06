@@ -20,7 +20,7 @@ const mutation=(room,type,extra={})=>({
 });
 function assertPrivate(state,ownIndex){
  const match=state.room.match;
- assert.equal(match.rack.length,7);
+ assert.equal(match.rack.length,8);
  assert.equal(state.room.you.index,ownIndex);
  assert.ok(match.players.every(p=>p.rack===undefined));
  assert.equal(match.board.length,169);
@@ -81,7 +81,7 @@ assert.equal(guestState.status,200,JSON.stringify(guestState));
 const guestMatch=assertPrivate(guestState,1);
 for(const tile of hostMatch.rack)
  assert.ok(!guestMatch.rack.some(x=>x.id===tile.id),'private rack duplication');
-assert.equal(hostMatch.bagCount,137);
+assert.equal(hostMatch.bagCount,135);
 assert.equal(hostMatch.players.length,2);
 const premature=await api(base+'/action',{method:'POST',token:joined.token,
   body:mutation(guestState.room,'pass')});
