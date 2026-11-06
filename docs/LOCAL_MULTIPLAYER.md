@@ -1,10 +1,10 @@
 # Pass E1 — Local multiplayer rulebook and quality checklist
 
-This pass implements **one-device, 2–4 player hot-seat competition**. It does **not** yet implement online room codes or WebSocket matchmaking. Competitive rules deliberately do not include The Drift upgrades.
+This pass implements **one-device, 2–4 player hot-seat competition**. This mode runs entirely in the browser; Online Rooms provides separate Cloudflare-hosted multiplayer. Competitive rules deliberately do not include The Drift upgrades.
 
 ## Setting up
 
-Choose **◈ MODE → LOCAL 2–4**, then configure 2–4 distinct player names and a turn timer: Off, 60, 90 or 120 seconds. Starting the match deals seven physical tiles to each player from one shuffled 151-tile bag. They all play on the same 13×13 board with the same premium squares and rigorous BIDMAS equation validator.
+Choose **◈ MODE → LOCAL 2–4**, then configure 2–4 distinct player names and a turn timer: Off, 60, 90 or 120 seconds. Starting the match deals eight physical tiles to each player: five number-kind and three operator-kind tiles, drawn from separate finite pools of the original 151-tile supply. They all play on the same 13×13 board with the same premium squares and rigorous BIDMAS equation validator.
 
 All three modes have **different random initial hands and a different draw order** each fresh game. Local Match, Sector Run and The Drift each remember only their own last starting pattern so back-to-back new games do not produce the same visible opening sequence. There is **no forced tutorial equation**, and neither the rack balancing nor the randomisation creates or duplicates a physical tile.
 
@@ -28,9 +28,9 @@ These are practical privacy controls for passing one shared device. Because ther
 
 - **Score** one mathematically true, connected equation each turn. The first equation must cross the centre; later equations must connect to a previously locked tile. The existing exact BIDMAS parser is unchanged. `3=3` and other identity-only statements are invalid.
 - The player receives the complete tile, multiplier, length, connection and full-rack bonuses **on their own score**. The satisfying per-tile energy animation works here too, including SKIP and reduced motion. Scoring is committed atomically to the match before the animation begins.
-- New tiles are drawn from the single shared bag, bringing the player's hand up to seven when possible. Balancing chooses valid tiles from the shuffled bag, without revealing upcoming order.
+- New tiles are drawn from separate number and operator supply pools, restoring five number-kind and three operator-kind tiles when supplies permit. No physical tiles are created, and the next draw order remains hidden.
 - **Pass** voluntarily if the player cannot form an equation. No points are earned.
-- **Swap** one or more rack tiles with the shared bag. A mixed rack's swap uses the turn. A rack with only numbers or only operators may use **one free rescue exchange per turn**, after which any further exchange costs the turn.
+- **Swap** one or more rack tiles with the shared bag. Swapping **exactly one tile is free once per turn**, irrespective of the rack composition. Swapping several tiles or swapping again uses the turn. Each replacement comes from its original supply pool.
 - Pending placements must be cleared before passing or swapping. There are no Drift shop upgrades or boss effects in competitive play.
 
 ## End of match and final scoring
@@ -60,12 +60,12 @@ Wildcards have zero physical tile points even when programmed to represent a mor
 
 ## Classroom and automated checks
 
-1. Start games with 2, 3 and 4 players. Check distinct racks of seven, 151 total physical tiles and genuinely different opening patterns on successive new games.
+1. Start games with 2, 3 and 4 players. Check distinct racks of eight, 151 total physical tiles and genuinely different opening patterns on successive new games.
 2. Verify the **handover** fully obscures the previous player's rack, cannot be bypassed via Tab, and does not start the timer until Ready.
 3. Score an opening equation, confirm the points credit only the active player, and check that a second player can connect an equation to a locked tile.
 4. Test a wrong BIDMAS equation. The player must be able to revise without consuming their turn or points.
 5. Test drag-to-rack, rack rearranging, keyboard placements, unlimited equals and programmable wildcards in local play.
-6. Test free all-number/all-operator exchanges, then a paid exchange, confirming the bag stays finite and other players' racks never change.
+6. Test one free single-tile exchange, then a paid second or multi-tile exchange, confirming the bag stays finite and other players' racks never change.
 7. Refresh during an unfinished turn and during the scoring animation; ensure the current player sees a new handover and completed scoring cannot be awarded twice.
 8. Try timers Off, 60, 90 and 120 seconds. Allow a timer to expire and check that unscored tiles return and a pass is recorded.
 9. Complete a match by two full non-scoring rotations. Check the leftover-point penalties and final rankings, including ties.
