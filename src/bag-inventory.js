@@ -1,5 +1,5 @@
 // Public inventory of remaining physical bag tiles, never the draw order.
-import {BLANK_KINDS,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,isDigit,isOperator} from './engine.js';
+import {BLANK_KINDS,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,tilePool,isDigit,isOperator} from './engine.js';
 
 const digitSymbols=Array.from({length:10},(_,i)=>String(i));
 const operationSymbols=['+','−','×','÷'];
@@ -23,6 +23,8 @@ export function summarizeBag(bag){
  });
  return {
    total:bag.length,
+   pools:{numbers:bag.filter(t=>tilePool(t)==='numbers').length,
+          operators:bag.filter(t=>tilePool(t)==='operators').length},
    groups:[
      group('numbers','NUMBER TILES · 0–9',digitSymbols),
      group('operators','OPERATION TILES',operationSymbols),
