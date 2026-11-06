@@ -33,6 +33,9 @@ export function buildScoringCeremony(points){
  const penalty=points.anomalyPenalty||0;
  if(!Number.isSafeInteger(penalty)||penalty<0)throw Error('Invalid anomaly deduction.');
  if(penalty)stages.push({kind:'penalty',id:'anomaly',amount:-penalty,label:'REACTOR ANOMALY'});
+ const temporaryBoost=points.temporaryBoost||0;
+ if(!Number.isSafeInteger(temporaryBoost)||temporaryBoost<0)throw Error('Invalid temporary boost.');
+ if(temporaryBoost)stages.push({kind:'bonus',id:'temporary',amount:temporaryBoost,label:'TEMPORARY POWER-UP'});
  const subtotal=stages.reduce((sum,stage)=>sum+stage.amount,0);
  if(subtotal!==points.total){
    throw Error('Score animation must exactly match the verified game score.');
