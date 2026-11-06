@@ -68,9 +68,11 @@ try{
  const geometry=[];
  for(const [width,height] of [[1366,768],[1280,720],[1024,768],[768,1024],[390,844],[320,700]]){
   await page.setViewportSize({width,height});
+  await page.evaluate(()=>window.scrollTo(0,0));
   await page.waitForTimeout(100);
   const size=await page.evaluate(()=>({
    width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,
+   pageHeight:document.documentElement.scrollHeight,
    preview:document.querySelector('.specimen-panel').getBoundingClientRect().toJSON(),
    workshop:document.querySelector('.workshop-panel').getBoundingClientRect().toJSON(),
    save:document.querySelector('#alien-save').getBoundingClientRect().toJSON(),
@@ -88,6 +90,8 @@ try{
    'panels must fit '+JSON.stringify(size));
   assert.ok(size.nav.width>=60&&size.nav.height>=30,'tiny next action '+JSON.stringify(size));
   if(width>=768){
+   assert.ok(size.pageHeight<=height+6,
+    'desktop creator must fit in one viewport: '+JSON.stringify(size));
    assert.ok(size.workshop.bottom<=height+5,
     'desktop workshop should not need a page scroll: '+JSON.stringify(size));
    assert.ok(size.save.bottom<=height+5,
