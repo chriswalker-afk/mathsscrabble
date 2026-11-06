@@ -118,7 +118,7 @@ test('relic collector requires one highlighted tile until it is scored, not on e
  assert.doesNotThrow(()=>validateBossMove(board,without,move,rogue,3));
 });
 test('Circuit Serpent rejects equations longer than eight spaces',()=>{
- const {board,pending,move}=equation(['1','2','+','3','+','4','=','1','9'],6,2);
+ const {board,pending,move}=equation(['1','2','+','3','+','4','=','1','9'],CENTER,CENTER-4);
  assert.equal(move.indices.length,9);
  assert.throws(()=>validateBossMove(board,pending,move,withBoss('short-circuit'),3),/eight squares/i);
  assert.doesNotThrow(()=>validateBossMove(board,pending,move,withBoss('short-circuit'),2));
