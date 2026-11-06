@@ -3,6 +3,7 @@
 import {SIZE,POINTS,BLANK_KINDS,makeTile,randomFloat} from './engine.js';
 import {summarizeBag} from './bag-inventory.js';
 import {acceptPilotAlien,isValidPilotAlien,safePilotAlien} from './alien/profiles.js';
+import {TILE_SET_BY_ID,normalizeTileSet,kitRackSize} from './tile-sets.js';
 import {makeLocalMatch,readyLocalTurn,scoreLocalTurn,passLocalTurn,
   exchangeLocalTiles,localStandings,isLocalTimerExpired} from './multiplayer.js';
 
@@ -69,15 +70,16 @@ function validateMutation(room,index,request){
 function addReceipt(room,index,request,result){
  return {...room,receipts:last([...room.receipts,{who:index,id:request.id,result}],ROOM_MAX_ACTIONS)};
 }
-export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlayers=4,turnSeconds=90,now=Date.now()}){
+export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlayers=4,turnSeconds=90,tileSet='natural',now=Date.now()}){
  const cleanCode=cleanRoomCode(code),name=cleanPilotName(hostName);
  requireHash(hostHash);
  if(!cleanCode)throw new OnlineError('Invalid room code.');
+ if(!Object.hasOwn(TILE_SET_BY_ID,tileSet))throw new OnlineError('Choose a supported mathematical tile set.');
  if(!number(maxPlayers,2,4)||!ROOM_TIMERS.includes(turnSeconds))
   throw new OnlineError('Choose 2–4 players and a supported turn timer.');
  return {
   version:ONLINE_VERSION,code:cleanCode,revision:1,phase:'lobby',
-  maxPlayers,turnSeconds,createdAt:now,updatedAt:now,
+  maxPlayers,turnSeconds,tileSet,createdAt:now,updatedAt:now,
   expiresAt:now+LOBBY_LIFETIME,
   people:[{id:'p1',name,tokenHash:hostHash,avatar:cleanPilotAvatar(hostAvatar,0)}],
   match:null,receipts:[]
@@ -136,7 +138,7 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  if(room.people.length<2)throw new OnlineError('At least two pilots must join before starting.');
  let match=makeLocalMatch({names:room.people.map(p=>p.name),
    avatars:room.people.map((p,i)=>safePilotAlien(p.avatar,i)),
-   turnSeconds:room.turnSeconds},rng);
+   turnSeconds:room.turnSeconds,tileSet:normalizeTileSet(room.tileSet)},rng);
  match=readyLocalTurn(match,now);
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
@@ -144,7 +146,7 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  return {room:updated,result};
 }
 function receivedPlacement(match,placements){
- if(!Array.isArray(placements)||placements.length<3||placements.length>12)
+ if(!Array.isArray(placements)||placements.length<3||placements.length>Math.min(SIZE,kitRackSize(match.tileSet)+3))
   throw new OnlineError('Place one complete equation using your own tiles.');
  const pending={},ids=new Set(),rack=match.players[match.current].rack;
  for(const raw of placements){
@@ -195,9 +197,9 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
    match=passLocalTurn(room.match);
    result={type:'passed',by:index};
  }else if(request.type==='exchange'){
-   if(!Array.isArray(request.ids)||request.ids.length<1||request.ids.length>8||
+   if(!Array.isArray(request.ids)||request.ids.length<1||request.ids.length>kitRackSize(room.match.tileSet)||
      request.ids.some(id=>typeof id!=='string'))
-     throw new OnlineError('Choose up to eight tiles in your rack to exchange.');
+     throw new OnlineError('Choose tiles from your own rack to exchange.');
    try{
      const changed=exchangeLocalTiles(room.match,request.ids,rng);
      match=changed.match;result={type:changed.free?'free-exchange':'exchange',by:index};
@@ -227,7 +229,7 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
  const player=room.people[index];
  const base={
   code:room.code,revision:room.revision,phase:room.phase,
-  maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,
+  maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,tileSet:normalizeTileSet(room.tileSet),
   people:room.people.map((p,i)=>({index:i,id:p.id,name:p.name,host:i===0,
      avatar:safePilotAlien(p.avatar,i)})),
   you:{index,id:player.id,name:player.name,host:index===0,
@@ -264,6 +266,7 @@ export function verifyOnlineRoom(room){
  if(!room||room.version!==ONLINE_VERSION||!cleanRoomCode(room.code)||
     !number(room.revision,1,1000000)||!['lobby','playing','finished','closed'].includes(room.phase)||
     !number(room.maxPlayers,2,4)||!ROOM_TIMERS.includes(room.turnSeconds)||
+     (room.tileSet!==undefined&&!Object.hasOwn(TILE_SET_BY_ID,room.tileSet))||
     !Array.isArray(room.people)||room.people.length>room.maxPlayers||
     !room.people.every((p,i)=>p.id==='p'+(i+1)&&
       typeof p.name==='string'&&p.name.length>=1&&p.name.length<=20&&
@@ -273,7 +276,8 @@ export function verifyOnlineRoom(room){
     !number(room.createdAt,1,4102444800000)||!number(room.expiresAt,1,4102444800000))return false;
  if(room.phase==='lobby'&&room.match!==null)return false;
  if(['playing','finished'].includes(room.phase)&&
-   (!room.match||room.match.players.length!==room.people.length||
+   (!room.match||normalizeTileSet(room.match.tileSet)!==normalizeTileSet(room.tileSet)||
+      room.match.players.length!==room.people.length||
      room.match.players.some((p,i)=>p.name!==room.people[i].name)))return false;
  if(!Array.isArray(room.receipts)||room.receipts.length>ROOM_MAX_ACTIONS)return false;
  return true;
