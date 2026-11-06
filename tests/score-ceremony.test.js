@@ -60,7 +60,7 @@ test('Drift equipment and anomaly stages always sum to the authoritative score',
      assert.equal(total(stages),pts.total,'sector '+sector+' equipment '+equipped.join(','));
      assert.equal(stages.filter(x=>x.kind==='tile').length,move.indices.length);
      assert.equal(stages.find(x=>x.kind==='bonus'&&x.id==='upgrade')?.amount,pts.extra);
-     assert.equal(stages.find(x=>x.kind==='penalty')?.amount??0,-pts.anomalyPenalty);
+     assert.equal(stages.find(x=>x.kind==='penalty')?.amount??0,pts.anomalyPenalty?-pts.anomalyPenalty:0);
    }
  }
 });
