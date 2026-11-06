@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SIZE,CENTER,pos,makeTile,makeBag,checkEquation,validateMove,scoreMove,tilePool} from '../src/engine.js';
-import {TILE_SETS,FRACTION_VALUES,hasBracketPair,tileValueAllowed} from '../src/tile-sets.js';
+import {TILE_SETS,FRACTION_VALUES,hasBracketPair,tileValueAllowed,kitRackOptions} from '../src/tile-sets.js';
 import {dealPlayableRack,freshStats,freshProgress,saveRun,loadRun} from '../src/solo.js';
 import {summarizeBag} from '../src/bag-inventory.js';
 import {makeRogueState,rogueRackOptions,rackSlots,scoreRogueMove,useTileTemporary} from '../src/rogue.js';
@@ -63,6 +63,16 @@ test('rational and quantum kits draw exactly one complete bracket pair in ten sl
  assert.equal(rogueRackOptions(r,1).bracketPairs,1);
  r.upgrades=['wide-rack'];
  assert.equal(rackSlots(r),11);
+});
+test('special kit identities are guaranteed in the first rack whenever supply exists',()=>{
+ const orbit=dealPlayableRack([],makeBag(random,'integer'),kitRackOptions('integer'),random);
+ assert.ok(orbit.rack.filter(t=>/^−[1-9]$/.test(t.value||'')).length>=2);
+ const nebula=dealPlayableRack([],makeBag(random,'rational'),kitRackOptions('rational'),random);
+ assert.ok(nebula.rack.filter(t=>t.value?.includes('/')).length>=2);
+ assert.equal(nebula.rack.filter(t=>t.pairId).length,2);
+ const quantum=dealPlayableRack([],makeBag(random,'advanced'),kitRackOptions('advanced'),random);
+ assert.ok(quantum.rack.filter(t=>['^','√','!'].includes(t.value)).length>=1);
+ assert.ok(quantum.rack.filter(t=>t.value?.includes('/')).length>=2);
 });
 test('negative integers and fractions remain atomic, even next to basic operations',()=>{
  const valid=[
