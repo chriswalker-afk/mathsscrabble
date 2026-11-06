@@ -16,6 +16,10 @@ export const ROGUE_ITEMS=Object.freeze([
  {id:'leak-shield',name:'Leak Shield',cost:7,kind:'DEFENCE UPGRADE',icon:'⬡',description:'Neutralise the Power Leak anomaly on its next appearance.'}
 ]);
 export const ROGUE_ITEM_BY_ID=Object.freeze(Object.fromEntries(ROGUE_ITEMS.map(item=>[item.id,item])));
+export const PULSE_ITEM=Object.freeze({
+ id:'pulse-charge',name:'Pulse Capacitor',cost:3,kind:'SINGLE-USE',icon:'⚡',
+ description:'Your next valid equation gains +12 energy. The charge is consumed only after scoring.'
+});
 export const ROGUE_ANOMALIES=Object.freeze([
  {id:'power-leak',name:'POWER LEAK',icon:'⚠',description:'An unstable reactor drains 15% of each equation’s energy unless shielded.',short:'−15% energy on every move'},
  {id:'signal-jam',name:'SIGNAL JAM',icon:'⌁',description:'Double-equation (2E) squares lose their multiplier this sector.',short:'2E multipliers disabled'},
@@ -32,7 +36,7 @@ export function targetForSector(mode,sector){
    Math.ceil(base*1.2):base;
 }
 export function makeRogueState(){
- return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0};
+ return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,pulse:0,pulseBought:0,pulseUsed:0};
 }
 const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function shopOffers(sector,rogue){
@@ -58,6 +62,18 @@ export function purchaseUpgrade(rogue,id,sector){
    ...rogue,flux:rogue.flux-item.cost,spent:rogue.spent+item.cost,
    upgrades:[...rogue.upgrades,id]
  }};
+}
+export function purchasePulse(rogue,sector){
+ if(rogue.shopSector!==sector)return {ok:false,reason:'The Salvage Bay is not open.',rogue};
+ if(rogue.pulse>=3)return {ok:false,reason:'You can carry at most three Pulse Capacitors.',rogue};
+ if(rogue.flux<PULSE_ITEM.cost)return {ok:false,reason:'Not enough Flux for a Pulse Capacitor.',rogue};
+ return {ok:true,reason:'Pulse Capacitor charged',rogue:{
+   ...rogue,flux:rogue.flux-PULSE_ITEM.cost,
+   spent:rogue.spent+PULSE_ITEM.cost,pulse:rogue.pulse+1,pulseBought:rogue.pulseBought+1
+ }};
+}
+export function consumePulse(rogue){
+ return rogue.pulse>0?{...rogue,pulse:rogue.pulse-1,pulseUsed:rogue.pulseUsed+1}:rogue;
 }
 export function rogueRackOptions(rogue){
  return {minBlanks:owns(rogue,'wild-beacon')?2:1,
@@ -118,6 +134,7 @@ export function scoreRogueMove(board,pending,move,rogue,sector){
    const amount=(placed-4)*2;additional+=amount;effects.push('Echo +'+amount);
  }
  if(boost)effects.push('Powered tiles +'+boost);
+ if(rogue.pulse>0){additional+=12;effects.push('Pulse Capacitor +12 (single-use)');}
  let prePenalty=adjustedBase*multiplier+base.length+base.sweep+base.equation+base.crossing+additional;
  let anomalyPenalty=0;
  if(anomaly?.id==='power-leak'&&!owns(rogue,'leak-shield')){
@@ -136,10 +153,11 @@ export function validRogueState(rogue,sector,phase){
  if(!integer(rogue.flux,0,100000000)||!integer(rogue.earned,0,100000000)||
     !integer(rogue.spent,0,100000000)||rogue.flux!==rogue.earned-rogue.spent)return false;
  if(!integer(rogue.shopSector,0,99)||rogue.shopSector>sector||!integer(rogue.lastReward,0,10000))return false;
+ if(!integer(rogue.pulse,0,3)||!integer(rogue.pulseBought,0,10000)||!integer(rogue.pulseUsed,0,10000)||rogue.pulse!==rogue.pulseBought-rogue.pulseUsed)return false;
  if(!Array.isArray(rogue.upgrades)||rogue.upgrades.length>ROGUE_ITEMS.length ||
     new Set(rogue.upgrades).size!==rogue.upgrades.length||
     !rogue.upgrades.every(id=>Boolean(ROGUE_ITEM_BY_ID[id])))return false;
- if(rogue.spent!==rogue.upgrades.reduce((sum,id)=>sum+ROGUE_ITEM_BY_ID[id].cost,0))return false;
+ if(rogue.spent!==rogue.upgrades.reduce((sum,id)=>sum+ROGUE_ITEM_BY_ID[id].cost,0)+rogue.pulseBought*PULSE_ITEM.cost)return false;
  if(phase==='won'&&rogue.shopSector!==sector)return false;
  if(phase==='playing'&&rogue.shopSector>=sector)return false;
  return true;
