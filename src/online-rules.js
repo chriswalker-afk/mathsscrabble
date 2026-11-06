@@ -197,7 +197,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  }else if(request.type==='exchange'){
    if(!Array.isArray(request.ids)||request.ids.length<1||request.ids.length>7||
      request.ids.some(id=>typeof id!=='string'))
-     throw new OnlineError('Choose up to seven tiles in your rack to exchange.');
+     throw new OnlineError('Choose up to eight tiles in your rack to exchange.');
    try{
      const changed=exchangeLocalTiles(room.match,request.ids,rng);
      match=changed.match;result={type:changed.free?'free-exchange':'exchange',by:index};
