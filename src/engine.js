@@ -1,7 +1,9 @@
 // Pure game rules. Both a future multiplayer server and this solo client can use these.
 export const SIZE = 13;
 export const CENTER = 6;
-export const HAND_SIZE = 7;
+export const HAND_SIZE = 8;
+export const NUMBER_SLOTS = 5;
+export const OPERATOR_SLOTS = 3;
 export const TURNS_PER_SECTOR = 6;
 export const TARGETS = [40, 55, 70, 90, 110, 135, 160, 190];
 export const BLANK_NUMBER = 'blank-number';
@@ -19,11 +21,12 @@ export function resolveBlank(tile,value){
  if(!isBlank(tile)||!BLANK_KINDS[tile.blank].choices.includes(value))throw Error('That symbol cannot be assigned to this blank tile.');
  return {...tile,value,points:0};
 }
+/** Physical tiles are drawn from separate number and operator pools.
+ * Universal wildcards belong to the number pool so every tile has one stable bag.
+ */
+export const tilePool=tile=>isOperator(tile?.value)||tile?.blank===BLANK_OPERATOR?'operators':'numbers';
 export function freeExchangeReason(availableRack){
- if(!availableRack.length)return null;
- const numbers=availableRack.every(tile=>isDigit(tile.value)||tile.blank===BLANK_NUMBER);
- const operators=availableRack.every(tile=>isOperator(tile.value)||tile.blank===BLANK_OPERATOR);
- return numbers?'numbers':operators?'operators':null;
+ return availableRack?.length?'one tile each turn':null;
 }
 /** Reorder visible physical tiles while retaining any unscored board tiles in hand. */
 export function reorderRack(rack,sourceId,index,hiddenIds=[]){
@@ -78,9 +81,15 @@ export function makeBag(random=randomFloat) {
   return values.map(makeTile);
 }
 export function refill(rack,bag) {
-  const nextRack=[...rack], nextBag=[...bag];
-  while(nextRack.length<HAND_SIZE && nextBag.length)nextRack.push(nextBag.pop());
-  return {rack:nextRack,bag:nextBag};
+ const nextRack=[...rack],nextBag=[...bag];
+ for(const [pool,target] of [['numbers',NUMBER_SLOTS],['operators',OPERATOR_SLOTS]]){
+   while(nextRack.filter(t=>tilePool(t)===pool).length<target){
+     const index=nextBag.findLastIndex(t=>tilePool(t)===pool);
+     if(index<0)break;
+     nextRack.push(nextBag.splice(index,1)[0]);
+   }
+ }
+ return {rack:nextRack,bag:nextBag};
 }
 const abs=n=>n<0n?-n:n;
 const gcd=(a,b)=>{a=abs(a);b=abs(b);while(b){[a,b]=[b,a%b];}return a||1n;};
