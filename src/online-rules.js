@@ -2,6 +2,7 @@
 // local play; the Worker never trusts a client-supplied score or tile value.
 import {SIZE,POINTS,BLANK_KINDS,makeTile,randomFloat} from './engine.js';
 import {summarizeBag} from './bag-inventory.js';
+import {acceptPilotAlien,isValidPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {makeLocalMatch,readyLocalTurn,scoreLocalTurn,passLocalTurn,
   exchangeLocalTiles,localStandings,isLocalTimerExpired} from './multiplayer.js';
 
@@ -64,7 +65,7 @@ function validateMutation(room,index,request){
 function addReceipt(room,index,request,result){
  return {...room,receipts:last([...room.receipts,{who:index,id:request.id,result}],ROOM_MAX_ACTIONS)};
 }
-export function makeOnlineLobby({code,hostName,hostHash,maxPlayers=4,turnSeconds=90,now=Date.now()}){
+export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlayers=4,turnSeconds=90,now=Date.now()}){
  const cleanCode=cleanRoomCode(code),name=cleanPilotName(hostName);
  requireHash(hostHash);
  if(!cleanCode)throw new OnlineError('Invalid room code.');
@@ -73,18 +74,20 @@ export function makeOnlineLobby({code,hostName,hostHash,maxPlayers=4,turnSeconds
  return {
   version:ONLINE_VERSION,code:cleanCode,revision:1,phase:'lobby',
   maxPlayers,turnSeconds,createdAt:now,updatedAt:now,
-  expiresAt:now+LOBBY_LIFETIME,people:[{id:'p1',name,tokenHash:hostHash}],
+  expiresAt:now+LOBBY_LIFETIME,
+  people:[{id:'p1',name,tokenHash:hostHash,avatar:acceptPilotAlien(hostAvatar,0)}],
   match:null,receipts:[]
  };
 }
-export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now()){
+export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now(),avatar=null){
  requireRoom(room,now);requireHash(tokenHash);
  if(room.phase!=='lobby')throw new OnlineError('This match has already started.',409);
  if(room.people.length>=room.maxPlayers)throw new OnlineError('This room is full.',409);
  const name=cleanPilotName(displayName);
  if(room.people.some(p=>p.name.toLowerCase()===name.toLowerCase()))
   throw new OnlineError('That pilot name is already taken.',409);
- const people=[...room.people,{id:'p'+(room.people.length+1),name,tokenHash}];
+ const people=[...room.people,{id:'p'+(room.people.length+1),name,tokenHash,
+   avatar:acceptPilotAlien(avatar,room.people.length)}];
  return {...room,people,revision:room.revision+1,updatedAt:now,expiresAt:now+LOBBY_LIFETIME};
 }
 export function leaveOnlineLobby(room,hash,request,now=Date.now()){
@@ -104,6 +107,24 @@ export function leaveOnlineLobby(room,hash,request,now=Date.now()){
  updated.receipts[updated.receipts.length-1].departedHash=hash;
  return {room:updated,result};
 }
+/** Only the authenticated room seat can change its public avatar in the
+ * waiting lobby. Validated, revision-checked and idempotent. No midgame edits.
+ */
+export function updateOnlinePilot(room,hash,request,now=Date.now()){
+ requireRoom(room,now);
+ const index=identity(room,hash),replay=validateMutation(room,index,request);
+ if(replay)return {room,replayed:true,result:replay.result};
+ if(room.phase!=='lobby')throw new OnlineError('Alien designs are locked after the match starts.',409);
+ if(request.avatar===undefined||request.avatar===null)
+  throw new OnlineError('An alien design is required.');
+ let avatar;
+ try{avatar=acceptPilotAlien(request.avatar,index);}
+ catch{throw new OnlineError('Choose a valid alien design from Alien Lab.');}
+ const people=room.people.map((p,i)=>i===index?{...p,avatar}:p);
+ const result={type:'avatar-updated',by:index};
+ return {room:addReceipt({...room,people,revision:room.revision+1,
+   updatedAt:now,expiresAt:now+LOBBY_LIFETIME},index,request,result),result};
+}
 export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloat){
  requireRoom(room,now);
  const index=identity(room,hash),replay=validateMutation(room,index,request);
@@ -111,7 +132,9 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  if(index!==0)throw new OnlineError('Only the room host can start the match.',403);
  if(room.phase!=='lobby')throw new OnlineError('The match has already started.',409);
  if(room.people.length<2)throw new OnlineError('At least two pilots must join before starting.');
- let match=makeLocalMatch({names:room.people.map(p=>p.name),turnSeconds:room.turnSeconds},rng);
+ let match=makeLocalMatch({names:room.people.map(p=>p.name),
+   avatars:room.people.map((p,i)=>safePilotAlien(p.avatar,i)),
+   turnSeconds:room.turnSeconds},rng);
  match=readyLocalTurn(match,now);
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
@@ -203,13 +226,16 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
  const base={
   code:room.code,revision:room.revision,phase:room.phase,
   maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,
-  people:room.people.map((p,i)=>({index:i,id:p.id,name:p.name,host:i===0})),
-  you:{index,id:player.id,name:player.name,host:index===0},
+  people:room.people.map((p,i)=>({index:i,id:p.id,name:p.name,host:i===0,
+     avatar:safePilotAlien(p.avatar,i)})),
+  you:{index,id:player.id,name:player.name,host:index===0,
+     avatar:safePilotAlien(player.avatar,index)},
   expiresAt:room.expiresAt
  };
  if(!match)return {...base,match:null};
  const players=match.players.map((p,i)=>({
-   index:i,name:p.name,score:p.score,rackCount:p.rack.length,scoredMoves:p.scoredMoves
+   index:i,name:p.name,avatar:safePilotAlien(room.people[i]?.avatar,i),
+    score:p.score,rackCount:p.rack.length,scoredMoves:p.scoredMoves
  }));
  return {...base,match:{
    board:match.board,players,current:match.current,turn:match.turnNumber,
@@ -239,6 +265,7 @@ export function verifyOnlineRoom(room){
     !Array.isArray(room.people)||room.people.length>room.maxPlayers||
     !room.people.every((p,i)=>p.id==='p'+(i+1)&&
       typeof p.name==='string'&&p.name.length>=1&&p.name.length<=20&&
+      (p.avatar===undefined||isValidPilotAlien(p.avatar))&&
       /^[a-f0-9]{64}$/.test(p.tokenHash))||
     new Set(room.people.map(p=>p.name.toLowerCase())).size!==room.people.length||
     !number(room.createdAt,1,4102444800000)||!number(room.expiresAt,1,4102444800000))return false;
