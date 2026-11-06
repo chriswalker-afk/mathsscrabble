@@ -10,6 +10,7 @@ test('bag inventory reports exact initial digits, operations and wildcard types'
  const bag=makeBag(()=>0.5);
  const report=summarizeBag(bag);
  assert.equal(report.total,151);
+ assert.deepEqual(report.pools,{numbers:92,operators:59});
  assert.deepEqual(report.groups.map(x=>x.total),[80,54,17]);
  const [numbers,operators,wildcards]=report.groups;
  assert.equal(numbers.tiles.length,10);
@@ -29,6 +30,7 @@ test('inventory reflects the actual remaining bag and excludes rack tiles',()=>{
  assert.equal(rack.length,8);
  const report=summarizeBag(remaining);
  assert.equal(report.total,143);
+ assert.deepEqual(report.pools,{numbers:87,operators:56});
  assert.equal(report.groups.reduce((n,g)=>n+g.total,0),143);
  const removed=(a,b)=>a.groups.flatMap(group=>group.tiles).reduce((sum,tile)=>{
    const after=b.groups.flatMap(g=>g.tiles).find(t=>t.key===tile.key);
