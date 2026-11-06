@@ -37,14 +37,14 @@ try{
  assert.equal(JSON.parse(firstDrift).mode,'rogue');
  assert.equal(await page.evaluate(()=>localStorage.getItem('equa-nova.last-mode.v1')),'rogue');
 
- // Approach the first-sector target with one turn left, then submit a real
+ // Approach the first-sector target with five turns left, then submit a real
  // BIDMAS equation. The save must resolve the win before the score animation.
  await page.evaluate(raw=>{
-   const data=JSON.parse(raw);data.turn=6;data.score=39;
+   const data=JSON.parse(raw);data.turn=1;data.score=39;
    localStorage.setItem('equa-nova.drift.v1',JSON.stringify(data));
  },firstDrift);
  await page.reload({waitUntil:'networkidle'});
- assert.equal(await page.locator('#turn').textContent(),'6 / 6');
+ assert.equal(await page.locator('#turn').textContent(),'1 / 6');
  for(const [symbol,row,col] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7]])await put(symbol,row,col);
  await page.locator('#rack .wildcard-blank-any').click();
  await cell(6,8).click();
@@ -56,17 +56,23 @@ try{
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
- assert.equal(await page.locator('.salvage-card').count(),4);
+ assert.equal(await page.locator('.salvage-card').count(),5);
  const firstUpgrade=await page.locator('.salvage-card').first().locator('strong').textContent();
  assert.equal(firstUpgrade,'Ionised Sevens');
  await page.locator('.salvage-card').first().locator('button').click();
  assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-4);
+ assert.ok(fluxBefore>=7,'the early-win bonus allows buying a permanent and single-use upgrade');
+ await page.locator('.salvage-consumable button').click();
+ assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-7);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
  const installed=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
  assert.deepEqual(installed.rogue.upgrades,['ion-seven']);
+ assert.equal(installed.rogue.pulse,1);
+ assert.equal(installed.rogue.pulseBought,1);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
- assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-4));
+ assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-7));
+ assert.match(await page.locator('.salvage-consumable').textContent(),/1\/3/);
  assert.equal(await page.locator('.salvage-card').filter({hasText:'Ionised Sevens'}).count(),0);
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
@@ -89,13 +95,36 @@ try{
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
  assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
  assert.equal(await page.locator('#anomaly-banner').isVisible(),true);
+ assert.match(await page.locator('#upgrade-summary').textContent(),/1 charge/);
+ // A capacitor appears in the prediction but must not be used on a bad move.
+ for(const [symbol,row,col] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7]])await put(symbol,row,col);
+ await page.locator('#rack .wildcard-blank-any').click();
+ await cell(6,8).click();
+ await page.locator('#wildcard-choices button',{hasText:'3'}).first().click();
+ await page.locator('#score-btn').click();
+ assert.match(await page.locator('#log').textContent(),/not balanced/i);
+ assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulse,1);
+ await cell(6,8).click();
+ await page.locator('#rack .wildcard-blank-any').click();
+ await cell(6,8).click();
+ await page.locator('#wildcard-choices button',{hasText:'2'}).first().click();
+ await page.locator('#score-btn').click();
+ await page.reload({waitUntil:'networkidle'});
+ assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulse,0);
+ assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulseUsed,1);
+ assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
 
  // Switching modes must restore the untouched original classroom save.
  await page.locator('#mode-btn').click();
  await page.locator('#modal-actions button').first().click();
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  assert.equal(await page.locator('#score').textContent(),'0');
- assert.equal(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'))===classicBefore,true);
+ const classicRestored=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
+ const classicStarted=JSON.parse(classicBefore);
+ for(const field of ['sector','turn','score','phase','board','rack','bag','pending','progress']){
+   assert.deepEqual(classicRestored[field],classicStarted[field],
+     'switching mode must preserve the classic game: '+field);
+ }
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
