@@ -11,7 +11,7 @@ import {renderDriftHud} from './drift-hud.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
-import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair} from './tile-sets.js';
+import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
@@ -69,7 +69,7 @@ const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
 const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE+(hasBracketPair(state.tileSet)?2:0);
-const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):{bracketPairs:hasBracketPair(state.tileSet)?1:0};
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):kitRackOptions(state.tileSet);
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
  (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
