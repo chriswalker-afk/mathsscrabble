@@ -39,6 +39,28 @@ test('an equation multiplier is applied exactly once to every tile',()=>{
  assert.ok(stages.find(x=>x.kind==='tile'&&x.existing),'locked shared tile must have a stage');
  assert.ok(stages.find(x=>x.kind==='bonus'&&x.id==='crossing'));
 });
+test('a real 2E square doubles each tile contribution once, including a locked crossing tile',()=>{
+ const first=makeEquation(['8','+','4','=','1','2']);
+ const board=Array(169).fill(null);
+ for(const [index,tile] of Object.entries(first.pending))board[Number(index)]=tile;
+ // The newly placed multiplication symbol occupies (9,3), a 2E square.
+ // 8+0×1=8 is valid BIDMAS, connects to the locked 8 and fits through row 12.
+ const pending={};
+ for(const [offset,value] of ['+','0','×','1','=','8'].entries())
+   pending[pos(7+offset,3)]=makeTile(value);
+ const move=validateMove(board,pending);
+ const points=scoreMove(board,pending,move);
+ assert.equal(points.multiplier,2);
+ const stages=buildScoringCeremony(points);
+ const reused=stages.find(stage=>stage.index===pos(6,3));
+ assert.equal(reused.existing,true);
+ assert.equal(reused.amount,board[pos(6,3)].points*2);
+ const operator=stages.find(stage=>stage.index===pos(9,3));
+ assert.equal(operator.value,'×');
+ assert.equal(operator.premium,'2E');
+ assert.equal(operator.amount,pending[pos(9,3)].points*2);
+ assert.equal(total(stages),points.total);
+});
 test('programmed zero-point wildcards and a reused tile stay in the ceremony',()=>{
  const {board,pending,move}=makeEquation(['8','+','4','=','1','2']);
  pending[pos(6,5)]={...makeTile(BLANK_ANY),value:'4',points:0};
