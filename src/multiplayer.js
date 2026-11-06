@@ -2,6 +2,7 @@
 // server-authoritative room logic. No DOM; the UI controls rack privacy.
 import {SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isDigit,isOperator,makeBag,validateMove,scoreMove} from './engine.js';
 import {dealPlayableRack} from './solo.js';
+import {acceptPilotAlien,isValidPilotAlien} from './alien/profiles.js';
 
 export const LOCAL_SAVE_KEY='equa-nova.local-match.v1';
 export const LOCAL_VERSION=1;
@@ -11,9 +12,11 @@ const allowedSymbols=new Set(Object.keys(POINTS));
 const validInteger=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const nameClean=name=>String(name??'').replace(/[\r\n\t]+/g,' ').replace(/\s+/g,' ').trim().slice(0,20);
 const randomSwap=(bag,rng)=>{for(let i=bag.length-1;i>0;i--){const j=Math.min(i,Math.floor(rng()*(i+1)));[bag[i],bag[j]]=[bag[j],bag[i]];}};
-export function makeLocalMatch({names=['Pilot 1','Pilot 2'],turnSeconds=0}={},rng=Math.random){
+export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSeconds=0}={},rng=Math.random){
  if(!Array.isArray(names)||names.length<2||names.length>4)throw Error('Choose 2–4 players.');
  if(!LOCAL_TIMER_OPTIONS.includes(turnSeconds))throw Error('Choose a supported timer.');
+ if(avatars!==null&&(!Array.isArray(avatars)||avatars.length!==names.length))
+   throw Error('Provide one valid alien avatar for each pilot.');
  const cleaned=names.map(nameClean);
  if(cleaned.some(name=>!name))throw Error('Every player needs a name.');
  if(new Set(cleaned.map(name=>name.toLowerCase())).size!==cleaned.length)throw Error('Player names must be different.');
@@ -21,7 +24,9 @@ export function makeLocalMatch({names=['Pilot 1','Pilot 2'],turnSeconds=0}={},rn
  const players=[];
  for(let i=0;i<cleaned.length;i++){
    const deal=dealPlayableRack([],bag);
-   players.push({id:'p'+(i+1),name:cleaned[i],rack:deal.rack,score:0,scoredMoves:0});
+   players.push({id:'p'+(i+1),name:cleaned[i],
+     avatar:acceptPilotAlien(avatars?.[i],i),
+     rack:deal.rack,score:0,scoredMoves:0});
    bag=deal.bag;
  }
  return {
@@ -173,6 +178,7 @@ export function validLocalMatch(match){
     !match.board.every(tile=>tile===null||validPlayed(tile)))return false;
  if(!Array.isArray(match.players)||match.players.length<2||match.players.length>4)return false;
  if(!match.players.every((p,i)=>p&&p.id==='p'+(i+1)&&
+    (p.avatar===undefined||isValidPilotAlien(p.avatar))&&
     typeof p.name==='string'&&p.name.length>=1&&p.name.length<=20&&
     validInteger(p.score,0,100000000)&&validInteger(p.scoredMoves,0,1000)&&
     Array.isArray(p.rack)&&p.rack.length<=HAND_SIZE&&p.rack.every(validSupply)))return false;
