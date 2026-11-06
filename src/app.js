@@ -395,7 +395,12 @@ function renderLocalStatus(){
  $('bag-details-btn').setAttribute('aria-label','View '+match.bag.length+' remaining tiles in the shared bag');
  $('score-btn').disabled=state.busy||match.phase!=='playing'||state.swapping||!Object.keys(state.pending).length;
  $('local-pass-btn').disabled=state.busy||match.phase!=='playing';
- $('local-pass-btn').textContent=match.turnSeconds?'↪ PASS / END TURN':'↪ PASS TURN';
+ $('local-pass-btn').textContent='↪ PASS';
+ $('score-btn').querySelector('strong').textContent='⚡ SCORE';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
+ const eligible=freeExchangeReason(state.rack)&&!match.freeExchangeUsed;
+ $('swap-btn').textContent=state.swapping?
+   '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
  $('new-btn').disabled=false;
  const time=$('local-time-remaining');
  if(match.phase==='playing'&&match.turnSeconds){
@@ -453,6 +458,7 @@ function render(){
  $('app').inert=false;
  $('local-panel').hidden=true;
  $('local-pass-btn').hidden=true;
+ $('score-btn').querySelector('strong').textContent='⚡ SCORE EQUATION';
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
