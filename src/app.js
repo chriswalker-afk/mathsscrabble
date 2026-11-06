@@ -1,7 +1,13 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
-import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
+ MAX_PERMANENT_SLOTS,MAX_TEMPORARY_SLOTS,makeRogueState,anomalyForSector,targetForSector,
+ shopOffers,shopTemperatures,purchaseUpgrade,purchaseTemporary,purchasePulse,heldConsumables,
+ armedConsumable,armTemporary,consumeTemporary,useTileTemporary,earnMoveFlux,consumeBoardEcho,
+ freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {equipmentArt} from './equipment-art.js';
+import {renderDriftHud} from './drift-hud.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -17,7 +23,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -56,6 +62,8 @@ const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA'
 const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector);
+const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
+const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
@@ -77,6 +85,8 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
+ if(isDrift())state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0};
+ state.itemTarget=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.freeSwapTurn=0;state.ended=false;state.busy=false;
@@ -106,6 +116,7 @@ function freshSector(sector=1,{newRun=false}={}){
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
  if(state.ended||state.swapping||state.busy)return;
+ if(state.itemTarget){applyTileTemporary(id);return;}
  state.selected=state.selected===id?null:id;
  renderRack();
  renderBoard();
@@ -268,6 +279,15 @@ function boardCell(i){
    const label=document.createElement('span');label.className='bonus-label';
    label.textContent=bonus==='START'?'✳':bonus;node.append(label);
  }
+ if(isDrift()&&locked&&tile.value!=='='&&state.rogue.upgrades.includes('bonus-echo')&&
+    ['2T','3T','2E','3E'].includes(rawBonus)){
+   const spent=(state.rogue.echoed||[]).includes(i);
+   node.classList.add(spent?'second-spark-spent':'second-spark-ready');
+   const note=spent?'Second Spark already used here this sector.':
+     'Second Spark ready: this premium can reactivate once when crossed.';
+   node.title=(node.title?node.title+' · ':'')+note;
+   node.setAttribute('aria-label',node.getAttribute('aria-label')+'. '+note);
+ }
  node.addEventListener('click',event=>{if(!wasDragClick(event))placeAt(i);});
  node.addEventListener('keydown',event=>{
    if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)){
@@ -288,7 +308,7 @@ function renderBoard(){
 function tileButton(tile, rackIndex){
  const button=document.createElement('button');
  button.type='button';
- button.className='tile'+(isChargedTile(tile)?' charged-rack-tile':'')+
+ button.className='tile'+(state.itemTarget?' consumable-target':'')+(isChargedTile(tile)?' charged-rack-tile':'')+
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
@@ -304,13 +324,14 @@ function tileButton(tile, rackIndex){
  button.append(main,points);
  button.addEventListener('click',event=>{
    if(wasDragClick(event))return;
+   if(state.itemTarget){applyTileTemporary(tile.id);return;}
    if(state.swapping){
      state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);
      renderRack();return;
    }
    selectTile(tile.id);
  });
- if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
+ if(!state.itemTarget&&!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
  button.addEventListener('keydown',event=>{
    if(!event.altKey||!['ArrowLeft','ArrowRight'].includes(event.key)||state.swapping||state.busy)return;
    event.preventDefault();
@@ -327,15 +348,16 @@ function renderRack(){
  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
  const available=state.rack.filter(t=>!used.has(t.id));
  $('rack').replaceChildren(...available.map((tile,i)=>tileButton(tile,i)));
- $('rack-count').textContent=`${available.length} / ${HAND_SIZE}`;
+ $('rack-count').textContent=`${available.length} / ${rackCapacity()}`;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
  const eligible=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
-   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
+   (isLocal()?!state.localMatch?.freeExchangeUsed:
+     isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:state.freeSwapTurn!==state.turn);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
-   eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
+   eligible?'⇄ FREE TILE SWAP'+(isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?' ×2':''):'⇄ SWAP TILES';
  $('swap-btn').classList.toggle('free-exchange',Boolean(eligible));
  $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
@@ -349,12 +371,15 @@ function renderPreview(){
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
  const freeReason=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
-   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
+   (isLocal()?!state.localMatch?.freeExchangeUsed:
+     isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:state.freeSwapTurn!==state.turn);
  $('preview-status').textContent=state.swapping?
    (freeReason?'Choose exactly one tile for your free swap; multiple tiles cost a turn.':
      'Choose tiles to replace — this uses a turn.'):
    freeReason&&!Object.keys(state.pending).length?
-     'One free tile swap available this turn.':preview.feedback;
+     isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
+       'Two separate free single-tile swaps available this turn.':
+       'One free single-tile swap available this turn.':preview.feedback;
  const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
@@ -460,9 +485,44 @@ function renderLocalStatus(){
  $('preview-status').setAttribute('aria-live','polite');
  showLocalHandover();
 }
+function showEquipmentInfo(item){
+ if(state.busy)return;
+ showModal(item.kind,item.name,
+   '<div class="equipment-info-art">'+equipmentArt(item.id)+'</div><p>'+item.description+
+   '</p><p>Installed until the end of your current Drift run.</p>',
+   [{text:'BACK TO BOARD',primary:true}]);
+}
+function activateTemporary(id){
+ if(!isDrift()||state.busy||state.ended||state.swapping)return;
+ const item=TEMP_ITEM_BY_ID[id];
+ if(!item||!heldConsumables(state.rogue).includes(id))return;
+ if(Object.keys(state.pending).length){
+   announce('Clear unscored tiles before activating equipment.',true);return;
+ }
+ if(item.action==='score'){
+   const armed=armTemporary(state.rogue,id);
+   if(!armed.ok){announce(armed.reason,true);return;}
+   state.rogue=armed.rogue;state.itemTarget=null;
+   announce(item.name+' armed for your next correctly scored equation.');render();return;
+ }
+ state.itemTarget=state.itemTarget===id?null:id;
+ state.selected=null;
+ announce(state.itemTarget?'Choose a rack tile for '+item.name+'. No turn will be used.':
+   'Power-up selection cancelled.');render();
+}
+function applyTileTemporary(tileId){
+ if(!isDrift()||!state.itemTarget||state.busy||state.ended)return;
+ const result=useTileTemporary(state.rogue,state.rack,state.bag,state.itemTarget,tileId);
+ if(!result.ok){announce(result.reason,true);return;}
+ state.rogue=result.rogue;state.rack=result.rack;state.bag=result.bag;
+ state.itemTarget=null;state.selected=null;
+ announce(result.reason+'. Power-up consumed without spending a turn.');
+ render();
+}
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
+ renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  // Both solo and local competition share the same scoring ceremony display.
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
@@ -479,13 +539,14 @@ function render(){
  $('score-btn').querySelector('strong').textContent='⚡ SCORE EQUATION';
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
-   Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
+   Math.max(1,maxTurns()-state.turn+1):0;
  const displayedScore=state.ceremony?
    state.ceremony.startScore+state.ceremony.awarded:state.score;
  $('score').textContent=displayedScore;$('target').textContent=target;
- $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
+ $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
+ $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
@@ -533,7 +594,9 @@ function render(){
  if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
  else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
  else if(state.swapping)coach.textContent=
-   'Choose one tile for a free swap (once per turn), or several to spend your turn.';
+   isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
+     'Exchange License: two separate free one-tile swaps this turn.':
+     'Choose one tile for a free swap (once per turn), or several to spend your turn.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
    state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
  else if(placed&&state.preview.ready)coach.textContent=
@@ -855,7 +918,7 @@ function completeTurn(){
    state.progress=completeProgress(state.progress,
      sectorReport(state.sector,state.score,state.turn,state.stats,true,currentTarget()));
    if(isDrift())state.rogue=rewardSector(state.rogue,state.sector,state.score,state.turn).rogue;
- }else if(state.turn>=TURNS_PER_SECTOR){
+ }else if(state.turn>=maxTurns()){
    state.phase='lost';state.ended=true;
  }else{
    state.phase='playing';state.ended=false;state.turn++;
@@ -873,61 +936,61 @@ function reportRows(moves){
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
  const offers=shopOffers(state.sector,state.rogue);
+ const consumables=shopTemperatures(state.sector);
+ const occupied=heldConsumables(state.rogue).length;
  const intro=`<div class="salvage-intro">
- <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
- <div><strong>SECTOR ${state.sector} STABILISED</strong>
- <p>+${state.rogue.lastReward} Flux earned. Buy permanent upgrades, or a single-use capacitor (+12 on the next correct equation). All equipment resets at the end of the run.</p></div>
- </div>
- <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Available Salvage Bay upgrades"></div>
- <p id="salvage-feedback" class="salvage-feedback">Permanent upgrades can be installed once; Pulse Capacitors are consumed by scoring and can be bought repeatedly.</p>`;
+   <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
+   <div><strong>SECTOR ${state.sector} STABILISED</strong>
+   <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
+   </div>
+   <div class="salvage-loadout"><strong>PERMANENT ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
+     <strong>TEMPORARY ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
+   <div class="salvage-section-heading">PERMANENT MODULES <small>FOUR ROTATING OFFERS</small></div>
+   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Permanent Salvage Bay upgrades"></div>
+   <div class="salvage-section-heading">TEMPORARY POWER-UPS <small>USE ONCE · UP TO TWO HELD</small></div>
+   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Temporary Salvage Bay powers"></div>
+   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap equipped artwork during play for details or activation.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
    {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
  ]);
- const grid=$('salvage-grid');
+ const permanentGrid=$('salvage-grid');
  if(!offers.length){
-   const end=document.createElement('p');
-   end.className='salvage-empty';
-   end.textContent='All ten upgrades installed. Your build is complete—continue into the next sector.';
-   grid.append(end);
+   const end=document.createElement('p');end.className='salvage-empty';
+   end.textContent='No unowned permanent modules remain.';
+   permanentGrid.append(end);
  }
- for(const item of offers){
-   const card=document.createElement('div');card.className='salvage-card';
+ function makeCard(item,temporary=false){
+   const card=document.createElement('div');card.className='salvage-card'+
+     (temporary?' salvage-consumable':'');
+   card.dataset.category=item.kind;card.dataset.itemId=item.id;
    const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
-   const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=item.icon;
-   const title=document.createElement('strong');title.textContent=item.name;
+   const icon=document.createElement('div');icon.className='salvage-icon';icon.innerHTML=equipmentArt(item.id);
+   const title=document.createElement('strong');
+   title.textContent=item.name+(temporary?' · '+heldConsumables(state.rogue).filter(id=>id===item.id).length+'/'+MAX_TEMPORARY_SLOTS:'');
    const description=document.createElement('p');description.textContent=item.description;
-   const buy=document.createElement('button');buy.type='button';buy.className='salvage-buy';
-   buy.textContent=item.cost+' FLUX · '+(state.rogue.flux>=item.cost?'INSTALL':'NOT ENOUGH');
-   buy.disabled=state.rogue.flux<item.cost;
-   buy.setAttribute('aria-label','Install '+item.name+' for '+item.cost+' Flux');
+   const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
+   const full=temporary?heldConsumables(state.rogue).length>=MAX_TEMPORARY_SLOTS:
+     state.rogue.upgrades.length>=MAX_PERMANENT_SLOTS;
+   buy.disabled=full||state.rogue.flux<item.cost;
+   buy.textContent=item.cost+' FLUX · '+(full?'SLOTS FULL':
+     state.rogue.flux<item.cost?'NOT ENOUGH':temporary?'STORE':'INSTALL');
+   buy.setAttribute('aria-label',(temporary?'Store ':'Install ')+item.name+
+     ' for '+item.cost+' Flux');
    buy.onclick=()=>{
-     const purchase=purchaseUpgrade(state.rogue,item.id,state.sector);
-     if(!purchase.ok){$('salvage-feedback').textContent=purchase.reason;return;}
-     state.rogue=purchase.rogue;
-     persistRun();render();showShop();
-     $('salvage-feedback').textContent=purchase.reason+'. Upgrade equipped for the rest of this run.';
+     const result=temporary?purchaseTemporary(state.rogue,item.id,state.sector):
+       purchaseUpgrade(state.rogue,item.id,state.sector);
+     if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
+     state.rogue=result.rogue;persistRun();render();showShop();
+     $('salvage-feedback').textContent=result.reason+
+       (temporary?'. Stored in your temporary power-up slots.':
+         '. Equipped for the remainder of this run.');
    };
-   card.append(tag,icon,title,description,buy);grid.append(card);
+   card.append(tag,icon,title,description,buy);return card;
  }
- const charge=document.createElement('div');charge.className='salvage-card salvage-consumable';
- const type=document.createElement('span');type.className='salvage-type';type.textContent=PULSE_ITEM.kind;
- const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=PULSE_ITEM.icon;
- const title=document.createElement('strong');title.textContent=PULSE_ITEM.name+' · '+state.rogue.pulse+'/3';
- const detail=document.createElement('p');detail.textContent=PULSE_ITEM.description;
- const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
- buy.textContent=PULSE_ITEM.cost+' FLUX · '+(state.rogue.flux>=PULSE_ITEM.cost&&state.rogue.pulse<3?'CHARGE':'UNAVAILABLE');
- buy.disabled=state.rogue.flux<PULSE_ITEM.cost||state.rogue.pulse>=3;
- buy.setAttribute('aria-label','Buy single-use '+PULSE_ITEM.name+' for '+PULSE_ITEM.cost+' Flux');
- buy.onclick=()=>{
-   const p=purchasePulse(state.rogue,state.sector);
-   if(!p.ok){$('salvage-feedback').textContent=p.reason;return;}
-   state.rogue=p.rogue;
-   persistRun();render();showShop();
-   $('salvage-feedback').textContent=p.reason+'. It will activate on your next scored equation.';
- };
- charge.append(type,icon,title,detail,buy);
- grid.append(charge);
+ for(const item of offers)permanentGrid.append(makeCard(item));
+ const temporaryGrid=$('salvage-temporary-grid');
+ for(const item of consumables)temporaryGrid.append(makeCard(item,true));
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
@@ -1162,7 +1225,11 @@ function score(){
    const startScore=state.score;
    // Consume single-use charges and commit the whole score atomically before
    // a timer, animation, tab switch or reload can interrupt the presentation.
-   if(isDrift())state.rogue=consumePulse(state.rogue);
+   if(isDrift()){
+     state.rogue=consumeBoardEcho(state.rogue,points.echoedIndices);
+     state.rogue=earnMoveFlux(state.rogue,state.pending).rogue;
+     if(points.tempApplied)state.rogue=consumeTemporary(state.rogue,points.tempApplied);
+   }
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
@@ -1195,19 +1262,23 @@ const escapeText=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').repla
 function swap(){
  if(isLocal())return localSwap();
  if(state.ended||state.busy)return;
+ if(state.itemTarget){announce('Finish or cancel your selected power-up first.',true);return;}
  if(!state.swapping){
    if(Object.keys(state.pending).length){
      announce('Clear your equation before swapping tiles.',true);return;
    }
    if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}
    state.swapping=true;state.selected=null;
-   announce(state.freeSwapTurn!==state.turn?
-     'Choose one tile for your free swap. Several tiles will cost a turn.':
+   announce((isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
+     state.freeSwapTurn!==state.turn)?
+     'Choose exactly one tile for a free swap. Selecting several costs your turn.':
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
- const free=state.swapSet.size===1&&state.freeSwapTurn!==state.turn;
+ const free=state.swapSet.size===1&&(isDrift()?
+   freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
+   state.freeSwapTurn!==state.turn);
  const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
@@ -1224,6 +1295,7 @@ function swap(){
  }
  if(free){
    state.stats.freeExchanges++;
+   if(isDrift())state.rogue=markFreeSwap(state.rogue,state.turn,state.freeSwapTurn);
    state.freeSwapTurn=state.turn;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
@@ -1238,6 +1310,7 @@ function swap(){
 }
 function clear(){
  if(state.ended||state.busy)return;
+ if(state.itemTarget){state.itemTarget=null;announce('Power-up selection cancelled.');render();return;}
  if(state.swapping){
    state.swapping=false;state.swapSet.clear();announce('Tile exchange cancelled.');
  }else{
@@ -1282,7 +1355,7 @@ function showTraining(firstVisit=false){
   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
     <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can swap one tile for free each turn.</p></div></div>
  </div>
- <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
+ <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles (9 with Rack Extension), = selects equals and Backspace undoes a tile.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
    firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
    message,firstVisit?
@@ -1307,9 +1380,9 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector still uses the same BIDMAS rules, physical tile rack and premium grid. Reach the energy target within six turns.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. Normally there are six turns and an eight-tile rack; equipment can extend either.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Choose permanent upgrades for this run: strengthen sevens, boost crossings, attract wildcards or power up board multipliers.</p></div></div>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
@@ -1328,8 +1401,8 @@ function restoreMode(mode,{initial=false}={}){
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
-   state.focusedIndex=pos(CENTER,CENTER);
-   announce(mode==='rogue'?
+   state.focusedIndex=pos(CENTER,CENTER);state.itemTarget=null;
+   announce(mode='rogue'?
      'Saved Drift run restored: your upgrades, Flux and rack are intact.':
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
@@ -1389,6 +1462,9 @@ document.addEventListener('keydown',event=>{
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
    event.preventDefault();undoLast();return;
  }
+ if(event.key==='Escape'&&state.itemTarget){
+   state.itemTarget=null;announce('Power-up selection cancelled.');render();return;
+ }
  if(event.key==='Escape'&&state.selected){
    state.selected=null;render();return;
  }
@@ -1396,7 +1472,7 @@ document.addEventListener('keydown',event=>{
  if(event.key==='='){
    event.preventDefault();selectTile('equals');return;
  }
- if(/^[1-8]$/.test(event.key)){
+ if(/^[1-9]$/.test(event.key)){
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    const available=state.rack.filter(t=>!used.has(t.id));
    const tile=available[Number(event.key)-1];

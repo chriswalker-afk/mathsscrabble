@@ -82,7 +82,15 @@ Select any of the **four full-size, keyboard-accessible mode cards** on the home
 
 **The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
 
-The current Salvage Bay offers:
+### Illustrated equipment loadouts (The Drift)
+
+The Drift now has **four permanent equipment slots** in the existing left-side telemetry panel and **two temporary power-up slots** in the right-side command panel, each with its own original SVG artwork. No board squares are obscured or resized. Each item can be inspected; temporary score boosters are armed from their slot, while tile tools let you select a rack tile. Upgrades expire at the end of the current Drift run.
+
+The Salvage Bay shows four rotating permanent module choices and three temporary choices after each victory. Distinct shop categories include **TILE TYPE**, **BOARD SPACE**, **LENGTH BONUS**, **ECONOMY**, **RACK**, **TACTICS**, **CONNECTION** and **DEFENCE**. The permanent limit makes equipment selection matter; a consumable is replaced only when its slot becomes free. The existing 5-number/3-operator rack and single free one-tile swap are still the defaults; Drift equipment can extend the rack to 6+3, add a seventh turn or grant a second **separate** free single-tile swap. Tile transformations always trade with the finite bag.
+
+See the [current complete item catalog and playtesting guide](docs/DRIFT_RULES.md), including Step Up/Down, Operator Shift, Wildcard Hunt, Double Reactor and Power Surge.
+
+The original Salvage Bay modules included:
 - **Tile upgrades** — Ionised Sevens (+3 points for new sevens) and Operator Core (+3 for new multiplication/division tiles).
 - **Equation upgrades** — Crosslink Circuit (+5 for connected equations), Longwave Coil (+7 for equations at least seven cells long) and Echo Generator (+2 per newly played physical tile after the fourth).
 - **Board upgrade** — Amplifier Array upgrades fresh 2T squares to 3T.

@@ -1,84 +1,81 @@
-# The Drift — Pass D rulebook and classroom quality checks
+# The Drift — illustrated equipment, Salvage Bay and playtesting guide
 
-**Status:** implemented as the separate roguelike mode on the Pass D feature branch. These costs, targets and bonuses are provisional game-balance values to test with students; no real classroom playtest is claimed here.
+The Drift is a self-contained, single-device roguelike, distinct from Sector Run, Local Match and Online Rooms. All actions remain client-side and do not send Worker requests. Equipment lasts until used or the current run ends; a failed sector ends the run and resets Flux and equipment.
 
-## Modes and saved progress
+## The loadout (Pass F)
 
-Choose between **Sector Run** and **The Drift** via the `◈ MODE` button. Both use exactly the same BIDMAS validator, unscored tile movement, physical rack and finite tile bag. They have independent local browser saves and therefore do not overwrite each other. Sector Run is repeatable classroom practice; The Drift is a run-based challenge with permanent upgrades lasting **only for the duration of that run**.
+**Permanent equipment:** four large illustrated slots in the existing *left-side Mission Telemetry* panel; these items remain installed through the run. The 13×13 board is unchanged in size, bonus pattern and location. Each slot can be inspected by mouse or keyboard; its tooltip and details show the complete rule. A legacy saved run with more than four upgrades can finish, but cannot install another.
 
-In The Drift, reach the sector energy target within six turns. Every completed sector awards Flux and opens the **Salvage Bay**. Buy upgrades, then advance to a new board. If you do not reach a target by the final turn, the run ends and you can start a new Drift without carrying over upgrades or currency. A refresh during the completion animation resumes the same won/lost phase; it must not duplicate Flux or score.
+**Temporary power-ups:** two independent illustrated slots in the *right-side Command Console*. Tap or select a score booster to **arm** it for the next correctly scored equation, or select a tile tool and tap a physical tile in your rack. A tile tool is only consumed if a matching physical replacement exists in the finite bag. None of these transformations spends a turn. A rejected mathematical equation does not consume a score booster. Existing older saves with multiple Pulse Capacitors can be resumed.
 
-## Flux economy
+**Slot counts:** strictly four purchases of permanent modules and two held temporaries. Purchased upgrades are nonrefundable; duplicates of permanent equipment are disallowed. Temporary powers can be purchased again after use.
 
-On a successful sector:
+## Permanent module catalog
 
-```
-Flux earned = 4 + floor(sector energy / 30)
-              + (6 − turns used)
-              + (3 if Flux Recycler is equipped)
-```
+Category tags are shown prominently in the Salvage Bay; board-space, tile-type and equation-length improvements deliberately belong to separate categories.
 
-This rewards correct, efficient play, but also guarantees basic shop currency for a six-turn victory. It is based on **sector score**, not cumulative run score, and paid **only once per cleared sector**. The shop can be visited and purchases made multiple times before proceeding. Unspent Flux rolls forward to subsequent sectors. Each purchased item is applied instantly to the **future** play rules; it does not retroactively change previous sector scores.
+| Category | Module | Cost | Effect |
+|---|---|---:|---|
+| Tile type | Ionised Sevens | 4 | New physical 7 adds 3 base tile points; tile multipliers apply |
+| Tile type | Operator Core | 5 | New physical × or ÷ adds 3 base points; tile multipliers apply |
+| Tile type | Oddity Coil | 5 | New physical odd digit adds 2 base points |
+| Board space | Amplifier Array | 7 | Newly played 2T squares act as 3T |
+| Board space | Second Spark | 7 | Once per premium cell each sector, crossing a locked premium tile reactivates its tile/equation multiplier |
+| Board space | Core Igniter | 5 | +6 energy on the sector's first correctly scored equation |
+| Length bonus | Longwave Coil | 5 | +7 energy when equation spans 7+ squares |
+| Length bonus | Echo Generator | 6 | +2 per newly placed physical tile after the fourth |
+| Length bonus | Stretch Matrix | 6 | +2 per equation square beyond the fifth, in addition to base length scoring |
+| Economy | Flux Recycler | 7 | +3 Flux on each successful sector completion |
+| Economy | Precision Dividend | 5 | +2 Flux per successfully scored move using no new wildcards |
+| Economy | Premium Prospect | 6 | +1 Flux for each premium square newly activated during a valid scored move |
+| Rack | Wildcard Beacon | 6 | Favour at least 2 wildcard tiles when drawing, subject to supply |
+| Rack | Operator Reserve | 5 | Favour × and ÷ among operator draws when available |
+| Rack | Rack Extension | 8 | Drift rack becomes **6 number-kind + 3 operator-kind = 9 tiles** |
+| Tactics | Exchange License | 6 | A second **separate free single-tile swap** per turn; no multi-tile swap is free |
+| Tactics | Time Dilator | 8 | A seventh turn is available in each Drift sector |
+| Connection | Crosslink Circuit | 5 | +5 flat energy for equations connecting to an existing locked tile |
+| Defence | Leak Shield | 7 | Negate the 15% energy penalty of Power Leak on affected sectors |
 
-### Shop stock
+A physical wildcard is still worth zero tile points regardless of its chosen face. Length, crossing, Core Igniter and Pulse bonuses are flat energy; scoring tiles and their boosts are multiplied by applicable board bonuses.
 
-The Salvage Bay shows **four rotating permanent upgrade offers** after each sector, plus a Pulse Capacitor card. New purchases replace a permanent offer with another unowned item where available. Every permanent upgrade can be bought once.
+## Temporary power-ups
 
-| Upgrade | Cost | Actual effect |
-|---|---:|---|
-| Ionised Sevens | 4 | Nonblank 7 tiles **you newly place** earn +3 base tile points, multiplied by their current tile square |
-| Crosslink Circuit | 5 | +5 flat energy when an equation intersects a previously locked tile |
-| Longwave Coil | 5 | +7 flat energy for equations at least seven board cells long |
-| Wildcard Beacon | 6 | Newly completed racks seek **two wildcards** while the finite bag permits |
-| Operator Core | 5 | Nonblank × and ÷ tiles **you newly place** earn +3 base tile points |
-| Amplifier Array | 7 | 2T squares act as 3T for newly placed physical tiles; board labels show 3T |
-| Echo Generator | 6 | +2 flat energy for each physical tile newly placed after the fourth |
-| Operator Reserve | 5 | New racks seek **two operator-capable tiles** while the bag permits |
-| Flux Recycler | 7 | +3 additional Flux on future sector wins |
-| Leak Shield | 7 | Removes the Power Leak penalty on any sector with that anomaly |
-| Pulse Capacitor | 3 | **Single-use:** +12 energy on next mathematically valid scored equation, then one charge is consumed; hold up to three |
+| Type | Power | Cost | Activation |
+|---|---|---:|---|
+| Score boost | Pulse Capacitor | 3 | +12 flat energy to the next correctly scored equation |
+| Score boost | Double Reactor | 7 | Double the next equation's final energy total |
+| Score boost | Power Surge | 5 | Add 50% of the next equation's final energy, rounded down |
+| Tile swap | Step Up | 3 | Select a physical digit 0–8; trade it for that digit +1 in the number bag |
+| Tile swap | Step Down | 3 | Select a physical digit 1–9; trade it for that digit −1 in the number bag |
+| Tile swap | Operator Shift | 3 | Select an operator; swap + ↔ × or − ↔ ÷ using the operator bag |
+| Tile swap | Wildcard Hunt | 5 | Replace one selected rack tile with an available wildcard **from the same bag** |
+| Tile swap | Recycle Tile | 2 | Replace one rack tile with a different physical tile from its original bag |
 
-Wildcards are **zero-point tiles** even when they represent a boosted 7 or operator. The capacitor is only consumed on a valid scoring action, never on a rejected equation. Multiple capacitors queue for later valid equations (at most one triggers on any equation). They are available after every victory while carrying capacity and funds permit.
+**Conservation:** Tile powers always exchange a physical tile with a tile in the relevant bag. They never invent or duplicate a tile or change its points/ID. If the desired replacement has run out, nothing is consumed. A score booster is applied only on successful mathematical validation, and the committed score is saved before the animation begins. The scoring ceremony includes the temporary final-score multiplier as a separate stage so its total equals the authoritative score.
 
-## Sector anomalies
+The legacy Pulse Capacitor's automatic next-equation activation remains supported; tap a different stored score booster to choose which effect should fire first.
 
-Every **third** sector contains a boss anomaly. These rotate deterministically, so players can learn and plan for later encounters.
+## Salvage Bay shop
 
-| Sector sequence | Anomaly | Gameplay consequence |
-|---|---|---|
-| 3, 15, 27, … | **Power Leak** | Lose 15% of each scored equation's energy (rounded down). Leak Shield cancels it |
-| 6, 18, 30, … | **Signal Jam** | Newly used 2E squares do not multiply an equation. Squares display `JAM` |
-| 9, 21, 33, … | **Critical Reactor** | Sector target increases by 20%, rounded up |
-| 12, 24, 36, … | **Tile Static** | 3T squares score as 2T for newly placed tiles; displayed as 2T |
+The shop opens only on completing a sector. It shows **four rotating permanent offers** and **three temporary offers** (always Pulse Capacitor plus two rotating other powers), grouped into their own sections with visible categories and costs. Buying does not use a turn. Bought permanent modules leave the pool. You may buy several upgrades per shop as long as there are free slots and enough Flux. The normal scoring engine, unchanged 13×13 board and original four-room / Solo modes remain compatible.
 
-Multipliers and upgrade boosts are applied before a Power Leak penalty. A correct equation is always validated by the same BIDMAS parser whether an anomaly is present or not. The preview uses the **same scoring function as submission**, including installed upgrades, capacitors and active anomalies, so the displayed possible score is trustworthy without giving away whether the maths is correct.
+On clearing a sector, Flux reward is
 
-## Balanced racks and conservation
+`4 + floor(sector energy / 30) + max(0, 6 - turns used) + (Flux Recycler ? 3 : 0)`.
 
-The starting bag has 151 physical tiles (digits, operators and the three wildcard types). **No roguelike upgrade creates or duplicates a tile**: bonus rack rules select a suitable existing tile from the shuffled bag when available. Ordinary minimum rack composition is four number-capable, one operator-capable and one wildcard. Operator Reserve and Wildcard Beacon increase those targets without removing any tiles already held. If the necessary types are exhausted, the rack simply fills from what remains. Free swaps for all-number or all-operator racks still work.
+This currency carries to subsequent sectors. Precision Dividend and Premium Prospect also award Flux *immediately on valid scored moves*. Successful sector completion grants the end reward once, even if reloaded during animation.
 
-## Student experience and readability
+## Anomalies
 
-- Mode selection is in the header; the board remains the large centre element and there is no second page/scrolling requirement on laptop.
-- The left panel displays current Flux and the equipped build; the right panel shows the active anomaly with the important changed rule.
-- The shop uses short cards, immediately visible prices and descriptions, with unaffordable purchases disabled.
-- Anomalies that change premium-square values update board labels, not just invisible scoring.
-- Score breakdown explicitly shows updated base points, equation multipliers, equipment bonuses and anomaly losses. The mathematical symbols never receive small point-score overlays on the board.
-- A Drift loss cannot be retried with upgrades retained. The loss report provides a new-run action; the independent Sector Run save is unaffected.
+Boss anomalies still occur every third sector: Power Leak (−15%), Signal Jam (2E suppression), Critical Reactor (+20% target), Tile Static (3T acts as 2T). Board-space reactivation is tracked per individual square and resets when entering the next sector. All score previews use the same power-up engine; the exact mathematical truth of an equation is still checked only when submitting.
 
-## Testing checklist
+## Quality checklist
 
-1. On a new browser, play an opening Sector Run equation, switch to The Drift, and switch back again. Confirm the Sector Run's board and scores are unchanged.
-2. In The Drift, win a sector and buy a permanent upgrade. Refresh in the shop. Confirm both Flux and purchase are preserved without a duplicate win reward.
-3. Purchase a capacitor. Try an incorrect equation: confirm the charge stays available. Correct and submit it: confirm exactly one charge is consumed and +12 was incorporated in the displayed potential and actual energy score.
-4. Use a 7 on a 2T square with Ionised Sevens or an operator on a 2T square with Operator Core. Confirm both original tile and upgrade values receive the active multiplier.
-5. Equip Amplifier Array; a 2T square must visibly become 3T. In a Signal Jam sector, a 2E square should visibly show JAM and not multiply energy.
-6. Start sectors 3, 6, 9 and 12; verify that each anomaly text and actual mathematical scoring or target agree.
-7. Reach the final turn without meeting a Drift sector target. Confirm the run ends, the only restart creates a new unequipped run, and the other mode's save survives.
-8. Test on 1366×768 and 1280×720 laptops, 768×1024 portrait tablet, and a 390×844 phone. The board, rack and critical game actions should remain readable and accessible without unintended horizontal scrolling.
-
-The automated Node suite tests exact mathematical scoring, currency conservation, duplicate purchase safeguards, anomaly rotation, shop offers and loss/win save validation. The Chromium browser suite tests switching, real scoring, purchase/reload, starter-sector completion, boss visibility, capacitors and permadeath. **Human playtesting is still required** to calibrate the economy and check whether the choices feel meaningfully different.
-
-## After Pass D
-
-**Pass E:** competitive multiplayer. Begin with 2–4 player local pass-and-play (private rack handovers and end-of-game leftover-tile deductions), then online rooms with server-authoritative turns and reconnect behaviour. Keep roguelike upgrades separate from competitive rules.
+- Verify the four permanent SVG pieces and two temporary SVG pieces remain visible without obscuring any board square on a 1366×768 laptop and on portrait phones.
+- Verify the extra rack slot displays *6 numbers + 3 operators* without reducing board size or overflowing, and the seventh-turn upgrade enables precisely one extra turn.
+- Verify one free single-tile swap normally; with Exchange License, two **separate** free one-tile swaps, never a free multi-tile swap. Sector Run and multiplayer should be unaffected.
+- Verify Step Up 3→4 when a physical 4 is in the bag, rejection when none remain, and the exact total of 151 physical tile IDs before and after.
+- Verify a score booster is unchanged by a mathematically incorrect submission, consumed after an accepted score, and restored after a page reload.
+- Verify Second Spark cannot repeatedly harvest one premium square in a sector, and resets in the next sector.
+- Verify no more than four permanent purchases or two temporary power-ups; check zero-cost/malformed purchases, replay safety, and save corruption validation.
+- Verify the existing scoring animation, shop navigation on narrow screens, Sector Run and multiplayer regression tests.

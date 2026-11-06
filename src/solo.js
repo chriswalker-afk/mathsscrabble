@@ -2,7 +2,7 @@
 import {
  SIZE,HAND_SIZE,NUMBER_SLOTS,OPERATOR_SLOTS,tilePool,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
-import {ROGUE_SAVE_KEY,targetForSector,validRogueState} from './rogue.js';
+import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -20,7 +20,8 @@ const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator
 export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
  const bag=[...sourceBag],rack=[...held];
  const minBlanks=options.minBlanks===2?2:1;
- for(const [pool,target] of [['numbers',NUMBER_SLOTS],['operators',OPERATOR_SLOTS]]){
+ const numberTarget=options.numberSlots===6?6:NUMBER_SLOTS;
+ for(const [pool,target] of [['numbers',numberTarget],['operators',OPERATOR_SLOTS]]){
    let count=rack.filter(t=>tilePool(t)===pool).length;
    while(count<target){
      let at=rack.filter(isBlank).length<minBlanks?
@@ -89,9 +90,9 @@ function validReportMove(move){
  return move&&typeof move==='object'&&
    typeof move.equation==='string'&&move.equation.length>0&&move.equation.length<=80&&
    /^[0-9+−×÷=() ]+$/.test(move.equation)&&
-   validInteger(move.points,0,500000)&&validInteger(move.turn,1,6)&&
-   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE)&&
-   validInteger(move.wildcards,0,HAND_SIZE)&&validInteger(move.crossing,0,10)&&
+   validInteger(move.points,0,500000)&&validInteger(move.turn,1,7)&&
+   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE+1)&&
+   validInteger(move.wildcards,0,HAND_SIZE+1)&&validInteger(move.crossing,0,10)&&
    Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
    move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
@@ -100,18 +101,18 @@ function validStats(stats){
    validInteger(stats.attempts,0,10000)&&
    validInteger(stats.freeExchanges,0,10000)&&
    validInteger(stats.paidExchanges,0,10000)&&
-   Array.isArray(stats.moves)&&stats.moves.length<=6&&stats.moves.every(validReportMove);
+   Array.isArray(stats.moves)&&stats.moves.length<=7&&stats.moves.every(validReportMove);
 }
 function validReport(report){
  return report&&typeof report==='object'&&
    validInteger(report.sector,1,MAX_SECTORS)&&
    validInteger(report.score,0,10000000)&&
    validInteger(report.target,1,10000000)&&
-   validInteger(report.turnsUsed,1,6)&&typeof report.success==='boolean'&&
+   validInteger(report.turnsUsed,1,7)&&typeof report.success==='boolean'&&
    validInteger(report.earned,0,10000000)&&validInteger(report.short,0,10000000)&&
-   validInteger(report.equations,0,6)&&validInteger(report.invalidAttempts,0,10000)&&
+   validInteger(report.equations,0,7)&&validInteger(report.invalidAttempts,0,10000)&&
    validInteger(report.freeExchanges,0,10000)&&validInteger(report.paidExchanges,0,10000)&&
-   Array.isArray(report.moves)&&report.moves.length<=6&&report.moves.every(validReportMove);
+   Array.isArray(report.moves)&&report.moves.length<=7&&report.moves.every(validReportMove);
 }
 function validProgress(progress){
  return progress&&typeof progress==='object'&&
@@ -129,20 +130,22 @@ function validSnapshot(data){
  if(!['sector','rogue'].includes(mode))return false;
  if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
  if(mode==='sector'&&data.rogue!=null)return false;
- if(!validInteger(data.freeSwapTurn??0,0,6))return false;
+ const limit=mode==='rogue'?turnLimit(data.rogue):6;
+ const maxRack=mode==='rogue'?rackSlots(data.rogue):HAND_SIZE;
+ if(!validInteger(data.freeSwapTurn??0,0,limit))return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
-    !validInteger(data.turn,1,6)||
+    !validInteger(data.turn,1,limit)||
     !validInteger(data.score,0,10000000)||
     !['playing','won','lost'].includes(data.phase))return false;
  if(!Array.isArray(data.board)||data.board.length!==SIZE*SIZE||
     !data.board.every(tile=>tile===null||validTile(tile,'placed')))return false;
- if(!Array.isArray(data.rack)||data.rack.length>HAND_SIZE||!data.rack.every(t=>validTile(t,'supply')))return false;
+ if(!Array.isArray(data.rack)||data.rack.length>maxRack||!data.rack.every(t=>validTile(t,'supply')))return false;
  if(!Array.isArray(data.bag)||data.bag.length>151||!data.bag.every(t=>validTile(t,'supply')))return false;
  if(!data.pending||typeof data.pending!=='object'||Array.isArray(data.pending))return false;
  const entries=Object.entries(data.pending);
- if(entries.length>HAND_SIZE+3)return false;
- if(!Array.isArray(data.placementOrder)||data.placementOrder.length>HAND_SIZE+3)return false;
+ if(entries.length>maxRack+3)return false;
+ if(!Array.isArray(data.placementOrder)||data.placementOrder.length>maxRack+3)return false;
  if(!entries.every(([i,t])=>/^(0|[1-9]\d*)$/.test(i)&&
       Number(i)<SIZE*SIZE&&data.board[Number(i)]===null&&validTile(t,'placed')))return false;
  if(!data.placementOrder.every(i=>validInteger(i,0,SIZE*SIZE-1)&&
@@ -162,8 +165,8 @@ function validSnapshot(data){
  if(data.progress.completed.some(x=>x.sector>data.sector||(x.sector===data.sector&&data.phase!=='won')))return false;
  const target=targetForSector(mode,data.sector);
  if(data.phase==='won'&&data.score<target)return false;
- if(data.phase==='lost'&&(data.score>=target||data.turn!==6))return false;
- if(data.phase==='playing'&&(data.score>=target||data.turn>6))return false;
+ if(data.phase==='lost'&&(data.score>=target||data.turn!==limit))return false;
+ if(data.phase==='playing'&&(data.score>=target||data.turn>limit))return false;
  if(data.phase!=='playing'&&entries.length>0)return false;
  return true;
 }

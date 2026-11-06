@@ -34,6 +34,9 @@ try{
  assert.equal(await page.locator('#rogue-summary').isVisible(),true);
  assert.equal(await page.locator('#flux-count').textContent(),'0');
  assert.equal(await page.locator('#anomaly-banner').isVisible(),false);
+ const baseBoardWidth=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
+ assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
+ assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
  const firstDrift=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
  assert.ok(firstDrift,'a different key saves the Drift');
  assert.equal(JSON.parse(firstDrift).mode,'rogue');
@@ -58,7 +61,7 @@ try{
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
- assert.equal(await page.locator('.salvage-card').count(),5);
+ assert.equal(await page.locator('.salvage-card').count(),7);
  await page.setViewportSize({width:390,height:844});
  const shopOnPhone=await page.evaluate(()=>{
    const actions=document.querySelector('#modal-actions').getBoundingClientRect();
@@ -77,21 +80,29 @@ try{
  await page.locator('.salvage-card').first().locator('button').click();
  assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-4);
  assert.ok(fluxBefore>=7,'the early-win bonus allows buying a permanent and single-use upgrade');
- await page.locator('.salvage-consumable button').click();
+ await page.locator('.salvage-consumable button').first().click();
  assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-7);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
  const installed=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
  assert.deepEqual(installed.rogue.upgrades,['ion-seven']);
+ assert.equal(await page.locator('#permanent-slots .equip-svg').count(),1);
+ assert.equal(await page.locator('#temporary-slots .equip-svg').count(),1);
+ assert.equal(await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width),baseBoardWidth,
+   'equipment must not reduce the board width');
  assert.equal(installed.rogue.pulse,1);
  assert.equal(installed.rogue.pulseBought,1);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
  assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-7));
- assert.match(await page.locator('.salvage-consumable').textContent(),/1\/3/);
+ assert.match(await page.locator('.salvage-consumable').first().textContent(),/1\/2/);
  assert.equal(await page.locator('.salvage-card').filter({hasText:'Ionised Sevens'}).count(),0);
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
+ assert.equal(await page.locator('#permanent-count').textContent(),'1 / 4');
+ assert.equal(await page.locator('#temporary-count').textContent(),'1 / 2');
+ assert.equal(await page.locator('#permanent-slots .equipment-slot:not(.is-empty)').count(),1);
+ assert.equal(await page.locator('#temporary-slots .equipment-slot:not(.is-empty)').count(),1);
  assert.ok(await page.locator('#rack .tile').count()===8);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
@@ -186,8 +197,34 @@ try{
          width:button.getBoundingClientRect().width}))};
  });
  assert.ok(mobile.scrollWidth<=mobile.width+3,'Drift header must not cause horizontal scrolling');
+ assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
+ assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
+ assert.equal(await page.locator('#rogue-summary').isVisible(),true);
+ await page.screenshot({path:'/tmp/equanova-drift-equipment-mobile.png',fullPage:true});
  assert.ok(mobile.topActions.every(x=>x.right<=mobile.width+3&&x.width>=25),'all mode and utility buttons remain accessible');
  assert.ok(mobile.scoreBottom<mobile.width*3,'score is visible without scrolling');
+
+ // A ninth rack tile and seventh turn do not reduce the standard 13x13 board.
+ const phoneBoardBefore=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
+ await page.evaluate(()=>{
+   const key='equa-nova.drift.v1';
+   const save=JSON.parse(localStorage.getItem(key));
+   const at=save.bag.findIndex(t=>!t.blank&&/^[0-9]$/.test(t.value));
+   if(at<0)throw Error('No number tile to extend rack');
+   save.rack.push(save.bag.splice(at,1)[0]);
+   save.rogue.upgrades=['wide-rack','extra-turn'];
+   save.rogue.earned=16;save.rogue.spent=16;save.rogue.flux=0;
+   localStorage.setItem(key,JSON.stringify(save));
+ });
+ await page.reload({waitUntil:'networkidle'});
+ assert.equal(await page.locator('#rack .tile').count(),9,'expanded rack needs nine physical tiles');
+ assert.equal(await page.locator('#rack-count').textContent(),'9 / 9');
+ assert.equal(await page.locator('#turn').textContent(),'1 / 7');
+ assert.equal(await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width),
+   phoneBoardBefore,'extra rack slot must not shrink the board');
+ const widthAfter=await page.evaluate(()=>document.documentElement.scrollWidth);
+ assert.ok(widthAfter<=390+3,'expanded rack must fit on a narrow phone');
+ await page.screenshot({path:'/tmp/equanova-drift-expanded-rack-phone.png',fullPage:true});
  assert.deepEqual(errors,[]);
  console.log('Drift browser passed: mode selection, shop purchase, double-safe rewards, restore, anomaly, separate saves and permadeath.');
 }finally{
