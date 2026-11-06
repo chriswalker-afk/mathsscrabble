@@ -348,7 +348,7 @@ function renderRack(){
      isDrift()?freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:state.freeSwapTurn!==state.turn);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
-   eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
+   eligible?'⇄ FREE TILE SWAP'+(isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?' ×2':''):'⇄ SWAP TILES';
  $('swap-btn').classList.toggle('free-exchange',Boolean(eligible));
  $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
@@ -585,7 +585,9 @@ function render(){
  if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
  else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
  else if(state.swapping)coach.textContent=
-   'Choose one tile for a free swap (once per turn), or several to spend your turn.';
+   isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
+     'Exchange License: two separate free one-tile swaps this turn.':
+     'Choose one tile for a free swap (once per turn), or several to spend your turn.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
    state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
  else if(placed&&state.preview.ready)coach.textContent=
