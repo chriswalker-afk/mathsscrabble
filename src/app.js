@@ -1012,14 +1012,14 @@ function showShop(){
  const intro=`${isBossSector(state.sector)?zoneVictoryMarkup(state.rogue,state.sector):''}<div class="salvage-intro">
    <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
    <div><strong>SECTOR ${state.sector} STABILISED</strong>
-   <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
+   <p>+${state.rogue.lastReward} Flux. Choose your build: only four ship systems and two one-use mission gadgets fit on the reactor. Installed ship systems last until this Drift run ends.</p></div>
    </div>
-   <div class="salvage-loadout"><strong>PERMANENT ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
-     <strong>TEMPORARY ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
-   <div class="salvage-section-heading">PERMANENT MODULES <small>FOUR ROTATING OFFERS</small></div>
-   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Permanent Salvage Bay upgrades"></div>
-   <div class="salvage-section-heading">TEMPORARY POWER-UPS <small>USE ONCE · UP TO TWO HELD</small></div>
-   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Temporary Salvage Bay powers"></div>
+   <div class="salvage-loadout"><strong>SHIP SYSTEMS ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
+     <strong>GADGETS ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
+   <div class="salvage-section-heading">SHIP SYSTEMS <small>FOUR ROTATING OFFERS</small></div>
+   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Ship Systems offered in the Salvage Bay"></div>
+   <div class="salvage-section-heading">MISSION GADGETS <small>USE ONCE · UP TO TWO HELD</small></div>
+   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Mission Gadgets offered in the Salvage Bay"></div>
    <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap equipped artwork during play for details or activation.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
@@ -1054,7 +1054,7 @@ function showShop(){
      if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
      state.rogue=result.rogue;persistRun();render();showShop();
      $('salvage-feedback').textContent=result.reason+
-       (temporary?'. Stored in your temporary power-up slots.':
+       (temporary?'. Stored in your Mission Gadget slots.':
          '. Equipped for the remainder of this run.');
    };
    card.append(tag,icon,title,description,buy);return card;
@@ -1461,7 +1461,7 @@ function showDriftIntro(){
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
        <p>Every sector uses the same BIDMAS rules and premium grid. Normally there are six turns and an eight-tile rack; equipment can extend either.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
@@ -1488,6 +1488,9 @@ function restoreMode(mode,{initial=false}={}){
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
    if(state.ended)showSectorOutcome();
+   const requestedKit=new URLSearchParams(location.search).get('tiles');
+   if(TILE_SET_BY_ID[requestedKit]&&requestedKit!==state.tileSet)
+     confirmTileSetChange(requestedKit);
  }else{
    state.tileSet=normalizeTileSet(new URLSearchParams(location.search).get('tiles')||storage?.getItem(TILE_SET_STORAGE_KEY));
    state.rogue=mode==='rogue'?makeRogueState(state.tileSet):null;
@@ -1501,6 +1504,46 @@ function restoreMode(mode,{initial=false}={}){
  }
 }
 // Mode selection now lives on the dedicated home page, not a duplicate dialog.
+function startChosenTileSet(id){
+ state.tileSet=normalizeTileSet(id);
+ try{storage?.setItem(TILE_SET_STORAGE_KEY,state.tileSet);}catch{/* optional storage */}
+ freshSector(1,{newRun:true});
+ announce(TILE_SET_BY_ID[id].title+' tile kit engaged. New shuffled supply ready.');
+}
+function confirmTileSetChange(id){
+ const set=TILE_SET_BY_ID[id];
+ if(!set)return;
+ if(state.tileSet===id){
+   announce(set.title+' is already the active tile kit.');
+   return;
+ }
+ showModal('CHANGE PHYSICAL TILE KIT',set.short+' · '+set.title,
+   '<p>Changing mathematical tiles starts a fresh '+(isDrift()?'Drift':'Sector Run')+
+   ' run. Your current board, score, '+(isDrift()?'ship systems and Flux':'progress')+
+   ' will be replaced.</p><p><strong>New kit:</strong> '+set.desc+'</p>'+
+   (set.brackets?'<p>Brackets come as a matched ( ) pair and occupy two extra rack positions.</p>':''),
+   [{text:'KEEP CURRENT RUN'},{
+     text:'START WITH '+set.short.toUpperCase()+' →',primary:true,fn:()=>startChosenTileSet(id)
+   }]);
+}
+function showTileSetMenu(){
+ if(isLocal()||state.busy)return;
+ const body='<p class="kit-dialog-explain">Choose the mathematical tiles used for the whole run. New sets preserve the same board and original 5 number / 3 operator balance; rational kits add two bracket tiles.</p>'+
+   '<div class="kit-dialog-grid" role="group" aria-label="Choose a maths tile kit">'+
+   TILE_SETS.map(kit=>'<button class="kit-dialog-card'+(kit.id===state.tileSet?' is-current':'')+
+     '" type="button" data-kit-choice="'+kit.id+'" aria-pressed="'+(kit.id===state.tileSet)+'">'+
+     '<span>'+kit.tier+' · '+kit.short.toUpperCase()+'</span>'+
+     '<strong>'+kit.title+'</strong>'+
+     '<em>'+kit.sample+'</em><small>'+kit.operations+'</small>'+
+     '</button>').join('')+'</div>'+
+   '<p class="kit-dialog-explain">The advanced kit supports integer powers from −8 to 8, exact rational square roots and factorials from 0! to 8!.</p>';
+ showModal('CHOOSE YOUR MATHS KIT','Four levels of equations',body,
+   [{text:'BACK TO BOARD',primary:true}]);
+ document.querySelectorAll('[data-kit-choice]').forEach(button=>{
+   button.onclick=()=>confirmTileSetChange(button.dataset.kitChoice);
+ });
+}
+$('tile-set-btn').onclick=showTileSetMenu;
 function showModeMenu(){
  window.location.assign('./index.html');
 }
