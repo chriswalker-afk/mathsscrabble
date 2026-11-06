@@ -42,7 +42,13 @@ try{
     const centered=await snapshot();
     assert.ok(centered.scrollLeft<panned.scrollLeft,'centre command must restore board focus');
   }
-  const visible=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+  const visible=await page.evaluate(()=>({
+    width:innerWidth,scroll:document.documentElement.scrollWidth,
+    overshooting:[...document.querySelectorAll('body *')].map(el=>({el,right:el.getBoundingClientRect().right}))
+      .filter(({right})=>right>innerWidth+3).slice(0,7)
+      .map(({el,right})=>({element:el.tagName.toLowerCase()+'#'+el.id+'.'+el.className,right:Math.round(right)}))
+  }));
+  console.log('Zoom layout',size,visible);
   assert.ok(visible.scroll<=visible.width+3,'zoom must not add page-wide scrolling');
   assert.deepEqual(errors,[]);
   await page.close();
