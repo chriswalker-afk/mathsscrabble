@@ -43,7 +43,7 @@
       <span class="cosmos-star cosmos-star-c" aria-hidden="true">✧</span>
       <div class="alien-art" id="alien-art" aria-label="Your alien, full body"></div>
       <span class="stage-serial">SPECIMEN / CUSTOM</span>
-      <span class="stage-coordinates">X 160 · Y 180</span>
+      <span class="stage-coordinates" id="alien-personality">FRIENDLY EXPLORER</span>
     </div>
     <div class="scale-strip" aria-label="How your alien will appear in the game">
       <div class="scale-title"><strong>LOOKS GOOD AT ANY SIZE</strong><span>IN-GAME PREVIEWS</span></div>
@@ -77,6 +77,13 @@
     <section id="editor-options" class="editor-options" role="tabpanel" aria-labelledby="tab-head" tabindex="0">
       <p>Loading the alien laboratory…</p>
     </section>
+    <nav class="category-journey" aria-label="Move between alien customisation categories">
+      <button id="alien-prev-section" class="journey-button" type="button" disabled aria-label="Previous alien category">← PREVIOUS</button>
+      <div class="journey-position"><span id="alien-journey-label">HEADS · 1 OF 7</span>
+        <div id="alien-journey-dots" class="journey-dots" aria-hidden="true"></div>
+      </div>
+      <button id="alien-next-section" class="journey-button journey-next" type="button" disabled>NEXT: FACE →</button>
+    </nav>
     <div class="workshop-footer">
       <div class="history-actions">
         <button id="alien-undo" class="icon-control" type="button" disabled title="Undo last change (Ctrl+Z)">↶ <span>UNDO</span></button>
