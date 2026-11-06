@@ -82,6 +82,12 @@ Select any of the **four full-size, keyboard-accessible mode cards** on the home
 
 **The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
 
+### The Drift: Galactic Zones and Bosses
+
+The roguelike now progresses through **named three-sector zones**. A random boss is chosen and saved at the start of each zone, with its showdown at sectors **3, 6, 9, ...**. A permanent visible three-node map and expanded **ZONE MAP** show the route, completed zones and boss artwork without reducing the 13×13 playing grid.
+
+The twelve boss encounters can seal addition or subtraction from fresh bag draws, block board cells, create −6 energy rifts, neutralize 7 tiles, demand a random rack tile, jam multipliers, increase the target, limit equation length or drain energy. Each effect is temporary to its boss sector. See the [full boss roster, map and rule guide](docs/DRIFT_ZONES.md).
+
 ### Illustrated equipment loadouts (The Drift)
 
 The Drift now has **four permanent equipment slots** in the existing left-side telemetry panel and **two temporary power-up slots** in the right-side command panel, each with its own original SVG artwork. No board squares are obscured or resized. Each item can be inspected; temporary score boosters are armed from their slot, while tile tools let you select a rack tile. Upgrades expire at the end of the current Drift run.
