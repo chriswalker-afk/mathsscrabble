@@ -12,7 +12,7 @@ const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
 const state={
  view:null,code:null,token:null,pending:{},order:[],rackOrder:[],
  selected:null,swapping:false,swapIds:new Set(),busy:false,
- ws:null,connection:'offline',lastRevision:0,reconnectDelay:2000,
+ ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
  reconnectTimer:null,refreshing:false,ceremony:null,focusIndex:pos(CENTER,CENTER),
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
 };
@@ -185,7 +185,7 @@ function connectSocket(){
  state.ws=ws;
  ws.onopen=()=>{
    if(state.ws!==ws)return;
-   state.reconnectDelay=2000;
+   state.reconnectDelay=2500;
    setConnection('live');
  };
  ws.onmessage=event=>{
@@ -206,7 +206,7 @@ function connectSocket(){
      if(!state.code||!state.token)return;
      connectSocket();void refreshRoom();
    },state.reconnectDelay);
-   state.reconnectDelay=Math.min(20000,state.reconnectDelay*1.6);
+   state.reconnectDelay=Math.min(60000,state.reconnectDelay*1.75);
  };
 }
 function clearSession(){
