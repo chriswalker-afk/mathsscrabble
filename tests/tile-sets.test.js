@@ -102,6 +102,7 @@ test('advanced operations use exact BIDMAS: powers, roots and factorials',()=>{
  for(const values of [
    ['√','2','=','1'],['3','!','=','5'],['9','!','=','1'],
    ['2','^','9','=','5','1','2'],['√','−3','=','0'],
+   ['0','^','0','=','1'],['3','!','!','=','7','2','0'],
    ['2','^','1/2','=','1']
  ])assert.throws(()=>checkEquation(values));
 });
