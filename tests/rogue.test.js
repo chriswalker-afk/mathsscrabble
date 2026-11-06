@@ -4,7 +4,7 @@ import {makeBag,makeTile,bonusAt,pos,nextTarget,scoreMove,validateMove,BLANK_ANY
 import {dealPlayableRack,saveRun,loadRun,freshStats,freshProgress,sectorReport,completeProgress} from '../src/solo.js';
 import {
  ROGUE_SAVE_KEY,ROGUE_ITEMS,ROGUE_ITEM_BY_ID,makeRogueState,anomalyForSector,
- targetForSector,shopOffers,purchaseUpgrade,rogueRackOptions,fluxReward,
+ targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,fluxReward,
  rewardSector,scoreRogueMove,validRogueState
 } from '../src/rogue.js';
 
@@ -178,4 +178,40 @@ test('corrupt rogue wallets and upgrades cannot resume',()=>{
   store.setItem(ROGUE_SAVE_KEY,JSON.stringify(invalid));
   assert.equal(loadRun(store,'rogue'),null);
  }
+});
+
+test('single-use capacitor is purchased with Flux and consumed exactly once',()=>{
+ const reward=rewardSector(makeRogueState(),1,100,1);
+ assert.ok(reward.rogue.flux>=10);
+ let after=purchasePulse(reward.rogue,1);
+ assert.equal(after.ok,true);
+ assert.equal(after.rogue.pulse,1);
+ assert.equal(after.rogue.pulseBought,1);
+ assert.equal(after.rogue.flux,reward.rogue.flux-PULSE_ITEM.cost);
+ assert.equal(validRogueState(after.rogue,1,'won'),true);
+ const {board,pending,move}=moveAt(['8','+','4','=','1','2'],3);
+ const plain=scoreRogueMove(board,pending,move,reward.rogue,1);
+ const charged=scoreRogueMove(board,pending,move,after.rogue,1);
+ assert.equal(charged.total-plain.total,12);
+ after={...after,rogue:consumePulse(after.rogue)};
+ assert.equal(after.rogue.pulse,0);
+ assert.equal(after.rogue.pulseUsed,1);
+ assert.equal(validRogueState(after.rogue,2,'playing'),true);
+ assert.equal(scoreRogueMove(board,pending,move,after.rogue,2).total,
+   scoreRogueMove(board,pending,move,reward.rogue,2).total);
+ assert.equal(consumePulse(after.rogue),after.rogue,'empty capacitor cannot be used twice');
+});
+test('a shop may sell several capacitors but the carry limit is three',()=>{
+ let rogue=rewardSector(makeRogueState(),1,500,1).rogue;
+ for(let i=0;i<3;i++){
+   const purchase=purchasePulse(rogue,1);
+   assert.equal(purchase.ok,true);
+   rogue=purchase.rogue;
+ }
+ assert.equal(rogue.pulse,3);
+ assert.equal(purchasePulse(rogue,1).ok,false);
+ assert.equal(validRogueState(rogue,1,'won'),true);
+ rogue=consumePulse(rogue);
+ assert.equal(rogue.pulse,2);
+ assert.equal(purchasePulse(rogue,1).ok,true);
 });
