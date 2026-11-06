@@ -3,7 +3,7 @@ export const SIZE = 13;
 export const CENTER = 6;
 export const HAND_SIZE = 7;
 export const TURNS_PER_SECTOR = 6;
-export const TARGETS = [45, 60, 75, 95, 115, 140, 170, 205];
+export const TARGETS = [40, 55, 70, 90, 110, 135, 160, 190];
 export const BLANK_NUMBER = 'blank-number';
 export const BLANK_OPERATOR = 'blank-operator';
 export const BLANK_ANY = 'blank-any';
@@ -213,4 +213,4 @@ export function scoreMove(board,pending,move){
   const crossing=move.indices.some(index=>Boolean(board[index]))?5:0;
   return {base,multiplier,length,sweep,equation,crossing,total:base*multiplier+length+sweep+equation+crossing,bonuses};
 }
-export function nextTarget(sector){return TARGETS[sector-1]??Math.round(205*Math.pow(1.18,sector-8));}
+export function nextTarget(sector){return TARGETS[sector-1]??Math.round(TARGETS[TARGETS.length-1]*Math.pow(1.18,sector-TARGETS.length));}
