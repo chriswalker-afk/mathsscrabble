@@ -174,3 +174,26 @@ test('manifest validation fails closed on broken anchors, colours, categories an
  mutate(m=>{m.presets.bloop.head='remote.svg'});
  mutate(m=>{m.allowAllCombinations=false});
 });
+
+test('A3 fixed portrait and part crops never allow arbitrary viewBoxes or remote URLs',async()=>{
+ const {ALIEN_FRAMINGS,framingForPart}=await import('../src/alien/renderer.js');
+ assert.equal(ALIEN_FRAMINGS.full,'0 0 320 360');
+ assert.equal(ALIEN_FRAMINGS.portrait,'52 3 216 216');
+ assert.equal(ALIEN_FRAMINGS.bust,'38 10 244 265');
+ assert.equal(framingForPart('eyes','cyclops'),'face');
+ assert.equal(framingForPart('mouth','smile'),'face');
+ assert.equal(framingForPart('head','facet'),'head');
+ assert.equal(framingForPart('arms','claws'),'arms');
+ assert.equal(framingForPart('legs','hover'),'legs');
+ assert.equal(framingForPart('accessory','badge'),'badge');
+ assert.equal(framingForPart('accessory','companion'),'companion');
+ assert.equal(framingForPart('accessory','helmet'),'head');
+ assert.equal(framingForPart('accessory','none'),'full');
+ assert.equal(framingForPart('body','puff'),'torso');
+ for(const frame of Object.values(ALIEN_FRAMINGS)){
+  const tokens=frame.split(' ').map(Number);
+  assert.equal(tokens.length,4);
+  assert.ok(tokens[0]>=0&&tokens[1]>=0&&tokens[2]>0&&tokens[3]>0);
+  assert.ok(tokens[0]+tokens[2]<=320&&tokens[1]+tokens[3]<=360);
+ }
+});

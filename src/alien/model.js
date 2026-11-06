@@ -186,8 +186,21 @@ export function alienLayers(value,manifest){
 }
 export function alienDescription(value,manifest){
  const a=validateAlienPayload(value,manifest);
- const name=s=>s.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
- return name(a.head)+'-headed alien with '+name(a.eyes).toLowerCase()+
-  ' eyes, '+name(a.mouth).toLowerCase()+' mouth, '+name(a.body).toLowerCase()+
-  ' body and '+name(a.legs).toLowerCase()+' movement';
+ const heads={orb:'round-headed',pear:'pear-shaped',jelly:'jelly-headed',facet:'faceted'};
+ const eyes={twin:'two bright eyes',cyclops:'one big sparkling eye',
+   trio:'three curious eyes',visor:'a friendly glowing visor'};
+ const mouths={smile:'a tiny smile',surprised:'a surprised round mouth',
+   toothy:'a cheerful toothy grin',zigzag:'a wiggly grin'};
+ const bodies={bean:'a rounded bean body',puff:'a fluffy body',
+   suit:'a little spacesuit body',jelly:'a wobbly jelly body'};
+ const arms={mittens:'mitten hands',noodles:'waving noodle arms',
+   claws:'soft claw hands',tentacles:'curly tentacle arms'};
+ const legs={stubs:'stubby feet',spindles:'springy legs',
+   tentacles:'tentacle feet',hover:'a hovering ring'};
+ const accessories={none:'',antennae:'starlight antennae',horns:'tiny moon horns',
+   helmet:'a bubble helmet',jetpack:'a miniature jetpack',
+   badge:'a star badge',companion:'a floating moon buddy'};
+ const extra=accessories[a.accessory]?', plus '+accessories[a.accessory]:'';
+ return 'A '+heads[a.head]+' alien with '+eyes[a.eyes]+', '+mouths[a.mouth]+
+   ', '+bodies[a.body]+', '+arms[a.arms]+', '+legs[a.legs]+extra+'.';
 }

@@ -160,7 +160,7 @@
     "lavender": {
       "primary": "#af95ea",
       "light": "#dfd0ff",
-      "dark": "#7967ba",
+      "dark": "#8674c4",
       "belly": "#f7efff",
       "accent": "#ffdc9b",
       "spot": "#9274c8",
@@ -194,9 +194,9 @@
       "blush": "#ef999e"
     },
     "cosmic-blue": {
-      "primary": "#7f94df",
+      "primary": "#869ee7",
       "light": "#c3d4ff",
-      "dark": "#5169ad",
+      "dark": "#667ec0",
       "belly": "#e8edff",
       "accent": "#b2f5d6",
       "spot": "#667abf",

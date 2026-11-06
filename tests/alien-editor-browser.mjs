@@ -87,7 +87,7 @@ try{
    outfit:document.querySelector('#alien-art [data-layer="body"] [data-color-slot="primary"]').getAttribute('fill'),
    accent:document.querySelector('#alien-art [data-layer="rear-accessory"] [data-stroke-slot="primary"]').getAttribute('stroke')
  }));
- assert.deepEqual(colours,{skin:'#f49a94',outfit:'#73c9e8',accent:'#7f94df'});
+ assert.deepEqual(colours,{skin:'#f49a94',outfit:'#73c9e8',accent:'#869ee7'});
  assert.equal(await palette(page,'skin','coral').getAttribute('aria-pressed'),'true');
 
  // Presets and randomisation are original, genuinely different compositions.
