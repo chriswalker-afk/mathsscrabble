@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {installKnownRack} from './opening-fixture.mjs';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
@@ -24,6 +25,7 @@ async function resetRun(){
  await page.locator('#modal-actions button').last().click();
  assert.equal(await page.locator('#turn').textContent(),'1 / 6');
  assert.equal(await page.locator('#score').textContent(),'0');
+ await installKnownRack(page,'sector');
 }
 async function openBagAndValidate(expected){
  const bagCount=Number(await page.locator('#bag-count').textContent());
@@ -55,6 +57,7 @@ try{
  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
  await page.locator('.cell').first().waitFor();
  if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
+ await installKnownRack(page,'sector');
  const original=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
  await openBagAndValidate(144);
  const afterInspection=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));

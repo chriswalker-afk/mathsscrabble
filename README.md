@@ -1,6 +1,6 @@
 # EQUA//NOVA — Maths Scrabble
 
-A **playable single-player prototype** of a sci-fi equation-building board game. Students build mathematically correct equations, guided by **BIDMAS**, and score by using numbered/operator tiles, premium squares, and equation length.
+A **playable three-mode prototype** of a sci-fi equation-building board game. Students build mathematically correct equations, guided by **BIDMAS**, and score by using numbered/operator tiles, premium squares, and equation length.
 
 ## Play
 
@@ -36,11 +36,19 @@ The animation runs only while the current view is active. Use **SKIP** in the co
 
 **Click/tap the IN BAG count** in Mission Telemetry to inspect every remaining digit (0–9), operation (+, −, ×, ÷), and each of the three blank tile types (#, ◇, ✦). The pop-in groups tiles with their exact current counts, including types that have run out. It does **not** include tiles already on the board or in the rack. It never reveals the bag's draw order, which may be adjusted by playable-rack balancing. The equals sign is unlimited and is not part of the physical bag. Opening the pop-in is free and does not change the game.
 
+## Random starting tiles and fresh draws
+
+**Every fresh game and sector begins with a newly shuffled 151-tile bag**, using browser-generated randomness when available. The former fixed opening hand has been removed. Starting racks are *balanced but random*: where the bag permits, each seven-tile rack contains at least four number-capable tiles, an operator-capable tile and a wildcard. Their **positions are shuffled**, rather than always placing the blank first and the operation second. Newly drawn tiles also appear in a randomized order, while tiles you choose to keep retain their positions.
+
+The game remembers the most recent opening rack pattern separately for Sector Run, The Drift and Local Match; if a new opening would look identical to the previous one, it is reshuffled (and if necessary rearranged). **No physical tiles are invented, duplicated or removed to avoid repetition.** A new game also creates an independent bag order, so later draws are not locked into a tutorial sequence. The opening pattern history is local to this browser and is not a competitive seed, server record or cross-device guarantee.
+
 ## Game modes
 
 Use **◈ MODE** in the header to switch without deleting the other mode's save.
 
 **Sector Run** remains the straightforward classroom practice mode: BIDMAS equation building, six-turn sectors, balanced racks, free exchanges for homogeneous racks, and a regular cumulative run report. You can retry a failed sector.
+
+**Local Match (Pass E1)** is a 2–4 player pass-and-play mode on one device. Players have private seven-tile racks drawn from the **same** finite bag, share the 13×13 board and score equations using the identical BIDMAS engine. A full-screen privacy handover hides the rack while the device changes hands; the next player explicitly presses **Ready** before their turn timer begins. Timers can be Off, 60, 90 or 120 seconds. Players may pass or exchange tiles, with a once-per-turn free rescue exchange for an all-number or all-operator rack. The match ends when the bag is empty and someone empties their rack, or after two full rotations without scoring. Every remaining physical rack tile's point value is **deducted** from that player's accumulated score; highest final net score wins, and ties share the win. Local Match has its own private, validated browser save. No online room or account is required. See [Local multiplayer rules and QA](docs/LOCAL_MULTIPLAYER.md).
 
 **The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
 
@@ -56,7 +64,7 @@ The shop presents four rotating permanent choices plus the capacitor. Prices, pu
 
 ## Scope and planned work
 
-This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run and The Drift** fully wired for local solo play. Brackets, signed/fraction tile sets, online multiplayer, room codes, reusable Critter Lab avatars, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
+This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift and Local Match**. Pass E1 covers **local** competition; online rooms are a separate next step. Brackets, signed/fraction tile sets, online multiplayer, room codes, reusable Critter Lab avatars, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
 
 **Rule prototype note:** A single submitted complete equation scores each turn. Unrelated adjacent perpendicular fragments are not checked, and this should be playtested before locking the full game rules.
 
@@ -68,19 +76,19 @@ npm run check
 
 The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover both modes, separate saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover all three modes, randomized starting racks, independent saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs the Solo, Drift, scoring-ceremony and local-match browser scenarios against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 
-Try a first equation such as **8 + 4 = 12** crossing the centre. Before scoring, deliberately use **13** to check that the game rejects a mathematically false equation only when you submit it. Verify the Double Tile score calculation. Then build a perpendicular equation reusing the 8, use drag and tap methods, replace and undo a tile, and try exchanging a few tiles. Check the board and seven-tile rack on a 1366 × 768 laptop and a touchscreen.
+Try a first equation such as **8 + 4 = 12** crossing the centre **when those tiles are available**. New starts are randomized; use a different correct calculation if they are not. Before scoring, deliberately use **13** to check that the game rejects a mathematically false equation only when you submit it. Verify the Double Tile score calculation. Then build a perpendicular equation reusing the 8, use drag and tap methods, replace and undo a tile, and try exchanging a few tiles. Check the board and seven-tile rack on a 1366 × 768 laptop and a touchscreen.
 
 **Pass C — Core solo gameplay** adds balanced rack replenishment, autosave/restore, sector reports, persistent cumulative run progress, a first-visit guide and contextual hints. The target curve is a prototype calibration; before locking the difficulty, collect classroom playtest observations as described in [docs/SOLO_BALANCE.md](docs/SOLO_BALANCE.md).
 
-**Pass D — Roguelike progression** adds The Drift: separate mode selection, Salvage Bay purchases, permanent and one-use upgrades, real tile/rack/board multipliers, rotating boss-sector anomalies, run-specific Flux and death/restart rules. **Next planned pass: E — 2–4 player multiplayer**, starting with private hot-seat rack handovers and then room-code online play, while retaining the same validated mathematical core. Calibrate shop and anomaly difficulty with real students before fixing the final economy.
+**Pass D — Roguelike progression** adds The Drift: separate mode selection, Salvage Bay purchases, permanent and one-use upgrades, real tile/rack/board multipliers, rotating boss-sector anomalies, run-specific Flux and death/restart rules. **Pass E1 — local multiplayer** adds 2–4 player hot-seat play with private rack handovers, optional turn timers, shared scoring, finite bag, pass/exchange rules and endgame penalties. **Pass E2 will be online multiplayer** with private room codes, reconnection and server-authoritative turns. Existing solo saves remain independent. Calibrate shop and anomaly difficulty with real students before fixing the final economy.
 
 ## Saved games and privacy
 
-Saving uses only this browser's `localStorage`. Sector Run uses `equa-nova.sector-run.v1`, The Drift uses `equa-nova.drift.v1`, and the most recently chosen mode is remembered using `equa-nova.last-mode.v1`. Existing Sector Run saves remain compatible with the new mode switch. No server account, external data service or login is involved. The small `AUTOSAVED` indicator is visible on desktop. If storage is blocked, the game still works in the current tab but **progress will not survive a reload**. Clearing browser site data or switching devices removes access to the saved game. Starting a new run overwrites **only that mode's** previous local save after confirmation; switching modes keeps the other run intact.
+Saving uses only this browser's `localStorage`. Sector Run uses `equa-nova.sector-run.v1`, The Drift uses `equa-nova.drift.v1`, Local Match uses `equa-nova.local-match.v1`, and the most recently chosen mode is remembered using `equa-nova.last-mode.v1`. Existing Sector Run saves remain compatible with the new mode switch. No server account, external data service or login is involved. The small `AUTOSAVED` indicator is visible on desktop. If storage is blocked, the game still works in the current tab but **progress will not survive a reload**. Clearing browser site data or switching devices removes access to the saved game. Starting a new run overwrites **only that mode's** previous local save after confirmation; switching modes keeps the other run intact.
 
 ## Hosting
 

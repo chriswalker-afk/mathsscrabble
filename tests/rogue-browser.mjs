@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {installKnownRack} from './opening-fixture.mjs';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];
@@ -25,9 +26,10 @@ try{
  await page.locator('#mode-btn').click();
  assert.match(await page.locator('#modal-title').textContent(),/reactor mission/i);
  assert.match(await page.locator('.mode-choice-grid').textContent(),/THE DRIFT/i);
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(1).click();
  assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
  await page.locator('#modal-actions button').last().click();
+ await installKnownRack(page,'rogue');
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 01/i);
  assert.equal(await page.locator('#rogue-summary').isVisible(),true);
  assert.equal(await page.locator('#flux-count').textContent(),'0');
@@ -140,7 +142,7 @@ try{
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#modal-actions button').nth(1).click();
  assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
 

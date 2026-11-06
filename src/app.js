@@ -1,20 +1,36 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
+import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
+ passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
+import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
  selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
- stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null
+ stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 function persistRun(){
-  state.saveAvailable=saveRun(storage,state);
+  if(state.mode==='local'&&state.localMatch){
+    if(state.localMatch.phase==='playing'){
+      const players=state.localMatch.players.map((p,i)=>i===state.localMatch.current?
+        {...p,rack:state.rack}:p);
+      state.localMatch={...state.localMatch,board:state.board,bag:state.bag,
+        pending:state.pending,placementOrder:state.placementOrder,players};
+    }
+    state.saveAvailable=saveLocalMatch(storage,state.localMatch);
+  }else if(state.mode==='local'){
+    state.saveAvailable=false;
+  }else{
+    state.saveAvailable=saveRun(storage,state);
+  }
   if(state.saveAvailable){try{storage?.setItem(ACTIVE_MODE_KEY,state.mode);}catch{/* storage unavailable */}}
   $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
   $('save-status').classList.toggle('unavailable',!state.saveAvailable);
@@ -24,6 +40,7 @@ function persistRun(){
 }
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 const isDrift=()=>state.mode==='rogue';
+const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector);
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
@@ -52,21 +69,20 @@ function freshSector(sector=1,{newRun=false}={}){
  state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
  state.focusedIndex=pos(CENTER,CENTER);
- state.bag=makeBag();
- if(sector===1){
-   const required=['8','+','4','1','2',BLANK_OPERATOR,BLANK_ANY];
-   state.rack=required.map(v=>{
-     const i=state.bag.findIndex(t=>(t.blank||t.value)===v);
-     return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
-   });
- }else{
-   const deal=dealPlayableRack([],state.bag,currentRackOptions());
-   state.rack=deal.rack;state.bag=deal.bag;
- }
+ // Each fresh board starts from a fully shuffled 151-tile bag. We then
+ // draw a balanced but randomly ordered hand, rather than the old fixed
+ // tutorial hand. Consecutive openings are never visibly identical.
+ const deal=distinctOpening(()=>{
+   const bag=makeBag();
+   return dealPlayableRack([],bag,currentRackOptions());
+ },loadOpeningPattern(storage,state.mode),
+   game=>game.rack,(game,rack)=>({...game,rack}));
+ state.rack=deal.rack;state.bag=deal.bag;
+ rememberOpening(storage,state.mode,state.rack);
  const anomaly=isDrift()?anomalyForSector(sector):null;
  announce(sector===1?
    (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
-     'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.'):
+     'First mission: use your shuffled tiles to create a true equation through the glowing centre. BIDMAS checks it when you submit.'):
    anomaly?
      `Sector anomaly: ${anomaly.name}. ${anomaly.short}. Build carefully.`:
      'New sector online. Use the centre to begin and aim for the new energy target.');
@@ -301,7 +317,8 @@ function renderRack(){
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
- const eligible=freeExchangeReason(state.rack);
+ const eligible=freeExchangeReason(state.rack)&&
+   !(isLocal()&&state.localMatch?.freeExchangeUsed);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
    eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
@@ -317,7 +334,8 @@ function renderPreview(){
  const box=$('equation-preview');
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
- const freeReason=freeExchangeReason(state.rack);
+ const freeReason=freeExchangeReason(state.rack)&&
+   !(isLocal()&&state.localMatch?.freeExchangeUsed);
  $('preview-status').textContent=state.swapping?
    (freeReason?`Choose tiles to replace — ${freeReason}-only rack, no turn used.`:
      'Choose tiles to replace — this uses a turn.'):
@@ -329,9 +347,118 @@ function renderPreview(){
    `Potential score ${points.total} if the equation is mathematically correct`:
    'No potential score yet');
 }
+function formatLocalClock(deadline){
+ const seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+ return String(Math.floor(seconds/60)).padStart(2,'0')+':'+
+   String(seconds%60).padStart(2,'0');
+}
+function showLocalHandover(){
+ if(!isLocal()||!state.localMatch)return;
+ const match=state.localMatch;
+ const hidden=match.phase==='handover'&&!state.localDeferPrivacy;
+ $('local-privacy').hidden=!hidden;
+ $('app').dataset.private=String(hidden);
+ $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
+ if(!hidden)return;
+ const player=match.players[match.current];
+ $('local-handover-title').textContent=player.name+' · YOUR TURN';
+ $('local-handover-description').textContent=
+   'Pass the device to '+player.name+' first. Tap Ready to reveal this player’s private rack.';
+ const last=match.history.at(-1);
+ $('local-handover-context').textContent=last?
+   (last.type==='score'?
+     'Previous move: '+match.players[last.player].name+' scored +'+last.points:
+     'Previous move: '+(last.type==='timeout'?'time expired':last.type.replaceAll('-',' ')))+
+   ' · Turn '+match.turnNumber:
+   'Turn '+match.turnNumber+' · Shared board, private racks';
+ $('local-ready-btn').focus({preventScroll:true});
+}
+function renderLocalStatus(){
+ const match=state.localMatch;
+ if(!match)return;
+ $('app').dataset.mode='local';
+ $('app').dataset.anomaly='none';
+ $('local-panel').hidden=false;
+ $('local-pass-btn').hidden=false;
+ $('rogue-summary').hidden=true;
+ $('anomaly-banner').hidden=true;
+ $('mode-btn').textContent='◈ LOCAL';
+ $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
+ $('sector-label').textContent=match.phase==='finished'?'LOCAL MATCH · FINAL SCORES':
+   state.ceremony&&state.localScoringPlayer!==null?
+     'LOCAL MATCH · SCORING':
+     'LOCAL MATCH · '+match.players[match.current].name.toUpperCase();
+ $('target').textContent='—';
+ $('turn').textContent=String(match.turnNumber);
+ $('bag-count').textContent=match.bag.length;
+ $('bag-details-btn').disabled=state.busy||match.phase!=='playing';
+ $('bag-details-btn').setAttribute('aria-label','View '+match.bag.length+' remaining tiles in the shared bag');
+ $('score-btn').disabled=state.busy||match.phase!=='playing'||state.swapping||!Object.keys(state.pending).length;
+ $('local-pass-btn').disabled=state.busy||match.phase!=='playing';
+ $('local-pass-btn').textContent='↪ PASS';
+ $('score-btn').querySelector('strong').textContent='⚡ SCORE';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
+ const eligible=freeExchangeReason(state.rack)&&!match.freeExchangeUsed;
+ $('swap-btn').textContent=state.swapping?
+   '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
+ $('new-btn').disabled=false;
+ const time=$('local-time-remaining');
+ if(match.phase==='playing'&&match.turnSeconds){
+   time.textContent=formatLocalClock(match.deadline);
+   time.classList.toggle('local-time-urgent',match.deadline-Date.now()<15000);
+ }else{
+   time.textContent=match.turnSeconds?match.turnSeconds+'s timer':'NO TIMER';
+   time.classList.remove('local-time-urgent');
+ }
+ const scoringIndex=state.ceremony&&state.localScoringPlayer!==null?
+   state.localScoringPlayer:match.current;
+ const displayScores=match.players.map((p,i)=>i===scoringIndex&&state.ceremony?
+   state.ceremony.startScore+state.ceremony.awarded:p.score);
+ const leading=Math.max(...displayScores);
+ $('local-scores').replaceChildren(...match.players.map((player,index)=>{
+   const row=document.createElement('div');
+   row.dataset.playerIndex=String(index);
+   row.className='local-score-row'+
+     (index===scoringIndex&&match.phase!=='finished'?' is-active':'')+
+     (player.score===leading&&player.score>0?' is-leader':'');
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=index+1;
+   const name=document.createElement('span');name.className='local-score-name';name.textContent=player.name;
+   const points=document.createElement('span');points.className='local-score-points';
+   const total=document.createElement('strong');total.textContent=displayScores[index];
+   const unit=document.createElement('small');unit.textContent='POINTS';
+   points.append(total,unit);
+   row.append(avatar,name,points);
+   row.setAttribute('aria-label',player.name+': '+displayScores[index]+' points');
+   return row;
+ }));
+ const status=$('local-game-status');
+ status.textContent=match.phase==='finished'?
+   'Match complete. Remaining rack values have been deducted.':
+   match.phase==='handover'?'Privacy handover: next player has not revealed their rack.':
+   'Turn '+match.turnNumber+' · '+match.players[match.current].name+' builds an equation.';
+ $('run-summary').textContent=match.players.length+' players · '+match.history.filter(x=>x.type==='score').length+' equations';
+ $('score').textContent=displayScores[scoringIndex]??0;
+ $('progress').style.width='0%';
+ $('preview-status').setAttribute('aria-live','polite');
+ showLocalHandover();
+}
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
+ // Both solo and local competition share the same scoring ceremony display.
+ $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
+ $('ceremony-readout').hidden=!state.ceremony;
+ if(isLocal()){
+   renderLocalStatus();
+   if(!state.busy)persistRun();
+   return;
+ }
+ $('local-privacy').hidden=true;
+ $('app').dataset.private='false';
+ $('app').inert=false;
+ $('local-panel').hidden=true;
+ $('local-pass-btn').hidden=true;
+ $('score-btn').querySelector('strong').textContent='⚡ SCORE EQUATION';
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
@@ -391,7 +518,7 @@ function render(){
    'All numbers or all operations? You can exchange tiles without spending a turn.':
    'Select your exchange tiles. This will use one turn.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
-   state.sector===1?'TRAINING · Try 8 + 4 = 12 through the glowing centre.':'START · Your first equation must cross the centre.';
+   state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
  else if(placed&&state.preview.ready)coach.textContent=
    'CHECK · A complete equation is in place. Submit it when you trust your BIDMAS calculation.';
  else if(placed)coach.textContent='BUILD · Arrange one unbroken equation, then add your free equals sign.';
@@ -450,6 +577,192 @@ function showBagInventory(){
  }
 }
 $('bag-details-btn').onclick=showBagInventory;
+function localStateFromMatch(match,{privateTurn=true}={}){
+ state.mode='local';state.localMatch=match;
+ state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
+ state.localDeferPrivacy=false;state.focusedIndex=pos(CENTER,CENTER);
+ state.board=match.board;state.bag=match.bag;state.pending={};
+ state.rack=[];state.placementOrder=[];state.selected=null;
+ state.swapping=false;state.swapSet.clear();state.recentlyPlaced=null;
+ state.lockedFlash.clear();state.ended=match.phase==='finished';
+ state.busy=match.phase!=='finished';
+ if(match.phase==='finished')state.busy=false;
+ announce(match.phase==='finished'?'Local match complete. Review the final standings.':
+   privateTurn?'Hot-seat privacy enabled. Hand the device to the next player.':
+   'Local multiplayer match ready.');
+ persistRun();render();
+ if(match.phase==='finished')showLocalResults();
+}
+function startNewLocalMatch(config){
+ try{
+   const match=distinctOpening(
+     ()=>makeLocalMatch(config,randomFloat),
+     loadOpeningPattern(storage,'local'),
+     game=>game.players[0].rack,
+     (game,rack)=>({...game,players:game.players.map((player,i)=>
+       i===0?{...player,rack}:player)})
+   );
+   rememberOpening(storage,'local',match.players[0].rack);
+   localStateFromMatch(match);
+ }catch(err){
+   showModal('MATCH SETUP ERROR','Please check the player settings',
+     '<p>'+escapeText(err.message)+'</p>',[{text:'EDIT SETTINGS',primary:true,fn:showLocalSetup}]);
+ }
+}
+function showLocalSetup(){
+ const saved=state.localMatch||loadLocalMatch(storage,{privateOnResume:false});
+ const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
+ const count=saved?.players.length||2;
+ const seconds=saved?.turnSeconds||0;
+ showModal('PASS E · LOCAL MULTIPLAYER','Set up a local match',
+   `<div class="local-setup-grid">
+    <div class="local-setup-row"><label for="local-player-count">PLAYERS</label>
+     <select id="local-player-count" aria-label="Number of players">
+       <option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option>
+     </select></div>
+    <div id="local-setup-names" class="local-setup-names"></div>
+    <div class="local-setup-row"><label for="local-turn-seconds">TURN TIMER</label>
+      <select id="local-turn-seconds">
+        <option value="0">Off · take your time</option>
+        <option value="60">60 seconds</option>
+        <option value="90">90 seconds</option>
+        <option value="120">120 seconds</option>
+      </select></div>
+    <p class="local-setup-tip">One shared 13×13 board, independent 7-tile racks, and a private handover between turns. A match ends when a player goes out with an empty bag, or after two full circuits without a scoring move. Remaining rack points are deducted at the end.</p>
+   </div>`,
+   [{text:'CANCEL'},{text:'START MATCH →',primary:true,fn:()=>{
+     const amount=Number($('local-player-count').value);
+     const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
+     const turnSeconds=Number($('local-turn-seconds').value);
+     startNewLocalMatch({names,turnSeconds});
+   }}]);
+ $('local-player-count').value=String(count);
+ $('local-turn-seconds').value=String(seconds);
+ const wrapper=$('local-setup-names');
+ const inputs=[];
+ for(let i=0;i<4;i++){
+   const row=document.createElement('div');row.className='local-setup-row';
+   const label=document.createElement('label');label.textContent='PILOT '+(i+1);
+   label.htmlFor='local-player-name-'+i;
+   const input=document.createElement('input');
+   input.id='local-player-name-'+i;
+   input.type='text';input.maxLength=20;input.autocomplete='off';input.value=players[i]||'Pilot '+(i+1);
+   row.append(label,input);wrapper.append(row);inputs.push(row);
+ }
+ const updateCount=()=>{const amount=Number($('local-player-count').value);
+   inputs.forEach((row,i)=>{row.hidden=i>=amount;});};
+ $('local-player-count').addEventListener('change',updateCount);
+ updateCount();
+}
+function readyLocalPlayer(){
+ if(!isLocal()||state.localMatch?.phase!=='handover')return;
+ try{
+   const match=readyLocalTurn(state.localMatch,Date.now());
+   state.localMatch=match;state.board=match.board;state.bag=match.bag;
+   state.rack=match.players[match.current].rack;
+   state.pending={...match.pending};state.placementOrder=[...match.placementOrder];
+   state.selected=null;state.swapping=false;state.swapSet.clear();
+   state.recentlyPlaced=null;state.localScoringPlayer=null;
+   state.ended=false;state.busy=false;state.localDeferPrivacy=false;
+   announce(match.players[match.current].name+
+     ' is on the board. Build one valid BIDMAS equation or exchange/pass.');
+   render();
+   $('board').querySelector('[tabindex="0"]')?.focus({preventScroll:true});
+ }catch(err){announce(err.message,true);}
+}
+$('local-ready-btn').onclick=readyLocalPlayer;
+function finishLocalTurn(match,message){
+ state.localMatch=match;state.board=match.board;state.bag=match.bag;
+ state.pending={};state.rack=[];state.placementOrder=[];
+ state.selected=null;state.swapping=false;state.swapSet.clear();
+ state.recentlyPlaced=null;state.lockedFlash.clear();
+ state.localDeferPrivacy=false;state.localScoringPlayer=null;
+ state.busy=match.phase!=='finished';state.ended=match.phase==='finished';
+ announce(message);persistRun();render();
+ if(match.phase==='finished')showLocalResults();
+}
+function localPass(reason='pass'){
+ if(!isLocal()||state.busy||state.ended)return;
+ if(Object.keys(state.pending).length){
+   announce('Return unscored tiles to the rack before passing.',true);return;
+ }
+ try{
+   const match=passLocalTurn({...state.localMatch,pending:{},placementOrder:[]},reason);
+   const previous=state.localMatch.players[state.localMatch.current].name;
+   finishLocalTurn(match,reason==='timeout'?previous+' ran out of time.':
+     previous+' passed without scoring.');
+ }catch(err){announce(err.message,true);}
+}
+$('local-pass-btn').onclick=()=>localPass('pass');
+function localSwap(){
+ if(!isLocal()||state.busy||state.ended)return;
+ if(!state.swapping){
+   if(Object.keys(state.pending).length){announce('Clear your equation before swapping.',true);return;}
+   if(!state.bag.length){announce('No tiles remain in the bag.',true);return;}
+   state.swapping=true;state.selected=null;
+   announce('Select the rack tiles to exchange. An all-number or all-operator rack gets one free rescue exchange per turn.');
+   render();return;
+ }
+ if(!state.swapSet.size){announce('Select at least one tile for exchange.',true);return;}
+ try{
+   const oldMatch={...state.localMatch,pending:{},placementOrder:[],
+     players:state.localMatch.players.map((p,i)=>i===state.localMatch.current?{...p,rack:state.rack}:p)};
+   const {match,free}=exchangeLocalTiles(oldMatch,[...state.swapSet]);
+   if(free){
+     state.localMatch=match;state.rack=match.players[match.current].rack;
+     state.bag=match.bag;state.swapping=false;state.swapSet.clear();state.selected=null;
+     announce('Free rescue exchange complete. Your turn continues.');render();
+   }else{
+     finishLocalTurn(match,'Tiles exchanged. Turn passed to the next player.');
+   }
+ }catch(err){announce(err.message,true);}
+}
+function showLocalResults(){
+ if(!isLocal()||state.localMatch?.phase!=='finished')return;
+ const match=state.localMatch;
+ const standing=match.finalScores||localStandings(match);
+ const winners=standing.filter(p=>p.winner).map(p=>p.name);
+ const summary=match.finishedReason==='stalled'?
+   'Two full circuits of passes or paid exchanges ended the match.':
+   'A player emptied their rack with no tiles left in the bag.';
+ const rows=standing.map(entry=>
+  `<div class="local-result-row${entry.winner?' is-winner':''}">
+    <span>${entry.winner?'★':entry.rank}</span><strong>${escapeText(entry.name)}</strong>
+    <span>${entry.gross}</span><span>−${entry.penalty}</span><span>${entry.net}</span>
+   </div>`).join('');
+ showModal('MATCH COMPLETE',winners.length===1?
+   escapeText(winners[0])+' wins!':'Shared victory!',
+   `<p class="local-match-note">${summary}</p>
+    <div class="local-result-legend"><span>#</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
+    <div class="local-result-table">${rows}</div>
+    <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>`,
+   [{text:'CHOOSE MODE',fn:showModeMenu},
+    {text:'NEW LOCAL MATCH →',primary:true,fn:showLocalSetup}]);
+}
+function showLocalReport(){
+ if(!isLocal()||!state.localMatch)return;
+ const match=state.localMatch;
+ if(match.phase==='finished'){showLocalResults();return;}
+ const rows=match.players.map((p,i)=>
+   `<div class="report-move"><span class="report-turn">P${i+1}</span>
+   <strong>${escapeText(p.name)}</strong><span>${p.score} pts</span></div>`).join('');
+ const moves=match.history.filter(x=>x.type==='score').slice(-5).reverse().map(x=>
+   `<div class="report-move"><span class="report-turn">T${x.turn}</span>
+   <strong>${escapeText(x.equation||'Equation')}</strong><span>+${x.points}</span></div>`).join('');
+ showModal('LOCAL SCOREBOARD','Match standings',
+   `<div class="report-moves">${rows}</div><p class="local-match-note">Scores are provisional. Remaining rack points are subtracted when the game ends.</p>
+    <div class="history-heading">RECENT EQUATIONS</div>
+    <div class="report-moves">${moves||'<p>No equations scored yet.</p>'}</div>`,
+   [{text:'BACK TO MATCH',primary:true}]);
+}
+function finishLocalPresentation(){
+ if(!isLocal())return;
+ state.localDeferPrivacy=false;state.localScoringPlayer=null;
+ const match=state.localMatch;
+ state.busy=match.phase!=='finished';state.ended=match.phase==='finished';
+ render();
+ if(match.phase==='finished')showLocalResults();
+}
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.recentlyPlaced=null;
@@ -625,10 +938,15 @@ function clearCeremonyTile(removePips=false){
 function setCeremonyReadout(ctl,label){
  const shown=ctl.startScore+ctl.awarded;
  $('score').textContent=String(shown);
- $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
- $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
- $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
-   ctl.awarded+' / +'+ctl.total;
+ if(isLocal()){
+   const row=$('local-scores').querySelector('[data-player-index="'+state.localScoringPlayer+'"] .local-score-points strong');
+   if(row)row.textContent=String(shown);
+ }else{
+   $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
+   $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
+   $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
+     ctl.awarded+' / +'+ctl.total;
+ }
  $('ceremony-count').textContent=(ctl.awarded>=0?'+':'')+ctl.awarded;
  $('ceremony-step').textContent=label;
  $('ceremony-tile-count').textContent=ctl.completedTiles+' / '+ctl.tileCount+' TILES';
@@ -651,9 +969,12 @@ function showScoreResult(points,move){
    <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
    <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
    ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
-   [{text:state.phase==='playing'?'CONTINUE →':
-     isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
-     primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
+   [isLocal()?
+      {text:state.localMatch.phase==='finished'?'FINAL STANDINGS →':'HAND OVER DEVICE →',
+       primary:true,fn:finishLocalPresentation}:
+      {text:state.phase==='playing'?'CONTINUE →':
+        isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
+       primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
 }
 function finishScoringCeremony(ctl){
  if(!ctl||state.ceremony!==ctl||ctl.finished)return;
@@ -711,7 +1032,42 @@ async function playScoringCeremony(ctl){
  if(active())finishScoringCeremony(ctl);
 }
 $('skip-ceremony').onclick=()=>finishScoringCeremony(state.ceremony);
+function scoreLocal(){
+ if(!isLocal()||state.busy||state.ended||state.swapping)return;
+ try{
+   const match=state.localMatch;
+   const oldIndex=match.current;
+   const active={...match,pending:state.pending,placementOrder:state.placementOrder,
+     players:match.players.map((p,i)=>i===oldIndex?{...p,rack:state.rack}:p)};
+   const {match:updated,points,move}=scoreLocalTurn(active,state.pending);
+   const stages=buildScoringCeremony(points);
+   const startScore=match.players[oldIndex].score;
+   // The complete shared board, the bag and this player's score are committed
+   // before any animation; reloading reveals only the next privacy handover.
+   state.localMatch=updated;state.board=updated.board;state.bag=updated.bag;
+   state.rack=[];state.pending={};state.placementOrder=[];
+   state.swapping=false;state.swapSet.clear();state.selected=null;
+   state.lockedFlash=new Set(move.indices);
+   state.busy=true;state.ended=updated.phase==='finished';
+   state.localDeferPrivacy=true;state.localScoringPlayer=oldIndex;
+   state.score=updated.players[oldIndex].score;
+   const epoch=++state.modalEpoch;
+   const ctl={startScore,awarded:0,total:points.total,points,move,stages,
+     tileCount:stages.filter(x=>x.kind==='tile').length,
+     completedTiles:0,epoch,finished:false};
+   state.ceremony=ctl;
+   announce(match.players[oldIndex].name+' scored a correct equation! Transferring +'+points.total+' points.');
+   persistRun();render();
+   setCeremonyReadout(ctl,'READY TO TRANSFER');
+   void playScoringCeremony(ctl);
+ }catch(err){
+   announce(err.message,true);
+   $('board').classList.remove('shake');void $('board').offsetWidth;
+   $('board').classList.add('shake');
+ }
+}
 function score(){
+ if(isLocal())return scoreLocal();
  if(state.ended||state.swapping||state.busy)return;
  try{
    const move=validateMove(state.board,state.pending);
@@ -753,6 +1109,7 @@ function score(){
 }
 const escapeText=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 function swap(){
+ if(isLocal())return localSwap();
  if(state.ended||state.busy)return;
  if(!state.swapping){
    if(Object.keys(state.pending).length){
@@ -808,20 +1165,27 @@ $('equals-tile').onclick=event=>{
 };
 enableTileDrag($('equals-tile'),{kind:'equals'},onTileDrop);
 $('new-btn').onclick=()=>{
+ if(isLocal()){
+   if(state.busy)return;
+   showModal('NEW LOCAL MATCH','Replace the current local match?',
+     '<p>A new local match replaces this match and its scores, but does not affect Sector Run or The Drift saves.</p>',
+     [{text:'KEEP MATCH'},{text:'SET UP NEW MATCH →',primary:true,fn:showLocalSetup}]);
+   return;
+ }
  if(state.busy)return;
  showModal('RESTART','Start a new run?',
    '<p>A new run replaces your current local save, including your sector and accumulated run points. Your completed sector history will be lost.</p>',
    [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1,{newRun:true})}]);
 };
-$('run-report-btn').onclick=()=>{if(!state.busy)showRunReport();};
-$('run-report-header').onclick=()=>{if(!state.busy)showRunReport();};
+$('run-report-btn').onclick=()=>{if(!state.busy)(isLocal()?showLocalReport():showRunReport());};
+$('run-report-header').onclick=()=>{if(!state.busy)(isLocal()?showLocalReport():showRunReport());};
 function rememberIntro(){
  try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
 }
 function showTraining(firstVisit=false){
  const message=`<div class="training-steps">
   <div class="training-step"><span>01</span><div><strong>Build one real calculation</strong>
-    <p>Try <em>8 + 4 = 12</em> through the centre. Use <strong>BIDMAS</strong>: brackets, indices, division/multiplication, then addition/subtraction. An identity like 3 = 3 does not score.</p></div></div>
+    <p>Every new game has a <strong>different shuffled starting rack</strong>. Build an equation through the centre, for example <em>8 + 4 = 12</em> if you have suitable tiles. Use <strong>BIDMAS</strong>; an identity like 3 = 3 does not score.</p></div></div>
   <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
     <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
@@ -835,7 +1199,19 @@ function showTraining(firstVisit=false){
      {text:'START MISSION →',primary:true,fn:rememberIntro}]:
     [{text:'BACK TO GAME',primary:true}]);
 }
-$('help-btn').onclick=()=>isDrift()?showDriftIntro():showTraining();
+$('help-btn').onclick=()=>isLocal()?showLocalHelp():isDrift()?showDriftIntro():showTraining();
+function showLocalHelp(){
+ showModal('LOCAL MULTIPLAYER · FLIGHT MANUAL','Build together, compete separately',
+   `<div class="training-steps">
+   <div class="training-step"><span>01</span><div><strong>Your rack is private</strong>
+     <p>Choose 2–4 players. Every turn begins on a secure handover screen. Tap Ready only when the named player holds the device. Never pass the screen while your rack is visible.</p></div></div>
+   <div class="training-step"><span>02</span><div><strong>Score on the same board</strong>
+     <p>The first correct equation crosses the centre; later ones must join a locked tile. BIDMAS and the free equals sign work as in Solo mode. A wrong equation is not scored. Use Pass Turn if you cannot play.</p></div></div>
+   <div class="training-step"><span>03</span><div><strong>Finish on net points</strong>
+     <p>Players alternate scoring, exchanging or passing. The match finishes when the bag is empty and a player empties their rack, or after two complete circuits without scoring. Remaining tile points are deducted from each score. The highest net score wins.</p></div></div>
+   </div><p class="training-footnote">Timers can be Off, 60, 90 or 120 seconds. Timers begin only when the next player presses Ready, and an expired turn counts as a pass. No online room or login is needed.</p>`,
+   [{text:'BACK TO MATCH',primary:true}]);
+}
 function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
@@ -877,37 +1253,75 @@ function restoreMode(mode,{initial=false}={}){
  }
 }
 function chooseMode(mode){
- if(!['sector','rogue'].includes(mode)||state.busy)return;
+ if(!['sector','rogue','local'].includes(mode))return;
+ if(state.busy&&!isLocal())return;
+ if(mode==='local'){
+   if(isLocal()){if(state.localMatch?.phase==='finished')showLocalResults();return;}
+   const previous=loadLocalMatch(storage);
+   if(previous)localStateFromMatch(previous);
+   else showLocalSetup();
+   return;
+ }
  if(mode===state.mode){
    if(state.ended)showSectorOutcome();
    return;
  }
+ // Private local racks are already persisted; returning requires a new Ready tap.
+ state.localDeferPrivacy=false;
  restoreMode(mode);
 }
 function showModeMenu(){
- if(state.busy)return;
+ if(state.busy&&!isLocal())return;
  showModal('SELECT MODE','Choose your reactor mission',
    `<div class="mode-choice-grid">
     <div class="mode-choice">
      <span class="mode-crest">◈</span><strong>SECTOR RUN</strong>
-     <p>Pure equation building, escalating targets and infinite retries. Your classroom practice progress is saved separately.</p>
-     <small>${!isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+     <p>Independent classroom practice with rising targets and retries. Your progress is saved separately.</p>
+     <small>${state.mode==='sector'?'CURRENT MODE':'SEPARATE SAVE'}</small>
     </div>
     <div class="mode-choice">
      <span class="mode-crest">✧</span><strong>THE DRIFT</strong>
-     <p>A finite run. Win Flux, buy upgrades between sectors, adapt to anomalies every third sector and survive as long as you can.</p>
+     <p>Win Flux, equip upgrades between sectors, survive anomalies and build a long roguelike run.</p>
      <small>${isDrift()?'CURRENT MODE':'SEPARATE SAVE'}</small>
+    </div>
+    <div class="mode-choice local-mode-choice">
+     <span class="mode-crest">♙</span><strong>LOCAL MATCH</strong>
+     <p>Two to four pilots, one shared board and private racks. Compete on the same device.</p>
+     <small>${isLocal()?'CURRENT MODE':'SEPARATE SAVE'}</small>
     </div>
    </div>`,
    [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
-    {text:'THE DRIFT →',primary:true,fn:()=>chooseMode('rogue')}]);
+    {text:'THE DRIFT',fn:()=>chooseMode('rogue')},
+    {text:'LOCAL 2–4 →',primary:true,fn:()=>chooseMode('local')}]);
 }
 $('mode-btn').onclick=showModeMenu;
+$('local-switch-btn').onclick=showModeMenu;
 function startSolo(){
  let mode='sector';
- try{if(storage?.getItem(ACTIVE_MODE_KEY)==='rogue')mode='rogue';}catch{/* no storage */}
+ try{const m=storage?.getItem(ACTIVE_MODE_KEY);
+   if(['sector','rogue','local'].includes(m))mode=m;
+ }catch{/* no storage */}
+ if(mode==='local'){
+   const saved=loadLocalMatch(storage);
+   if(saved){localStateFromMatch(saved);return;}
+   mode='sector';
+ }
  restoreMode(mode,{initial:true});
 }
+window.setInterval(()=>{
+ if(!isLocal()||!state.localMatch||state.localMatch.phase!=='playing'||state.busy||state.ended)return;
+ const match=state.localMatch;
+ if(match.turnSeconds===0)return;
+ $('local-time-remaining').textContent=formatLocalClock(match.deadline);
+ $('local-time-remaining').classList.toggle('local-time-urgent',match.deadline-Date.now()<15000);
+ if(!isLocalTimerExpired(match,Date.now()))return;
+ const name=match.players[match.current].name;
+ // A timeout cancels unscored placement and exchanges without discarding
+ // physical rack tiles, then immediately activates the privacy handover.
+ const updated={...match,pending:{},placementOrder:[],
+   players:match.players.map((p,i)=>i===match.current?{...p,rack:state.rack}:p)};
+ finishLocalTurn(passLocalTurn(updated,'timeout'),name+' ran out of time. The turn was passed.');
+},250);
 document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){

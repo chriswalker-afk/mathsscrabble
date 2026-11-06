@@ -13,6 +13,11 @@
 <div class="panel-heading">MISSION TELEMETRY</div>
 <div class="pilot-emblem" aria-hidden="true"><span>✦</span><div class="pilot-orbit"></div></div>
 <div class="pilot-name">PILOT // NOVA</div>
+<div id="local-panel" class="local-panel" hidden aria-label="Local multiplayer scoreboard">
+  <div class="local-score-header"><strong>LOCAL MATCH</strong><span id="local-time-remaining" aria-live="off">NO TIMER</span></div>
+  <div id="local-scores" class="local-scores" aria-label="Player standings"></div>
+  <div id="local-game-status" class="local-game-status">Pass the device to the next player.</div>
+</div>
 <div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div class="progress-track"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><button id="bag-details-btn" class="mini-stat bag-stat" type="button" aria-label="Show remaining tiles in the bag" title="View which tiles remain in the bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="bag-count">0</strong></button></div>
 <div id="rogue-summary" class="rogue-summary" hidden>
@@ -40,10 +45,23 @@
 <div id="anomaly-banner" class="anomaly-banner" hidden role="note"><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
 <div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
 <button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
+<button id="local-pass-btn" class="secondary-command local-pass-btn" type="button" hidden>↪ PASS TURN</button>
 <button id="swap-btn" class="secondary-command" type="button">⇄ SWAP TILES</button></div>
 <div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div><div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile</span></div><div><i class="legend-square ee">2E</i><span>Double equation</span></div><div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
 <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div><p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p><p class="rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p><div class="keys-guide">KEYS <kbd>1–7</kbd> rack <kbd>=</kbd> equals <kbd>←↑↓→</kbd> grid <kbd>⌫</kbd> undo</div></aside>
 </main><footer class="bottom-strip"><span id="footer-mode">⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
+</div>
+<div id="local-privacy" class="local-privacy" hidden role="dialog" aria-modal="true"
+  aria-labelledby="local-handover-title" aria-describedby="local-handover-description">
+  <div class="local-privacy-card">
+    <div class="local-privacy-icon" aria-hidden="true">✧</div>
+    <span class="local-privacy-eyebrow">SECURE HANDOVER · HOT SEAT</span>
+    <h2 id="local-handover-title">Your turn, Pilot</h2>
+    <p id="local-handover-description">Pass the device to this player before revealing their private tiles.</p>
+    <div id="local-handover-context" class="local-handover-context">Shared board · Private rack</div>
+    <button id="local-ready-btn" type="button" class="local-ready-btn">I'M READY · REVEAL MY TILES</button>
+    <button id="local-switch-btn" type="button" class="local-privacy-switch">SWITCH GAME MODE</button>
+  </div>
 </div>
 <dialog id="modal"><div class="modal-content"><div class="modal-heading"><span id="modal-eyebrow">TRANSMISSION</span><button id="modal-close" class="modal-x" type="button" aria-label="Close">×</button></div><h2 id="modal-title"></h2><div id="modal-body"></div><div id="modal-actions" class="modal-actions"></div></div></dialog>
 </body></html>

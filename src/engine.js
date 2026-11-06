@@ -59,7 +59,16 @@ export const makeTile = value => ({
  points:BLANK_KINDS[value]?0:(POINTS[value]??0),
  ...(BLANK_KINDS[value]?{blank:value}:{})
 });
-export function makeBag(random=Math.random) {
+/** Web Crypto-backed entropy for fresh games, with Math.random fallback for
+ * environments without crypto. Inject a seeded rng in unit tests. */
+export function randomFloat(){
+  if(typeof crypto!=='undefined'&&typeof crypto.getRandomValues==='function'){
+    const draw=new Uint32Array(1);crypto.getRandomValues(draw);
+    return draw[0]/4294967296;
+  }
+  return Math.random();
+}
+export function makeBag(random=randomFloat) {
   const values=[];
   for(let digit=0;digit<=9;digit++) for(let i=0;i<(digit<=4?9:7);i++) values.push(String(digit));
   for(const [value,count] of [['+',18],['−',14],['×',12],['÷',10]]) for(let i=0;i<count;i++) values.push(value);
