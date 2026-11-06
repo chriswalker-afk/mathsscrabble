@@ -848,3 +848,65 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
 #app[data-mode="rogue"] .cell.second-spark-spent .board-tile{
  box-shadow:inset 0 0 0 1px #637c84;
 }
+
+
+/* Curriculum tile kits: no changes to the board's physical dimensions. */
+#app .tile-kit-button{border-color:#a69369;color:#f6d8a0;font-weight:900;background:linear-gradient(120deg,#3d4145,#24414c);white-space:nowrap}
+#app .tile-kit-button:hover{border-color:#f5dfac}
+#app[data-mode="local"] .tile-kit-button{display:none}
+.tile.fraction-tile,.tile.signed-tile,.board-tile.fraction-tile,.board-tile.signed-tile{letter-spacing:-.05em}
+.tile.fraction-tile{font-size:19px}
+.tile.signed-tile{font-size:clamp(16px,1.8vw,23px)}
+.tile.advanced-tile{color:#5b3988;font-size:clamp(22px,2.3vw,31px)}
+.tile.bracket-tile{background:linear-gradient(155deg,#e1f7f3,#b5e1d7);color:#285d5d;border-color:#6eaaa2}
+.tile.bracket-tile::after{content:"PAIR";position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:5px;font-weight:950;letter-spacing:.08em;color:#507f79}
+.board-tile.bracket-tile{color:#167c7c;background:linear-gradient(145deg,#e1f6f0,#bbdcd4);border-color:#7caba5}
+.fraction-face{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;line-height:1.03;white-space:nowrap;min-width:0;transform:translateY(-1px);gap:0}
+.fraction-face .frac-numerator,.fraction-face .frac-denominator{display:block;font-size:.78em;font-weight:900;line-height:1}
+.fraction-face .frac-rule{display:block;height:1.7px;width:100%;min-width:16px;max-width:36px;background:currentColor;margin:2px 0}
+.board-tile.fraction-face{display:flex;font-size:clamp(10px,1.25vw,20px);gap:0}
+.board-tile.fraction-face .frac-rule{min-width:10px;width:55%;height:1.3px;margin:1px 0}
+.board-tile.signed-tile{font-size:clamp(11px,1.2vw,20px)}
+.board-tile.advanced-tile{font-size:clamp(14px,1.8vw,23px);color:#593a81}
+#app[data-bracket-kit="true"] #rack{gap:clamp(2px,.3vw,6px)}
+#app[data-bracket-kit="true"] #rack .tile{width:clamp(26px,3vw,43px);font-size:clamp(17px,1.7vw,24px)}
+#app[data-bracket-kit="true"] #rack .tile.fraction-tile{font-size:18px}
+#app[data-bracket-kit="true"] #rack .tile.fraction-tile .frac-rule{min-width:12px}
+#app[data-bracket-kit="true"] #rack .tile.bracket-tile{font-size:25px}
+#app[data-bracket-kit="true"] #rack .tile.advanced-tile{font-size:25px}
+#app[data-bracket-kit="true"] .rack-row{gap:5px;padding-left:5px;padding-right:5px}
+.kit-dialog-explain{color:#b5d4d6;font-size:11px;line-height:1.6;margin:0 0 12px}
+.kit-dialog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+.kit-dialog-card{display:flex;align-items:flex-start;flex-direction:column;gap:6px;min-width:0;padding:13px;border:1px solid #637988;border-radius:11px;background:linear-gradient(135deg,#243e4d,#182c3a);color:#e3e9e7;text-align:left}
+.kit-dialog-card:hover{border-color:#e5c785;filter:brightness(1.12)}
+.kit-dialog-card.is-current{border:2px solid #d9bb80;background:#45534d;padding:12px}
+.kit-dialog-card span{font-size:9px;font-weight:900;letter-spacing:.13em;color:#9ce2d1}
+.kit-dialog-card strong{color:#fff0cc;font-size:13px;line-height:1.3}
+.kit-dialog-card em{font-style:normal;font-size:19px;font-weight:900;color:#f6db9b}
+.kit-dialog-card small{color:#b3cdd2;font-size:10px;line-height:1.35}
+@media(min-width:731px) and (max-width:1070px){
+ #app .top-actions{gap:4px}
+ #app .top-actions .quiet-button{padding:7px 8px;font-size:9px}
+}
+@media(max-width:730px){
+ #app .tile-kit-button{font-size:0!important;letter-spacing:0;min-width:36px;padding:5px 6px;align-self:center}
+ #app .tile-kit-button::after{content:"◇";font-size:16px}
+ #app .top-actions{gap:4px}
+ #app[data-bracket-kit="true"] #rack{gap:2px}
+ #app[data-bracket-kit="true"] #rack .tile{width:clamp(22px,6.6vw,29px);height:clamp(32px,9vw,44px);font-size:clamp(14px,4.2vw,20px)}
+ #app[data-bracket-kit="true"] #rack .tile.fraction-tile{font-size:clamp(15px,4.3vw,19px)}
+ #app[data-bracket-kit="true"] #rack .tile.bracket-tile{font-size:clamp(19px,5vw,24px)}
+ #app[data-bracket-kit="true"] #rack .tile.advanced-tile{font-size:clamp(20px,5vw,26px)}
+ #app[data-bracket-kit="true"] .rack-row{padding:4px;gap:2px}
+ #app[data-bracket-kit="true"] .equals-bank{padding-left:3px}
+ .kit-dialog-grid{gap:7px}
+ .kit-dialog-card{padding:10px;min-height:105px}
+ .kit-dialog-card.is-current{padding:9px}
+ .kit-dialog-card em{font-size:16px}
+}
+@media(max-width:375px){
+ #app .top-actions .quiet-button{padding:5px;font-size:8px}
+ #app[data-bracket-kit="true"] #rack .tile{width:clamp(21px,6vw,24px)}
+ #app[data-bracket-kit="true"] #rack{gap:1px}
+ .kit-dialog-card strong{font-size:11px}
+}
