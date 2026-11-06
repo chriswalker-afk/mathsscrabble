@@ -690,3 +690,31 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
  .local-setup-grid select,.local-setup-grid input{padding:8px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.local-privacy-icon{animation:none}.local-ready-btn:hover{transform:none}}
+
+/* Local matches retain the large, single-screen board on smaller devices.
+   Fold four scores into a small horizontal strip and keep IN BAG tappable. */
+@media(max-width:730px){
+ #app[data-mode="local"] .left-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;padding:5px 8px;min-height:0}
+ #app[data-mode="local"] .left-panel #local-panel{grid-column:1;grid-row:1;min-width:0;display:flex;gap:3px;margin:0;padding:0}
+ #app[data-mode="local"] .left-panel .local-score-header{gap:6px}
+ #app[data-mode="local"] .left-panel .local-score-header>strong{font-size:8px}
+ #app[data-mode="local"] .left-panel .local-score-header>span{padding:2px 5px;font-size:9px}
+ #app[data-mode="local"] .local-scores{display:flex;grid-template-columns:none;gap:3px}
+ #app[data-mode="local"] .local-score-row{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;align-items:center;justify-content:center;padding:3px 2px;line-height:1.1}
+ #app[data-mode="local"] .local-score-row .local-score-avatar{display:none}
+ #app[data-mode="local"] .local-score-name{font-size:9px;max-width:100%;line-height:1.2}
+ #app[data-mode="local"] .local-score-points strong{font-size:14px}
+ #app[data-mode="local"] .local-score-points small{display:none}
+ #app[data-mode="local"] .local-game-status{display:none}
+ #app[data-mode="local"] .left-panel .stat-grid{display:block;grid-column:2;grid-row:1;margin:0}
+ #app[data-mode="local"] .left-panel .stat-grid .mini-stat:first-child{display:none}
+ #app[data-mode="local"] .left-panel .stat-grid .bag-stat{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:62px;height:52px;padding:3px 6px}
+ #app[data-mode="local"] .left-panel .stat-grid .bag-stat small{font-size:7px}
+ #app[data-mode="local"] .left-panel .stat-grid .bag-stat strong{font-size:14px}
+ #app[data-mode="local"] .right-panel .command-group{display:grid;grid-template-columns:1.2fr repeat(3,minmax(0,1fr));gap:4px}
+ #app[data-mode="local"] .right-panel .primary-command{grid-column:auto;font-size:9px;padding:8px 2px;letter-spacing:0}
+ #app[data-mode="local"] .right-panel .primary-command strong{font-size:9px;white-space:nowrap}
+ #app[data-mode="local"] .right-panel .primary-command small{display:none}
+ #app[data-mode="local"] .right-panel .secondary-command{padding:8px 2px;font-size:9px;letter-spacing:0;white-space:nowrap}
+ #app[data-mode="local"] .right-panel .local-pass-btn{grid-column:auto}
+}
