@@ -3,6 +3,7 @@ import {
  SIZE,HAND_SIZE,NUMBER_SLOTS,OPERATOR_SLOTS,tilePool,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
+import {bossField,bossForSector} from './drift-bosses.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -21,15 +22,17 @@ export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
  const bag=[...sourceBag],rack=[...held];
  const minBlanks=options.minBlanks===2?2:1;
  const numberTarget=options.numberSlots===6?6:NUMBER_SLOTS;
+ const excluded=new Set(Array.isArray(options.forbiddenValues)?options.forbiddenValues:[]);
+ const eligible=tile=>!excluded.has(tile.value);
  for(const [pool,target] of [['numbers',numberTarget],['operators',OPERATOR_SLOTS]]){
    let count=rack.filter(t=>tilePool(t)===pool).length;
    while(count<target){
      let at=rack.filter(isBlank).length<minBlanks?
-       bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)):-1;
+       bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)&&eligible(t)):-1;
      // Prioritise higher-value operators when the Drift Operator Reserve is installed.
      if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
-       at=bag.findLastIndex(t=>t.value==='×'||t.value==='÷');
-     if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool);
+       at=bag.findLastIndex(t=>(t.value==='×'||t.value==='÷')&&eligible(t));
+     if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool&&eligible(t));
      if(at<0)break;
      rack.push(bag.splice(at,1)[0]);count++;
    }
@@ -148,6 +151,14 @@ function validSnapshot(data){
  if(!Array.isArray(data.placementOrder)||data.placementOrder.length>maxRack+3)return false;
  if(!entries.every(([i,t])=>/^(0|[1-9]\d*)$/.test(i)&&
       Number(i)<SIZE*SIZE&&data.board[Number(i)]===null&&validTile(t,'placed')))return false;
+ if(mode==='rogue'){
+   const boss=bossForSector(data.rogue,data.sector);
+   if(boss){
+     const field=bossField(data.rogue,data.sector);
+     if(entries.some(([i])=>field.blocked.has(Number(i))))return false;
+     if(data.rogue.forcedTile&&!data.rack.some(t=>t.id===data.rogue.forcedTile))return false;
+   }
+ }
  if(!data.placementOrder.every(i=>validInteger(i,0,SIZE*SIZE-1)&&
       Object.hasOwn(data.pending,String(i))))return false;
  if(new Set(data.placementOrder).size!==data.placementOrder.length)return false;
@@ -163,7 +174,7 @@ function validSnapshot(data){
  }
  if(!validStats(data.stats)||!validProgress(data.progress))return false;
  if(data.progress.completed.some(x=>x.sector>data.sector||(x.sector===data.sector&&data.phase!=='won')))return false;
- const target=targetForSector(mode,data.sector);
+ const target=targetForSector(mode,data.sector,data.rogue);
  if(data.phase==='won'&&data.score<target)return false;
  if(data.phase==='lost'&&(data.score>=target||data.turn!==limit))return false;
  if(data.phase==='playing'&&(data.score>=target||data.turn>limit))return false;

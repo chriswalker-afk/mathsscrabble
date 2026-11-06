@@ -1,0 +1,46 @@
+# The Drift — Galactic Zone Map and Boss Encounters
+
+The Drift now advances through **three-sector zones**, each named after a uniquely illustrated boss drawn at random from a twelve-boss pool. **Sectors 3, 6, 9, ...** are boss battles. The first two sectors of each zone use ordinary Drift gameplay. Winning the boss battle grants the normal Salvage Bay visit, shows the zone victory card, and advances to a new boss-named zone on the next sector.
+
+The route display appears in the existing left telemetry panel with three numbered mission nodes and a boss portrait; it does **not** resize, obscure, or overlay the 13×13 board. Tap the route card or **ZONE MAP** in the header to view completed zones, the current three-sector path and the uncharted zone ahead. The current node glows, completed sectors show checkmarks, and the final node has a distinctive boss diamond. Boss artwork and ambient lighting use original inline SVG/CSS rather than downloads or Cloudflare services.
+
+Boss identity is selected using browser entropy at the beginning of the zone and stored in the existing Drift local save. A reload cannot reroll it. Consecutive zones may not choose the same boss; all other combinations are possible. Older saves retain their original fixed boss encounters for already defeated zones.
+
+## Boss pool
+
+| Boss / Zone | Boss-sector rule |
+|---|---|
+| **The Addition Eater** — The Silent Sum Nebula | Physical `+` tiles are **sealed from new operator draws** for this sector. The tile still physically exists in the 151-tile inventory and can be used if already held; wildcard operators may still be configured as + |
+| **The Grid Warden** — The Obsidian Grid | Eight visually marked board cells are **impassable** for physical tiles, equals signs, clicks, keyboard placements and drags |
+| **The Curse Weaver** — The Crimson Fracture | Eight red **rift squares** subtract **6 energy per newly played physical tile** placed there. Only the current move is charged, never a reused locked tile, and total scores cannot become negative |
+| **The Seven Thief** — The Hollow Sevens | Newly placed physical `7` tiles score **0 tile energy**, even if boosted by equipment. The digit still works mathematically |
+| **The Relic Collector** — The Relic Vault | One random rack tile is highlighted. It **must be included in the next successfully scored equation**. It cannot be swapped away or transformed first. Once scored, the demand ends |
+| **The Subtraction Spectre** — The Vanishing Difference | Physical `−` is sealed from fresh operator draws for the boss sector |
+| **The Signal Phantom** — The Static Expanse | Double-equation (`2E`) multipliers are jammed |
+| **The Energy Leech** — The Draining Deep | Every equation loses **15% energy**. Leak Shield protects the reactor |
+| **The Overloaded Core** — The Overload Belt | The sector target increases by **20%** |
+| **The Crystal Storm** — The Broken Constellation | Newly placed tiles on `3T` count as `2T` |
+| **The Circuit Serpent** — The Narrow Signal | Equations cannot be longer than **eight consecutive squares** |
+| **The Spark Devourer** — The Dimming Array | `2T` squares supply no tile multiplier, overriding Amplifier Array on those squares |
+
+### How the random encounter works
+
+At the start of a fresh run, a first-zone boss is chosen at random. As the player enters sectors 4, 7, 10, ... the next boss is selected from the other eleven types. Until the zone is entered, subsequent zones appear as **UNCHARTED** on the larger map. This avoids allowing players to reroll a boss by refreshing or repeatedly opening the map.
+
+A glowing boss introduction appears when entering a new boss sector, explaining the temporary restriction **before the player starts placing tiles**. It is intentionally not replayed on an ordinary page reload. In combat, the game also shows the boss portrait and rules beside the command console.
+
+### Board and bag safeguards
+
+The standard bonus map remains exactly as it was. Boss-only blocked/rift squares are applied over the existing board as a temporary visual layer. The board remains symmetric in its permanent bonus-square layout. The center square and a usable initial equation route are never blocked. Boss hazards vanish when the next sector begins.
+
+Sealed operators remain in the physical bag so tile IDs and the total of 151 physical tiles stay conserved, but the draw engine excludes them from both initial and replacement draws. Bag Scan explicitly explains this during a boss. Swapping and single-use tile-transform powers also respect the embargo; the user is not charged for an impossible draw or transformation.
+
+Boss tile/drain scoring uses the same score preview and scoring-ceremony totals as regular Drift. Rejected moves never consume the temporary score boosters. A required tile cannot be exchanged or transformed away. All boss-specific effects disappear after the sector.
+
+## Verification
+
+- Unit rules: zone boundaries, random selection and no consecutive repeats, saved boss persistence, compatibility with older fixed-boss runs, all twelve temporary encounter rules, unchanged regular sectors, physical-bag conservation and scoring-ceremony arithmetic
+- Browser: full map, three-node route, boss artwork, saved identity after reload, rejected blocked squares, draining squares, forced-tile swap prevention, sealed-bag warning, keyboard and phone responsiveness
+- Existing Sector Run, Drift, local multiplayer, online multiplayer, Worker runtime and Alien Lab regression tests
+
+The boss system operates entirely in the existing static GitHub Pages client. No Cloudflare Worker change or additional Worker requests are needed.

@@ -113,13 +113,14 @@ try{
    const data=JSON.parse(localStorage.getItem('equa-nova.drift.v1'));
    const clean=JSON.parse(starter);
    data.sector=3;data.turn=1;data.score=0;data.phase='playing';
+    data.rogue.zoneBosses=['power-leak'];data.rogue.forcedTile=null;
    data.board=clean.board;data.rack=clean.rack;data.bag=clean.bag;
    data.pending={};data.placementOrder=[];data.stats=clean.stats;
    localStorage.setItem('equa-nova.drift.v1',JSON.stringify(data));
  },firstDrift);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
- assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
+ assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.equal(await page.locator('#anomaly-banner').isVisible(),true);
  assert.match(await page.locator('#upgrade-summary').textContent(),/1 charge/);
  // A capacitor appears in the prediction but must not be used on a bad move.
@@ -154,7 +155,7 @@ try{
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  await page.locator('#mode-btn').click();
  await page.locator('#home-rogue').click();
- assert.match(await page.locator('#anomaly-name').textContent(),/POWER LEAK/);
+ assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
 
  // No retry with preserved upgrades: failing the last turn offers a new run.
@@ -188,7 +189,7 @@ try{
  // Header and game controls should remain fully visible on a phone.
  await page.setViewportSize({width:390,height:844});
  const mobile=await page.evaluate(()=>{
-   const buttons=[...document.querySelectorAll('.top-actions button')];
+   const buttons=[...document.querySelectorAll('.top-actions button')].filter(button=>button.getClientRects().length>0);
    const score=document.querySelector('#score-btn').getBoundingClientRect();
    return {scrollWidth:document.documentElement.scrollWidth,
       width:innerWidth,scoreBottom:score.bottom,

@@ -8,6 +8,9 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
+import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
+import {bossArtwork} from './boss-art.js';
+import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -23,7 +26,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -61,10 +64,10 @@ function persistRun(){
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
-const currentTarget=()=>targetForSector(state.mode,state.sector);
+const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
 const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
-const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
  (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
@@ -85,7 +88,10 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
- if(isDrift())state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0};
+ if(isDrift()){
+   state.rogue=ensureZoneBoss(state.rogue,sector,randomFloat);
+   state.rogue={...state.rogue,echoed:[],swapTurn:0,swapsUsed:0,forcedTile:null};
+ }
  state.itemTarget=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
@@ -102,8 +108,10 @@ function freshSector(sector=1,{newRun=false}={}){
  },loadOpeningPattern(storage,state.mode),
    game=>game.rack,(game,rack)=>({...game,rack}));
  state.rack=deal.rack;state.bag=deal.bag;
+ state.bossGrid=isDrift()?bossField(state.rogue,sector):null;
+ if(isDrift())state.rogue=selectForcedTile(state.rogue,sector,state.rack,randomFloat);
  rememberOpening(storage,state.mode,state.rack);
- const anomaly=isDrift()?anomalyForSector(sector):null;
+ const anomaly=isDrift()?anomalyForSector(sector,state.rogue):null;
  announce(sector===1?
    (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
      'First mission: use your shuffled tiles to create a true equation through the glowing centre. BIDMAS checks it when you submit.'):
@@ -112,6 +120,7 @@ function freshSector(sector=1,{newRun=false}={}){
      'New sector online. Use the centre to begin and aim for the new energy target.');
  $('board-frame').classList.remove('reactor-scored');
  render();
+ if(isDrift()&&isBossSector(sector))showBossEncounter();
 }
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
@@ -147,6 +156,9 @@ function chooseBlank(tile,index){
 }
 function commitPending(tile,index){
  if(state.ended||state.swapping||state.busy||state.board[index])return;
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('The Grid Warden has blocked that square.',true);return;
+ }
  // Replacing a pending tile returns the displaced physical tile to the rack.
  state.pending[index]=tile;
  state.placementOrder=state.placementOrder.filter(i=>i!==index);
@@ -156,6 +168,9 @@ function commitPending(tile,index){
 function placePayload(payload,index){
  if(state.ended||state.swapping||state.busy||!Number.isInteger(index)||index<0||index>=SIZE*SIZE)return;
  if(state.board[index]){announce('This tile is locked. Choose an empty square.',true);return;}
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('A boss blockade prevents placing tiles on that square.',true);return;
+ }
  if(payload.kind==='pending'){
    const from=payload.index,moving=state.pending[from];
    if(!moving||from===index)return;
@@ -203,6 +218,9 @@ function onTileDrop(payload,target){
 function placeAt(index){
  if(state.ended||state.swapping||state.busy)return;
  if(state.board[index]){announce('That tile is locked. Use an empty square.',true);return;}
+ if(isDrift()&&state.bossGrid?.blocked.has(index)){
+   announce('This square is blocked by the boss.',true);return;
+ }
  if(state.selected){
    placePayload(state.selected==='equals'?{kind:'equals'}:{kind:'rack',id:state.selected},index);
    return;
@@ -247,8 +265,11 @@ function focusCell(currentIndex,key){
 }
 function boardCell(i){
  const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],locked=!!state.board[i];
- const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector):null;
- const bonus=isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
+ const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector,state.rogue):null;
+ const blocked=Boolean(isDrift()&&state.bossGrid?.blocked.has(i));
+ const rift=Boolean(isDrift()&&state.bossGrid?.rifts.has(i));
+ const bonus=isDrift()&&anomaly?.id==='multiplier-leech'&&rawBonus==='2T'?'NO':
+   isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
    isDrift()&&rawBonus==='2E'&&anomaly?.id==='signal-jam'?'JAM':
    isDrift()&&rawBonus==='3T'&&anomaly?.id==='tile-static'?'2T':rawBonus;
  const inPath=state.preview?.indices?.includes(i);
@@ -260,9 +281,10 @@ function boardCell(i){
    (inPath?' path-cell':'')+
    (inPath&&!tile?' path-gap':'')+
    (i===state.recentlyPlaced?' tile-landing':'')+
-   (state.lockedFlash.has(i)?' locked-flash':'');
+   (state.lockedFlash.has(i)?' locked-flash':'')+
+   (blocked?' boss-blocked':'')+(rift?' boss-rift':'');
  node.setAttribute('role','gridcell');
- node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
+ node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${blocked?'BLOCKED':rift?'RIFT minus six energy':tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
  node.dataset.index=String(i);
  node.dataset.locked=String(locked);
  node.tabIndex=state.focusedIndex===i?0:-1;
@@ -275,6 +297,10 @@ function boardCell(i){
    // on the rack, in the equation breakdown, and in this accessible tooltip.
    if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
    node.append(inner);
+ }else if(blocked){
+   const label=document.createElement('span');label.className='boss-cell-label';label.textContent='⊠';node.append(label);
+ }else if(rift){
+   const label=document.createElement('span');label.className='boss-cell-label';label.textContent='−6';node.append(label);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
    label.textContent=bonus==='START'?'✳':bonus;node.append(label);
@@ -311,12 +337,15 @@ function tileButton(tile, rackIndex){
  button.className='tile'+(state.itemTarget?' consumable-target':'')+(isChargedTile(tile)?' charged-rack-tile':'')+
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
-   (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
+   (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+   (isDrift()&&state.rogue.forcedTile===tile.id?' boss-required':'');
  button.dataset.tileId=tile.id;
  button.dataset.rackIndex=String(rackIndex);
  button.setAttribute('aria-label',isBlank(tile)?
    `Blank ${BLANK_KINDS[tile.blank].label.toLowerCase()}: choose a value when placing, zero tile points`:
    `Tile ${tile.value}, worth ${tile.points} points`);
+ if(isDrift()&&state.rogue.forcedTile===tile.id)
+   button.setAttribute('aria-label',button.getAttribute('aria-label')+'. REQUIRED BY BOSS in your next equation.');
  button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
  const main=document.createElement('span');main.textContent=isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value;
  const points=document.createElement('sub');
@@ -380,7 +409,13 @@ function renderPreview(){
      isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
        'Two separate free single-tile swaps available this turn.':
        'One free single-tile swap available this turn.':preview.feedback;
- const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
+ let points=null;
+ if(!state.swapping&&preview.ready){
+   try{points=calculateMove(preview);}catch(error){
+     $('preview-status').textContent=error.message;
+     box.dataset.state='error';
+   }
+ }
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
    `Potential score ${points.total} if the equation is mathematically correct`:
@@ -512,8 +547,13 @@ function activateTemporary(id){
 }
 function applyTileTemporary(tileId){
  if(!isDrift()||!state.itemTarget||state.busy||state.ended)return;
+ if(state.rogue.forcedTile===tileId){announce('This tile is claimed by the boss. It must be used in an equation.',true);return;}
  const result=useTileTemporary(state.rogue,state.rack,state.bag,state.itemTarget,tileId);
  if(!result.ok){announce(result.reason,true);return;}
+ const replacement=result.rack.find(t=>!state.rack.some(old=>old.id===t.id));
+ if(replacement&&restrictedDraws(state.rogue,state.sector).includes(replacement.value)){
+   announce('That operator is sealed from the bag by the boss.',true);return;
+ }
  state.rogue=result.rogue;state.rack=result.rack;state.bag=result.bag;
  state.itemTarget=null;state.selected=null;
  announce(result.reason+'. Power-up consumed without spending a turn.');
@@ -523,6 +563,7 @@ function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
+ renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
  // Both solo and local competition share the same scoring ceremony display.
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
@@ -544,22 +585,24 @@ function render(){
    state.ceremony.startScore+state.ceremony.awarded:state.score;
  $('score').textContent=displayedScore;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
- $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('sector-label').textContent=isDrift()?`THE DRIFT ${String(state.sector).padStart(2,'0')} · ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()}`:
+   `SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
- $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
+ $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector,state.rogue)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
- $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector);
+ $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector,state.rogue);
  if(isDrift()){
-   const anomaly=anomalyForSector(state.sector);
+   const anomaly=anomalyForSector(state.sector,state.rogue);
    $('flux-count').textContent=String(state.rogue.flux);
    const upgrades=state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name);
    $('upgrade-summary').textContent=(upgrades.length?
      `${upgrades.slice(0,2).join(' · ')}${upgrades.length>2?' · +'+(upgrades.length-2)+' more':''}`:
      'No upgrades equipped yet')+(state.rogue.pulse?' · ⚡ '+state.rogue.pulse+' charge(s)':'');
    if(anomaly){
+     $('boss-banner-art').innerHTML=bossArtwork(anomaly.id);
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
      $('anomaly-text').textContent=anomaly.short+
        (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
@@ -610,6 +653,22 @@ function showModal(eyebrow,title,body,buttons){
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
  if(!$('modal').open)$('modal').showModal();
 }
+function showZoneMap(){
+ if(!isDrift())return;
+ const returnAction=state.phase==='won'?showShop:
+   state.phase==='lost'?showSectorOutcome:undefined;
+ showModal('GALACTIC ROUTE','The Drift · Zone Map',
+   zoneMapMarkup(state.rogue,state.sector,state.phase),
+   [{text:'BACK TO '+(state.phase==='won'?'SALVAGE BAY':state.phase==='lost'?'REPORT':'BOARD'),primary:true,fn:returnAction}]);
+}
+function showBossEncounter(){
+ if(!isDrift()||!isBossSector(state.sector))return;
+ const info=zoneInfo(state.rogue,state.sector);
+ showModal('BOSS APPROACH · ZONE '+info.number,
+   info.boss.name,
+   bossIntroMarkup(state.rogue,state.sector),
+   [{text:'VIEW ZONE MAP',fn:showZoneMap},{text:'ENGAGE BOSS →',primary:true}]);
+}
 function showBagInventory(){
  if(state.busy)return;
  const inventory=summarizeBag(state.bag);
@@ -617,6 +676,9 @@ function showBagInventory(){
    `<div class="bag-overview"><div class="bag-overview-total">
      <strong>${inventory.total}</strong><div><span>PHYSICAL TILES</span>
      <p>Available for future draws and exchanges</p></div></div>
+      ${isDrift()&&restrictedDraws(state.rogue,state.sector).length?
+       '<p class="bag-seal-notice">BOSS EMBARGO · '+restrictedDraws(state.rogue,state.sector).join(', ')+
+       ' tiles are sealed from draws during this sector. They remain in the physical inventory.</p>':''}
      <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong></p>
      <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
      <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
@@ -938,7 +1000,7 @@ function showShop(){
  const offers=shopOffers(state.sector,state.rogue);
  const consumables=shopTemperatures(state.sector);
  const occupied=heldConsumables(state.rogue).length;
- const intro=`<div class="salvage-intro">
+ const intro=`${isBossSector(state.sector)?zoneVictoryMarkup(state.rogue,state.sector):''}<div class="salvage-intro">
    <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
    <div><strong>SECTOR ${state.sector} STABILISED</strong>
    <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
@@ -1006,7 +1068,7 @@ function showSectorOutcome(){
  <div><span>SECTOR TARGET</span><strong>${report.target}</strong></div></div>
  <div class="report-meter"><div style="width:${Math.min(100,Math.round(100*report.score/report.target))}%"></div></div>
  <div class="report-facts"><div><span>Equations</span><strong>${report.equations}</strong></div>
- <div><span>Turns used</span><strong>${report.turnsUsed}/6</strong></div>
+ <div><span>Turns used</span><strong>${report.turnsUsed}/${maxTurns()}</strong></div>
  <div><span>Best move</span><strong>${report.best?report.best.points:0} pts</strong></div>
  <div><span>Free exchanges</span><strong>${report.freeExchanges}</strong></div></div>
  <p class="report-best">Best calculation: ${best}</p>
@@ -1226,6 +1288,7 @@ function score(){
    // Consume single-use charges and commit the whole score atomically before
    // a timer, animation, tab switch or reload can interrupt the presentation.
    if(isDrift()){
+     state.rogue=resolveBossScore(state.rogue,state.sector,state.pending);
      state.rogue=consumeBoardEcho(state.rogue,points.echoedIndices);
      state.rogue=earnMoveFlux(state.rogue,state.pending).rogue;
      if(points.tempApplied)state.rogue=consumeTemporary(state.rogue,points.tempApplied);
@@ -1275,14 +1338,18 @@ function swap(){
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
+ if(isDrift()&&state.rogue.forcedTile&&state.swapSet.has(state.rogue.forcedTile)){
+   announce('The boss demands that tile. Use it in a correct equation before swapping.',true);return;
+ }
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
  const free=state.swapSet.size===1&&(isDrift()?
    freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
    state.freeSwapTurn!==state.turn);
  const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
+ const sealed=new Set(isDrift()?restrictedDraws(state.rogue,state.sector):[]);
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
-   const available=state.bag.filter(t=>kind(t)===pool).length;
+   const available=state.bag.filter(t=>kind(t)===pool&&!sealed.has(t.value)).length;
    if(needed>available){announce('Not enough '+pool+' remain in that bag.',true);return;}
  }
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
@@ -1384,7 +1451,7 @@ function showDriftIntro(){
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
        <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
-       <p>Every third sector disrupts the reactor with a named hazard. If you fail a target, the Drift run ends and you must start again without your upgrades. Sector Run remains available separately.</p></div></div>
+       <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
    [{text:'BEGIN THE DRIFT →',primary:true}]);
 }
@@ -1398,11 +1465,12 @@ function restoreMode(mode,{initial=false}={}){
    state.freeSwapTurn=previous.freeSwapTurn??0;
    state.mode=mode;
    state.rogue=mode==='rogue'?previous.rogue:null;
+   state.bossGrid=mode==='rogue'?bossField(state.rogue,state.sector):null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
    state.focusedIndex=pos(CENTER,CENTER);state.itemTarget=null;
-   announce(mode='rogue'?
+   announce(mode==='rogue'?
      'Saved Drift run restored: your upgrades, Flux and rack are intact.':
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();

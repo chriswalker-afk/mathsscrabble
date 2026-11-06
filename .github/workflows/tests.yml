@@ -83,6 +83,7 @@ jobs:
           node tests/home-browser.mjs
           node tests/browser-smoke.mjs
           node tests/rogue-browser.mjs
+          node tests/drift-map-browser.mjs
           node tests/drift-power-browser.mjs
           node tests/ceremony-browser.mjs
           node tests/local-browser.mjs
