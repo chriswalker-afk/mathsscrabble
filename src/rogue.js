@@ -86,14 +86,14 @@ export function targetForSector(mode,sector){
    Math.ceil(base*1.2):base;
 }
 export function makeRogueState(){
- return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,pulse:0,pulseBought:0,pulseUsed:0};
+ return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,
+   pulse:0,pulseBought:0,pulseUsed:0,tempSlots:[],tempBought:[],tempUsed:[],
+   armed:null,swapTurn:0,swapsUsed:0,echoed:[]};
 }
-const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function shopOffers(sector,rogue){
  const unowned=ROGUE_ITEMS.filter(item=>!owns(rogue,item.id));
  if(!unowned.length)return [];
- // Four choices, rotating with the sector, while purchased upgrades disappear.
- // Fresh runs always offer four complementary directions for a first build.
+ // Four curated offers; the four-slot build limit makes stock choices matter.
  if(sector===1)return unowned.slice(0,4);
  const start=((sector-1)*3)%ROGUE_ITEMS.length;
  const ordered=[...ROGUE_ITEMS.slice(start),...ROGUE_ITEMS.slice(0,start)];
@@ -105,29 +105,107 @@ export function purchaseUpgrade(rogue,id,sector){
  if(!Number.isInteger(sector)||sector<1||rogue.shopSector!==sector)
    return {ok:false,reason:'Upgrades can only be purchased in the current Salvage Bay.',rogue};
  if(owns(rogue,id))return {ok:false,reason:'You already own that upgrade.',rogue};
+ if(rogue.upgrades.length>=MAX_PERMANENT_SLOTS)
+   return {ok:false,reason:'All four permanent equipment slots are occupied.',rogue};
  if(!shopOffers(sector,rogue).some(offer=>offer.id===id))
    return {ok:false,reason:'That upgrade is not offered in this sector.',rogue};
  if(rogue.flux<item.cost)return {ok:false,reason:'Not enough Flux for this upgrade.',rogue};
- return {ok:true,reason:'Purchased '+item.name,rogue:{
+ return {ok:true,reason:'Installed '+item.name,rogue:{
    ...rogue,flux:rogue.flux-item.cost,spent:rogue.spent+item.cost,
    upgrades:[...rogue.upgrades,id]
  }};
 }
-export function purchasePulse(rogue,sector){
- if(rogue.shopSector!==sector)return {ok:false,reason:'The Salvage Bay is not open.',rogue};
- if(rogue.pulse>=3)return {ok:false,reason:'You can carry at most three Pulse Capacitors.',rogue};
- if(rogue.flux<PULSE_ITEM.cost)return {ok:false,reason:'Not enough Flux for a Pulse Capacitor.',rogue};
- return {ok:true,reason:'Pulse Capacitor charged',rogue:{
-   ...rogue,flux:rogue.flux-PULSE_ITEM.cost,
-   spent:rogue.spent+PULSE_ITEM.cost,pulse:rogue.pulse+1,pulseBought:rogue.pulseBought+1
+export function purchaseTemporary(rogue,id,sector){
+ const item=TEMP_ITEM_BY_ID[id];
+ if(!item)return {ok:false,reason:'Unknown temporary equipment.',rogue};
+ if(!Number.isInteger(sector)||sector<1||rogue.shopSector!==sector)
+   return {ok:false,reason:'The Salvage Bay is not open.',rogue};
+ if(!shopTemperatures(sector).some(offer=>offer.id===id))
+   return {ok:false,reason:'This consumable is not offered this sector.',rogue};
+ if(heldConsumables(rogue).length>=MAX_TEMPORARY_SLOTS)
+   return {ok:false,reason:'Both temporary equipment slots are full.',rogue};
+ if(rogue.flux<item.cost)return {ok:false,reason:'Not enough Flux for '+item.name+'.',rogue};
+ return {ok:true,reason:'Stored '+item.name,rogue:{
+   ...rogue,flux:rogue.flux-item.cost,spent:rogue.spent+item.cost,
+   tempSlots:[...heldConsumables(rogue),id],
+   ...(id===PULSE_ITEM.id?{pulse:rogue.pulse+1,pulseBought:rogue.pulseBought+1}:
+     {tempBought:[...(rogue.tempBought||[]),id]})
  }};
 }
-export function consumePulse(rogue){
- return rogue.pulse>0?{...rogue,pulse:rogue.pulse-1,pulseUsed:rogue.pulseUsed+1}:rogue;
+export function purchasePulse(rogue,sector){return purchaseTemporary(rogue,PULSE_ITEM.id,sector);}
+export function armTemporary(rogue,id){
+ const item=TEMP_ITEM_BY_ID[id];
+ if(!item||item.action!=='score'||!heldConsumables(rogue).includes(id))
+   return {ok:false,reason:'Choose a stored score booster.',rogue};
+ return {ok:true,reason:'Armed '+item.name,rogue:{...rogue,armed:id}};
 }
+export function consumeTemporary(rogue,id){
+ if(!heldConsumables(rogue).includes(id))return rogue;
+ const slots=heldConsumables(rogue),at=slots.indexOf(id);slots.splice(at,1);
+ return {...rogue,tempSlots:slots,armed:rogue.armed===id?null:rogue.armed,
+   ...(id===PULSE_ITEM.id?{pulse:rogue.pulse-1,pulseUsed:rogue.pulseUsed+1}:
+     {tempUsed:[...(rogue.tempUsed||[]),id]})};
+}
+export function consumePulse(rogue){return consumeTemporary(rogue,PULSE_ITEM.id);}
 export function rogueRackOptions(rogue){
  return {minBlanks:owns(rogue,'wild-beacon')?2:1,
-         preferAdvancedOperators:owns(rogue,'operator-reserve')};
+         preferAdvancedOperators:owns(rogue,'operator-reserve'),
+         numberSlots:owns(rogue,'wide-rack')?6:5};
+}
+export function consumeBoardEcho(rogue,used=[]){
+ if(!used.length)return rogue;
+ return {...rogue,echoed:[...new Set([...(rogue.echoed||[]),...used])]};
+}
+export function earnMoveFlux(rogue,pending){
+ const newlyPlaced=Object.entries(pending).filter(([,tile])=>tile.value!=='=');
+ let earned=0;
+ if(owns(rogue,'precision-pay')&&newlyPlaced.length&&newlyPlaced.every(([,tile])=>!tile.blank))earned+=2;
+ if(owns(rogue,'premium-dividend')){
+   for(const [index] of newlyPlaced){
+     const [row,col]=coords(Number(index));
+     if(['2T','3T','2E','3E'].includes(bonusAt(row,col)))earned++;
+   }
+ }
+ if(!earned)return {rogue,amount:0};
+ return {rogue:{...rogue,flux:rogue.flux+earned,earned:rogue.earned+earned},amount:earned};
+}
+export function useTileTemporary(rogue,rack,bag,id,tileId,random=randomFloat){
+ const item=TEMP_ITEM_BY_ID[id];
+ if(item?.action!=='tile'||!heldConsumables(rogue).includes(id))
+   return {ok:false,reason:'That tile tool is unavailable.',rogue,rack,bag};
+ const tile=rack.find(t=>t.id===tileId);
+ if(!tile)return {ok:false,reason:'Choose a tile from your rack.',rogue,rack,bag};
+ const samePool=t=>((t.blank==='blank-operator'||['+','−','×','÷'].includes(t.value))?
+   'operators':'numbers')===((tile.blank==='blank-operator'||['+','−','×','÷'].includes(tile.value))?
+   'operators':'numbers');
+ const plainDigit=/^[0-9]$/.test(tile.value)&&!tile.blank;
+ let match=()=>false;
+ if(id==='step-up'||id==='step-down'){
+   if(!plainDigit)return {ok:false,reason:'Choose a physical number tile.',rogue,rack,bag};
+   const next=Number(tile.value)+(id==='step-up'?1:-1);
+   if(next<0||next>9)return {ok:false,reason:'The number must stay between 0 and 9.',rogue,rack,bag};
+   match=t=>!t.blank&&t.value===String(next);
+ }else if(id==='operator-shift'){
+   const map={'+':'×','×':'+','−':'÷','÷':'−'};
+   if(tile.blank||!map[tile.value])
+     return {ok:false,reason:'Choose a physical +, −, × or ÷ tile.',rogue,rack,bag};
+   match=t=>!t.blank&&t.value===map[tile.value];
+ }else if(id==='wildcard-hunt'){
+   match=t=>Boolean(t.blank)&&samePool(t);
+ }else if(id==='recycle-tile'){
+   match=t=>samePool(t)&&(t.value!==tile.value||t.blank!==tile.blank);
+ }
+ const at=bag.findIndex(match);
+ if(at<0)return {ok:false,reason:'No suitable replacement remains in that bag.',rogue,rack,bag};
+ const newBag=[...bag],replacement=newBag.splice(at,1)[0];
+ const newRack=rack.map(t=>t.id===tileId?replacement:t);
+ newBag.push(tile);
+ for(let i=newBag.length-1;i>0;i--){
+   const j=Math.min(i,Math.floor(random()*(i+1)));
+   [newBag[i],newBag[j]]=[newBag[j],newBag[i]];
+ }
+ return {ok:true,reason:item.name+': '+(tile.value||tile.blank)+' → '+(replacement.value||replacement.blank),
+   rogue:consumeTemporary(rogue,id),rack:newRack,bag:newBag};
 }
 export function fluxReward(score,turn,rogue){
  const base=4+Math.floor(score/30)+Math.max(0,TURNS_PER_SECTOR-turn);
