@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="legs" data-part-id="tentacles" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Tentacle base - Alien Lab</title><desc>Three curling feelers instead of ordinary feet.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M139 256 Q121 275 104 293 Q80 316 64 303 Q51 292 65 284" fill="none" stroke="#26344e" stroke-width="27" stroke-linecap="round"/>
+<path d="M181 256 Q199 275 216 293 Q240 316 256 303 Q269 292 255 284" fill="none" stroke="#26344e" stroke-width="27" stroke-linecap="round"/>
+<path d="M158 256 Q154 291 164 317 Q167 334 148 339" fill="none" stroke="#26344e" stroke-width="28" stroke-linecap="round"/>
+<path d="M139 256 Q121 275 104 293 Q80 316 64 303 Q51 292 65 284" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="19" stroke-linecap="round"/>
+<path d="M181 256 Q199 275 216 293 Q240 316 256 303 Q269 292 255 284" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="19" stroke-linecap="round"/>
+<path d="M158 256 Q154 291 164 317 Q167 334 148 339" fill="none" stroke="#77d9b7" data-stroke-slot="primary" stroke-width="20" stroke-linecap="round"/>
+<circle cx="90" cy="297" r="4" fill="#c0f9df" data-color-slot="light" />
+<circle cx="230" cy="297" r="4" fill="#c0f9df" data-color-slot="light" />
+<circle cx="156" cy="327" r="5" fill="#c0f9df" data-color-slot="light" />
+</g></svg>

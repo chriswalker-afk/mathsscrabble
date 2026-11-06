@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="antennae" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Starlight antennae - Alien Lab</title><desc>Two rounded antennae peeking over the alien head.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M131 71 Q111 49 112 21 M189 71 Q210 49 208 21" fill="none" stroke="#26344e" stroke-width="10" stroke-linecap="round"/>
+<path d="M131 71 Q111 49 112 21 M189 71 Q210 49 208 21" fill="none" stroke="#f0c86d" data-stroke-slot="primary" stroke-width="5.5" stroke-linecap="round"/>
+<circle cx="112" cy="21" r="12" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="3.6"/>
+<circle cx="208" cy="21" r="12" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="3.6"/>
+<circle cx="108" cy="17" r="3.8" fill="#fff8db" data-color-slot="belly" />
+<circle cx="204" cy="17" r="3.8" fill="#fff8db" data-color-slot="belly" />
+</g></svg>

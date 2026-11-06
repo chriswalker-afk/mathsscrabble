@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="helmet" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Glass bubble helmet - Alien Lab</title><desc>A clear space canopy with gold rim and rounded collar.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<path d="M67 145 Q47 113 69 62 Q100 5 160 7 Q221 5 251 62 Q274 113 253 145" fill="none" stroke="#26344e" stroke-width="13" stroke-linecap="round"/>
+<path d="M67 145 Q47 113 69 62 Q100 5 160 7 Q221 5 251 62 Q274 113 253 145" fill="none" stroke="#f0c86d" data-stroke-slot="primary" stroke-width="7" stroke-linecap="round"/>
+<path d="M77 66 Q108 13 163 17 Q211 18 239 63" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+<path d="M108 169 Q160 178 212 169 Q215 173 215 184 Q160 191 105 184 Q105 174 108 169Z" fill="#c6954e" data-color-slot="dark" stroke="#26344e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="146" y="176" width="28" height="10" rx="4" fill="#a6ecdc" stroke="#26344e" stroke-width="2.8"/>
+<circle cx="65" cy="144" r="7" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="3.6"/>
+<circle cx="255" cy="144" r="7" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="3.6"/>
+</g></svg>

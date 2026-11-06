@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360" data-alien-part="accessories" data-part-id="badge" data-art-version="1" data-anchor-x="160" data-anchor-neck-y="154" data-anchor-hip-y="260">
+<title>Cosmic star badge - Alien Lab</title><desc>A tiny star medallion pinned to the alien chest.</desc><g stroke-linecap="round" stroke-linejoin="round">
+<circle cx="192" cy="227" r="17" fill="#c6954e" data-color-slot="dark" stroke="#26344e" stroke-width="3.2"/>
+<path d="M192 214 L195.9 223.2 L206 224 L198.3 230.4 L200.7 240 L192 235.2 L183.3 240 L185.7 230.4 L178 224 L188.1 223.2Z" fill="#f995a2" data-color-slot="accent" stroke="#26344e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="191" cy="222" r="2.8" fill="#fff8db" data-color-slot="belly" />
+</g></svg>
