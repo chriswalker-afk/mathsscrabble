@@ -25,9 +25,8 @@ test('each equation cell receives its exact score before equation bonuses',()=>{
  assert.ok(stages.every(x=>Number.isSafeInteger(x.amount)));
 });
 test('an equation multiplier is applied exactly once to every tile',()=>{
- const {board,pending,move}=makeEquation(['8','+','4','=','1','2'],3,2);
- // Choose a 2E square on the equation where possible. The genuine validator
- // requires the first equation to cross the centre, so use a connected move.
+ const board=Array(169).fill(null);
+ // A connected perpendicular equation reuses an existing tile.
  const start=makeEquation(['8','+','4','=','1','2']);
  for(const [i,tile] of Object.entries(start.pending))board[Number(i)]=tile;
  const down={};for(const [offset,value] of ['+','3','=','1','1'].entries()){
