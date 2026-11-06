@@ -541,6 +541,9 @@ function showBag(){
  const detail=document.createElement('div');
  detail.textContent='PHYSICAL TILES LEFT IN SHARED BAG';
  count.append(total,detail);wrap.append(count);
+ const pools=document.createElement('p');pools.className='bag-pool-summary';
+ pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators;
+ wrap.append(pools);
  const groups=document.createElement('div');groups.className='bag-inventory-groups';
  for(const group of inventory.groups){
    const section=document.createElement('section');section.className='bag-inventory-group';
