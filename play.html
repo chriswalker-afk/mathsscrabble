@@ -22,6 +22,8 @@
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><button id="bag-details-btn" class="mini-stat bag-stat" type="button" aria-label="Show remaining tiles in the bag" title="View which tiles remain in the bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="bag-count">0</strong></button></div>
 <div id="rogue-summary" class="rogue-summary" hidden>
  <div class="rogue-head"><span>THE DRIFT · BUILD</span><strong id="flux-count">0 <small>FLUX</small></strong></div>
+ <div class="equipment-label"><strong>PERMANENT EQUIPMENT</strong><span id="permanent-count">0 / 4</span></div>
+ <div id="permanent-slots" class="permanent-slots" role="group" aria-label="Four permanent upgrade slots"></div>
  <div id="upgrade-summary" class="upgrade-summary">No upgrades equipped</div>
 </div>
 <div class="panel-divider"></div><div class="panel-heading">REACTOR LOG</div><div id="log" role="status" aria-live="polite">Place your first equation through the glowing centre tile.</div>
@@ -47,6 +49,11 @@
 <button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
 <button id="local-pass-btn" class="secondary-command local-pass-btn" type="button" hidden>↪ PASS TURN</button>
 <button id="swap-btn" class="secondary-command" type="button">⇄ SWAP TILES</button></div>
+<div id="drift-temporary" class="drift-temporary" hidden>
+ <div class="equipment-label"><strong>TEMPORARY POWER-UPS</strong><span id="temporary-count">0 / 2</span></div>
+ <div id="temporary-slots" class="temporary-slots" role="group" aria-label="Two temporary power-up slots"></div>
+ <p id="temporary-hint">Tap a power-up to arm it or select a rack tile.</p>
+</div>
 <div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div><div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile</span></div><div><i class="legend-square ee">2E</i><span>Double equation</span></div><div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
 <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div><p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p><p class="rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p><div class="keys-guide">KEYS <kbd>1–8</kbd> rack <kbd>=</kbd> equals <kbd>←↑↓→</kbd> grid <kbd>⌫</kbd> undo</div></aside>
 </main><footer class="bottom-strip"><span id="footer-mode">⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
