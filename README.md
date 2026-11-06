@@ -42,6 +42,14 @@ The animation runs only while the current view is active. Use **SKIP** in the co
 
 The game remembers the most recent opening rack pattern separately for Sector Run, The Drift and Local Match; if a new opening would look identical to the previous one, it is reshuffled (and if necessary rearranged). **No physical tiles are invented, duplicated or removed to avoid repetition.** A new game also creates an independent bag order, so later draws are not locked into a tutorial sequence. The opening pattern history is local to this browser and is not a competitive seed, server record or cross-device guarantee.
 
+## Pass E2 — Online Signal Clash
+
+**Online Rooms** extends multiplayer to two to four people on **different devices**. One pilot creates a six-character room code, others join with the link, and the host starts the match. Players see one shared 13×13 board, their **own private seven-tile rack**, live scoreboards and optional server-enforced turn timers. All completed equations are checked using BIDMAS and scored **by the Cloudflare server**, not the player's browser. Passes, free/paid swaps, finite bag, final rack-point deductions, tie handling, reconnection and the existing satisfying tile-scoring animation are supported.
+
+The online experience lives in [online.html](online.html), uses [server/worker.js](server/worker.js) with one SQLite-backed Cloudflare Durable Object per game and leaves Sector Run, The Drift and Local Match entirely independent. WebSockets announce room revisions, but each player retrieves only their own authorised state.
+
+**Deployment status:** This repository contains the online implementation; **GitHub Pages alone cannot host the room server**. Before students can play across devices, the Worker must be deployed using `cf deploy` and its endpoint configured at `rooms.mrwalkermaths.com`. See the [complete online deployment and testing guide](docs/ONLINE_MULTIPLAYER.md). The automated online browser test simulates the server and does not prove that a live Cloudflare service is available.
+
 ## Game modes
 
 Use **◈ MODE** in the header to switch without deleting the other mode's save.
@@ -64,7 +72,7 @@ The shop presents four rotating permanent choices plus the capacitor. Prices, pu
 
 ## Scope and planned work
 
-This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift and Local Match**. Pass E1 covers **local** competition; online rooms are a separate next step. Brackets, signed/fraction tile sets, online multiplayer, room codes, reusable Critter Lab avatars, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
+This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift, Local Match and Online Rooms**. Online Rooms require a separate Cloudflare Worker deployment before public multiplayer becomes functional. Brackets, signed/fraction tile sets, reusable Critter Lab avatars, signed/fraction/advanced tile sets, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
 
 **Rule prototype note:** A single submitted complete equation scores each turn. Unrelated adjacent perpendicular fragments are not checked, and this should be playtested before locking the full game rules.
 
@@ -76,7 +84,7 @@ npm run check
 
 The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover all three modes, randomized starting racks, independent saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs the Solo, Drift, scoring-ceremony and local-match browser scenarios against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover all four modes, including the online two-device UI with a simulated server, and randomized starting racks, independent saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs the Solo, Drift, scoring-ceremony and local-match browser scenarios against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 
