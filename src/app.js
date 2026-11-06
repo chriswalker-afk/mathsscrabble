@@ -106,7 +106,7 @@ function freshSector(sector=1,{newRun=false}={}){
  // draw a balanced but randomly ordered hand, rather than the old fixed
  // tutorial hand. Consecutive openings are never visibly identical.
  const deal=distinctOpening(()=>{
-   const bag=makeBag();
+   const bag=makeBag(randomFloat,state.tileSet);
    return dealPlayableRack([],bag,currentRackOptions());
  },loadOpeningPattern(storage,state.mode),
    game=>game.rack,(game,rack)=>({...game,rack}));
@@ -294,8 +294,9 @@ function boardCell(i){
  if(tile){
    const inner=document.createElement('span');
    inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'')+
+     (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'')+
      (pending&&isChargedTile(tile)?' charged-tile':'');
-   inner.textContent=tile.value;
+   renderTileFace(inner,tile.value);
    // Keep board symbols completely unobstructed. Point values remain visible
    // on the rack, in the equation breakdown, and in this accessible tooltip.
    if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
@@ -341,6 +342,7 @@ function tileButton(tile, rackIndex){
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+   (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'')+
    (isDrift()&&state.rogue.forcedTile===tile.id?' boss-required':'');
  button.dataset.tileId=tile.id;
  button.dataset.rackIndex=String(rackIndex);
