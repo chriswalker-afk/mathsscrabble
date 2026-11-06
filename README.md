@@ -82,6 +82,14 @@ Select any of the **four full-size, keyboard-accessible mode cards** on the home
 
 **The Drift** is a separate roguelike. The equation engine and board are familiar, but completing each sector awards **Flux**, which is spent in the **Salvage Bay** before the next sector. Each permanent upgrade can be installed once and changes real scoring, rack or board rules. You can also buy a repeatable single-use **Pulse Capacitor**, adding 12 energy to the next correct equation. Every third sector has a deterministic reactor anomaly. If you fail the target in The Drift, the run ends and you must start over without the purchased upgrades or Flux.
 
+### Choose a mathematical tile kit
+
+Before entering **Sector Run** or **The Drift**, choose one of four classroom tile kits: **Launchpad** (natural numbers and + − × ÷), **Orbit** (positive and negative integers), **Nebula** (positive/negative fractions, four basic operators and a matched bracket pair), or **Quantum** (rational numbers and extra ^, √, ! operators). Every kit still has five number-kind tiles and three operator-kind tiles; bracket kits also hold two linked bracket tiles. An already-started run keeps its kit unless the player explicitly confirms a new run. See [Tile Sets and exact mathematics](docs/TILE_SETS.md).
+
+Drift upgrade names are now **Ship Systems** (four installed slots per run) and **Mission Gadgets** (two one-use slots). The distinction is thematic while retaining all existing upgrade effects, purchase costs and limited inventory.
+
+Local Match and Online Rooms remain on the original natural-number kit while multiplayer protocol support is developed.
+
 ### The Drift: Galactic Zones and Bosses
 
 The roguelike now progresses through **named three-sector zones**. A random boss is chosen and saved at the start of each zone, with its showdown at sectors **3, 6, 9, ...**. A permanent visible three-node map and expanded **ZONE MAP** show the route, completed zones and boss artwork without reducing the 13×13 playing grid.
