@@ -200,7 +200,11 @@ function focusCell(currentIndex,key){
  }
 }
 function boardCell(i){
- const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],bonus=bonusAt(r,c),locked=!!state.board[i];
+ const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],locked=!!state.board[i];
+ const rawBonus=bonusAt(r,c),anomaly=isDrift()?anomalyForSector(state.sector):null;
+ const bonus=isDrift()&&rawBonus==='2T'&&state.rogue.upgrades.includes('amplifier')?'3T':
+   isDrift()&&rawBonus==='2E'&&anomaly?.id==='signal-jam'?'JAM':
+   isDrift()&&rawBonus==='3T'&&anomaly?.id==='tile-static'?'2T':rawBonus;
  const inPath=state.preview?.indices?.includes(i);
  const node=document.createElement('button');
  node.type='button';
@@ -321,12 +325,29 @@ function renderPreview(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
- const target=nextTarget(state.sector),remaining=Math.max(0,target-state.score);
+ const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
  $('score').textContent=state.score;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
- $('sector-label').textContent=`SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('mode-btn').textContent=isDrift()?'◈ THE DRIFT':'◈ SECTOR RUN';
+ $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
+ $('rogue-summary').hidden=!isDrift();
+ $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector);
+ if(isDrift()){
+   const anomaly=anomalyForSector(state.sector);
+   $('flux-count').textContent=String(state.rogue.flux);
+   const upgrades=state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name);
+   $('upgrade-summary').textContent=upgrades.length?
+     `${upgrades.slice(0,2).join(' · ')}${upgrades.length>2?' · +'+(upgrades.length-2)+' more':''}`:
+     'No upgrades equipped yet';
+   if(anomaly){
+     $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
+     $('anomaly-text').textContent=anomaly.short+
+       (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
+   }
+ }
  $('bag-count').textContent=state.bag.length;
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
@@ -348,8 +369,8 @@ function render(){
  }
  const coach=$('coach-hint');
  const placed=Object.keys(state.pending).length;
- if(state.phase==='won')coach.textContent='Reactor stabilised. Open the sector report to advance.';
- else if(state.phase==='lost')coach.textContent='Review your moves and retry this sector.';
+ if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
+ else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
  else if(state.swapping)coach.textContent=freeExchangeReason(state.rack)?
    'All numbers or all operations? You can exchange tiles without spending a turn.':
    'Select your exchange tiles. This will use one turn.';
@@ -364,7 +385,7 @@ function render(){
 function showModal(eyebrow,title,body,buttons){
  $('modal-eyebrow').textContent=eyebrow;$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal-body').innerHTML=body;
  $('modal-actions').replaceChildren(...buttons.map(({text,fn,primary})=>{const b=document.createElement('button');b.type='button';b.className=primary?'primary-command':'secondary-command';b.textContent=text;b.onclick=()=>{$('modal').close();fn?.();};return b;}));
- $('modal').showModal();
+ if(!$('modal').open)$('modal').showModal();
 }
 function completeTurn(){
  state.pending={};state.selected=null;state.swapping=false;state.swapSet.clear();
