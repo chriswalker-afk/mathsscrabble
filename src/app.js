@@ -1,7 +1,7 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
-import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -341,9 +341,9 @@ function render(){
    const anomaly=anomalyForSector(state.sector);
    $('flux-count').textContent=String(state.rogue.flux);
    const upgrades=state.rogue.upgrades.map(id=>ROGUE_ITEM_BY_ID[id].name);
-   $('upgrade-summary').textContent=upgrades.length?
+   $('upgrade-summary').textContent=(upgrades.length?
      `${upgrades.slice(0,2).join(' · ')}${upgrades.length>2?' · +'+(upgrades.length-2)+' more':''}`:
-     'No upgrades equipped yet';
+     'No upgrades equipped yet')+(state.rogue.pulse?' · ⚡ '+state.rogue.pulse+' charge(s)':'');
    if(anomaly){
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
      $('anomaly-text').textContent=anomaly.short+
@@ -418,10 +418,10 @@ function showShop(){
  const intro=`<div class="salvage-intro">
  <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
  <div><strong>SECTOR ${state.sector} STABILISED</strong>
- <p>+${state.rogue.lastReward} Flux earned. Choose permanent upgrades for this run, or keep your Flux for later. All upgrades reset when the run ends.</p></div>
+ <p>+${state.rogue.lastReward} Flux earned. Buy permanent upgrades, or a single-use capacitor (+12 on the next correct equation). All equipment resets at the end of the run.</p></div>
  </div>
  <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Available Salvage Bay upgrades"></div>
- <p id="salvage-feedback" class="salvage-feedback">Upgrades remain equipped across the next sectors. Each can be purchased once.</p>`;
+ <p id="salvage-feedback" class="salvage-feedback">Permanent upgrades can be installed once; Pulse Capacitors are consumed by scoring and can be bought repeatedly.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
    {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
@@ -452,6 +452,24 @@ function showShop(){
    };
    card.append(tag,icon,title,description,buy);grid.append(card);
  }
+ const charge=document.createElement('div');charge.className='salvage-card salvage-consumable';
+ const type=document.createElement('span');type.className='salvage-type';type.textContent=PULSE_ITEM.kind;
+ const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=PULSE_ITEM.icon;
+ const title=document.createElement('strong');title.textContent=PULSE_ITEM.name+' · '+state.rogue.pulse+'/3';
+ const detail=document.createElement('p');detail.textContent=PULSE_ITEM.description;
+ const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
+ buy.textContent=PULSE_ITEM.cost+' FLUX · '+(state.rogue.flux>=PULSE_ITEM.cost&&state.rogue.pulse<3?'CHARGE':'UNAVAILABLE');
+ buy.disabled=state.rogue.flux<PULSE_ITEM.cost||state.rogue.pulse>=3;
+ buy.setAttribute('aria-label','Buy single-use '+PULSE_ITEM.name+' for '+PULSE_ITEM.cost+' Flux');
+ buy.onclick=()=>{
+   const p=purchasePulse(state.rogue,state.sector);
+   if(!p.ok){$('salvage-feedback').textContent=p.reason;return;}
+   state.rogue=p.rogue;
+   persistRun();render();showShop();
+   $('salvage-feedback').textContent=p.reason+'. It will activate on your next scored equation.';
+ };
+ charge.append(type,icon,title,detail,buy);
+ grid.append(charge);
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
@@ -538,6 +556,9 @@ function score(){
  try{
    const move=validateMove(state.board,state.pending);
    const points=calculateMove(move);
+   // The capacitor triggers only on a mathematically valid scored move. Charge
+   // is deducted alongside the turn, before the animation or any page reload.
+   if(isDrift())state.rogue=consumePulse(state.rogue);
    const changed=Object.keys(state.pending).map(Number);
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    state.stats=recordMove(state.stats,move,points,state.turn,state.pending);
