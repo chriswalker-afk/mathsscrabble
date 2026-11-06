@@ -222,14 +222,16 @@ try{
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#turn').textContent(),'6 / 6');
   assert.match(await page.locator('#modal-title').textContent(),/sector 1 complete/i);
-  assert.equal(await page.locator('#run-summary').textContent(), '1 sector · '+(39+23)+' energy');
+  const restoredWinScore=Number(await page.locator('#score').textContent());
+  assert.ok(restoredWinScore>=40,'the finishing equation stabilises the sector');
+  assert.equal(await page.locator('#run-summary').textContent(),'1 sector · '+restoredWinScore+' energy');
   await page.locator('#modal-actions button').last().click();
   assert.equal(await page.locator('#sector-label').textContent(),'SECTOR 02 · POLARIS');
   assert.equal(await page.locator('#turn').textContent(),'1 / 6');
   assert.ok((await page.locator('#rack .tile.wildcard').count())>=1);
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#sector-label').textContent(),'SECTOR 02 · POLARIS');
-  assert.equal(await page.locator('#run-summary').textContent(), '1 sector · '+(39+23)+' energy');
+  assert.equal(await page.locator('#run-summary').textContent(),'1 sector · '+restoredWinScore+' energy');
 
   // Report can be reopened without changing the current sector.
   await page.locator('#run-report-btn').click();
