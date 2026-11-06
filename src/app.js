@@ -24,6 +24,9 @@ const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA'
 const isDrift=()=>state.mode==='rogue';
 const currentTarget=()=>targetForSector(state.mode,state.sector);
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
+const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
+ ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
+ (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
 const calculateMove=move=>isDrift()?
   scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
   scoreMove(state.board,state.pending,move);
@@ -222,11 +225,12 @@ function boardCell(i){
  node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
    const inner=document.createElement('span');
-   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
+   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'')+
+     (pending&&isChargedTile(tile)?' charged-tile':'');
    inner.textContent=tile.value;
    // Keep board symbols completely unobstructed. Point values remain visible
    // on the rack, in the equation breakdown, and in this accessible tooltip.
-   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points`;
+   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
    node.append(inner);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
@@ -252,7 +256,8 @@ function renderBoard(){
 function tileButton(tile, rackIndex){
  const button=document.createElement('button');
  button.type='button';
- button.className='tile'+(state.selected===tile.id?' selected':'')+
+ button.className='tile'+(isChargedTile(tile)?' charged-rack-tile':'')+
+   (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
  button.dataset.tileId=tile.id;
