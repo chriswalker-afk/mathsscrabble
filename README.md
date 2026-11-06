@@ -19,12 +19,14 @@ Drag tiles to the 13 × 13 board with a mouse, finger or pen; or click/tap a til
 - A mathematical parser implements BIDMAS and exact rational arithmetic (currently exposed through whole-number tiles). Pure identities such as `3=3` are disallowed: at least one actual calculation must appear.
 - Double/triple tile and equation squares are applied only when a *new non-equals tile* lands on them.
 - Length bonus: +3 per square beyond 5. Every completed valid calculation earns +5 and every connected equation earns another +5. Playing all 7 physical rack tiles gives +20.
-- Exchanging one or more rack tiles normally uses a turn. A rack of **only numbers** or **only operators** qualifies for a free exchange (no turn consumed). The rack replenishes from a shuffled bag after scoring.
+- Exchanging one or more rack tiles normally uses a turn. A rack of **only numbers** or **only operators** qualifies for a free exchange (no turn consumed). **Pass C balances freshly drawn tiles** (without removing tiles you kept): where the bag permits, a complete rack offers at least four number-capable tiles, an operator-capable tile and a wildcard.
 - Three wildcard types are available: **#** (digit 0–9), **◇** (+, −, × or ÷), and **✦** (any digit or basic operator). Choose the wildcard value on placement; its tile value is always zero points.
-- Six-turn escalating single-player sectors; earlier score targets have been eased while keeping later progression. Each round starts with a freshly generated board and bag.
-- The equation readout is now **in the right-hand command console**, not underneath the board. The redundant strip above the board was removed, giving the board substantially more screen space. A live placement preview shows the assembled mathematical expression, any gaps/alignment issues, and *potential* points. The calculation is **not evaluated** until the player presses **Score Equation**, so this does not give away the answer.
+- Six-turn escalating single-player sectors. Targets begin at **40, 55, 70, 90, 110, 135, 160 and 190**, then grow gradually. A fresh board and bag start each sector; the run's cleared sectors and lifetime energy continue across them.
+- The equation readout is **in the right-hand command console**, not underneath the board. A live placement preview shows the expression, gaps/alignment issues and *potential* points. The calculation is **not evaluated** until submission, so this does not give away the answer.
+- **Pass C autosave:** the board, rack order, tile bag, pending placements (including programmed blanks), sector/turn/energy, scoring history and accumulated run progress are saved locally after each meaningful action. Reloading resumes the run. A success/failure report survives reload, and scoring is saved **before** the animation. **New Run** asks for confirmation before replacing a saved game.
 - Keyboard controls: 1–7 select an available rack tile, = selects an unlimited equals sign, arrows move board focus, Enter places or picks up, Backspace undoes the most recent tile, and Escape deselects.
 - Responsive board sizing keeps the larger board, physical rack and primary controls visible together on standard laptop screens. On portrait phones secondary panels may sit below the play area.
+- First-time players see a short three-step guide. The left-hand panel provides context-sensitive placement tips, remaining-points-per-turn guidance, the last three scored equations, and a **Run Summary** button. Sector reports include a progress bar, best move, equations scored, turns used, exchanges and a per-turn record.
 
 ## Scope and planned work
 
@@ -38,15 +40,21 @@ This is an initial **Origin** (non-negative integer digits, +, −, ×, ÷) **Se
 npm run check
 ```
 
-The test suite exercises BIDMAS, non-trivial equation requirements, multi-digit parsing, zero-division errors, intersections, crossing/length bonuses, wildcards, free swap eligibility, rack reordering and non-spoiling previews. It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
+The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover true and false equations, wildcard programming, physical mouse/touch dragging, rack-to-board and board-to-rack movement, rack reordering, tile undo, keyboard navigation and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs `node tests/browser-smoke.mjs` against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 
 Try a first equation such as **8 + 4 = 12** crossing the centre. Before scoring, deliberately use **13** to check that the game rejects a mathematically false equation only when you submit it. Verify the Double Tile score calculation. Then build a perpendicular equation reusing the 8, use drag and tap methods, replace and undo a tile, and try exchanging a few tiles. Check the board and seven-tile rack on a 1366 × 768 laptop and a touchscreen.
 
-This playability pass addresses the first part of **Pass C — Core solo gameplay**. Next: balancing equation/rack difficulty based on students' actual play sessions, saving/continuing runs, clearer sector-completion feedback and classroom onboarding. The existing six-turn Sector Run is an initial version to be developed further.
+**Pass C — Core solo gameplay** adds balanced rack replenishment, autosave/restore, sector reports, persistent cumulative run progress, a first-visit guide and contextual hints. The target curve is a prototype calibration; before locking the difficulty, collect classroom playtest observations as described in [docs/SOLO_BALANCE.md](docs/SOLO_BALANCE.md).
+
+**Next planned pass: D — Roguelike sector progression.** Add between-sector shop/upgrades, richer anomalies and run-specific decisions without changing the validated BIDMAS engine. The existing six-turn Sector Run is an initial version to be developed further.
+
+## Saved games and privacy
+
+Saving uses only this browser's `localStorage` (key `equa-nova.sector-run.v1`). No server account, external data service or login is involved. The small `AUTOSAVED` indicator is visible on desktop. If storage is blocked, the game still works in the current tab but **progress will not survive a reload**. Clearing browser site data or switching devices removes access to the saved game. Every new run overwrites the previous local saved run after confirmation.
 
 ## Hosting
 
