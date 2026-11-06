@@ -188,6 +188,15 @@ test('one free single-tile exchange does not advance a turn, but repeating does'
  assert.equal(second.room.match.current,1);
  assert.equal(allPhysical(second.room).length,151);
 });
+test('online server rejects a two-tile exchange as a free action, charging the turn',()=>{
+ const room=started();
+ const ids=room.match.players[0].rack.slice(0,2).map(t=>t.id);
+ const changed=takeOnlineAction(room,H,request(room.revision,'exchange','two-tiles-paid-123',{ids}),3000);
+ assert.equal(changed.result.type,'exchange');
+ assert.equal(changed.room.match.current,1);
+ assert.equal(changed.room.match.turnNumber,2);
+ assert.equal(allPhysical(changed.room).length,151);
+});
 test('authoritative alarm deadlines pass turns and eventually finish the match',()=>{
  let room=started({timer:60});
  assert.equal(room.match.deadline,62000);

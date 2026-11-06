@@ -10,7 +10,7 @@ Serve the project root using a static web server:
 python3 -m http.server 4173
 ```
 
-Open http://localhost:4173. The project has no install/build step.
+Open http://localhost:4173 to see the new **Mission Control homepage**. The four large cards take you directly to Sector Run, The Drift, Local Match and Online Rooms. Alien Lab has its own wide card below them. Game boards now live at [play.html](play.html) with the selected mode in the URL (`?mode=sector`, `?mode=rogue` or `?mode=local`). The project has no install/build step for the static site.
 
 Drag tiles to the 13 × 13 board with a mouse, finger or pen; or click/tap a tile and then its destination. Drag an unscored tile to move it, **or drag it back to the rack to remove it**. Drag rack tiles left or right to reorder them without using a turn, or tap them to select a destination. A separate **Undo Tile** button reverts the most recent placement, and **Clear Placement** returns all unscored tiles to the rack. Select the green **=** tile as often as required. The first complete horizontal/vertical equation must cross the centre. Later equations must share an already-scored tile. Click **Score Equation** to validate and score a move.
 
@@ -56,7 +56,7 @@ For setup instructions and security checks see [Alien Lab profile integration](d
 
 The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **30 original, interchangeable SVG components** (four each for heads, eyes, mouths, bodies, arms and legs/movement; six optional accessories) plus **six independent colour palettes**. The shared transparent **320×360** canvas and anatomical anchors let all **28,672 base combinations** connect cleanly. Face elements, shoulder seams, neck seams and hip seams are independently tested, and the renderer keeps high-contrast outlines at small scoreboard sizes.
 
-**Build your own alien:** open [Alien Lab](alien-lab.html), or choose **ALIEN LAB** from the game's **Mode** popup without changing your active match.
+**Build your own alien:** open [Alien Lab](alien-lab.html), or select the **Alien Lab** card on the homepage. Returning home keeps each existing game save.
 
 **Pass A3 visual polish:** category thumbnails now zoom to the chosen feature (eyes, mouths, arms, legs and extras) instead of shrinking the whole creature; the **48px player portrait** and **72px lobby bust** are framed for readable expressions, while the downloadable SVG stays full-body and transparent. A previous/next category guide makes it easier to finish all seven decisions, and the colours have been adjusted for stronger contrast. The large creature blinks and gently floats (respecting reduced-motion settings), but player icons do not animate. Automated [A3 visual quality tests](tests/alien-a3-browser.mjs) review 64 face variants, 64 body/arm/leg combinations, 42 accessory–palette pairings, 24 skin/head colourways, all front overlays and six screen sizes; labeled contact sheets are uploaded by CI for human design review. Pass A2 now provides live previews, clickable SVG thumbnails for **heads, faces (eyes and mouth), bodies, arms, movement, extras** and **three independently selectable colours**; the four curated starters, **Surprise Me**, reset, undo/redo, browser-only save/restore and a fully transparent **SVG export**. The editor works on desktop/tablet and stacks with a compact sticky preview on phones. Art remains in the reviewable [A1 Specimen Vault](alien-preview.html).
 
@@ -74,7 +74,7 @@ The online experience lives in [online.html](online.html), uses [server/worker.j
 
 ## Game modes
 
-Use **◈ MODE** in the header to switch without deleting the other mode's save.
+Select any of the **four full-size, keyboard-accessible mode cards** on the homepage. The in-game **⌂ HOME** control returns to Mission Control without deleting the other modes' saved games. The old mode-selection pop-up and its duplicate bottom buttons have been removed.
 
 **Sector Run** remains the straightforward classroom practice mode: BIDMAS equation building, six-turn sectors, balanced racks, one free tile swap each turn, and a regular cumulative run report. You can retry a failed sector.
 
@@ -86,7 +86,7 @@ The current Salvage Bay offers:
 - **Tile upgrades** — Ionised Sevens (+3 points for new sevens) and Operator Core (+3 for new multiplication/division tiles).
 - **Equation upgrades** — Crosslink Circuit (+5 for connected equations), Longwave Coil (+7 for equations at least seven cells long) and Echo Generator (+2 per newly played physical tile after the fourth).
 - **Board upgrade** — Amplifier Array upgrades fresh 2T squares to 3T.
-- **Rack upgrades** — Wildcard Beacon requests two blanks and Operator Reserve requests two operator-capable tiles per refill, when the remaining bag permits.
+- **Rack upgrades** — Wildcard Beacon favours two wildcards where supply allows, and Operator Reserve favours × and ÷ among the three operator tiles, when the remaining bag permits.
 - **Economy and defence** — Flux Recycler adds three Flux per cleared sector; Leak Shield neutralises the Power Leak anomaly.
 - **Single-use equipment** — Pulse Capacitor, cost 3 Flux, provides +12 on the next correct submission; maximum three charges carried.
 
@@ -94,7 +94,7 @@ The shop presents four rotating permanent choices plus the capacitor. Prices, pu
 
 ## Scope and planned work
 
-This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift, Local Match and Online Rooms**. Online Rooms require a separate Cloudflare Worker deployment before public multiplayer becomes functional. Brackets, signed/fraction tile sets, reusable Critter Lab avatars, signed/fraction/advanced tile sets, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
+This is a playable **Origin** (non-negative integer digits, +, −, ×, ÷) prototype with **Sector Run, The Drift, Local Match and Online Rooms**. Online Rooms uses a separately deployed Cloudflare Worker for multiplayer. Returning to the static homepage does not send a Worker request. Brackets, signed/fraction tile sets, reusable Critter Lab avatars, signed/fraction/advanced tile sets, audio and achievements are not yet implemented. The illustrative pilot emblem remains a placeholder.
 
 **Rule prototype note:** A single submitted complete equation scores each turn. Unrelated adjacent perpendicular fragments are not checked, and this should be playtested before locking the full game rules.
 
@@ -106,7 +106,7 @@ npm run check
 
 The test suite exercises BIDMAS, non-trivial equations, intersections, scoring, wildcards, free swaps and rack reordering. **Pass C also tests hundreds of shuffled rack draws, save corruption/duplicate tile protection, programmed wildcard restoration, report deduplication, storage failures and victory/defeat resume.** It also syntax-checks the browser modules. GitHub Actions runs these checks on pushes and pull requests.
 
-The Chromium smoke tests cover all four modes, including the online two-device UI with a simulated server, and randomized starting racks, independent saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs the Solo, Drift, scoring-ceremony and local-match browser scenarios against a local static server and uploads diagnostic screenshots.
+The Chromium smoke tests cover the full-card mission homepage, mobile and keyboard navigation, save-preserving returns, all four modes, including the online two-device UI with a simulated server, and randomized starting racks, independent saves, Salvage Bay purchases, anomalies, roguelike permadeath, consumable usage, the bag pop-in, tile-by-tile scoring with skip/reduced-motion/refresh cases, and true and false equations, wildcard programming, mouse/touch dragging, rack-to-board and board-to-rack movement, reorder/undo, keyboard navigation, first-visit onboarding, pending-move restoration, an interrupted scoring animation, victory resume, sector continuation, corrupted-save recovery and responsive laptop/mobile geometry. The separate Chromium CI job runs the Solo, Drift, scoring-ceremony and local-match browser scenarios against a local static server and uploads diagnostic screenshots.
 
 ## Suggested classroom playtest
 

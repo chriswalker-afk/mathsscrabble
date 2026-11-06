@@ -54,7 +54,7 @@ async function openBagAndValidate(expected){
  assert.equal(await page.locator('#bag-count').textContent(),String(expected));
 }
 try{
- await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+ await page.goto('http://127.0.0.1:4173/play.html?mode=sector',{waitUntil:'networkidle'});
  await page.locator('.cell').first().waitFor();
  if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'sector');

@@ -38,11 +38,8 @@ try{
  }
  const local=await browser.newPage({viewport:{width:390,height:844}});
  local.on('pageerror',e=>errors.push(e.message));
- await local.goto(ORIGIN+'/index.html',{waitUntil:'networkidle'});
- await local.locator('.cell').first().waitFor();
- if(await local.locator('#modal[open]').count())await local.locator('#modal-actions button').last().click();
- await local.locator('#mode-btn').click();
- await local.locator('#modal-actions button').nth(2).click();
+ await local.goto(ORIGIN+'/play.html?mode=local',{waitUntil:'networkidle'});
+ await local.locator('#local-player-count').waitFor();
  await local.locator('#local-alien-0').selectOption('orbit');
  await local.locator('#local-alien-1').selectOption('niblet');
  assert.equal(await local.locator('.local-pilot-setup:visible').count(),2);

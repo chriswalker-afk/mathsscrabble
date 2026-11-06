@@ -123,6 +123,17 @@ test('one tile is free each turn; a repeat or multi-tile swap costs a turn',()=>
  assert.equal(second.match.turnNumber,2);
  assert.equal(validLocalMatch(second.match),true);
 });
+test('exchanging two physical tiles first is paid and immediately advances the turn',()=>{
+ const match=readyLocalTurn(makeLocalMatch({names:['A','B']},rng));
+ const ids=match.players[0].rack.slice(0,2).map(t=>t.id);
+ const result=exchangeLocalTiles(match,ids,rng);
+ assert.equal(result.free,false,'two or more exchanged tiles can never be free');
+ assert.equal(result.match.current,1);
+ assert.equal(result.match.turnNumber,2);
+ assert.equal(result.match.history.at(-1).tiles,2);
+ assert.equal(result.match.history.at(-1).type,'exchange');
+ assert.equal(validLocalMatch(result.match),true);
+});
 test('a free single-tile swap preserves its supply pool and cannot repeat',()=>{
  let match=readyLocalTurn(makeLocalMatch({names:['A','B']},rng));
  const original=match.players[0].rack.find(t=>tilePool(t)==='operators');

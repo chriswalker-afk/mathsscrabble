@@ -204,12 +204,8 @@ try{
  const launchContext=await browser.newContext({viewport:{width:1366,height:768}});
  const gamePage=await launchContext.newPage();
  await gamePage.goto(ORIGIN+'/index.html',{waitUntil:'networkidle'});
- await gamePage.locator('.cell').first().waitFor();
- if(await gamePage.locator('#modal[open]').count())
-   await gamePage.locator('#modal-actions button').last().click();
- await gamePage.locator('#mode-btn').click();
- assert.equal(await gamePage.locator('.alien-lab-modal-link').count(),1);
- await gamePage.locator('.alien-lab-modal-link').click();
+ assert.equal(await gamePage.locator('.alien-lab-card').count(),1);
+ await gamePage.locator('.alien-lab-card').click();
  await gamePage.waitForURL(/alien-lab\.html$/);
  await waitReady(gamePage);
  await launchContext.close();
