@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#091b2b">
+<meta name="description" content="Design your own friendly alien pilot for EQUA//NOVA. Mix heads, eyes, mouths, bodies, arms, legs, accessories and colours.">
+<title>Alien Lab · Create your pilot · EQUA//NOVA</title>
+<link rel="stylesheet" href="./src/alien/editor.css">
+<script type="module" src="./src/alien/editor.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#workshop-heading">Skip to alien customisation</a>
+<div class="lab-app" id="alien-app">
+<header class="topbar">
+  <a class="brand" href="./index.html" aria-label="EQUA NOVA — return to the game">
+    <span class="brand-symbol" aria-hidden="true">✳</span>
+    <span class="brand-text"><strong>EQUA<span>//</span>NOVA</strong><small>ALIEN LAB / CREATURE CREATOR</small></span>
+  </a>
+  <div class="header-actions">
+    <a href="./alien-preview.html" class="quiet-link">SPECIMEN ATLAS <span aria-hidden="true">↗</span></a>
+    <a href="./index.html" class="quiet-link exit-link">BACK TO GAME <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+<section class="mission-bar" aria-label="Alien Lab introduction">
+  <div class="mission-heading"><span class="status-orb" aria-hidden="true">✦</span>
+    <div><p class="micro-label">CREATURE DESIGN STATION</p><h1>Make a little <em>extraterrestrial.</em></h1></div>
+  </div>
+  <p>Mix your parts. Pick your colours. Meet your new cosmic companion.</p>
+  <div class="mission-counter">✧ <strong>30</strong> ALIEN PARTS</div>
+</section>
+<main class="lab-shell" id="lab-shell">
+  <section class="specimen-panel" aria-labelledby="specimen-heading">
+    <div class="panel-topline">
+      <div><p class="micro-label">LIVE CREATURE TRANSMISSION</p><h2 id="specimen-heading">Your alien pilot <span aria-hidden="true">✧</span></h2></div>
+      <span class="transmission-badge"><span class="pulse-dot" aria-hidden="true"></span> SIGNAL GOOD</span>
+    </div>
+    <div class="creature-stage" id="creature-stage">
+      <span class="cosmos-ring cosmos-ring-one" aria-hidden="true"></span>
+      <span class="cosmos-ring cosmos-ring-two" aria-hidden="true"></span>
+      <span class="cosmos-star cosmos-star-a" aria-hidden="true">✦</span>
+      <span class="cosmos-star cosmos-star-b" aria-hidden="true">✧</span>
+      <span class="cosmos-star cosmos-star-c" aria-hidden="true">✧</span>
+      <div class="alien-art" id="alien-art" aria-label="Your alien, full body"></div>
+      <span class="stage-serial">SPECIMEN / CUSTOM</span>
+      <span class="stage-coordinates">X 160 · Y 180</span>
+    </div>
+    <div class="scale-strip" aria-label="How your alien will appear in the game">
+      <div class="scale-title"><strong>LOOKS GOOD AT ANY SIZE</strong><span>IN-GAME PREVIEWS</span></div>
+      <div class="scale-samples">
+        <div class="size-sample"><div class="size-image" id="tiny-avatar"></div><span>48 PX<br>PLAYER ICON</span></div>
+        <div class="size-sample"><div class="size-image" id="lobby-avatar"></div><span>72 PX<br>LOBBY</span></div>
+        <div class="size-sample size-sample-future"><span class="future-icon" aria-hidden="true">✳</span><span>READY FOR<br>MULTIPLAYER</span></div>
+      </div>
+    </div>
+    <div class="starter-section" aria-labelledby="starter-heading">
+      <div class="section-small-heading"><h3 id="starter-heading">MEET THE CREW</h3><span>QUICK START PRESETS</span></div>
+      <div id="starter-options" class="starter-options" aria-label="Choose a starter alien"></div>
+    </div>
+  </section>
+
+  <section class="workshop-panel" aria-labelledby="workshop-heading">
+    <div class="workshop-heading">
+      <div><p class="micro-label">ASSEMBLY CONSOLE</p><h2 id="workshop-heading">Build your creature.</h2></div>
+      <span class="step-badge">YOUR DESIGN <span id="design-completeness">1 / 7</span></span>
+    </div>
+    <div class="section-tabs" id="section-tabs" role="tablist" aria-label="Alien parts and colours">
+      <!-- Populated from the approved category list; arrow keys navigate tabs. -->
+    </div>
+    <div class="editor-section-heading">
+      <div><span id="current-section-number">01 / 07</span><h3 id="current-section-title">Heads</h3></div>
+      <p id="current-section-hint">Find a silhouette with personality.</p>
+    </div>
+    <section id="editor-options" class="editor-options" role="tabpanel" aria-labelledby="tab-head" tabindex="0">
+      <p>Loading the alien laboratory…</p>
+    </section>
+    <div class="workshop-footer">
+      <div class="history-actions">
+        <button id="alien-undo" class="icon-control" type="button" disabled title="Undo last change (Ctrl+Z)">↶ <span>UNDO</span></button>
+        <button id="alien-redo" class="icon-control" type="button" disabled title="Redo last change (Ctrl+Shift+Z)">↷ <span>REDO</span></button>
+      </div>
+      <div class="primary-actions">
+        <button id="alien-reset" class="action-button secondary" type="button" disabled>↺ RESET</button>
+        <button id="alien-random" class="action-button gold" type="button" disabled>✧ SURPRISE ME!</button>
+      </div>
+    </div>
+    <div class="save-station">
+      <div class="save-caption"><strong id="save-state">NOT SAVED YET</strong><p id="save-description">Save your design in this browser, or export it as a transparent image.</p></div>
+      <div class="save-actions">
+        <button id="alien-load" class="action-button ghost" type="button" disabled>↶ LOAD SAVED</button>
+        <button id="alien-save" class="action-button teal" type="button" disabled>✓ SAVE MY ALIEN</button>
+        <button id="alien-export" class="action-button ghost" type="button" disabled>⇩ EXPORT SVG</button>
+      </div>
+      <div id="alien-status" class="editor-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+  </section>
+</main>
+<footer class="bottom-strip">
+  <span>ALIEN LAB // CREATURE CREATOR</span><span>ALL PARTS MIX & MATCH · NO ACCOUNTS REQUIRED</span><span>YOUR DESIGN STAYS ON THIS DEVICE</span>
+</footer>
+</div>
+</body>
+</html>
