@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SIZE,CENTER,pos,makeTile} from '../src/engine.js';
+import {SIZE,CENTER,pos,makeTile,tilePool} from '../src/engine.js';
 import {LOCAL_SAVE_KEY,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,
  validLocalMatch,isLocalTimerExpired} from '../src/multiplayer.js';
@@ -44,6 +44,8 @@ test('2–4 player set-up uses a single finite bag and independent private racks
    assert.equal(match.phase,'handover');
    assert.equal(match.bag.length,151-8*n);
    assert.ok(match.players.every(p=>p.rack.length===8));
+   assert.ok(match.players.every(p=>p.rack.filter(t=>tilePool(t)==='numbers').length===5));
+   assert.ok(match.players.every(p=>p.rack.filter(t=>tilePool(t)==='operators').length===3));
    assert.equal(validLocalMatch(match),true);
    assert.equal(new Set([...match.bag,...match.players.flatMap(p=>p.rack)].map(t=>t.id)).size,151);
  }
@@ -120,6 +122,25 @@ test('one tile is free each turn; a repeat or multi-tile swap costs a turn',()=>
  assert.equal(second.match.current,1);
  assert.equal(second.match.turnNumber,2);
  assert.equal(validLocalMatch(second.match),true);
+});
+test('a free single-tile swap preserves its supply pool and cannot repeat',()=>{
+ let match=readyLocalTurn(makeLocalMatch({names:['A','B']},rng));
+ const original=match.players[0].rack.find(t=>tilePool(t)==='operators');
+ const result=exchangeLocalTiles(match,[original.id],rng);
+ assert.equal(result.free,true);
+ assert.equal(result.match.turnNumber,1);
+ assert.equal(result.match.freeExchangeUsed,true);
+ assert.equal(result.match.players[0].rack.filter(t=>tilePool(t)==='numbers').length,5);
+ assert.equal(result.match.players[0].rack.filter(t=>tilePool(t)==='operators').length,3);
+ assert.equal(validLocalMatch(result.match),true);
+ const second=exchangeLocalTiles(result.match,[result.match.players[0].rack[0].id],rng);
+ assert.equal(second.free,false);
+ assert.equal(second.match.turnNumber,2);
+ assert.equal(second.match.freeExchangeUsed,false);
+ assert.equal(validLocalMatch(second.match),true);
+ const next=readyLocalTurn(second.match);
+ const other=next.players[1].rack.find(t=>tilePool(t)==='numbers');
+ assert.equal(exchangeLocalTiles(next,[other.id],rng).free,true);
 });
 test('finished standings deduct each leftover tile value and allow tied winners',()=>{
  let match=makeLocalMatch({names:['A','B']},rng);
