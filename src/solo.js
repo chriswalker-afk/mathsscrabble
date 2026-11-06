@@ -32,7 +32,17 @@ export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
      let at=rack.filter(isBlank).length<minBlanks?
        bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)&&eligible(t)):-1;
      // Prioritise higher-value operators when the Drift Operator Reserve is installed.
-     if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
+     if(at<0&&pool==='numbers'&&options.minNegativeNumbers &&
+         rack.filter(t=>/^−[1-9]$/.test(t.value||'')).length<options.minNegativeNumbers)
+        at=bag.findLastIndex(t=>tilePool(t)==='numbers'&&/^−[1-9]$/.test(t.value||'')&&eligible(t));
+      if(at<0&&pool==='numbers'&&options.minFractionNumbers &&
+         rack.filter(t=>typeof t.value==='string'&&t.value.includes('/')).length<options.minFractionNumbers)
+        at=bag.findLastIndex(t=>tilePool(t)==='numbers'&&
+          typeof t.value==='string'&&t.value.includes('/')&&eligible(t));
+      if(at<0&&pool==='operators'&&options.minAdvancedOperators &&
+         rack.filter(t=>['^','√','!'].includes(t.value)).length<options.minAdvancedOperators)
+        at=bag.findLastIndex(t=>['^','√','!'].includes(t.value)&&eligible(t));
+      if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
        at=bag.findLastIndex(t=>(t.value==='×'||t.value==='÷')&&eligible(t));
      if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool&&eligible(t));
      if(at<0)break;
