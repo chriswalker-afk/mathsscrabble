@@ -133,6 +133,12 @@ try{
   await cell(5,9).click();
   assert.match(await cell(5,9).getAttribute('class'),/pending/);
   assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  await put('=',5,10);
+  await cell(5,9).focus();
+  await page.keyboard.press('Backspace');
+  assert.doesNotMatch(await cell(5,9).getAttribute('class'),/pending/);
+  assert.match(await cell(5,10).getAttribute('class'),/pending/,
+    'keyboard Backspace should remove one tile, not perform a second global undo');
   await page.locator('#undo-last-btn').click();
 
   // The entire board and rack should fit without document vertical scrolling
@@ -158,7 +164,8 @@ try{
       const rack=document.querySelector('.rack-row').getBoundingClientRect();
       const scoreBtn=document.querySelector('#score-btn').getBoundingClientRect();
       const scoreLabel=document.querySelector('#score').getBoundingClientRect();
-      return {boardWidth:board.width,rackBottom:rack.bottom,scoreButtonBottom:scoreBtn.bottom,scoreLabelTop:scoreLabel.top,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      const preview=document.querySelector('#equation-preview').getBoundingClientRect();
+      return {boardWidth:board.width,rackBottom:rack.bottom,scoreButtonBottom:scoreBtn.bottom,scoreLabelTop:scoreLabel.top,previewBottom:preview.bottom,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Narrow layout',size,geometry);
     assert.ok(geometry.boardWidth>=250,'board should retain readable dimensions');
@@ -166,6 +173,7 @@ try{
     if(size.width===390){
       assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
       assert.ok(geometry.scoreButtonBottom<=size.height-20,'score command must be visible without scrolling on phones');
+      assert.ok(geometry.previewBottom<=size.height-4,'equation preview should fit on one mobile screen');
       assert.ok(geometry.scoreLabelTop>=0&&geometry.scoreLabelTop<size.height,'energy readout must be visible');
     }
     if(size.width===768)assert.ok(geometry.boardWidth>=430,'portrait tablets need a broader board');
