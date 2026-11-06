@@ -210,7 +210,7 @@ function boardCell(i){
    if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)){
      event.preventDefault();focusCell(i,event.key);
    }else if((event.key==='Delete'||event.key==='Backspace')&&state.pending[i]){
-     event.preventDefault();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
+     event.preventDefault();event.stopPropagation();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
    }
  });
  if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},onTileDrop);
