@@ -97,9 +97,19 @@ export function shopOffers(sector,rogue){
  if(!unowned.length)return [];
  // Four curated offers; the four-slot build limit makes stock choices matter.
  if(sector===1)return unowned.slice(0,4);
+ // Early waves deliberately expose distinct build archetypes, not just the
+ // next four entries in a long catalog. Players can see economy, board, time,
+ // rack and free-swap decisions before their four slots are all occupied.
+ const featured={
+   2:['extra-swap','flux-recycler','amplifier','odd-charge'],
+   3:['bonus-echo','wide-rack','extra-turn','length-matrix'],
+   4:['precision-pay','premium-dividend','operator-core','starter-spark']
+ };
  const start=((sector-1)*3)%ROGUE_ITEMS.length;
- const ordered=[...ROGUE_ITEMS.slice(start),...ROGUE_ITEMS.slice(0,start)];
- return ordered.filter(item=>!owns(rogue,item.id)).slice(0,4);
+ const rotated=[...ROGUE_ITEMS.slice(start),...ROGUE_ITEMS.slice(0,start)];
+ const candidates=[...(featured[sector]||[]).map(id=>ROGUE_ITEM_BY_ID[id]),...rotated];
+ return [...new Map(candidates.map(item=>[item.id,item])).values()]
+   .filter(item=>!owns(rogue,item.id)).slice(0,4);
 }
 export function purchaseUpgrade(rogue,id,sector){
  const item=ROGUE_ITEM_BY_ID[id];
