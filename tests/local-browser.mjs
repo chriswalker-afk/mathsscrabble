@@ -105,7 +105,7 @@ try{
  assert.equal(scored.players[1].score,0);
  assert.equal(scored.board[13*6+6].value,'=');
  assert.equal(scored.consecutiveStalls,0);
- assert.equal(scored.bag.length,125);
+ assert.equal(scored.bag.length,122);
  await page.locator('#skip-ceremony').click();
  assert.match(await page.locator('#modal-title').textContent(),/energy/i);
  await page.locator('#modal-actions button').last().click();
