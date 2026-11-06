@@ -2,7 +2,7 @@
  * The alien shape renderer is deterministic, the data model is allowlisted.
  * No account, remote API, avatar upload or existing match data is modified.
  */
-import {loadAlienLibrary,renderAlienSVG,serializeAlienSVG} from './renderer.js';
+import {loadAlienLibrary,renderAlienSVG,serializeAlienSVG,framingForPart} from './renderer.js';
 import {
  ALIEN_COLOUR_FIELDS,ALIEN_PART_FIELDS,defaultAlien,randomAlien,presetAlien,
  serializeAlien,alienDescription
@@ -62,18 +62,19 @@ function makeButton({className,text,ariaLabel,pressed=false}={}){
  button.setAttribute('aria-pressed',String(pressed));
  return button;
 }
-function appendSVG(target,alien,{width=105,height=119,focus='full'}={}){
- const svg=renderAlienSVG(alien,state.library,{width,height,accessible:false});
- if(focus==='face'){
-   svg.setAttribute('viewBox','65 48 190 145');
-   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
- }else if(focus==='head'){
-   svg.setAttribute('viewBox','42 4 236 226');
-   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
- }
+function appendSVG(target,alien,{width=105,height=119,framing='full'}={}){
+ const svg=renderAlienSVG(alien,state.library,{
+   width,height,framing,accessible:false
+ });
  target.append(svg);
  return svg;
 }
+const personalityFor=alien=>({
+ orb:'GENTLE STARGAZER',
+ pear:'CURIOUS COSMIC SPROUT',
+ jelly:'SQUISHY LITTLE EXPLORER',
+ facet:'BRAVE STAR PILOT'
+})[alien.head]+(alien.accessory==='companion'?' + ORBIT BUDDY':alien.legs==='hover'?' · FLOATING FREE':'');
 function renderPresets(){
  const grid=$('starter-options');
  const fragment=document.createDocumentFragment();
@@ -83,7 +84,7 @@ function renderPresets(){
      className:'preset-button',ariaLabel:'Choose '+humanize(id)+' starter alien',pressed:chosen
    });
    button.dataset.preset=id;
-   appendSVG(button,alien,{width:47,height:53});
+   appendSVG(button,alien,{width:47,height:53,framing:'bust'});
    const caption=document.createElement('span');caption.textContent=humanize(id);
    button.append(caption);
    button.addEventListener('click',()=>usePreset(id));
@@ -101,20 +102,56 @@ function renderPreview(animate=false){
  },{once:true});
  art.append(svg);
  art.setAttribute('aria-label','Full size preview: '+alienDescription(alien,state.library.manifest));
+ $('alien-personality').textContent=personalityFor(alien);
  $('tiny-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
-   width:48,height:54,accessible:false
+   width:48,height:48,accessible:false,framing:'portrait'
  }));
  $('lobby-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
-   width:60,height:68,accessible:false
+   width:72,height:72,accessible:false,framing:'bust'
  }));
  $('mobile-alien').replaceChildren(renderAlienSVG(alien,state.library,{
-   width:62,height:70,accessible:false
+   width:60,height:60,accessible:false,framing:'portrait'
  }));
  renderPresets();
 }
 function sectionIndex(id){
  return EDITOR_SECTIONS.findIndex(section=>section.id===id);
 }
+function renderJourney(){
+ const index=sectionIndex(state.activeSection);
+ const total=EDITOR_SECTIONS.length;
+ const previous=$('alien-prev-section'),next=$('alien-next-section');
+ previous.disabled=index===0;
+ next.disabled=false;
+ const last=index===total-1;
+ next.textContent=last?'GO TO SAVE →':'NEXT: '+EDITOR_SECTIONS[index+1].label+' →';
+ next.setAttribute('aria-label',last?'Go to Save My Alien':
+   'Next alien category: '+EDITOR_SECTIONS[index+1].label);
+ $('alien-journey-label').textContent=
+   EDITOR_SECTIONS[index].label+' · '+(index+1)+' OF '+total;
+ const dots=document.createDocumentFragment();
+ for(let i=0;i<total;i++){
+   const dot=document.createElement('span');
+   dot.className='journey-dot'+(i<=index?' done':'')+(i===index?' current':'');
+   dots.append(dot);
+ }
+ $('alien-journey-dots').replaceChildren(dots);
+}
+function moveCategory(direction){
+ const index=sectionIndex(state.activeSection);
+ const next=index+direction;
+ if(next<0||next>=EDITOR_SECTIONS.length){
+   if(direction>0&&next===EDITOR_SECTIONS.length){
+     const button=$('alien-save');
+     button.scrollIntoView({block:'nearest',behavior:'auto'});
+     button.focus({preventScroll:true});
+     notify('Your alien is ready! Choose Save My Alien to keep this design.');
+   }
+   return;
+ }
+ switchSection(EDITOR_SECTIONS[next].id,true);
+}
+
 function renderTabs(){
  const fragment=document.createDocumentFragment();
  EDITOR_SECTIONS.forEach((section,i)=>{
@@ -156,6 +193,7 @@ function switchSection(id,focusTab=false){
  $('current-section-title').textContent=descriptions[id];
  $('current-section-hint').textContent=section.hint;
  $('editor-options').setAttribute('aria-labelledby','tab-'+id);
+ renderJourney();
  $('editor-options').scrollTop=0;
  renderOptions();
  const tab=$('tab-'+id);
@@ -185,7 +223,7 @@ function addPartGroup(parent,field){
    const candidate=updateAlienPart(current(),state.library.manifest,field,id);
    appendSVG(scene,candidate,{
      width:105,height:119,
-     focus:(field==='eyes'||field==='mouth')?'face':field==='head'?'head':'full'
+     framing:framingForPart(field,id)
    });
    const name=document.createElement('span');name.className='option-name';name.textContent=humanize(id);
    button.append(scene,name);
@@ -211,7 +249,8 @@ function addPaletteGroup(parent,role){
    });
    button.dataset.colourRole=role;button.dataset.palette=id;
    const dot=document.createElement('span');dot.className='palette-dot';
-   dot.style.backgroundColor=palette.primary;
+   dot.style.background='linear-gradient(135deg,'+palette.light+' 0%,'+
+     palette.primary+' 55%,'+palette.dark+' 100%)';
    const name=document.createElement('span');
    name.className='palette-name';name.textContent=humanize(id);
    button.append(dot,name);
@@ -330,6 +369,8 @@ function exportSvg(){
  }
 }
 function bindButtons(){
+ $('alien-prev-section').onclick=()=>moveCategory(-1);
+ $('alien-next-section').onclick=()=>moveCategory(1);
  $('alien-undo').onclick=performUndo;
  $('alien-redo').onclick=performRedo;
  $('alien-reset').onclick=reset;
