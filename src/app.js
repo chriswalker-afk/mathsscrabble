@@ -472,6 +472,40 @@ function renderLocalStatus(){
  $('preview-status').setAttribute('aria-live','polite');
  showLocalHandover();
 }
+function showEquipmentInfo(item){
+ if(state.busy)return;
+ showModal(item.kind,item.name,
+   '<div class="equipment-info-art">'+equipmentArt(item.id)+'</div><p>'+item.description+
+   '</p><p>Installed until the end of your current Drift run.</p>',
+   [{text:'BACK TO BOARD',primary:true}]);
+}
+function activateTemporary(id){
+ if(!isDrift()||state.busy||state.ended||state.swapping)return;
+ const item=TEMP_ITEM_BY_ID[id];
+ if(!item||!heldConsumables(state.rogue).includes(id))return;
+ if(Object.keys(state.pending).length){
+   announce('Clear unscored tiles before activating equipment.',true);return;
+ }
+ if(item.action==='score'){
+   const armed=armTemporary(state.rogue,id);
+   if(!armed.ok){announce(armed.reason,true);return;}
+   state.rogue=armed.rogue;state.itemTarget=null;
+   announce(item.name+' armed for your next correctly scored equation.');render();return;
+ }
+ state.itemTarget=state.itemTarget===id?null:id;
+ state.selected=null;
+ announce(state.itemTarget?'Choose a rack tile for '+item.name+'. No turn will be used.':
+   'Power-up selection cancelled.');render();
+}
+function applyTileTemporary(tileId){
+ if(!isDrift()||!state.itemTarget||state.busy||state.ended)return;
+ const result=useTileTemporary(state.rogue,state.rack,state.bag,state.itemTarget,tileId);
+ if(!result.ok){announce(result.reason,true);return;}
+ state.rogue=result.rogue;state.rack=result.rack;state.bag=result.bag;
+ state.itemTarget=null;state.selected=null;
+ announce(result.reason+'. Power-up consumed without spending a turn.');
+ render();
+}
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
@@ -1251,6 +1285,7 @@ function swap(){
 }
 function clear(){
  if(state.ended||state.busy)return;
+ if(state.itemTarget){state.itemTarget=null;announce('Power-up selection cancelled.');render();return;}
  if(state.swapping){
    state.swapping=false;state.swapSet.clear();announce('Tile exchange cancelled.');
  }else{
@@ -1401,6 +1436,9 @@ document.addEventListener('keydown',event=>{
  if($('modal').open||event.altKey||event.metaKey||event.ctrlKey||state.ended||state.busy)return;
  if(event.key==='Backspace'&&!event.target.matches('input,textarea')){
    event.preventDefault();undoLast();return;
+ }
+ if(event.key==='Escape'&&state.itemTarget){
+   state.itemTarget=null;announce('Power-up selection cancelled.');render();return;
  }
  if(event.key==='Escape'&&state.selected){
    state.selected=null;render();return;
