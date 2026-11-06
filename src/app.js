@@ -410,6 +410,47 @@ function reportRows(moves){
    `<div class="report-move"><span class="report-turn">T${m.turn}</span><strong>${escapeText(m.equation)}</strong><span>+${m.points}</span></div>`
  ).join('')+'</div>';
 }
+function showShop(){
+ if(!isDrift()||state.phase!=='won')return;
+ const offers=shopOffers(state.sector,state.rogue);
+ const intro=`<div class="salvage-intro">
+ <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
+ <div><strong>SECTOR ${state.sector} STABILISED</strong>
+ <p>+${state.rogue.lastReward} Flux earned. Choose permanent upgrades for this run, or keep your Flux for later. All upgrades reset when the run ends.</p></div>
+ </div>
+ <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Available Salvage Bay upgrades"></div>
+ <p id="salvage-feedback" class="salvage-feedback">Upgrades remain equipped across the next sectors. Each can be purchased once.</p>`;
+ showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
+   {text:'RUN REPORT',fn:showRunReport},
+   {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
+ ]);
+ const grid=$('salvage-grid');
+ if(!offers.length){
+   const end=document.createElement('p');
+   end.className='salvage-empty';
+   end.textContent='All ten upgrades installed. Your build is complete—continue into the next sector.';
+   grid.append(end);
+ }
+ for(const item of offers){
+   const card=document.createElement('div');card.className='salvage-card';
+   const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
+   const icon=document.createElement('div');icon.className='salvage-icon';icon.textContent=item.icon;
+   const title=document.createElement('strong');title.textContent=item.name;
+   const description=document.createElement('p');description.textContent=item.description;
+   const buy=document.createElement('button');buy.type='button';buy.className='salvage-buy';
+   buy.textContent=item.cost+' FLUX · '+(state.rogue.flux>=item.cost?'INSTALL':'NOT ENOUGH');
+   buy.disabled=state.rogue.flux<item.cost;
+   buy.setAttribute('aria-label','Install '+item.name+' for '+item.cost+' Flux');
+   buy.onclick=()=>{
+     const purchase=purchaseUpgrade(state.rogue,item.id,state.sector);
+     if(!purchase.ok){$('salvage-feedback').textContent=purchase.reason;return;}
+     state.rogue=purchase.rogue;
+     persistRun();render();showShop();
+     $('salvage-feedback').textContent=purchase.reason+'. Upgrade equipped for the rest of this run.';
+   };
+   card.append(tag,icon,title,description,buy);grid.append(card);
+ }
+}
 function showSectorOutcome(){
  const won=state.phase==='won';
  const report=sectorReport(state.sector,state.score,state.turn,state.stats,won,currentTarget());
