@@ -554,10 +554,11 @@ function showBagInventory(){
    `<div class="bag-overview"><div class="bag-overview-total">
      <strong>${inventory.total}</strong><div><span>PHYSICAL TILES</span>
      <p>Available for future draws and exchanges</p></div></div>
+     <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong></p>
      <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
      <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
      the board or in your rack are not included. The equals sign is free and
-     unlimited, so it is never drawn from the bag. Future draw order is not shown.</p>
+     unlimited, so it is never drawn from the bag. Future draw order is not shown. The ✦ wildcard is in the number bag.</p>
      </div>`,
    [{text:'BACK TO BOARD',primary:true}]);
  const groups=$('bag-inventory-groups');
