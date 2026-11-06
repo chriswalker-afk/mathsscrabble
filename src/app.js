@@ -331,7 +331,7 @@ function renderRack(){
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
- const eligible=Boolean(freeExchangeReason(state.rack))&&
+ const eligible=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
    (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
@@ -348,7 +348,7 @@ function renderPreview(){
  const box=$('equation-preview');
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
- const freeReason=Boolean(freeExchangeReason(state.rack))&&
+ const freeReason=Boolean(freeExchangeReason(state.rack))&&state.swapSet.size<=1&&
    (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
  $('preview-status').textContent=state.swapping?
    (freeReason?'Choose exactly one tile for your free swap; multiple tiles cost a turn.':
@@ -415,7 +415,7 @@ function renderLocalStatus(){
  $('local-pass-btn').textContent='↪ PASS';
  $('score-btn').querySelector('strong').textContent='⚡ SCORE';
  $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
- const eligible=!match.freeExchangeUsed;
+ const eligible=!match.freeExchangeUsed&&state.swapSet.size<=1;
  $('swap-btn').textContent=state.swapping?
    '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
  $('new-btn').disabled=false;
@@ -1435,7 +1435,7 @@ document.addEventListener('keydown',event=>{
  if(event.key==='='){
    event.preventDefault();selectTile('equals');return;
  }
- if(/^[1-7]$/.test(event.key)){
+ if(/^[1-8]$/.test(event.key)){
    const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
    const available=state.rack.filter(t=>!used.has(t.id));
    const tile=available[Number(event.key)-1];
