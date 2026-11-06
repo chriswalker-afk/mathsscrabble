@@ -181,8 +181,9 @@ try{
      const unchanged=await sprite({...def,head,accessory:'none'},128,'full');
      const withExtra=await sprite({...def,head,accessory},128,'full');
      // Full 320x360 -> 128x128 squares (letterbox vertically), so
-     // central x 110–212/y 72–159 projects to approx x44–85/y29–63.
-     const occluded=compare(unchanged,withExtra,[44,29,85,62],128);
+     // central eyes and mouth (y 72–155) project to approx x44–85/y27–56.
+     // Helmet collar is BELOW the mouth and must not count as face occlusion.
+     const occluded=compare(unchanged,withExtra,[44,27,85,56],128);
      output.accessoryClobber.push({head,accessory,occluded});
     }
   }
