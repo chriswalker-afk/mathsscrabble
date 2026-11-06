@@ -440,6 +440,9 @@ function renderLocalStatus(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
+ // Both solo and local competition share the same scoring ceremony display.
+ $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
+ $('ceremony-readout').hidden=!state.ceremony;
  if(isLocal()){
    renderLocalStatus();
    if(!state.busy)persistRun();
