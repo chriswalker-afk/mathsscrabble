@@ -1,3 +1,28 @@
+import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet} from './tile-sets.js';
+const kitFromStore=()=>{
+ try{return normalizeTileSet(localStorage.getItem(TILE_SET_STORAGE_KEY));}
+ catch{return 'natural';}
+};
+let selectedKit=kitFromStore();
+function applyKit(id){
+ selectedKit=normalizeTileSet(id);
+ try{localStorage.setItem(TILE_SET_STORAGE_KEY,selectedKit);}catch{/* ephemeral choice */}
+ document.querySelectorAll('[data-tile-kit]').forEach(node=>{
+   const active=node.dataset.tileKit===selectedKit;
+   node.classList.toggle('is-selected',active);
+   node.setAttribute('aria-pressed',String(active));
+ });
+ const kit=TILE_SET_BY_ID[selectedKit];
+ document.getElementById('tile-kit-active').textContent=kit.short.toUpperCase()+' ACTIVE';
+ for(const mode of ['sector','rogue']){
+   const card=document.getElementById('home-'+mode);
+   if(card)card.href='./play.html?mode='+mode+'&tiles='+selectedKit;
+ }
+}
+for(const node of document.querySelectorAll('[data-tile-kit]'))
+ node.addEventListener('click',()=>applyKit(node.dataset.tileKit));
+applyKit(selectedKit);
+
 // The home screen is deliberately static and free of Worker requests.
 // It only reads the existing local save keys to label the navigation cards.
 const SAVES={
