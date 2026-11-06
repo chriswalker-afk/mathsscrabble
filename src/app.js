@@ -13,7 +13,7 @@ import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
- selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
+ selected:null,swapping:false,swapSet:new Set(),freeSwapTurn:0,ended:false,busy:false,
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
@@ -79,7 +79,7 @@ function freshSector(sector=1,{newRun=false}={}){
  if(!isDrift())state.rogue=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
- state.turn=1;state.score=0;state.ended=false;state.busy=false;
+ state.turn=1;state.score=0;state.freeSwapTurn=0;state.ended=false;state.busy=false;
  state.selected=null;state.swapping=false;state.swapSet.clear();
  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
  state.focusedIndex=pos(CENTER,CENTER);
@@ -331,8 +331,8 @@ function renderRack(){
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
- const eligible=freeExchangeReason(state.rack)&&
-   !(isLocal()&&state.localMatch?.freeExchangeUsed);
+ const eligible=Boolean(freeExchangeReason(state.rack))&&
+   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
  $('swap-btn').textContent=state.swapping?
    `⇄ CONFIRM ${eligible?'FREE ':''}SWAP (${state.swapSet.size})`:
    eligible?'⇄ FREE TILE SWAP':'⇄ SWAP TILES';
@@ -348,13 +348,13 @@ function renderPreview(){
  const box=$('equation-preview');
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
- const freeReason=freeExchangeReason(state.rack)&&
-   !(isLocal()&&state.localMatch?.freeExchangeUsed);
+ const freeReason=Boolean(freeExchangeReason(state.rack))&&
+   (isLocal()?!state.localMatch?.freeExchangeUsed:state.freeSwapTurn!==state.turn);
  $('preview-status').textContent=state.swapping?
-   (freeReason?`Choose tiles to replace — ${freeReason}-only rack, no turn used.`:
+   (freeReason?'Choose exactly one tile for your free swap; multiple tiles cost a turn.':
      'Choose tiles to replace — this uses a turn.'):
    freeReason&&!Object.keys(state.pending).length?
-     `Only ${freeReason} in your rack. Free exchange available.`:preview.feedback;
+     'One free tile swap available this turn.':preview.feedback;
  const points=(!state.swapping&&preview.ready)?calculateMove(preview):null;
  $('potential-score').textContent=points?'+'+points.total:'—';
  $('potential-score').setAttribute('aria-label',points?
@@ -415,7 +415,7 @@ function renderLocalStatus(){
  $('local-pass-btn').textContent='↪ PASS';
  $('score-btn').querySelector('strong').textContent='⚡ SCORE';
  $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
- const eligible=freeExchangeReason(state.rack)&&!match.freeExchangeUsed;
+ const eligible=!match.freeExchangeUsed;
  $('swap-btn').textContent=state.swapping?
    '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
  $('new-btn').disabled=false;
@@ -532,9 +532,8 @@ function render(){
  const placed=Object.keys(state.pending).length;
  if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
  else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
- else if(state.swapping)coach.textContent=freeExchangeReason(state.rack)?
-   'All numbers or all operations? You can exchange tiles without spending a turn.':
-   'Select your exchange tiles. This will use one turn.';
+ else if(state.swapping)coach.textContent=
+   'Choose one tile for a free swap (once per turn), or several to spend your turn.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
    state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
  else if(placed&&state.preview.ready)coach.textContent=
@@ -777,7 +776,7 @@ function localSwap(){
    if(Object.keys(state.pending).length){announce('Clear your equation before swapping.',true);return;}
    if(!state.bag.length){announce('No tiles remain in the bag.',true);return;}
    state.swapping=true;state.selected=null;
-   announce('Select the rack tiles to exchange. An all-number or all-operator rack gets one free rescue exchange per turn.');
+   announce('Choose exactly one tile for your free swap each turn. Exchanging several costs your turn.');
    render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile for exchange.',true);return;}
@@ -788,7 +787,7 @@ function localSwap(){
    if(free){
      state.localMatch=match;state.rack=match.players[match.current].rack;
      state.bag=match.bag;state.swapping=false;state.swapSet.clear();state.selected=null;
-     announce('Free rescue exchange complete. Your turn continues.');render();
+     announce('Free tile swap complete. Your turn continues.');render();
    }else{
      finishLocalTurn(match,'Tiles exchanged. Turn passed to the next player.');
    }
@@ -1201,13 +1200,19 @@ function swap(){
    }
    if(!state.bag.length){announce('The bag is empty; swapping is unavailable.',true);return;}
    state.swapping=true;state.selected=null;
-   announce(freeExchangeReason(state.rack)?
-     'Free exchange: choose tiles to replace, then confirm. No turn used.':
-     'Choose one or more rack tiles, then confirm. This uses a turn.');render();return;
+   announce(state.freeSwapTurn!==state.turn?
+     'Choose one tile for your free swap. Several tiles will cost a turn.':
+     'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
  if(state.swapSet.size>state.bag.length){announce('Not enough tiles remain in the bag.',true);return;}
- const free=Boolean(freeExchangeReason(state.rack));
+ const free=state.swapSet.size===1&&state.freeSwapTurn!==state.turn;
+ const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
+ for(const pool of ['numbers','operators']){
+   const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
+   const available=state.bag.filter(t=>kind(t)===pool).length;
+   if(needed>available){announce('Not enough '+pool+' remain in that bag.',true);return;}
+ }
  const exchanged=state.rack.filter(t=>state.swapSet.has(t.id));
  state.rack=state.rack.filter(t=>!state.swapSet.has(t.id));
  const draw=dealPlayableRack(state.rack,state.bag,currentRackOptions());state.rack=draw.rack;state.bag=draw.bag;
@@ -1218,6 +1223,7 @@ function swap(){
  }
  if(free){
    state.stats.freeExchanges++;
+   state.freeSwapTurn=state.turn;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
    render();
@@ -1273,9 +1279,9 @@ function showTraining(firstVisit=false){
   <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
     <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
-    <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can exchange an all-number or all-operation rack for free.</p></div></div>
+    <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can swap one tile for free each turn.</p></div></div>
  </div>
- <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–7 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
+ <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles, = selects equals and Backspace undoes a tile.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
    firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
    message,firstVisit?
