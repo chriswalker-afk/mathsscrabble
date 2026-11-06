@@ -55,6 +55,7 @@ jobs:
           sleep 2
           node tests/alien-art-browser.mjs
           node tests/alien-editor-browser.mjs
+          node tests/alien-a3-browser.mjs
       - name: Upload specimen vault screenshots
         if: always()
         uses: actions/upload-artifact@v4
