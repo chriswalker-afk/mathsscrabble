@@ -82,7 +82,7 @@ function freshSector(sector=1,{newRun=false}={}){
  const anomaly=isDrift()?anomalyForSector(sector):null;
  announce(sector===1?
    (isDrift()?'THE DRIFT begins. Build equations to earn energy, then buy upgrades with Flux.':
-     'First mission: try 8 + 4 = 12 through the centre. BIDMAS checks your calculation when you submit.'):
+     'First mission: use your shuffled tiles to create a true equation through the glowing centre. BIDMAS checks it when you submit.'):
    anomaly?
      `Sector anomaly: ${anomaly.name}. ${anomaly.short}. Build carefully.`:
      'New sector online. Use the centre to begin and aim for the new energy target.');
@@ -358,6 +358,7 @@ function showLocalHandover(){
  const hidden=match.phase==='handover'&&!state.localDeferPrivacy;
  $('local-privacy').hidden=!hidden;
  $('app').dataset.private=String(hidden);
+ $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
  if(!hidden)return;
  const player=match.players[match.current];
  $('local-handover-title').textContent=player.name+' · YOUR TURN';
@@ -446,6 +447,7 @@ function render(){
  }
  $('local-privacy').hidden=true;
  $('app').dataset.private='false';
+ $('app').inert=false;
  $('local-panel').hidden=true;
  $('local-pass-btn').hidden=true;
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
@@ -507,7 +509,7 @@ function render(){
    'All numbers or all operations? You can exchange tiles without spending a turn.':
    'Select your exchange tiles. This will use one turn.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
-   state.sector===1?'TRAINING · Try 8 + 4 = 12 through the glowing centre.':'START · Your first equation must cross the centre.';
+   state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
  else if(placed&&state.preview.ready)coach.textContent=
    'CHECK · A complete equation is in place. Submit it when you trust your BIDMAS calculation.';
  else if(placed)coach.textContent='BUILD · Arrange one unbroken equation, then add your free equals sign.';
@@ -1174,7 +1176,7 @@ function rememberIntro(){
 function showTraining(firstVisit=false){
  const message=`<div class="training-steps">
   <div class="training-step"><span>01</span><div><strong>Build one real calculation</strong>
-    <p>Try <em>8 + 4 = 12</em> through the centre. Use <strong>BIDMAS</strong>: brackets, indices, division/multiplication, then addition/subtraction. An identity like 3 = 3 does not score.</p></div></div>
+    <p>Every new game has a <strong>different shuffled starting rack</strong>. Build an equation through the centre, for example <em>8 + 4 = 12</em> if you have suitable tiles. Use <strong>BIDMAS</strong>; an identity like 3 = 3 does not score.</p></div></div>
   <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
     <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
