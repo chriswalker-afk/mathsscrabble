@@ -540,6 +540,7 @@ $('new-btn').onclick=()=>{
    [{text:'CANCEL'},{text:'NEW RUN',primary:true,fn:()=>freshSector(1,{newRun:true})}]);
 };
 $('run-report-btn').onclick=()=>{if(!state.busy)showRunReport();};
+$('run-report-header').onclick=()=>{if(!state.busy)showRunReport();};
 function rememberIntro(){
  try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
 }
