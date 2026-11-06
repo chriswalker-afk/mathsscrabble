@@ -198,16 +198,17 @@ function boardCell(i){
    (i===state.recentlyPlaced?' tile-landing':'')+
    (state.lockedFlash.has(i)?' locked-flash':'');
  node.setAttribute('role','gridcell');
- node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${pending?', unscored':''}`);
+ node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${tile&&tile.value!=='='?', '+tile.points+' tile points':''}${pending?', unscored':''}`);
  node.dataset.index=String(i);
  node.dataset.locked=String(locked);
  node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
-   const inner=document.createElement('span');inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
+   const inner=document.createElement('span');
+   inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'');
    inner.textContent=tile.value;
-   if(tile.value!=='='){
-     const point=document.createElement('sup');point.textContent=tile.points;inner.append(point);
-   }
+   // Keep board symbols completely unobstructed. Point values remain visible
+   // on the rack, in the equation breakdown, and in this accessible tooltip.
+   if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points`;
    node.append(inner);
  }else if(bonus){
    const label=document.createElement('span');label.className='bonus-label';
