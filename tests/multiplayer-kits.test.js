@@ -115,7 +115,8 @@ test('online host kit is authoritative, immutable after creation, and hidden han
     assert.ok(host.match.rack.every(t=>!guest.match.rack.some(g=>g.id===t.id)));
     assert.equal(host.match.bagCount,151-2*kitRackSize(kit.id));
     // Even a user with their own rack ID cannot change its mathematical face.
-    const tile=started.match.players[0].rack[0];
+    const tile=started.match.players[0].rack.find(t=>!t.blank);
+    assert.ok(tile);
     assert.throws(()=>takeOnlineAction(started,hashA,
       {id:'spoof-maths-tile-1234',revision:started.revision,type:'score',
        placements:[{index:pos(6,5),tileId:tile.id,value:'999'},
