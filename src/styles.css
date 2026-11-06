@@ -181,3 +181,60 @@ body{overscroll-behavior:none}
  .right-panel .equation-preview .preview-points strong{font-size:17px}
 }
 @media(prefers-reduced-motion:reduce){.wild-choice:hover{transform:none}}
+
+/* PASS C — compact solo progress, trustworthy autosave and classroom onboarding */
+.save-status{display:inline-flex;align-items:center;white-space:nowrap;padding:5px 8px;border:1px solid #3d796c;border-radius:5px;color:#96dcbf;font:800 9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.07em}
+.save-status.unavailable{border-color:#9d6863;color:#f7b8a6}
+.coach-hint{font-size:10px;line-height:1.5;color:#aac9c8;border-left:2px solid #68bfc0;padding:5px 0 5px 9px;margin:12px 0 4px;max-height:60px;overflow:hidden}
+.history-mini{margin-top:7px;min-height:0;overflow:hidden}
+.history-heading{font-size:9px;letter-spacing:.14em;color:#80aebb;font-weight:800;margin-bottom:6px}
+.history-row{display:flex;justify-content:space-between;gap:7px;margin:3px 0;padding:5px 6px;border-radius:4px;background:#112b393b;font-size:10px;color:#d7e5dc;white-space:nowrap}
+.history-row span{overflow:hidden;text-overflow:ellipsis}
+.history-row strong{color:#f5d49a;font-size:10px}
+.left-panel .side-footer{display:block;margin-top:auto;padding-top:12px}
+.run-overview{width:100%;display:flex;flex-direction:column;gap:5px;align-items:flex-start;padding:8px 9px;border:1px solid #507680;border-radius:6px;background:linear-gradient(115deg,#254454,#192f41);color:#bed9d9;text-align:left}
+.run-overview:hover{border-color:#81c8c5;background:#2d5860}
+.run-overview>span{font-size:9px;font-weight:850;letter-spacing:.15em;color:#8caeb8}
+.run-overview strong{font-size:11px;font-weight:800;color:#f0e2bc}
+dialog{max-height:min(88dvh,720px);overflow-y:auto}
+.training-steps{display:grid;gap:12px;margin-top:14px}
+.training-step{display:grid;grid-template-columns:33px minmax(0,1fr);gap:10px;padding:12px;background:#163344;border:1px solid #446c79;border-radius:8px}
+.training-step>span{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;border:1px solid #7cbaad;background:#315d60;color:#d4fae3;font-size:11px;font-weight:900}
+.training-step strong{display:block;font-size:13px;letter-spacing:.02em;color:#f0e7d0}
+.training-step p{font-size:12px;line-height:1.5;margin:5px 0 0}
+.training-step em{color:#ffe3a8;font-style:normal;font-weight:850;white-space:nowrap}
+.training-footnote{padding:10px;border-top:1px solid #456574;font-size:11px!important}
+.sector-report{display:grid;gap:10px}
+.report-energy{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.report-energy>div{padding:12px;border:1px solid #4c6975;border-radius:6px;background:#143143;display:flex;flex-direction:column;gap:5px}
+.report-energy span,.report-facts span{font-size:9px;font-weight:800;letter-spacing:.13em;color:#8fb0bb}
+.report-energy strong{font-size:31px;color:#ffe7b1;line-height:1.2;font-variant-numeric:tabular-nums}
+.report-meter{height:9px;background:#102733;border:1px solid #446570;border-radius:20px;overflow:hidden}
+.report-meter>div{height:100%;background:linear-gradient(90deg,#438f9c,#a0e8bb)}
+.report-facts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.report-facts>div{border:1px solid #3c6070;border-radius:6px;padding:8px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.report-facts strong{font-size:12px;color:#f1d8a0;font-variant-numeric:tabular-nums}
+.report-best{margin:0!important;color:#bedbd2!important;font-size:12px!important}
+.report-moves{display:grid;gap:5px;max-height:210px;overflow-y:auto}
+.report-move{padding:7px 8px;display:flex;gap:9px;align-items:center;border:1px solid #385d6b;background:#142d3d;border-radius:5px;color:#e2e7dc;font-size:12px}
+.report-move strong{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-move>span:last-child{color:#ffe1a0;font-weight:850;white-space:nowrap}
+.report-turn{font-size:9px;letter-spacing:.06em;color:#91bac4!important}
+.report-note{font-size:11px!important;margin:1px 0!important;color:#a4c8cc!important}
+@media(max-width:1050px){
+ .coach-hint{font-size:9px;padding:4px 0 4px 7px;margin:8px 0 3px}
+ .history-row{font-size:9px;padding:4px}
+ .run-overview{padding:6px}
+}
+@media(max-width:730px){
+ .save-status{display:none}
+ .left-panel #coach-hint,.left-panel #history-mini,.left-panel .side-footer{display:none}
+ .training-step{padding:9px;gap:8px}
+ .report-move{font-size:11px}
+}
+@media(max-height:760px) and (min-width:731px){
+ .history-mini{margin-top:4px}
+ .history-row{padding:2px 4px;margin:1px 0}
+ .coach-hint{max-height:47px;margin:7px 0 2px}
+ .run-overview{padding:5px 7px;gap:1px}
+}
