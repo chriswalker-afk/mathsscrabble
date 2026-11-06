@@ -148,7 +148,8 @@ try{
  assert.notEqual(guestKey.token,hostKey.token);
  // The rooms use revision-only WebSocket messages. When the test has no
  // WebSocket server, the browser fallback poll synchronises the second player.
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.locator('#online-lobby-players .online-lobby-player').nth(1).waitFor({state:'attached',timeout:5000});
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').count(),2);
  await host.locator('#online-lobby-players .alien-player-avatar svg').first().waitFor({timeout:12000});
  assert.equal(await host.locator('#online-lobby-players .alien-player-avatar svg').count(),2);
