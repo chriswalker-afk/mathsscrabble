@@ -7,6 +7,7 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  armedConsumable,armTemporary,consumeTemporary,useTileTemporary,earnMoveFlux,consumeBoardEcho,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
+import {renderDriftHud} from './drift-hud.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -115,6 +116,7 @@ function freshSector(sector=1,{newRun=false}={}){
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
  if(state.ended||state.swapping||state.busy)return;
+ if(state.itemTarget){applyTileTemporary(id);return;}
  state.selected=state.selected===id?null:id;
  renderRack();
  renderBoard();
@@ -297,7 +299,7 @@ function renderBoard(){
 function tileButton(tile, rackIndex){
  const button=document.createElement('button');
  button.type='button';
- button.className='tile'+(isChargedTile(tile)?' charged-rack-tile':'')+
+ button.className='tile'+(state.itemTarget?' consumable-target':'')+(isChargedTile(tile)?' charged-rack-tile':'')+
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'');
@@ -313,13 +315,14 @@ function tileButton(tile, rackIndex){
  button.append(main,points);
  button.addEventListener('click',event=>{
    if(wasDragClick(event))return;
+   if(state.itemTarget){applyTileTemporary(tile.id);return;}
    if(state.swapping){
      state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);
      renderRack();return;
    }
    selectTile(tile.id);
  });
- if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
+ if(!state.itemTarget&&!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
  button.addEventListener('keydown',event=>{
    if(!event.altKey||!['ArrowLeft','ArrowRight'].includes(event.key)||state.swapping||state.busy)return;
    event.preventDefault();
@@ -336,7 +339,7 @@ function renderRack(){
  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
  const available=state.rack.filter(t=>!used.has(t.id));
  $('rack').replaceChildren(...available.map((tile,i)=>tileButton(tile,i)));
- $('rack-count').textContent=`${available.length} / ${HAND_SIZE}`;
+ $('rack-count').textContent=`${available.length} / ${rackCapacity()}`;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('equals-tile').setAttribute('aria-pressed',String(state.selected==='equals'));
  $('equals-tile').disabled=state.ended||state.swapping||state.busy;
@@ -472,6 +475,7 @@ function renderLocalStatus(){
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
+ renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  // Both solo and local competition share the same scoring ceremony display.
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
