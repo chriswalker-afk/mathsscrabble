@@ -28,8 +28,11 @@ function renderPilotPicker(){
    'Your alien joins the room with you. You can edit it first.';
  for(const button of $('online-alien-presets').querySelectorAll('button[data-preset]')){
   const id=button.dataset.preset;
+  const i=PILOT_PRESET_NAMES.indexOf(id);
+  paintPilotAvatar(button.querySelector('.alien-player-avatar'),
+    defaultPilotAlien(i),i,{size:35,framing:'portrait'});
   button.setAttribute('aria-pressed',String(pilotProfileEqual(alien,
-   defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(id)))));
+   defaultPilotAlien(i))));
   button.disabled=state.busy;
  }
  for(const id of ['online-alien-random','online-alien-saved'])$(id).disabled=state.busy;
