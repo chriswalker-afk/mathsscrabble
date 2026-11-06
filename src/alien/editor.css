@@ -434,3 +434,14 @@ button:disabled{cursor:not-allowed;opacity:.48}
 @media(prefers-reduced-motion:reduce){
  .alien-art svg [data-layer="eyes"]{animation:none!important;transform:none!important}
 }
+
+/* The complete desktop workshop is one viewport tall, as in the game.
+ * Only the part gallery scrolls; Save, Next, Undo and the live preview remain
+ * available without the whole page drifting down after a focus change. */
+@media(min-width:741px){
+ .lab-app{height:100dvh;min-height:0;overflow:hidden}
+ .lab-shell{min-height:0;overflow:hidden}
+ .specimen-panel,.workshop-panel{min-height:0;overflow:hidden}
+ .editor-options{flex:1;min-height:0;overflow-y:auto}
+ .creature-stage{flex:1;min-height:0}
+}
