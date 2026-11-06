@@ -136,7 +136,7 @@ test('false equations, forged values, duplicates, wrong owner and stale revision
  const room=makeGoodOpening(started());
  const good=placements(room);
  const bad=good.map(x=>({...x}));
- bad.at(-1)={...bad.at(-1),value:'3'};
+ bad[bad.length-1]={...bad.at(-1),value:'3'};
  assert.throws(()=>takeOnlineAction(room,H,
    request(room.revision,'score','score-invalid12345',{placements:bad}),3000),
    /tile value cannot be changed/i);
