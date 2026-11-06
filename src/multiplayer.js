@@ -134,7 +134,8 @@ export function exchangeLocalTiles(match,selectedIds,rng=Math.random){
    for(const t of match.bag)if(t.pairId){
      const pair=available.get(t.pairId)||new Set();pair.add(t.value);available.set(t.pairId,pair);
    }
-   if(![...available.values()].some(faces=>faces.has('(')&&faces.has(')'))
+   const completePairs=[...available.values()].filter(faces=>faces.size===2);
+   if(!completePairs.length)
      throw Error('Another complete bracket pair must remain in the bag to exchange yours.');
  }
  // Draw replacements before shuffling exchanged tiles back into the bag.
