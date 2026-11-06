@@ -191,6 +191,7 @@ try{
     assert.ok(geometry.boardWidth>=250,'board should retain readable dimensions');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'no horizontal scrolling');
     if(size.width===390){
+      assert.ok(await page.locator('#run-report-header').isVisible(),'compact screens need an accessible run-report button');
       assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
       assert.ok(geometry.scoreButtonBottom<=size.height-20,'score command must be visible without scrolling on phones');
       assert.ok(geometry.previewBottom<=size.height-4,'equation preview should fit on one mobile screen');
@@ -239,9 +240,13 @@ try{
   assert.equal(await page.locator('#run-summary').textContent(),'1 sector · '+restoredWinScore+' energy');
 
   // Report can be reopened without changing the current sector.
-  await page.locator('#run-report-btn').click();
+  await page.locator('#run-report-header').click();
   assert.match(await page.locator('#modal-title').textContent(),/reactor run/i);
   assert.match(await page.locator('.sector-report').textContent(),/S1/);
+  await page.locator('#modal-actions button').last().click();
+  await page.setViewportSize({width:1366,height:768});
+  await page.locator('#run-report-btn').click();
+  assert.match(await page.locator('#modal-title').textContent(),/reactor run/i);
   await page.locator('#modal-actions button').last().click();
 
   // Damaged browser storage must fall back to a clean new run.
