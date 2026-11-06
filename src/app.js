@@ -331,6 +331,8 @@ function render(){
  $('score').textContent=state.score;$('target').textContent=target;
  $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
+ $('app').dataset.mode=state.mode;
+ $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
  $('mode-btn').textContent=isDrift()?'◈ THE DRIFT':'◈ SECTOR RUN';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
