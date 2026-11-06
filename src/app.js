@@ -1,58 +1,184 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,scoreMove,nextTarget} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,refill,validateMove,inspectPlacement,scoreMove,nextTarget} from './engine.js';
+import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 const $=id=>document.getElementById(id);
-const state={board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,selected:null,swapping:false,swapSet:new Set(),ended:false};
+const state={
+ board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
+ selected:null,swapping:false,swapSet:new Set(),ended:false,busy:false,
+ focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
+ lockedFlash:new Set(),preview:null,modalEpoch:0
+};
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
-const symbols={'+':'+','−':'−','×':'×','÷':'÷'};
-function announce(message,isError=false){$('log').textContent=message;$('log').classList.toggle('error',isError);$('footer-text').textContent=message.toUpperCase(); }
+function announce(message,isError=false){
+ $('log').textContent=message;
+ $('log').classList.toggle('error',isError);
+ $('footer-text').textContent=message.toUpperCase();
+}
 function freshSector(sector=1){
-  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;state.turn=1;state.score=0;state.ended=false;state.selected=null;state.swapping=false;state.swapSet.clear();
+  state.modalEpoch++;
+  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
+  state.turn=1;state.score=0;state.ended=false;state.busy=false;
+  state.selected=null;state.swapping=false;state.swapSet.clear();
+  state.placementOrder=[];state.lockedFlash.clear();state.recentlyPlaced=null;
+  state.focusedIndex=pos(CENTER,CENTER);
   state.bag=makeBag();
   if(sector===1){
     const required=['8','+','4','1','2','3','×'];
-    state.rack=required.map(v=>{const i=state.bag.findIndex(t=>t.value===v);return state.bag.splice(i,1)[0]||makeTile(v);});
-  }else{const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;}
-  announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');render();
+    state.rack=required.map(v=>{
+      const i=state.bag.findIndex(t=>t.value===v);
+      return i>=0?state.bag.splice(i,1)[0]:makeTile(v);
+    });
+  }else{
+    const draw=refill([],state.bag);state.rack=draw.rack;state.bag=draw.bag;
+  }
+  announce(sector===1?'Try 8 + 4 = 12 through the centre. Select tiles by tapping or dragging.':'New sector online. Build an equation through the centre.');
+  $('board-frame').classList.remove('reactor-scored');
+  render();
 }
 const valueAt=i=>state.pending[i]||state.board[i];
 function selectTile(id){
- if(state.ended||state.swapping)return;
- state.selected=id;$('equals-tile').classList.toggle('selected',id==='equals');renderRack();
+ if(state.ended||state.swapping||state.busy)return;
+ state.selected=state.selected===id?null:id;
+ renderRack();
+ renderBoard();
+}
+function placePayload(payload,index){
+ if(state.ended||state.swapping||state.busy||!Number.isInteger(index)||index<0||index>=SIZE*SIZE)return;
+ if(state.board[index]){announce('This tile is locked. Choose an empty square.',true);return;}
+ if(payload.kind==='pending'){
+   const from=payload.index;
+   const moving=state.pending[from];
+   if(!moving||from===index)return;
+   const displaced=state.pending[index];
+   delete state.pending[from];state.pending[index]=moving;
+   if(displaced)state.pending[from]=displaced;
+   state.placementOrder=state.placementOrder.filter(i=>i!==from&&i!==index);
+   if(displaced)state.placementOrder.push(from);
+   state.placementOrder.push(index);
+ }else{
+   let tile;
+   if(payload.kind==='equals'){
+     tile={id:'equals-'+index,value:'=',points:0};
+   }else if(payload.kind==='rack'){
+     tile=state.rack.find(t=>t.id===payload.id);
+     if(!tile||Object.values(state.pending).some(t=>t.id===tile.id))return;
+   }else{return;}
+   state.pending[index]=tile;
+   state.placementOrder=state.placementOrder.filter(i=>i!==index);
+   state.placementOrder.push(index);
+ }
+ state.recentlyPlaced=index;state.selected=null;
+ render();
 }
 function placeAt(index){
- if(state.ended||state.swapping)return;
- if(state.pending[index]){const t=state.pending[index];delete state.pending[index];state.selected=t.value==='='?'equals':t.id;render();return;}
- if(state.board[index]){announce('That tile is locked. Use an empty square.');return;}
- if(!state.selected){announce('Select a rack tile or the free equals sign first.');return;}
- const tile=state.selected==='equals'?{id:'equals-'+index,value:'=',points:0}:state.rack.find(t=>t.id===state.selected);
- if(!tile)return;
- state.pending[index]=tile;state.selected=null;render();
+ if(state.ended||state.swapping||state.busy)return;
+ if(state.board[index]){announce('That tile is locked. Use an empty square.',true);return;}
+ if(state.selected){
+   placePayload(state.selected==='equals'?{kind:'equals'}:{kind:'rack',id:state.selected},index);
+   return;
+ }
+ if(state.pending[index]){
+   const tile=state.pending[index];
+   delete state.pending[index];
+   state.placementOrder=state.placementOrder.filter(i=>i!==index);
+   state.recentlyPlaced=null;
+   state.selected=tile.value==='='?'equals':tile.id;
+   render();
+   return;
+ }
+ announce('Choose a rack tile or the unlimited equals tile first.');
 }
-function pickupPending(index){const tile=state.pending[index];if(!tile)return;delete state.pending[index];state.selected=tile.value==='='?'equals':tile.id;render();}
+function undoLast(){
+ if(state.ended||state.busy)return;
+ if(state.swapping){state.swapping=false;state.swapSet.clear();announce('Exchange cancelled.');render();return;}
+ while(state.placementOrder.length){
+   const index=state.placementOrder.pop();
+   if(state.pending[index]){
+     delete state.pending[index];state.selected=null;state.recentlyPlaced=null;
+     announce('Last tile returned to the rack.');render();return;
+   }
+ }
+ announce('There is no unscored tile to undo.');
+}
+function focusCell(currentIndex,key){
+ const [r,c]=coords(currentIndex);
+ let next=currentIndex;
+ if(key==='ArrowRight')next=pos(r,Math.min(SIZE-1,c+1));
+ if(key==='ArrowLeft')next=pos(r,Math.max(0,c-1));
+ if(key==='ArrowDown')next=pos(Math.min(SIZE-1,r+1),c);
+ if(key==='ArrowUp')next=pos(Math.max(0,r-1),c);
+ state.focusedIndex=next;
+ const target=$('board').querySelector('[data-index="'+next+'"]');
+ if(target){
+   const previous=$('board').querySelector('[tabindex="0"]');
+   if(previous)previous.tabIndex=-1;
+   target.tabIndex=0;target.focus({preventScroll:true});
+ }
+}
 function boardCell(i){
- const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],bonus=bonusAt(r,c);
- const node=document.createElement('button');node.type='button';node.className='cell'+(bonus?' bonus-'+bonus.toLowerCase():'')+(tile?' occupied':'')+(pending?' pending':'')+(state.selected&&!tile?' drop-ready':'');
- node.setAttribute('role','gridcell');node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}`);
+ const [r,c]=coords(i),tile=valueAt(i),pending=!!state.pending[i],bonus=bonusAt(r,c),locked=!!state.board[i];
+ const inPath=state.preview?.indices?.includes(i);
+ const node=document.createElement('button');
+ node.type='button';
+ node.className='cell'+(bonus?' bonus-'+bonus.toLowerCase():'')+
+   (tile?' occupied':'')+(pending?' pending':'')+
+   (state.selected&&!locked?' drop-ready':'')+
+   (inPath?' path-cell':'')+
+   (inPath&&!tile?' path-gap':'')+
+   (i===state.recentlyPlaced?' tile-landing':'')+
+   (state.lockedFlash.has(i)?' locked-flash':'');
+ node.setAttribute('role','gridcell');
+ node.setAttribute('aria-label',`Row ${r+1}, column ${c+1}: ${tile?tile.value:bonus||'empty'}${pending?', unscored':''}`);
  node.dataset.index=String(i);
+ node.dataset.locked=String(locked);
+ node.tabIndex=state.focusedIndex===i?0:-1;
  if(tile){
-  const inner=document.createElement('span');inner.className='board-tile';inner.textContent=tile.value;
-  if(tile.value!=='='){const point=document.createElement('sup');point.textContent=tile.points;inner.append(point);}
-  node.append(inner);
- }else if(bonus){const label=document.createElement('span');label.className='bonus-label';label.textContent=bonus==='START'?'✳':bonus;node.append(label);}
- node.addEventListener('click',()=>placeAt(i));
- node.addEventListener('dragover',e=>{if(state.board[i])return;e.preventDefault();node.classList.add('drag-hover');});
- node.addEventListener('dragleave',()=>node.classList.remove('drag-hover'));
- node.addEventListener('drop',e=>{e.preventDefault();node.classList.remove('drag-hover');const id=e.dataTransfer.getData('text/plain');if(!id)return;if(id.startsWith('pending:'))pickupPending(Number(id.slice(8)));else state.selected=id;placeAt(i);});
- if(pending){node.draggable=true;node.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain','pending:'+i));}
+   const inner=document.createElement('span');inner.className='board-tile';
+   inner.textContent=tile.value;
+   if(tile.value!=='='){
+     const point=document.createElement('sup');point.textContent=tile.points;inner.append(point);
+   }
+   node.append(inner);
+ }else if(bonus){
+   const label=document.createElement('span');label.className='bonus-label';
+   label.textContent=bonus==='START'?'✳':bonus;node.append(label);
+ }
+ node.addEventListener('click',event=>{if(!wasDragClick(event))placeAt(i);});
+ node.addEventListener('keydown',event=>{
+   if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)){
+     event.preventDefault();focusCell(i,event.key);
+   }else if((event.key==='Delete'||event.key==='Backspace')&&state.pending[i]){
+     event.preventDefault();delete state.pending[i];state.placementOrder=state.placementOrder.filter(k=>k!==i);render();
+   }
+ });
+ if(pending&&!state.busy)enableTileDrag(node,{kind:'pending',index:i},placePayload);
  return node;
 }
-function renderBoard(){const board=$('board');board.replaceChildren(...Array.from({length:SIZE*SIZE},(_,i)=>boardCell(i)));}
-function tileButton(tile,pending=false){
- const button=document.createElement('button');button.type='button';button.className='tile'+(state.selected===tile.id?' selected':'')+(state.swapping&&state.swapSet.has(tile.id)?' marked':'')+(pending?' on-board':'');
- button.draggable=!state.swapping;button.dataset.tileId=tile.id;
+function renderBoard(){
+ const board=$('board');
+ const hadFocus=board.contains(document.activeElement);
+ board.replaceChildren(...Array.from({length:SIZE*SIZE},(_,i)=>boardCell(i)));
+ if(hadFocus)board.querySelector('[data-index="'+state.focusedIndex+'"]')?.focus({preventScroll:true});
+}
+function tileButton(tile){
+ const button=document.createElement('button');
+ button.type='button';
+ button.className='tile'+(state.selected===tile.id?' selected':'')+
+   (state.swapping&&state.swapSet.has(tile.id)?' marked':'');
+ button.dataset.tileId=tile.id;
  button.setAttribute('aria-label',`Tile ${tile.value}, worth ${tile.points} points`);
- const main=document.createElement('span');main.textContent=tile.value;const points=document.createElement('sub');points.textContent=tile.points;button.append(main,points);
- button.addEventListener('click',()=>{if(state.swapping){state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);renderRack();return;}selectTile(tile.id);renderBoard();});
- button.addEventListener('dragstart',e=>{state.selected=tile.id;e.dataTransfer.setData('text/plain',tile.id);});
+ button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
+ const main=document.createElement('span');main.textContent=tile.value;
+ const points=document.createElement('sub');points.textContent=tile.points;
+ button.append(main,points);
+ button.addEventListener('click',event=>{
+   if(wasDragClick(event))return;
+   if(state.swapping){
+     state.swapSet.has(tile.id)?state.swapSet.delete(tile.id):state.swapSet.add(tile.id);
+     renderRack();return;
+   }
+   selectTile(tile.id);
+ });
+ if(!state.swapping&&!state.busy)enableTileDrag(button,{kind:'rack',id:tile.id},placePayload);
  return button;
 }
 function renderRack(){
