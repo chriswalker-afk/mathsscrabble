@@ -1,7 +1,12 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
-import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,makeRogueState,anomalyForSector,targetForSector,shopOffers,purchaseUpgrade,PULSE_ITEM,purchasePulse,consumePulse,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
+ MAX_PERMANENT_SLOTS,MAX_TEMPORARY_SLOTS,makeRogueState,anomalyForSector,targetForSector,
+ shopOffers,shopTemperatures,purchaseUpgrade,purchaseTemporary,purchasePulse,heldConsumables,
+ armedConsumable,armTemporary,consumeTemporary,useTileTemporary,earnMoveFlux,consumeBoardEcho,
+ freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
+import {equipmentArt} from './equipment-art.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -17,7 +22,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -56,6 +61,8 @@ const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA'
 const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector);
+const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
+const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
 const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue):undefined;
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
@@ -77,6 +84,8 @@ function freshSector(sector=1,{newRun=false}={}){
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
  if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
  if(!isDrift())state.rogue=null;
+ if(isDrift())state.rogue={...state.rogue,echoed:[]};
+ state.itemTarget=null;
  state.stats=freshStats();state.phase='playing';state.ceremony=null;
  state.board=Array(SIZE*SIZE).fill(null);state.pending={};state.sector=sector;
  state.turn=1;state.score=0;state.freeSwapTurn=0;state.ended=false;state.busy=false;
@@ -479,11 +488,11 @@ function render(){
  $('score-btn').querySelector('strong').textContent='⚡ SCORE EQUATION';
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
-   Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
+   Math.max(1,maxTurns()-state.turn+1):0;
  const displayedScore=state.ceremony?
    state.ceremony.startScore+state.ceremony.awarded:state.score;
  $('score').textContent=displayedScore;$('target').textContent=target;
- $('turn').textContent=`${Math.min(state.turn,TURNS_PER_SECTOR)} / ${TURNS_PER_SECTOR}`;
+ $('turn').textContent=`${Math.min(state.turn,maxTurns())} / ${maxTurns()}`;
  $('sector-label').textContent=`${isDrift()?'THE DRIFT':'SECTOR'} ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector)?.id||'none'):'none';
@@ -855,7 +864,7 @@ function completeTurn(){
    state.progress=completeProgress(state.progress,
      sectorReport(state.sector,state.score,state.turn,state.stats,true,currentTarget()));
    if(isDrift())state.rogue=rewardSector(state.rogue,state.sector,state.score,state.turn).rogue;
- }else if(state.turn>=TURNS_PER_SECTOR){
+ }else if(state.turn>=maxTurns()){
    state.phase='lost';state.ended=true;
  }else{
    state.phase='playing';state.ended=false;state.turn++;
@@ -1328,8 +1337,8 @@ function restoreMode(mode,{initial=false}={}){
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
-   state.focusedIndex=pos(CENTER,CENTER);
-   announce(mode==='rogue'?
+   state.focusedIndex=pos(CENTER,CENTER);state.itemTarget=null;
+   announce(mode='rogue'?
      'Saved Drift run restored: your upgrades, Flux and rack are intact.':
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
