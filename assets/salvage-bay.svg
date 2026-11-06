@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 470" role="img" aria-labelledby="title desc">
+<title id="title">The Salvage Bay — a spacecraft under repair in a luminous orbital hangar</title>
+<desc id="desc">An angular teal and gold ship on a suspended maintenance cradle, robot arms, welding sparks, illuminated modules, deck grates and a vast starfield beyond the bay doors.</desc>
+<defs>
+ <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#061420"/><stop offset=".58" stop-color="#12394c"/><stop offset="1" stop-color="#10252d"/></linearGradient>
+ <linearGradient id="steel" x1="0" y1="0" x2="1" y2=".5"><stop stop-color="#b9d6ce"/><stop offset=".27" stop-color="#617e88"/><stop offset=".7" stop-color="#284b5d"/><stop offset="1" stop-color="#132b3b"/></linearGradient>
+ <linearGradient id="hull" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#e4ddc1"/><stop offset=".45" stop-color="#6a9aa0"/><stop offset="1" stop-color="#213f50"/></linearGradient>
+ <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#335b66"/><stop offset="1" stop-color="#091a29"/></linearGradient>
+ <linearGradient id="light" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fce8b0" stop-opacity=".85"/><stop offset="1" stop-color="#ecb361" stop-opacity="0"/></linearGradient>
+ <radialGradient id="core"><stop stop-color="#c8ffec"/><stop offset=".25" stop-color="#5eeecf"/><stop offset=".75" stop-color="#1b737e"/><stop offset="1" stop-color="#144257"/></radialGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="8"/></filter>
+ <filter id="shadow"><feGaussianBlur stdDeviation="20"/></filter>
+ <pattern id="grate" width="54" height="54" patternUnits="userSpaceOnUse" patternTransform="skewX(-24)"><path d="M0 0H54M0 0V54" fill="none" stroke="#7196a1" stroke-width="1.4" opacity=".26"/></pattern>
+</defs>
+<rect width="1200" height="470" fill="url(#sky)"/>
+<!-- starfield and open hangar doors -->
+<g fill="#d3fcf5" opacity=".78"><circle cx="122" cy="70" r="2"/><circle cx="236" cy="92" r="1.5"/><circle cx="390" cy="34" r="1.6"/><circle cx="514" cy="98" r="1"/><circle cx="813" cy="58" r="2"/><circle cx="998" cy="96" r="1.5"/><circle cx="1068" cy="48" r="1.1"/><circle cx="720" cy="31" r="1.3"/></g>
+<circle cx="1018" cy="153" r="89" fill="#1b6a79" opacity=".16"/><circle cx="1018" cy="153" r="62" fill="none" stroke="#4f9ba5" stroke-width="2" opacity=".25"/>
+<path d="M0 0H1200V65L1125 86L1036 58H180L73 93L0 66Z" fill="#07111b" stroke="#68828b" stroke-width="8"/>
+<path d="M0 0L125 75L146 330L0 393ZM1200 0L1075 75L1056 330L1200 393" fill="#132a36" stroke="#557b88" stroke-width="7"/>
+<path d="M0 109H1200M0 215H1200" stroke="#7ed6c9" stroke-opacity=".12" stroke-width="4"/>
+<path d="M138 82V294M1061 82V294" stroke="#a5c5ba" stroke-opacity=".38" stroke-width="9"/>
+<path d="M170 66L210 264M1032 66L993 264" stroke="#526976" stroke-width="13"/>
+<rect x="0" y="282" width="1200" height="188" fill="url(#deck)"/>
+<path d="M0 287H1200L1170 470H30Z" fill="url(#grate)" opacity=".85"/>
+<path d="M270 287L74 470M930 287L1130 470M570 287L530 470M636 287L679 470" stroke="#5ba9ac" stroke-opacity=".22" stroke-width="3"/>
+<path d="M0 328H1200M0 397H1200" stroke="#67959a" stroke-opacity=".2" stroke-width="3"/>
+<!-- portal and cranes -->
+<path d="M220 73V235L285 271M980 73V225L921 274" fill="none" stroke="#8da8ab" stroke-width="14"/>
+<path d="M216 73V206L270 235M984 73V201L933 235" fill="none" stroke="#263f4c" stroke-width="7"/>
+<g stroke="#f5d596" stroke-width="5" fill="none"><path d="M215 90V172L253 214"/><path d="M984 90V172L946 214"/></g>
+<g fill="#d6b77d"><rect x="203" y="185" width="30" height="37" rx="7"/><rect x="968" y="185" width="30" height="37" rx="7"/></g>
+<!-- side panels, diagnostic monitors -->
+<g><rect x="33" y="163" width="120" height="92" rx="8" fill="#0d222e" stroke="#5cabb4" stroke-width="4"/><rect x="43" y="173" width="100" height="59" rx="3" fill="#1c555c"/><path d="M51 220L72 199L88 211L103 186L128 199" fill="none" stroke="#7df1ce" stroke-width="3"/><g stroke="#74b4b1" stroke-width="4"><path d="M49 241h32m15 0h38"/></g></g>
+<g><rect x="1040" y="149" width="127" height="99" rx="8" fill="#0b2530" stroke="#627f89" stroke-width="4"/><rect x="1051" y="161" width="105" height="58" rx="4" fill="#244b5e"/><circle cx="1104" cy="190" r="24" fill="none" stroke="#78e8d4" stroke-width="4"/><path d="M1078 190h52M1104 166v48" stroke="#7dd1cf" stroke-width="2"/><path d="M1061 235h52" stroke="#dbbd7b" stroke-width="4"/></g>
+<!-- launch cradle -->
+<ellipse cx="601" cy="374" rx="344" ry="53" fill="#07131b" opacity=".66" filter="url(#shadow)"/>
+<path d="M307 349H901l37 36H279Z" fill="#203c49" stroke="#6f999d" stroke-width="7"/>
+<path d="M319 355H891" stroke="#8fe9d3" stroke-opacity=".55" stroke-width="4"/>
+<path d="M347 383V407M858 383V407" stroke="#bda46d" stroke-width="15"/>
+<rect x="320" y="407" width="568" height="15" rx="5" fill="#2b4651" stroke="#647a7b" stroke-width="3"/>
+<!-- detailed ship hull -->
+<path d="M222 260L360 225L475 185L735 185L873 232L994 260L910 306L775 323H423L295 307Z" fill="url(#hull)" stroke="#a0b8b2" stroke-width="9" stroke-linejoin="round"/>
+<path d="M316 251L460 202H748L870 251L754 265H450Z" fill="#2f6270" opacity=".92" stroke="#b3c3b1" stroke-width="4"/>
+<path d="M475 200L520 146H684L735 202Z" fill="url(#steel)" stroke="#a9c9c2" stroke-width="6"/>
+<path d="M528 181L551 153H651L678 181Z" fill="#163745" stroke="#8cdcd1" stroke-width="3"/>
+<path d="M570 151V182M604 151V182M636 151V182" stroke="#80b0b5" stroke-width="2"/>
+<path d="M267 268L396 288L430 316L323 310Z" fill="#2b5961" stroke="#bad8c6" stroke-width="4"/>
+<path d="M937 268L811 288L778 317L896 308Z" fill="#2b5961" stroke="#bad8c6" stroke-width="4"/>
+<path d="M431 276H774L800 306H414Z" fill="#173745" stroke="#80a0a5" stroke-width="4"/>
+<path d="M465 284H730M483 297H716" stroke="#4ba39f" stroke-width="4" opacity=".65"/>
+<path d="M239 260L180 240L190 274L247 286M973 260L1033 240L1024 277L965 288" fill="#7d9a98" stroke="#afc5bd" stroke-width="4"/>
+<!-- reactor core -->
+<ellipse cx="601" cy="255" rx="64" ry="55" fill="#53ffe0" opacity=".3" filter="url(#glow)"/>
+<circle cx="601" cy="260" r="49" fill="#0d2f40" stroke="#e4d3a6" stroke-width="8"/>
+<circle cx="601" cy="260" r="36" fill="url(#core)" stroke="#8bf6d8" stroke-width="4"/>
+<path d="M575 260H627M601 234V286" stroke="#ddfff0" stroke-width="4"/>
+<!-- repair weld and flying sparks -->
+<path d="M995 201L927 234L886 252" fill="none" stroke="#b6a17b" stroke-width="14"/>
+<path d="M886 252l-24 5" stroke="#ffdc96" stroke-width="8"/>
+<circle cx="856" cy="264" r="27" fill="#f8d494" opacity=".5" filter="url(#glow)"/>
+<g fill="#ffdd8c" stroke="#ffe8b4" stroke-width="2"><path d="M852 264l-18-23m23 25l30-18m-33 17l14 29m-19-24l-26 18m30-24l-1-34"/><circle cx="825" cy="242" r="2.8"/><circle cx="872" cy="294" r="2.5"/><circle cx="886" cy="246" r="2.5"/></g>
+<!-- illuminated tool stands and repair units -->
+<g><path d="M70 329h143l30 26H43Z" fill="#a18557" stroke="#e6cc8d" stroke-width="4"/><rect x="83" y="287" width="115" height="44" rx="7" fill="#2c5257" stroke="#9da5a0" stroke-width="5"/><rect x="100" y="297" width="21" height="20" rx="4" fill="#7de0c5"/><rect x="128" y="297" width="21" height="20" rx="4" fill="#e2b870"/><rect x="157" y="297" width="25" height="20" rx="4" fill="#a29ed1"/></g>
+<g><path d="M985 332h150l19 28H956Z" fill="#a18557" stroke="#dcc18d" stroke-width="4"/><rect x="995" y="288" width="132" height="45" rx="8" fill="#284650" stroke="#8aa2a0" stroke-width="5"/><circle cx="1026" cy="311" r="12" fill="#69d8c0"/><circle cx="1064" cy="311" r="12" fill="#c8a4ee"/><circle cx="1101" cy="311" r="12" fill="#f3ca82"/></g>
+<!-- floor guidance strips and atmosphere -->
+<path d="M0 433H1200" stroke="#6dd8c7" stroke-opacity=".58" stroke-width="4"/>
+<path d="M264 414L177 470M936 414L1025 470" stroke="#e3c78d" stroke-width="8" stroke-dasharray="27 14"/>
+<path d="M285 90h145M770 90h140" stroke="#7bded0" stroke-opacity=".44" stroke-width="4"/>
+<g font-family="Arial, sans-serif" font-weight="700" letter-spacing="4"><text x="57" y="123" fill="#beddd3" font-size="17">BAY // 07</text><text x="958" y="119" fill="#ead7aa" font-size="16">SHIP REPAIR</text></g>
+</svg>

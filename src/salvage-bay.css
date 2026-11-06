@@ -1,0 +1,87 @@
+
+/* The Drift intermission: independent, cinematic end-of-round hub. */
+.drift-hub{width:min(1020px,calc(100vw - 24px));max-width:none;height:min(92dvh,820px);max-height:92dvh;overflow:hidden;background:#081924;color:#e7e8d6;border:1px solid #7eaaae;border-radius:18px;padding:0;box-shadow:0 35px 110px #000e,0 0 0 2px #1d4548}
+.drift-hub::backdrop{background:#010b16db;backdrop-filter:blur(7px)}
+.drift-hub-shell{height:100%;display:flex;flex-direction:column;min-height:0;background:radial-gradient(circle at 70% 0%,#285e62 0%,transparent 49%),linear-gradient(135deg,#142b3b,#081924 75%)}
+.drift-hub-header{display:flex;justify-content:space-between;align-items:start;gap:18px;padding:16px clamp(16px,3vw,30px) 11px;border-bottom:1px solid #52798699;flex:none}
+.drift-hub-header span{font-size:10px;font-weight:850;letter-spacing:.22em;color:#8ce1d1}
+.drift-hub-header h2{font-size:clamp(23px,3vw,35px);color:#ffe4af;margin:5px 0 0;letter-spacing:.02em}
+.drift-hub-close{border:1px solid #5b7b84;color:#e8e5d6;background:#163747;border-radius:9px;width:34px;height:34px;font-size:24px;line-height:1}
+.drift-hub-close:hover{border-color:#eed19b;background:#2b5660}
+.drift-hub-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:clamp(12px,2vw,24px) clamp(16px,3vw,30px);scrollbar-color:#457b80 #0d2736}
+.drift-hub-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;background:#102c39f4;border-top:1px solid #547784;padding:14px clamp(16px,3vw,30px);flex:none}
+.drift-hub-actions button{min-width:190px;min-height:46px;font-weight:850;border-radius:8px;padding:11px 19px}
+.drift-hub-actions .drift-go{background:linear-gradient(145deg,#f4d69d,#dba45f);color:#172b33;border:1px solid #ffe4ab;box-shadow:inset 0 1px #fff4d4,0 3px #8c693e}
+.drift-hub-actions .drift-bay{background:linear-gradient(145deg,#285e64,#17404f);color:#bff9e8;border:1px solid #69bab4}
+.drift-hub-actions .drift-back{background:#1c3949;border:1px solid #587c85;color:#cfe2df}
+.drift-hub-actions button:hover{filter:brightness(1.12)}
+.drift-summary-heading{font-size:11px;letter-spacing:.18em;font-weight:900;color:#c5f2dc;margin:0 0 10px}
+.drift-summary-energy{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:9px}
+.drift-summary-energy>div{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;border:1px solid #557983;background:linear-gradient(145deg,#254752,#152d3d);padding:14px 17px;border-radius:10px}
+.drift-summary-energy>div:first-child{border-color:#a8c8ae;background:linear-gradient(145deg,#4b675f,#203d45)}
+.drift-summary-energy small{font-size:10px;letter-spacing:.08em;color:#b4d5d2;font-weight:850}
+.drift-summary-energy strong{font-size:clamp(27px,3.5vw,46px);color:#fff0ca;font-variant-numeric:tabular-nums}
+.drift-summary-energy .drift-flux-award strong{color:#e6ce91}
+.drift-summary-meter{height:8px;margin:10px 0 16px;border-radius:30px;overflow:hidden;background:#0f2935;border:1px solid #4c7783}
+.drift-summary-meter>div{height:100%;background:linear-gradient(90deg,#57bdb6,#c3ead0);border-radius:inherit}
+.drift-summary-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,1fr);gap:16px}
+.drift-summary-card{min-width:0;border:1px solid #46747b;background:#142e3a;border-radius:10px;padding:14px}
+.drift-summary-card h3{font-size:11px;font-weight:900;letter-spacing:.1em;color:#f4d5a3;margin:0 0 11px}
+.drift-summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}
+.drift-summary-stats>div{background:#234251;border-radius:6px;padding:8px 6px;text-align:center}
+.drift-summary-stats small{display:block;font-size:9px;color:#a2c8c6;margin-bottom:5px}
+.drift-summary-stats strong{font-size:22px;color:#f1e8cb;font-variant-numeric:tabular-nums}
+.drift-summary-best{font-size:12px;line-height:1.5;border-left:3px solid #a9d7ba;padding:8px 10px;background:#233f48;color:#d9eae3;margin:0 0 10px;overflow-wrap:anywhere}
+.drift-summary-recent{margin-top:11px}
+.drift-summary-recent .report-moves{max-height:150px;overflow:auto}
+.drift-map-feature{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;align-items:center;border-radius:10px;background:linear-gradient(130deg,#234451,#112b3b);padding:10px;border:1px solid #56858a}
+.drift-map-feature-art{width:100%;height:112px;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle,#3a696c,#13313e 71%);border:1px solid #548d8c;border-radius:10px;overflow:hidden}
+.drift-map-feature-art .boss-art{width:98px;height:108px;max-width:100%}
+.drift-map-feature-info{min-width:0;display:flex;flex-direction:column;gap:6px}
+.drift-feature-kicker{font-size:9px;letter-spacing:.1em;font-weight:850;color:#99dbcd}
+.drift-map-feature-info>strong{font-size:17px;color:#f7e7c1;line-height:1.15}
+.drift-feature-boss{font-size:10px;color:#b4d6d2}
+.drift-map-feature .zone-route{margin:8px 0 2px}
+.drift-map-next{font-size:10px;font-weight:800;color:#edcd8f}
+.drift-map-full{display:block;margin-top:10px;padding:8px 10px;background:#1b3946;border:1px solid #588487;border-radius:7px;color:#bcf0df;font-size:10px;font-weight:850;width:100%;text-align:center}
+.drift-salvage-hero{position:relative;min-height:238px;border:1px solid #719e9c;overflow:hidden;border-radius:12px;background:linear-gradient(115deg,#102c38,#22404b);isolation:isolate;box-shadow:0 14px 30px #0008}
+.drift-salvage-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%;filter:contrast(1.06) saturate(1.08)}
+.drift-salvage-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#061925e8 0%,#0b283caa 32%,transparent 70%),linear-gradient(0deg,#0315208a,transparent 57%);pointer-events:none}
+.drift-salvage-caption{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:end;min-height:238px;max-width:470px;padding:24px 28px;gap:8px}
+.drift-salvage-caption>span{font-size:10px;letter-spacing:.19em;font-weight:850;color:#8cf5cf}
+.drift-salvage-caption>strong{font-size:clamp(24px,3vw,36px);line-height:1.07;font-weight:950;letter-spacing:.03em;color:#fff1ce;text-shadow:0 2px 18px #041822}
+.drift-salvage-caption>p{font-size:12px;line-height:1.5;color:#d6e9de;margin:0}
+.drift-shop-budget{margin:15px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.drift-shop-budget>div{display:flex;justify-content:space-between;align-items:center;border:1px solid #5d7f84;background:#1a3642;padding:11px 15px;border-radius:9px;gap:8px}
+.drift-shop-budget span{font-size:10px;color:#b4d5d1;font-weight:850}
+.drift-shop-budget strong{font-size:20px;color:#f5daa2;white-space:nowrap}
+.drift-shop-tab-title{font-size:11px;color:#f7dbac;letter-spacing:.13em;font-weight:950;margin:20px 0 9px}
+.drift-hub .salvage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.drift-hub .salvage-card{display:flex;flex-direction:column;gap:8px;padding:11px 12px;border-radius:10px;background:linear-gradient(145deg,#2a4a50,#193140);min-height:185px;position:relative}
+.drift-hub .salvage-type{font-size:9px}
+.drift-hub .salvage-icon{width:65px;height:58px;align-self:center;min-height:0;background:radial-gradient(circle,#416e75,#203f4e);border:1px solid #719f9b;border-radius:10px}
+.drift-hub .salvage-icon .equip-svg{width:55px;height:55px}
+.drift-hub .salvage-card>strong{font-size:13px;line-height:1.3;color:#ffe5b8;min-height:32px}
+.drift-hub .salvage-card>p{font-size:11px;line-height:1.4;color:#bdd8d2;flex:1;margin:0}
+.drift-hub .salvage-buy{font-size:10px;min-height:36px;padding:8px;margin-top:auto;letter-spacing:.025em}
+.drift-hub .salvage-consumable{background:linear-gradient(145deg,#383951,#202e42)}
+.drift-hub .salvage-feedback{border:1px solid #638e8a;border-radius:7px;padding:9px 11px;background:#203e43;line-height:1.5;color:#c9ebde}
+@media(max-width:900px){.drift-hub .salvage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.drift-summary-layout{grid-template-columns:1fr}.drift-salvage-hero,.drift-salvage-caption{min-height:184px}.drift-summary-map{order:-1}}
+@media(max-width:580px){
+ .drift-hub{width:calc(100vw - 12px);height:calc(100dvh - 15px);max-height:calc(100dvh - 15px);border-radius:10px}
+ .drift-hub-header{padding:13px 12px 10px}.drift-hub-header h2{font-size:22px}
+ .drift-hub-body{padding:12px}.drift-hub-actions{padding:9px 11px;gap:7px;justify-content:stretch}
+ .drift-hub-actions button{min-width:0;flex:1;padding:12px 6px;font-size:11px}
+ .drift-summary-energy{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.drift-summary-energy>div{padding:10px 8px}
+ .drift-summary-energy small{font-size:8px}.drift-summary-energy strong{font-size:25px}
+ .drift-summary-stats strong{font-size:18px}
+ .drift-map-feature{grid-template-columns:72px minmax(0,1fr);gap:8px}.drift-map-feature-art{height:90px}.drift-map-feature-art .boss-art{height:86px}
+ .drift-map-feature-info>strong{font-size:14px}.drift-map-feature .zone-route{margin:3px 0}
+ .drift-salvage-hero,.drift-salvage-caption{min-height:170px}.drift-salvage-caption{padding:14px;max-width:310px}
+ .drift-salvage-caption>strong{font-size:25px}.drift-salvage-caption>p{font-size:11px}
+ .drift-shop-budget{grid-template-columns:1fr 1fr;margin:11px 0}.drift-shop-budget>div{padding:7px 10px}.drift-shop-budget span{font-size:9px}.drift-shop-budget strong{font-size:17px}
+ .drift-shop-budget>div:first-child{grid-column:1/-1}
+ .drift-hub .salvage-grid{gap:7px}.drift-hub .salvage-card{padding:9px;min-height:164px}.drift-hub .salvage-icon{width:46px;height:46px}.drift-hub .salvage-icon .equip-svg{width:42px;height:42px}
+}
+@media(max-width:370px){.drift-hub .salvage-grid{grid-template-columns:1fr}.drift-hub-actions button{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.drift-hub *{transition:none!important;animation:none!important}}

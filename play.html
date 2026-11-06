@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor — Play</title>
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
 <body>
 <div class="stars" aria-hidden="true"></div>
 <div id="app">
@@ -71,5 +71,12 @@
     <button id="local-switch-btn" type="button" class="local-privacy-switch">SWITCH GAME MODE</button>
   </div>
 </div>
+<dialog id="drift-hub" class="drift-hub" aria-labelledby="drift-hub-title">
+ <div class="drift-hub-shell">
+ <header class="drift-hub-header"><div><span id="drift-hub-eyebrow">THE DRIFT · AFTER ACTION</span><h2 id="drift-hub-title">Sector results</h2></div>
+ <button type="button" id="drift-hub-close" class="drift-hub-close" aria-label="Close this screen and return to the board">×</button></header>
+ <div id="drift-hub-body" class="drift-hub-body"></div>
+ <footer id="drift-hub-actions" class="drift-hub-actions"></footer>
+ </div></dialog>
 <dialog id="modal"><div class="modal-content"><div class="modal-heading"><span id="modal-eyebrow">TRANSMISSION</span><button id="modal-close" class="modal-x" type="button" aria-label="Close">×</button></div><h2 id="modal-title"></h2><div id="modal-body"></div><div id="modal-actions" class="modal-actions"></div></div></dialog>
 </body></html>
