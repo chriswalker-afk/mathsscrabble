@@ -17,7 +17,7 @@
 <main class="game-shell">
  <aside class="side-panel left-panel" aria-label="Match standings">
   <div class="panel-heading">PILOT TELEMETRY</div>
-  <div class="online-room-box"><small>ROOM CODE</small><strong id="online-room-code">······</strong></div>
+  <div class="online-room-box"><small>ROOM CODE</small><strong id="online-room-code">······</strong><span class="online-room-kit" id="online-active-kit">KIT · LAUNCHPAD</span></div>
   <div class="local-score-header"><strong>LIVE STANDINGS</strong><span id="online-clock">--:--</span></div>
   <div id="online-scores" class="local-scores" aria-label="Online player scores"></div>
   <div class="online-current" id="online-current">Waiting for the reactor signal.</div>
@@ -109,6 +109,14 @@
       <div><label for="online-timer-settings">TURN TIMER</label><select id="online-timer-settings">
        <option value="0">Off</option><option value="60">60 sec</option><option value="90" selected>90 sec</option><option value="120">120 sec</option></select></div>
      </div>
+     <label for="online-tile-kit">MATHEMATICAL TILE KIT</label>
+     <select id="online-tile-kit" aria-describedby="online-create-kit-info">
+      <option value="natural">01 · Launchpad — Natural numbers</option>
+      <option value="integer">02 · Orbit — Integers</option>
+      <option value="rational">03 · Nebula — Positive fractions</option>
+      <option value="advanced">04 · Quantum — Advanced operations</option>
+     </select>
+     <p id="online-create-kit-info" class="online-kit-help">The host selects one kit for every pilot. Six number tiles in Nebula and Quantum.</p>
      <button id="online-create-button" type="submit" class="primary-command">CREATE ROOM →</button>
     </form>
     <form id="online-join-form" class="online-form">
@@ -123,7 +131,8 @@
    <div class="online-code-card"><small>SHARE THIS ROOM CODE</small><strong id="lobby-code">······</strong>
     <button id="lobby-copy" type="button" class="secondary-command">⧉ COPY INVITE LINK</button></div>
    <div class="online-lobby-head"><span>PILOTS CONNECTED</span><span id="online-lobby-count">1 / 4</span></div>
-   <div id="online-lobby-players" class="online-lobby-players"></div>
+   <p class="online-lobby-kit" id="online-lobby-kit" role="note">MATHEMATICAL KIT · LAUNCHPAD</p>
+    <div id="online-lobby-players" class="online-lobby-players"></div>
    <div id="online-avatar-lobby-slot"></div>
    <p id="online-lobby-note">At least two pilots are needed before starting.</p>
    <button id="online-start-match" type="button" class="primary-command">START MATCH →</button>

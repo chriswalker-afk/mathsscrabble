@@ -5,6 +5,7 @@
 .online-room-box{padding:10px;border:1px solid #5d8789;border-radius:7px;background:linear-gradient(145deg,#234655,#193444);display:flex;flex-direction:column;gap:4px}
 .online-room-box small{font-size:9px;color:#94d8cf;letter-spacing:.15em;font-weight:900}
 .online-room-box strong{color:#ffdea2;font-size:clamp(19px,2.1vw,27px);font-weight:950;letter-spacing:.2em;line-height:1.15}
+.online-room-kit{font-weight:900;font-size:10px;color:#a6ebd6;letter-spacing:.1em}
 .online-app .local-scores{display:flex;flex-direction:column;gap:5px}
 .online-app .local-score-row{width:100%}
 .online-app .local-score-row.is-active{border-color:#84edce}
@@ -40,6 +41,8 @@
 .online-form-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .online-form-duo>div{display:grid;gap:5px}
 .online-form>button{margin-top:auto;min-height:42px}
+.online-kit-help{margin:0;color:#b7d4d0;font-size:10px;line-height:1.4}
+.online-lobby-kit{margin:10px 0;padding:10px 12px;border:1px solid #7ca9a1;border-radius:7px;background:#2b5154;color:#ffe8b5;font-size:11px;font-weight:850;letter-spacing:.04em}
 .online-form .secondary-command{border-color:#8ec4c0;background:#204555;color:#e6eddc}
 .online-gate-error{padding:11px 13px;background:#51343a;border:1px solid #cf9192;color:#ffe0db;border-radius:6px;margin-top:12px!important;font-size:12px!important}
 .online-back{display:inline-flex;margin-top:14px;color:#92d4c6;font-weight:800;font-size:10px;text-decoration:none;letter-spacing:.05em}
