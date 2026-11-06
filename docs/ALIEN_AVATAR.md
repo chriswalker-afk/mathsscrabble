@@ -1,6 +1,6 @@
 # ALIEN LAB // Pass A1 — Modular alien pilot artwork
 
-**Status:** A1 is the original art library, shared anatomy, reusable SVG renderer, safe data model, and automated pixel-compatibility tests. The interactive character editor is **Pass A2**; multiplayer avatar selection and server-backed seat binding are **Pass B**. This pass leaves all existing EQUA//NOVA gameplay and the standalone [Critter Lab](https://github.com/chriswalker-afk/avatar) unchanged.
+**Status:** A1 supplies original art, shared anatomy, reusable SVG rendering, a strict data model and automated pixel compatibility tests. **A2 adds the interactive creator** at [alien-lab.html](../alien-lab.html), plus editing, explicit local saves and SVG export. Multiplayer avatar selection and server-backed seat binding are **Pass B**. This pass leaves all existing EQUA//NOVA gameplay and the standalone [Critter Lab](https://github.com/chriswalker-afk/avatar) unchanged.
 
 For visual inspection on a local web server or deployed GitHub Pages branch, visit **[alien-preview.html](../alien-preview.html)**. The specimen vault shows four curated aliens, their 48/64/96/240px renderings, and every part option on a neutral base character. This is a **review-only gallery, not an interactive editor**.
 
@@ -132,7 +132,7 @@ CI runs these tests alongside the existing Sector Run, Drift, Local Match and On
 
 ## Next passes
 
-**A2:** Make the creator interactive, with thumbnail part selectors, skin/outfit/accent palettes, curated presets, randomiser, reset, local save/restore, transparent SVG export, keyboard/touch accessibility and reduced-motion animation. Keep the artwork/renderer reusable and the main game board unchanged.
+**A2 — implemented:** [Alien Lab creator](../alien-lab.html) includes all seven editor sections, zoomed face thumbnails, six palettes for each of three colour roles, four presets, randomisation, reset, 30-step undo/redo, explicit save/load, transparent self-contained SVG export, keyboard tab navigation, mobile sticky preview and reduced-motion support. `src/alien/editor-state.js` keeps editing and browser persistence testable separately from `src/alien/editor.js`. `tests/alien-editor-state.test.js` and `tests/alien-editor-browser.mjs` cover these controls, sandboxed saved state, failed storage, corrupt saves, no regression to other game keys and responsive screens. Keep the artwork/renderer reusable and the main game board unchanged.
 
 **A3:** Thorough aesthetics audit: check every permitted pairing at scoreboard scale, polish silhouettes, collision/occlusion edge cases, responsive student flow and focus states; refine art based on classroom feedback.
 
