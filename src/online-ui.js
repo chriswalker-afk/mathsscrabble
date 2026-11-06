@@ -12,8 +12,8 @@ const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
 const state={
  view:null,code:null,token:null,pending:{},order:[],rackOrder:[],
  selected:null,swapping:false,swapIds:new Set(),busy:false,
- ws:null,connection:'offline',lastRevision:0,reconnectDelay:2000,
- reconnectTimer:null,refreshing:false,ceremony:null,focusIndex:pos(CENTER,CENTER),
+ ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
+ reconnectTimer:null,refreshing:false,wantedRevision:0,ceremony:null,focusIndex:pos(CENTER,CENTER),
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
@@ -176,7 +176,7 @@ function disconnectSockets(){
  }
 }
 function connectSocket(){
- if(!state.code||!state.token)return;
+ if(!state.code||!state.token||document.hidden)return;
  disconnectSockets();
  let ws;
  try{
@@ -185,7 +185,7 @@ function connectSocket(){
  state.ws=ws;
  ws.onopen=()=>{
    if(state.ws!==ws)return;
-   state.reconnectDelay=2000;
+   state.reconnectDelay=2500;
    setConnection('live');
  };
  ws.onmessage=event=>{
@@ -195,24 +195,30 @@ function connectSocket(){
      showNotice('This room has expired. Create or join a new room.',true);
      clearSession();return;
    }
-   if(msg.type==='revision'&&msg.revision>state.lastRevision&&!state.busy)
-     void refreshRoom();
+   if(msg.type==='revision'&&msg.revision>state.lastRevision){
+     state.wantedRevision=Math.max(state.wantedRevision,msg.revision);
+     if(!state.busy&&!state.refreshing)void refreshRoom();
+   }
  };
  ws.onerror=()=>{if(state.ws===ws)setConnection('reconnecting');};
  ws.onclose=()=>{
    if(state.ws!==ws)return;
    state.ws=null;setConnection('reconnecting');
+   // Background tabs do not reconnect repeatedly while students are away.
+   if(document.hidden)return;
    state.reconnectTimer=setTimeout(()=>{
-     if(!state.code||!state.token)return;
-     connectSocket();void refreshRoom();
+     if(!state.code||!state.token||document.hidden)return;
+     // The room sends its current revision on WebSocket connection. A state
+     // fetch follows only when that revision has actually changed.
+     connectSocket();
    },state.reconnectDelay);
-   state.reconnectDelay=Math.min(20000,state.reconnectDelay*1.6);
+   state.reconnectDelay=Math.min(60000,state.reconnectDelay*1.75);
  };
 }
 function clearSession(){
  disconnectSockets();state.view=null;state.code=null;state.token=null;
  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
- state.busy=false;state.ceremony=null;state.shownResults=false;
+ state.busy=false;state.wantedRevision=0;state.ceremony=null;state.shownResults=false;
  history.replaceState(null,'',location.pathname);
  sessionStore();setConnection('offline');
  render();gateError('');
@@ -220,9 +226,11 @@ function clearSession(){
 async function refreshRoom(){
  if(!state.code||!state.token||state.refreshing||state.busy)return;
  state.refreshing=true;
+ let updated=false;
  try{
    const response=await requestApi(roomPath()+'/state',{auth:true});
    saveRoomFromServer(response);
+   updated=true;
    if(state.connection!=='live')setConnection('polling');
  }catch(err){
    setConnection('reconnecting');
@@ -231,7 +239,12 @@ async function refreshRoom(){
      $('online-join-code').value=code;
      gateError('Saved access is no longer valid. Rejoin the room using its code.');
    }else showNotice(err.message,true);
- }finally{state.refreshing=false;}
+ }finally{
+   state.refreshing=false;
+   // Only issue another request if a newer revision arrived mid-fetch.
+   if(updated&&!state.busy&&state.wantedRevision>state.lastRevision)
+     queueMicrotask(()=>void refreshRoom());
+ }
 }
 function showEntry(){
  if($('online-pilot-picker').parentElement!==$('online-avatar-entry-slot'))
@@ -373,20 +386,20 @@ function renderRack(){
    if(enabled&&!state.swapping)enableTileDrag(button,{kind:'rack',id:tile.id},onTileDrop);
    root.append(button);
  }
- $('online-rack-count').textContent=rack.length+' / 7';
+ $('online-rack-count').textContent=rack.length+' / 8';
  $('equals-tile').disabled=!enabled||state.swapping;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('online-rack-label').textContent=match?'YOUR PRIVATE RACK · '+v.you.name.toUpperCase():'YOUR PRIVATE RACK';
 }
 function renderPreview(){
  const board=current()?.board||EMPTY_BOARD,preview=inspectPlacement(board,state.pending);
- const eligible=Boolean(freeExchangeReason(current()?.rack||[]))&&!current()?.freeExchangeUsed;
+ const eligible=Boolean(freeExchangeReason(current()?.rack||[]))&&!current()?.freeExchangeUsed&&state.swapIds.size<=1;
  $('equation-preview').dataset.state=state.swapping?'swap':preview.status;
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
  $('online-expression').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
  $('online-preview-status').textContent=state.swapping?
-   (eligible?'Free rescue swap. Choose tiles to replace.':'Choose tiles to replace; exchanging uses the turn.'):
+   (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
    myTurn()?preview.feedback:'Wait for your turn. Only the current pilot can submit.';
  $('online-potential').textContent=preview.ready&&!state.swapping?
    '+'+scoreMove(board,state.pending,preview).total:'—';
@@ -528,6 +541,9 @@ function showBag(){
  const detail=document.createElement('div');
  detail.textContent='PHYSICAL TILES LEFT IN SHARED BAG';
  count.append(total,detail);wrap.append(count);
+ const pools=document.createElement('p');pools.className='bag-pool-summary';
+ pools.textContent='NUMBER BAG '+inventory.pools.numbers+' · OPERATOR BAG '+inventory.pools.operators;
+ wrap.append(pools);
  const groups=document.createElement('div');groups.className='bag-inventory-groups';
  for(const group of inventory.groups){
    const section=document.createElement('section');section.className='bag-inventory-group';
@@ -585,7 +601,7 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private seven-tile rack and shares the same 13×13 board.'],
+  ['One board, private racks','Each of 2–4 pilots joins with a code, keeps a private eight-tile rack and shares the same 13×13 board.'],
   ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
   ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
   ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
@@ -645,7 +661,10 @@ async function mutate(endpoint,payload){
         {label:'RETRY SAME ACTION',action:retryPending}]);
    }
    return null;
- }finally{state.busy=false;render();}
+ }finally{
+   state.busy=false;render();
+   if(state.wantedRevision>state.lastRevision)void refreshRoom();
+ }
 }
 async function retryPending(){
  const pending=state.pendingRequest;
@@ -656,7 +675,10 @@ async function retryPending(){
    state.pendingRequest=null;saveRoomFromServer(response);
    if(response.event?.type==='scored')void playScoring(response.event);
  }catch(err){showNotice(err.message,true);await refreshRoom();}
- finally{state.busy=false;render();}
+ finally{
+   state.busy=false;render();
+   if(state.wantedRevision>state.lastRevision)void refreshRoom();
+ }
 }
 function clearCeremony(){
  const cells=$('board').querySelectorAll('.scoring-lift,.scoring-settled');
@@ -770,14 +792,14 @@ $('online-swap').onclick=async()=>{
  if(!state.swapping){
    if(Object.keys(state.pending).length){showNotice('Clear unscored tiles before swapping.',true);return;}
    state.swapping=true;state.selected=null;render();
-   showNotice('Select your tiles, then press CONFIRM. A number-only or operation-only rack may swap free once.');
+   showNotice('Select exactly one tile to swap free once per turn. Multiple tiles cost the turn.');
    return;
  }
  if(!state.swapIds.size){showNotice('Select at least one tile from your rack.',true);return;}
  const result=await mutate('action',{type:'exchange',ids:[...state.swapIds]});
  if(result){
    showNotice(result.event?.type==='free-exchange'?
-     'Free exchange complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
+     'Free tile swap complete. You may still score this turn.':'Tiles exchanged; the turn has passed.');
    if(state.view?.phase==='finished')showResults();
  }
 };
@@ -852,11 +874,16 @@ window.setInterval(()=>{
  const match=current();
  if(match?.deadline)$('online-clock').textContent=formatTime(match.deadline-Date.now());
 },250);
+// Event-first syncing: hibernating room WebSockets deliver every authoritative
+// revision. Avoid repeated HTTP+Durable Object reads while the socket is live.
+// Only fall back to bounded polling while the connection is unavailable.
 window.setInterval(()=>{
- if(state.view&&!state.busy&&!document.hidden)void refreshRoom();
-},7000);
+ if(state.view&&!state.busy&&!document.hidden&&state.connection!=='live')void refreshRoom();
+},30000);
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden&&state.view&&!state.busy)void refreshRoom();
+ if(document.hidden||!state.view)return;
+ if(!state.ws&&!state.reconnectTimer)connectSocket();
+ if(!state.busy)void refreshRoom();
 });
 window.addEventListener('keydown',event=>{
  if($('online-dialog').open||!$('online-gate').hidden||!myTurn())return;
@@ -868,7 +895,7 @@ window.addEventListener('keydown',event=>{
    event.preventDefault();removePending(state.order.at(-1));return;
  }
  const i=Number(event.key);
- if(i>=1&&i<=7&&String(i)===event.key){
+ if(i>=1&&i<=8&&String(i)===event.key){
    const used=new Set(Object.values(state.pending).map(t=>t.id));
    const tiles=visibleRack().filter(t=>!used.has(t.id));
    if(tiles[i-1]){state.selected=tiles[i-1].id;render();}

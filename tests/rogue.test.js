@@ -140,8 +140,10 @@ test('rack passives change draw constraints while retaining all physical IDs',()
  const bag=makeBag(()=>0.5);
  const defaultRack=dealPlayableRack([],bag);
  const equipped=dealPlayableRack([],bag,rogueRackOptions(boosted(['wild-beacon','operator-reserve'])));
- assert.equal(defaultRack.rack.length,7);
- assert.equal(equipped.rack.length,7);
+ assert.equal(defaultRack.rack.length,8);
+ assert.equal(equipped.rack.length,8);
+ assert.ok(equipped.rack.filter(t=>t.value==='×'||t.value==='÷').length>=2,
+   'Operator Reserve should favour × and ÷ rather than duplicate the base operator quota');
  assert.ok(equipped.rack.filter(t=>t.blank).length>=2,'two flexible tiles');
  assert.ok(equipped.rack.filter(t=>['+','−','×','÷'].includes(t.value)||['blank-any','blank-operator'].includes(t.blank)).length>=2);
  assert.equal(new Set([...equipped.rack,...equipped.bag].map(t=>t.id)).size,151);
@@ -225,7 +227,7 @@ test('Wildcard Beacon plus Operator Reserve works across 250 shuffled bags',()=>
    const rng=()=>{state=(1664525*state+1013904223)>>>0;return state/4294967296;};
    const all=makeBag(rng);
    const deal=dealPlayableRack([],all,rogueRackOptions(equipment));
-   assert.equal(deal.rack.length,7);
+   assert.equal(deal.rack.length,8);
    const blanks=deal.rack.filter(t=>Boolean(t.blank)).length;
    const operators=deal.rack.filter(t=>['+','−','×','÷'].includes(t.value)||['blank-operator','blank-any'].includes(t.blank)).length;
    const numbers=deal.rack.filter(t=>/^[0-9]$/.test(t.value)||['blank-number','blank-any'].includes(t.blank)).length;

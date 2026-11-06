@@ -59,7 +59,7 @@ try{
  if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'sector');
  const original=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
- await openBagAndValidate(144);
+ await openBagAndValidate(143);
  const afterInspection=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
  assert.equal(afterInspection,original,'opening bag scan must not change the saved game');
  await page.locator('#bag-details-btn').click();
@@ -95,7 +95,7 @@ try{
  assert.equal(await page.locator('#board .score-pip').count(),0);
  assert.match(await page.locator('#modal-title').textContent(),/energy/i);
  await page.locator('#modal-actions button').last().click();
- await openBagAndValidate(139);
+ await openBagAndValidate(138);
  await page.waitForTimeout(1200);
  assert.equal(await page.locator('#modal[open]').count(),0,'a skipped presentation must not reopen a stale dialog');
  assert.equal(await page.locator('#score').textContent(),String(saved.score));
@@ -135,7 +135,7 @@ try{
  // The In Bag control remains available on narrow phone layouts.
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.locator('#bag-details-btn').isVisible(),true);
- await openBagAndValidate(139);
+ await openBagAndValidate(138);
  const mobile=await page.evaluate(()=>({
    viewportWidth:innerWidth,scrollWidth:document.documentElement.scrollWidth,
    bagRight:document.querySelector('#bag-details-btn').getBoundingClientRect().right

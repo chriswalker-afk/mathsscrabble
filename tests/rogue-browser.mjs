@@ -92,7 +92,7 @@ try{
  await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
- assert.ok(await page.locator('#rack .tile').count()===7);
+ assert.ok(await page.locator('#rack .tile').count()===8);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
 
@@ -152,6 +152,13 @@ try{
    state.turn=6;state.score=0;
    localStorage.setItem('equa-nova.drift.v1',JSON.stringify(state));
  });
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#swap-btn').click();
+ await page.locator('#rack .tile').first().click();
+ await page.locator('#swap-btn').click();
+ const freeSwapSave=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ assert.equal(freeSwapSave.turn,6,'the first single-tile swap is free');
+ assert.equal(freeSwapSave.freeSwapTurn,6,'the free swap must be saved for this turn');
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#swap-btn').click();
  await page.locator('#rack .tile').first().click();

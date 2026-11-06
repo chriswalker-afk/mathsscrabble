@@ -1,6 +1,6 @@
 // Solo-sector rules and local save validation. This module has no DOM dependencies.
 import {
- SIZE,HAND_SIZE,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
+ SIZE,HAND_SIZE,NUMBER_SLOTS,OPERATOR_SLOTS,tilePool,POINTS,BLANK_KINDS,isBlank,isDigit,isOperator,nextTarget,randomFloat
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState} from './rogue.js';
 
@@ -12,41 +12,33 @@ export const MAX_SECTORS=99;
 const numberCapable=tile=>isDigit(tile.value)||tile.blank==='blank-number'||tile.blank==='blank-any';
 const operatorCapable=tile=>isOperator(tile.value)||tile.blank==='blank-operator'||tile.blank==='blank-any';
 
-/**
- * Draw from the shuffled bag without replacing tiles the player kept.
- * Where possible the new rack contains >=4 number-capable tiles,
- * >=1 operator-capable tile, and >=1 blank. These roles may overlap.
- * The source bag's physical IDs and combined tile total are preserved.
+/** Fill the rack from two independent physical supply pools.
+ * Exactly five number-kind and three operator-kind tiles when available.
+ * Held tile positions are preserved; fresh draws are shuffled as one group.
+ * Original physical IDs are never replaced or duplicated.
  */
 export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
-  const minBlanks=options.minBlanks===2?2:1;
-  const minOperators=options.minOperators===2?2:1;
-  const rack=[...held],bag=[...sourceBag];
-  function choose(predicate){
-    for(let i=bag.length-1;i>=0;i--){
-      if(predicate(bag[i])){rack.push(bag.splice(i,1)[0]);return true;}
-    }
-    return false;
-  }
-  while(rack.length<HAND_SIZE && bag.length){
-    // Pick the flexible and rarer roles first. They also count towards the
-    // number/operator minimums, which avoids filling all seven slots before
-    // upgraded Wildcard Beacon and Operator Reserve can take effect.
-    if(rack.filter(isBlank).length<minBlanks && choose(isBlank))continue;
-    if(rack.filter(operatorCapable).length<minOperators && choose(operatorCapable))continue;
-    if(rack.filter(numberCapable).length<4 &&
-       choose(tile=>isDigit(tile.value)||tile.blank==='blank-number'))continue;
-    if(rack.filter(numberCapable).length<4 && choose(numberCapable))continue;
-    rack.push(bag.pop());
-  }
-  // A balanced draw must not imply a fixed visual pattern. Randomise newly
-  // drawn tiles while preserving the positions of any tiles the player kept.
-  const newTiles=rack.slice(held.length);
-  for(let i=newTiles.length-1;i>0;i--){
-    const j=Math.min(i,Math.floor(random()*(i+1)));
-    [newTiles[i],newTiles[j]]=[newTiles[j],newTiles[i]];
-  }
-  return {rack:[...held,...newTiles],bag};
+ const bag=[...sourceBag],rack=[...held];
+ const minBlanks=options.minBlanks===2?2:1;
+ for(const [pool,target] of [['numbers',NUMBER_SLOTS],['operators',OPERATOR_SLOTS]]){
+   let count=rack.filter(t=>tilePool(t)===pool).length;
+   while(count<target){
+     let at=rack.filter(isBlank).length<minBlanks?
+       bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)):-1;
+     // Prioritise higher-value operators when the Drift Operator Reserve is installed.
+     if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
+       at=bag.findLastIndex(t=>t.value==='×'||t.value==='÷');
+     if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool);
+     if(at<0)break;
+     rack.push(bag.splice(at,1)[0]);count++;
+   }
+ }
+ const drawn=rack.slice(held.length);
+ for(let i=drawn.length-1;i>0;i--){
+   const j=Math.min(i,Math.floor(random()*(i+1)));
+   [drawn[i],drawn[j]]=[drawn[j],drawn[i]];
+ }
+ return {rack:[...held,...drawn],bag};
 }
 export const freshStats=()=>({attempts:0,freeExchanges:0,paidExchanges:0,moves:[]});
 export const freshProgress=()=>({startedAt:Date.now(),completed:[],runPoints:0});
@@ -98,8 +90,8 @@ function validReportMove(move){
    typeof move.equation==='string'&&move.equation.length>0&&move.equation.length<=80&&
    /^[0-9+−×÷=() ]+$/.test(move.equation)&&
    validInteger(move.points,0,500000)&&validInteger(move.turn,1,6)&&
-   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,7)&&
-   validInteger(move.wildcards,0,7)&&validInteger(move.crossing,0,10)&&
+   validInteger(move.length,2,SIZE)&&validInteger(move.tiles,1,HAND_SIZE)&&
+   validInteger(move.wildcards,0,HAND_SIZE)&&validInteger(move.crossing,0,10)&&
    Array.isArray(move.bonuses)&&move.bonuses.length<=35&&
    move.bonuses.every(b=>typeof b==='string'&&b.length<=100);
 }
@@ -137,6 +129,7 @@ function validSnapshot(data){
  if(!['sector','rogue'].includes(mode))return false;
  if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
  if(mode==='sector'&&data.rogue!=null)return false;
+ if(!validInteger(data.freeSwapTurn??0,0,6))return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
     !validInteger(data.turn,1,6)||
@@ -179,6 +172,7 @@ export function snapshotRun(state){
   version:SAVE_VERSION,savedAt:Date.now(),
   board:state.board,pending:state.pending,rack:state.rack,bag:state.bag,
   sector:state.sector,turn:state.turn,score:state.score,
+   freeSwapTurn:state.freeSwapTurn??0,
   phase:state.phase,placementOrder:state.placementOrder,
   stats:state.stats,progress:state.progress,
   mode:state.mode||'sector',rogue:state.mode==='rogue'?state.rogue:null

@@ -29,7 +29,7 @@ test('newly dealt tiles have random rack positions but kept tiles retain order',
  const kept=first.rack.slice(0,3);
  const topUp=dealPlayableRack(kept,first.bag,{},()=>0.99999);
  assert.deepEqual(topUp.rack.slice(0,3),kept);
- assert.equal(topUp.rack.length,7);
+ assert.equal(topUp.rack.length,8);
 });
 test('consecutive new games cannot show the same visible opening hand',()=>{
  const seedBag=makeBag(()=>0.5);

@@ -734,3 +734,6 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
 .alien-lab-modal-link strong{font-size:12px;color:#fff0c9;letter-spacing:.09em}
 .alien-lab-modal-link small{font-size:10px;line-height:1.35;color:#b7e5d9}
 .alien-lab-modal-link>span:last-child{font-size:19px;color:#f8dfac}
+/* Two logical draw bags remain visually distinct in the shared inventory. */
+.bag-pool-summary{margin:8px 0 10px;padding:9px 10px;border:1px solid #517b86;border-radius:7px;background:#173342;color:#d0e7e6;font-size:11px;font-weight:750;letter-spacing:.04em;text-align:center}
+.bag-pool-summary strong{color:#ffe0a7;font-variant-numeric:tabular-nums}

@@ -117,7 +117,7 @@ test('online room create/join exposes only safe cosmetics and private player rac
    assert.deepEqual(snapshot.match.players.map(p=>p.avatar),[host,guest]);
    assert.deepEqual(snapshot.match.rack,started.match.players[index].rack);
    assert.equal(snapshot.match.players.some(p=>p.rack),false);
-   assert.equal(snapshot.match.players.every(p=>p.rackCount===7),true);
+   assert.equal(snapshot.match.players.every(p=>p.rackCount===8),true);
  }
  assert.equal(verifyOnlineRoom(started),true);
 });

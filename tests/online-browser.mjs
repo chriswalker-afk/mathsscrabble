@@ -148,7 +148,8 @@ try{
  assert.notEqual(guestKey.token,hostKey.token);
  // The rooms use revision-only WebSocket messages. When the test has no
  // WebSocket server, the browser fallback poll synchronises the second player.
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.locator('#online-lobby-players .online-lobby-player').nth(1).waitFor({state:'attached',timeout:5000});
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').count(),2);
  await host.locator('#online-lobby-players .alien-player-avatar svg').first().waitFor({timeout:12000});
  assert.equal(await host.locator('#online-lobby-players .alien-player-avatar svg').count(),2);
@@ -161,14 +162,14 @@ try{
  assert.deepEqual(backend.room.match.players.map(p=>p.avatar),
   [defaultPilotAlien(3),defaultPilotAlien(2)]);
  assert.equal(await host.locator('#online-scores .alien-player-avatar svg').count(),2);
- assert.equal(await host.locator('#rack .tile').count(),7);
- assert.equal(await host.locator('#online-bag-count').textContent(),'137');
+ assert.equal(await host.locator('#rack .tile').count(),8);
+ assert.equal(await host.locator('#online-bag-count').textContent(),'135');
  assert.equal(await active(host),false,'cannot score until an equation is placed');
  assert.equal(backend.room.match.board.length,169);
 
- await guest.waitForTimeout(7600);
+ await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
  await guest.locator('#online-gate').waitFor({state:'hidden'});
- assert.equal(await guest.locator('#rack .tile').count(),7);
+ assert.equal(await guest.locator('#rack .tile').count(),8);
  assert.notDeepEqual(
    await host.locator('#rack .tile').evaluateAll(nodes=>nodes.map(n=>n.dataset.tileId).sort()),
    await guest.locator('#rack .tile').evaluateAll(nodes=>nodes.map(n=>n.dataset.tileId).sort()),
@@ -201,7 +202,7 @@ try{
  // Reconnection restores only the host's own private rack and the shared board.
  await host.reload({waitUntil:'domcontentloaded'});
  await host.locator('#online-gate').waitFor({state:'hidden'});
- assert.equal(await host.locator('#rack .tile').count(),7);
+ assert.equal(await host.locator('#rack .tile').count(),8);
  assert.equal(await cell(host,6,6).getAttribute('data-locked'),'true');
  assert.equal(backend.room.match.players[1].score,0);
  const hostPrivateIds=backend.room.match.players[0].rack.map(t=>t.id);
@@ -211,16 +212,20 @@ try{
  assert.ok(hostDisplayed.every(id=>!guestPrivateIds.includes(id)),
    'host must not receive any opponent rack tiles');
 
- await guest.waitForTimeout(7600);
+ await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await guest.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  assert.equal(await guest.locator('#online-pass').isEnabled(),true);
  await guest.locator('#online-pass').click();
  assert.equal(backend.room.match.current,0);
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  assert.equal(await host.locator('#online-pass').isEnabled(),true);
  await host.locator('#online-pass').click();
- await guest.waitForTimeout(7600);
+ await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await guest.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  await guest.locator('#online-pass').click();
- await host.waitForTimeout(7600);
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.waitForFunction(()=>!document.querySelector('#online-pass').disabled);
  await host.locator('#online-pass').click();
  assert.equal(backend.room.phase,'finished');
  assert.equal(backend.room.match.finalScores.length,2);

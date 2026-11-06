@@ -42,8 +42,8 @@ try{
   assert.ok(initialSave?.length>1000,'the initial run should be saved');
   assert.match(await page.locator('#save-status').textContent(),/autosaved/i);
   assert.equal(await page.locator('.cell').count(),169);
-  assert.equal(await page.locator('#rack .tile').count(),7);
-  assert.equal(await page.locator('#bag-count').textContent(),String(144));
+  assert.equal(await page.locator('#rack .tile').count(),8);
+  assert.equal(await page.locator('#bag-count').textContent(),String(143));
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
   assert.equal(await page.locator('.arena-topline').count(),0);
   assert.equal(await page.locator('.right-panel #equation-preview').count(),1);
@@ -58,7 +58,7 @@ try{
   await page.locator('#score-btn').click();
   assert.match(await page.locator('#log').textContent(),/calculation/i);
   await page.locator('#undo-btn').click();
-  assert.equal(await page.locator('#rack .tile').count(),7);
+  assert.equal(await page.locator('#rack .tile').count(),8);
 
   // Enter an intentionally incorrect equation; preview must never reveal its truth.
   const placements=[['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7]];
@@ -69,7 +69,7 @@ try{
   assert.equal(await page.locator('#preview-equation').textContent(),'8+4=13');
   assert.match(await page.locator('#preview-status').textContent(),/submit to check BIDMAS/i);
   assert.match(await page.locator('#potential-score').textContent(),/^\+\d+$/);
-  assert.equal(await page.locator('#rack-count').textContent(),'2 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'3 / 8');
   await page.locator('#score-btn').click();
   assert.match(await page.locator('#log').textContent(),/not balanced/i);
   assert.equal(await page.locator('#modal').getAttribute('open'),null);
@@ -84,20 +84,20 @@ try{
   assert.match(await page.locator('.equation-result').textContent(),/8\+4=12/);
   await page.locator('#modal-actions button').first().click();
   assert.equal(await page.locator('#turn').textContent(),'2 / 6');
-  assert.equal(await page.locator('#rack .tile').count(),7);
-  assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  assert.equal(await page.locator('#rack .tile').count(),8);
+  assert.equal(await page.locator('#rack-count').textContent(),'8 / 8');
   assert.equal(await cell(6,6).getAttribute('data-locked'),'true');
 
   // Mouse drag a tile from the rack, then relocate it and undo.
   await drag(page.locator('#rack .tile:not(.wildcard)').first(),cell(5,10));
   assert.match(await cell(5,10).getAttribute('class'),/pending/);
-  assert.equal(await page.locator('#rack-count').textContent(),'6 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'7 / 8');
   // An unfinished placement and all other rack tiles must survive a page refresh.
   const pendingTile=await cell(5,10).locator('.board-tile').textContent();
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#modal[open]').count(),0,'welcome should only appear on first visit');
   assert.equal(await cell(5,10).locator('.board-tile').textContent(),pendingTile);
-  assert.equal(await page.locator('#rack-count').textContent(),'6 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'7 / 8');
   assert.match(await page.locator('#log').textContent(),/restored/i);
   await drag(cell(5,10),cell(5,11));
   assert.match(await cell(5,11).getAttribute('class'),/pending/);
@@ -105,7 +105,7 @@ try{
   // Drag a board tile directly back into the rack, preserving the physical tile.
   await drag(cell(5,11),page.locator('#rack .tile').first());
   assert.doesNotMatch(await cell(5,11).getAttribute('class'),/pending/);
-  assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'8 / 8');
   const beforeOrder=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
   await drag(page.locator('#rack .tile').first(),page.locator('#rack .tile').last());
   const afterOrder=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
@@ -116,7 +116,7 @@ try{
   await drag(page.locator('#rack .tile:not(.wildcard)').first(),cell(5,10));
   assert.match(await cell(5,10).getAttribute('class'),/pending/);
   await page.locator('#undo-last-btn').click();
-  assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'8 / 8');
 
   // Touch-style PointerEvents must also place physical tiles without native DnD.
   const touchResult=await page.evaluate(()=>{
@@ -141,7 +141,7 @@ try{
   assert.equal(await page.locator('#board .board-tile sup').count(),0,
     'board glyphs should not contain tiny score overlays');
   await drag(cell(4,9),page.locator('#rack .tile').first());
-  assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'8 / 8');
   assert.ok(await page.locator('#rack .wildcard-blank-operator').count()>=1);
 
   // Roving keyboard focus and free equals signs.
@@ -151,7 +151,7 @@ try{
   await page.keyboard.press('=');
   await cell(5,9).click();
   assert.match(await cell(5,9).getAttribute('class'),/pending/);
-  assert.equal(await page.locator('#rack-count').textContent(),'7 / 7');
+  assert.equal(await page.locator('#rack-count').textContent(),'8 / 8');
   await put('=',5,10);
   await cell(5,9).focus();
   await page.keyboard.press('Backspace');

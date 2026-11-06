@@ -10,6 +10,7 @@ test('bag inventory reports exact initial digits, operations and wildcard types'
  const bag=makeBag(()=>0.5);
  const report=summarizeBag(bag);
  assert.equal(report.total,151);
+ assert.deepEqual(report.pools,{numbers:92,operators:59});
  assert.deepEqual(report.groups.map(x=>x.total),[80,54,17]);
  const [numbers,operators,wildcards]=report.groups;
  assert.equal(numbers.tiles.length,10);
@@ -26,15 +27,16 @@ test('bag inventory reports exact initial digits, operations and wildcard types'
 test('inventory reflects the actual remaining bag and excludes rack tiles',()=>{
  const bag=makeBag(()=>0.5);
  const {rack,bag:remaining}=dealPlayableRack([],bag);
- assert.equal(rack.length,7);
+ assert.equal(rack.length,8);
  const report=summarizeBag(remaining);
- assert.equal(report.total,144);
- assert.equal(report.groups.reduce((n,g)=>n+g.total,0),144);
+ assert.equal(report.total,143);
+ assert.deepEqual(report.pools,{numbers:87,operators:56});
+ assert.equal(report.groups.reduce((n,g)=>n+g.total,0),143);
  const removed=(a,b)=>a.groups.flatMap(group=>group.tiles).reduce((sum,tile)=>{
    const after=b.groups.flatMap(g=>g.tiles).find(t=>t.key===tile.key);
    return sum+(tile.count-after.count);
  },0);
- assert.equal(removed(summarizeBag(bag),report),7);
+ assert.equal(removed(summarizeBag(bag),report),8);
  // The inventory is independent of internal shuffle/draw ordering.
  assert.deepEqual(summarizeBag([...remaining].reverse()),report);
 });
