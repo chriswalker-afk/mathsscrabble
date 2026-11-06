@@ -1289,10 +1289,16 @@ function showModeMenu(){
      <p>Two to four pilots, one shared board and private racks. Compete on the same device.</p>
      <small>${isLocal()?'CURRENT MODE':'SEPARATE SAVE'}</small>
     </div>
+    <div class="mode-choice">
+     <span class="mode-crest">✧</span><strong>ONLINE ROOMS</strong>
+     <p>Compete from separate devices. Share a six-character code, with private racks and server-validated turns.</p>
+     <small>SERVER-COORDINATED MULTIPLAYER</small>
+    </div>
    </div>`,
    [{text:'SECTOR RUN',fn:()=>chooseMode('sector')},
     {text:'THE DRIFT',fn:()=>chooseMode('rogue')},
-    {text:'LOCAL 2–4 →',primary:true,fn:()=>chooseMode('local')}]);
+    {text:'LOCAL 2–4',fn:()=>chooseMode('local')},
+    {text:'ONLINE ROOMS →',primary:true,fn:()=>{window.location.href='./online.html';}}]);
 }
 $('mode-btn').onclick=showModeMenu;
 $('local-switch-btn').onclick=showModeMenu;
