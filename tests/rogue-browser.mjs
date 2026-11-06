@@ -57,6 +57,19 @@ try{
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
  assert.equal(await page.locator('.salvage-card').count(),5);
+ await page.setViewportSize({width:390,height:844});
+ const shopOnPhone=await page.evaluate(()=>{
+   const actions=document.querySelector('#modal-actions').getBoundingClientRect();
+   const dialog=document.querySelector('#modal').getBoundingClientRect();
+   return {actionsBottom:actions.bottom,dialogTop:dialog.top,dialogBottom:dialog.bottom,
+     scrollWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth,viewportHeight:innerHeight};
+ });
+ assert.ok(shopOnPhone.actionsBottom<=shopOnPhone.viewportHeight,
+   'Salvage Bay navigation must remain visible on phones');
+ assert.ok(shopOnPhone.dialogTop>=0&&shopOnPhone.dialogBottom<=shopOnPhone.viewportHeight,
+   'shop must fit within the mobile viewport');
+ assert.ok(shopOnPhone.scrollWidth<=shopOnPhone.viewportWidth+3,'shop must not overflow horizontally');
+ await page.setViewportSize({width:1366,height:768});
  const firstUpgrade=await page.locator('.salvage-card').first().locator('strong').textContent();
  assert.equal(firstUpgrade,'Ionised Sevens');
  await page.locator('.salvage-card').first().locator('button').click();
