@@ -30,7 +30,7 @@ function opening(match){
  const players=match.players.map((p,i)=>i===0?{...p,rack}:p);
  const pending={};
  for(const [i,symbol] of ['8','+','4','=','1','2'].entries()){
-   pending[pos(CENTER,3+i)]=symbol==='='?makeTile('='):
+   pending[pos(CENTER,6+i)]=symbol==='='?makeTile('='):
      rack.find(t=>t.value===symbol&&!t.blank);
  }
  const next={...match,bag,players,pending,placementOrder:Object.keys(pending).map(Number)};
@@ -65,17 +65,17 @@ test('a correct shared-board equation scores only the active player and hands ov
  assert.equal(scored.current,1);
  assert.equal(scored.turnNumber,2);
  assert.equal(scored.round,1);
- assert.equal(scored.board[pos(6,6)].value,'=');
+ assert.equal(scored.board[pos(9,9)].value,'=');
  assert.equal(scored.history[0].type,'score');
  assert.equal(scored.players[0].rack.length,8);
  assert.equal(validLocalMatch(scored),true);
  match=readyLocalTurn(scored);
- assert.throws(()=>scoreLocalTurn(match,{[pos(7,0)]:scored.players[0].rack[0]}),/another player/i);
+ assert.throws(()=>scoreLocalTurn(match,{[pos(10,3)]:scored.players[0].rack[0]}),/another player/i);
 });
 test('scoring rejects a tile copied from an opponent’s rack',()=>{
  let match=readyLocalTurn(makeLocalMatch({},rng));
  const t=match.players[1].rack[0];
- assert.throws(()=>scoreLocalTurn(match,{[pos(6,6)]:t}),/another player/i);
+ assert.throws(()=>scoreLocalTurn(match,{[pos(9,9)]:t}),/another player/i);
 });
 test('pass sequence goes around and ends after two full non-scoring rotations',()=>{
  let match=makeLocalMatch({names:['A','B','C']},rng);
@@ -191,7 +191,7 @@ test('corrupt and cross-mode state cannot be loaded as a local match',()=>{
   {...raw,bag:[...raw.bag,raw.players[0].rack[0]]},
   {...raw,current:99},
   {...raw,phase:'finished',finishedReason:'stalled'},
-  {...raw,pending:{[pos(6,6)]:{...raw.players[1].rack[0]}}}
+  {...raw,pending:{[pos(9,9)]:{...raw.players[1].rack[0]}}}
  ]){
    storage.setItem(LOCAL_SAVE_KEY,JSON.stringify(changed));
    assert.equal(loadLocalMatch(storage),null);

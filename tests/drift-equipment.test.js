@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeBag,makeTile,validateMove,pos,tilePool} from '../src/engine.js';
+import {SIZE,makeBag,makeTile,validateMove,pos,tilePool} from '../src/engine.js';
 import {dealPlayableRack,saveRun,loadRun,freshStats,freshProgress} from '../src/solo.js';
 import {buildScoringCeremony} from '../src/score-ceremony.js';
 import {
@@ -17,8 +17,8 @@ const equipment=(...upgrades)=>({...makeRogueState(),upgrades,
  earned:upgrades.reduce((sum,id)=>sum+ROGUE_ITEMS.find(i=>i.id===id).cost,0),
  spent:upgrades.reduce((sum,id)=>sum+ROGUE_ITEMS.find(i=>i.id===id).cost,0)});
 function firstMove(){
- const board=Array(169).fill(null),pending={};
- for(const [i,value] of ['8','+','4','=','1','2'].entries())pending[pos(6,3+i)]=makeTile(value);
+ const board=Array(SIZE*SIZE).fill(null),pending={};
+ for(const [i,value] of ['8','+','4','=','1','2'].entries())pending[pos(9,6+i)]=makeTile(value);
  return {board,pending,move:validateMove(board,pending)};
 }
 test('the shop defines independent board-space, tile-type and length disciplines',()=>{
@@ -120,13 +120,13 @@ test('Second Spark reuses a premium square only once across subsequent equations
  const first=firstMove(),board=[...first.board];
  for(const [i,t] of Object.entries(first.pending))board[Number(i)]=t;
  const pending={};
- for(const [j,value] of ['+','3','=','1','1'].entries())pending[pos(7+j,3)]=makeTile(value);
+ for(const [j,value] of ['+','3','=','1','1'].entries())pending[pos(10+j,6)]=makeTile(value);
  const move=validateMove(board,pending);
  const plain=scoreRogueMove(board,pending,move,makeRogueState(),2);
  const rogue=equipment('bonus-echo');
  const once=scoreRogueMove(board,pending,move,rogue,2);
  assert.ok(once.total>plain.total);
- assert.ok(once.echoedIndices.includes(pos(6,3)));
+ assert.ok(once.echoedIndices.includes(pos(9,6)));
  const spent=consumeBoardEcho(rogue,once.echoedIndices);
  const twice=scoreRogueMove(board,pending,move,spent,2);
  assert.equal(twice.total,plain.total);
