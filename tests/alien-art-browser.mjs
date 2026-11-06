@@ -152,9 +152,9 @@ try{
    },library);
    const skinNode=recolour.querySelector('[data-layer="head"] [data-color-slot="primary"]');
    const outfitNode=recolour.querySelector('[data-layer="body"] [data-color-slot="primary"]');
-   const accentNode=recolour.querySelector('[data-layer="rear-accessory"] [data-color-slot="primary"]');
+   const accentNode=recolour.querySelector('[data-layer="rear-accessory"] [data-stroke-slot="primary"]');
    const chosen={skin:skinNode.getAttribute('fill'),outfit:outfitNode.getAttribute('fill'),
-      accent:accentNode.getAttribute('fill')};
+      accent:accentNode.getAttribute('stroke')};
    const exportText=r.serializeAlienSVG(manifest.presets.bloop,library);
    const rejected=[];
    const source=await (await fetch('./assets/aliens/heads/orb.svg')).text();
