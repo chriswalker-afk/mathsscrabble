@@ -125,3 +125,22 @@
  .online-pilot-picker .alien-profile-picker button{font-size:10px}
  .online-pilot-picker .alien-profile-controls button{padding:7px}
 }
+
+/* Keep creature identity visible even in the compact mobile score strips,
+   using miniature 18px portraits instead of spending an extra screen row. */
+@media(max-width:730px){
+ #app[data-mode="local"] .left-panel .local-score-row{
+  grid-template-columns:18px minmax(0,1fr) auto!important;gap:2px!important
+ }
+ #app[data-mode="local"] .left-panel .alien-player-avatar{
+  display:grid!important;width:18px!important;height:19px!important;min-width:18px;
+  border-radius:5px!important
+ }
+ .online-app .left-panel #online-scores .local-score-row{
+  position:relative;padding-right:20px!important
+ }
+ .online-app .left-panel #online-scores .alien-player-avatar{
+  display:grid!important;position:absolute;top:4px;right:2px;
+  width:18px!important;height:18px!important;min-width:18px;border-radius:5px!important
+ }
+}
