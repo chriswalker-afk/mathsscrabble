@@ -26,7 +26,7 @@ try{
  await page.locator('#mode-btn').click();
  await page.waitForURL(/index\.html$/);
  await page.locator('#home-rogue').click();
- await page.waitForURL(/play\.html\?mode=rogue$/);
+ await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
  assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
  await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'rogue');

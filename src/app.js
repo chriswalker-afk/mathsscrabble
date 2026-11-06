@@ -1,4 +1,4 @@
-import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
+import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,tilePool,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
@@ -11,6 +11,8 @@ import {renderDriftHud} from './drift-hud.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
+import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
+import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
@@ -26,7 +28,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural'
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -66,14 +68,14 @@ const isDrift=()=>state.mode==='rogue';
 const isLocal=()=>state.mode==='local';
 const currentTarget=()=>targetForSector(state.mode,state.sector,state.rogue);
 const maxTurns=()=>isDrift()?turnLimit(state.rogue):TURNS_PER_SECTOR;
-const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE;
-const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):undefined;
+const rackCapacity=()=>isDrift()?rackSlots(state.rogue):HAND_SIZE+(hasBracketPair(state.tileSet)?2:0);
+const currentRackOptions=()=>isDrift()?rogueRackOptions(state.rogue,state.sector):kitRackOptions(state.tileSet);
 const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
  ((tile.value==='7'&&state.rogue.upgrades.includes('ion-seven'))||
  (['×','÷'].includes(tile.value)&&state.rogue.upgrades.includes('operator-core')));
 const calculateMove=move=>isDrift()?
   scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
-  scoreMove(state.board,state.pending,move);
+  scoreMove(state.board,state.pending,move,{rackSize:rackCapacity()});
 function announce(message,isError=false){
  $('log').textContent=message;
  $('log').classList.toggle('error',isError);
@@ -86,7 +88,8 @@ function announce(message,isError=false){
 function freshSector(sector=1,{newRun=false}={}){
  state.modalEpoch++;
  if(newRun||sector===1||!state.progress)state.progress=freshProgress();
- if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState();
+ if(isDrift()&&(newRun||sector===1||!state.rogue))state.rogue=makeRogueState(state.tileSet);
+ if(isDrift())state.rogue.tileSet=state.tileSet;
  if(!isDrift())state.rogue=null;
  if(isDrift()){
    state.rogue=ensureZoneBoss(state.rogue,sector,randomFloat);
@@ -103,7 +106,7 @@ function freshSector(sector=1,{newRun=false}={}){
  // draw a balanced but randomly ordered hand, rather than the old fixed
  // tutorial hand. Consecutive openings are never visibly identical.
  const deal=distinctOpening(()=>{
-   const bag=makeBag();
+   const bag=makeBag(randomFloat,state.tileSet);
    return dealPlayableRack([],bag,currentRackOptions());
  },loadOpeningPattern(storage,state.mode),
    game=>game.rack,(game,rack)=>({...game,rack}));
@@ -291,8 +294,9 @@ function boardCell(i){
  if(tile){
    const inner=document.createElement('span');
    inner.className='board-tile'+(isBlank(tile)?' placed-wildcard':'')+
+     (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'')+
      (pending&&isChargedTile(tile)?' charged-tile':'');
-   inner.textContent=tile.value;
+   renderTileFace(inner,tile.value);
    // Keep board symbols completely unobstructed. Point values remain visible
    // on the rack, in the equation breakdown, and in this accessible tooltip.
    if(tile.value!=='=')node.title=`${tile.value} · ${tile.points} tile points${pending&&isChargedTile(tile)?' (+3 upgrade boost)':''}`;
@@ -338,6 +342,7 @@ function tileButton(tile, rackIndex){
    (state.selected===tile.id?' selected':'')+
    (state.swapping&&state.swapSet.has(tile.id)?' marked':'')+
    (isBlank(tile)?' wildcard wildcard-'+tile.blank:'')+
+   (tileFaceClass(tile.value)?' '+tileFaceClass(tile.value):'')+
    (isDrift()&&state.rogue.forcedTile===tile.id?' boss-required':'');
  button.dataset.tileId=tile.id;
  button.dataset.rackIndex=String(rackIndex);
@@ -347,7 +352,7 @@ function tileButton(tile, rackIndex){
  if(isDrift()&&state.rogue.forcedTile===tile.id)
    button.setAttribute('aria-label',button.getAttribute('aria-label')+'. REQUIRED BY BOSS in your next equation.');
  button.setAttribute('aria-pressed',String(state.selected===tile.id||state.swapSet.has(tile.id)));
- const main=document.createElement('span');main.textContent=isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value;
+ const main=document.createElement('span');renderTileFace(main,isBlank(tile)?BLANK_KINDS[tile.blank].symbol:tile.value);
  const points=document.createElement('sub');
  points.textContent=isBlank(tile)?({[BLANK_NUMBER]:'N',[BLANK_OPERATOR]:'OP',[BLANK_ANY]:'ALL'})[tile.blank]:tile.points;
  button.append(main,points);
@@ -588,6 +593,10 @@ function render(){
  $('sector-label').textContent=isDrift()?`THE DRIFT ${String(state.sector).padStart(2,'0')} · ZONE ${zoneInfo(state.rogue,state.sector).number} · ${zoneInfo(state.rogue,state.sector).name.toUpperCase()}`:
    `SECTOR ${String(state.sector).padStart(2,'0')} · ${names[state.sector-1]||'DEEP SPACE'}`;
  $('app').dataset.mode=state.mode;
+ $('app').dataset.tileSet=state.tileSet;
+ $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
+ $('tile-set-btn').textContent='◇ '+TILE_SET_BY_ID[state.tileSet].short.toUpperCase();
+ $('tile-set-btn').setAttribute('aria-label','Select maths tile set, currently '+TILE_SET_BY_ID[state.tileSet].title);
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector,state.rogue)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
@@ -679,7 +688,7 @@ function showBagInventory(){
       ${isDrift()&&restrictedDraws(state.rogue,state.sector).length?
        '<p class="bag-seal-notice">BOSS EMBARGO · '+restrictedDraws(state.rogue,state.sector).join(', ')+
        ' tiles are sealed from draws during this sector. They remain in the physical inventory.</p>':''}
-     <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong></p>
+     <p class="bag-pool-summary">NUMBER BAG <strong>${inventory.pools.numbers}</strong> · OPERATOR BAG <strong>${inventory.pools.operators}</strong>${inventory.pools.brackets!==undefined?' · BRACKETS <strong>'+inventory.pools.brackets+'</strong>':''}</p>
      <div id="bag-inventory-groups" class="bag-inventory-groups"></div>
      <p class="bag-inventory-note">Counts are exact for the current bag. Tiles already on
      the board or in your rack are not included. The equals sign is free and
@@ -1003,15 +1012,15 @@ function showShop(){
  const intro=`${isBossSector(state.sector)?zoneVictoryMarkup(state.rogue,state.sector):''}<div class="salvage-intro">
    <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
    <div><strong>SECTOR ${state.sector} STABILISED</strong>
-   <p>+${state.rogue.lastReward} Flux. Choose your build: only four permanent modules and two one-use power-ups fit on the reactor. Permanent upgrades last until the run ends.</p></div>
+   <p>+${state.rogue.lastReward} Flux. Choose your build: only four ship systems and two one-use mission gadgets fit on the reactor. Installed ship systems last until this Drift run ends.</p></div>
    </div>
-   <div class="salvage-loadout"><strong>PERMANENT ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
-     <strong>TEMPORARY ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
-   <div class="salvage-section-heading">PERMANENT MODULES <small>FOUR ROTATING OFFERS</small></div>
-   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Permanent Salvage Bay upgrades"></div>
-   <div class="salvage-section-heading">TEMPORARY POWER-UPS <small>USE ONCE · UP TO TWO HELD</small></div>
-   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Temporary Salvage Bay powers"></div>
-   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap equipped artwork during play for details or activation.</p>`;
+   <div class="salvage-loadout"><strong>SHIP SYSTEMS ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
+     <strong>GADGETS ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
+   <div class="salvage-section-heading">SHIP SYSTEMS <small>FOUR ROTATING OFFERS</small></div>
+   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Ship Systems offered in the Salvage Bay"></div>
+   <div class="salvage-section-heading">MISSION GADGETS <small>USE ONCE · UP TO TWO HELD</small></div>
+   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Mission Gadgets offered in the Salvage Bay"></div>
+   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap installed Ship Systems for details or activate Mission Gadgets while playing.</p>`;
  showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
    {text:'RUN REPORT',fn:showRunReport},
    {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
@@ -1045,7 +1054,7 @@ function showShop(){
      if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
      state.rogue=result.rogue;persistRun();render();showShop();
      $('salvage-feedback').textContent=result.reason+
-       (temporary?'. Stored in your temporary power-up slots.':
+       (temporary?'. Stored in your Mission Gadget slots.':
          '. Equipped for the remainder of this run.');
    };
    card.append(tag,icon,title,description,buy);return card;
@@ -1338,6 +1347,9 @@ function swap(){
      'Your free swap is used. Exchanging tiles now costs a turn.');render();return;
  }
  if(!state.swapSet.size){announce('Select at least one tile to exchange.',true);return;}
+ if(state.rack.some(t=>state.swapSet.has(t.id)&&t.pairId)){
+   announce('Bracket halves stay linked. Play both together instead of exchanging them.',true);return;
+ }
  if(isDrift()&&state.rogue.forcedTile&&state.swapSet.has(state.rogue.forcedTile)){
    announce('The boss demands that tile. Use it in a correct equation before swapping.',true);return;
  }
@@ -1345,7 +1357,7 @@ function swap(){
  const free=state.swapSet.size===1&&(isDrift()?
    freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>0:
    state.freeSwapTurn!==state.turn);
- const kind=t=>(isOperator(t.value)||t.blank===BLANK_OPERATOR?'operators':'numbers');
+ const kind=t=>tilePool(t);
  const sealed=new Set(isDrift()?restrictedDraws(state.rogue,state.sector):[]);
  for(const pool of ['numbers','operators']){
    const needed=state.rack.filter(t=>state.swapSet.has(t.id)&&kind(t)===pool).length;
@@ -1447,9 +1459,9 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector uses the same BIDMAS rules and premium grid. Normally there are six turns and an eight-tile rack; equipment can extend either.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators. Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated permanent slots and carry up to two one-use powers. Tap temporary equipment during play to arm score boosts or transform a rack tile.</p></div></div>
+       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
@@ -1465,6 +1477,7 @@ function restoreMode(mode,{initial=false}={}){
    state.freeSwapTurn=previous.freeSwapTurn??0;
    state.mode=mode;
    state.rogue=mode==='rogue'?previous.rogue:null;
+   state.tileSet=normalizeTileSet(previous.tileSet);
    state.bossGrid=mode==='rogue'?bossField(state.rogue,state.sector):null;
    state.ended=state.phase!=='playing';state.busy=false;
    state.swapping=false;state.swapSet.clear();state.selected=null;
@@ -1475,8 +1488,12 @@ function restoreMode(mode,{initial=false}={}){
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
    render();
    if(state.ended)showSectorOutcome();
+   const requestedKit=new URLSearchParams(location.search).get('tiles');
+   if(TILE_SET_BY_ID[requestedKit]&&requestedKit!==state.tileSet)
+     confirmTileSetChange(requestedKit);
  }else{
-   state.rogue=mode==='rogue'?makeRogueState():null;
+   state.tileSet=normalizeTileSet(new URLSearchParams(location.search).get('tiles')||storage?.getItem(TILE_SET_STORAGE_KEY));
+   state.rogue=mode==='rogue'?makeRogueState(state.tileSet):null;
    freshSector(1,{newRun:true});
    if(mode==='rogue')showDriftIntro();
    else if(initial){
@@ -1487,6 +1504,46 @@ function restoreMode(mode,{initial=false}={}){
  }
 }
 // Mode selection now lives on the dedicated home page, not a duplicate dialog.
+function startChosenTileSet(id){
+ state.tileSet=normalizeTileSet(id);
+ try{storage?.setItem(TILE_SET_STORAGE_KEY,state.tileSet);}catch{/* optional storage */}
+ freshSector(1,{newRun:true});
+ announce(TILE_SET_BY_ID[id].title+' tile kit engaged. New shuffled supply ready.');
+}
+function confirmTileSetChange(id){
+ const set=TILE_SET_BY_ID[id];
+ if(!set)return;
+ if(state.tileSet===id){
+   announce(set.title+' is already the active tile kit.');
+   return;
+ }
+ showModal('CHANGE PHYSICAL TILE KIT',set.short+' · '+set.title,
+   '<p>Changing mathematical tiles starts a fresh '+(isDrift()?'Drift':'Sector Run')+
+   ' run. Your current board, score, '+(isDrift()?'ship systems and Flux':'progress')+
+   ' will be replaced.</p><p><strong>New kit:</strong> '+set.desc+'</p>'+
+   (set.brackets?'<p>Brackets come as a matched ( ) pair and occupy two extra rack positions.</p>':''),
+   [{text:'KEEP CURRENT RUN'},{
+     text:'START WITH '+set.short.toUpperCase()+' →',primary:true,fn:()=>startChosenTileSet(id)
+   }]);
+}
+function showTileSetMenu(){
+ if(isLocal()||state.busy)return;
+ const body='<p class="kit-dialog-explain">Choose the mathematical tiles used for the whole run. New sets preserve the same board and original 5 number / 3 operator balance; rational kits add two bracket tiles.</p>'+
+   '<div class="kit-dialog-grid" role="group" aria-label="Choose a maths tile kit">'+
+   TILE_SETS.map(kit=>'<button class="kit-dialog-card'+(kit.id===state.tileSet?' is-current':'')+
+     '" type="button" data-kit-choice="'+kit.id+'" aria-pressed="'+(kit.id===state.tileSet)+'">'+
+     '<span>'+kit.tier+' · '+kit.short.toUpperCase()+'</span>'+
+     '<strong>'+kit.title+'</strong>'+
+     '<em>'+kit.sample+'</em><small>'+kit.operations+'</small>'+
+     '</button>').join('')+'</div>'+
+   '<p class="kit-dialog-explain">The advanced kit supports integer powers from −8 to 8, exact rational square roots and factorials from 0! to 8!.</p>';
+ showModal('CHOOSE YOUR MATHS KIT','Four levels of equations',body,
+   [{text:'BACK TO BOARD',primary:true}]);
+ document.querySelectorAll('[data-kit-choice]').forEach(button=>{
+   button.onclick=()=>confirmTileSetChange(button.dataset.kitChoice);
+ });
+}
+$('tile-set-btn').onclick=showTileSetMenu;
 function showModeMenu(){
  window.location.assign('./index.html');
 }

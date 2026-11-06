@@ -4,6 +4,7 @@ import {
 } from './engine.js';
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
 import {bossField,bossForSector} from './drift-bosses.js';
+import {normalizeTileSet,hasBracketPair,tileValueAllowed} from './tile-sets.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -22,6 +23,7 @@ export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
  const bag=[...sourceBag],rack=[...held];
  const minBlanks=options.minBlanks===2?2:1;
  const numberTarget=options.numberSlots===6?6:NUMBER_SLOTS;
+ const bracketTarget=options.bracketPairs===1?2:0;
  const excluded=new Set(Array.isArray(options.forbiddenValues)?options.forbiddenValues:[]);
  const eligible=tile=>!excluded.has(tile.value);
  for(const [pool,target] of [['numbers',numberTarget],['operators',OPERATOR_SLOTS]]){
@@ -30,11 +32,35 @@ export function dealPlayableRack(held,sourceBag,options={},random=randomFloat){
      let at=rack.filter(isBlank).length<minBlanks?
        bag.findLastIndex(t=>tilePool(t)===pool&&isBlank(t)&&eligible(t)):-1;
      // Prioritise higher-value operators when the Drift Operator Reserve is installed.
-     if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
+     if(at<0&&pool==='numbers'&&options.minNegativeNumbers &&
+         rack.filter(t=>/^−[1-9]$/.test(t.value||'')).length<options.minNegativeNumbers)
+        at=bag.findLastIndex(t=>tilePool(t)==='numbers'&&/^−[1-9]$/.test(t.value||'')&&eligible(t));
+      if(at<0&&pool==='numbers'&&options.minFractionNumbers &&
+         rack.filter(t=>typeof t.value==='string'&&t.value.includes('/')).length<options.minFractionNumbers)
+        at=bag.findLastIndex(t=>tilePool(t)==='numbers'&&
+          typeof t.value==='string'&&t.value.includes('/')&&eligible(t));
+      if(at<0&&pool==='operators'&&options.minAdvancedOperators &&
+         rack.filter(t=>['^','√','!'].includes(t.value)).length<options.minAdvancedOperators)
+        at=bag.findLastIndex(t=>['^','√','!'].includes(t.value)&&eligible(t));
+      if(at<0&&pool==='operators'&&options.preferAdvancedOperators)
        at=bag.findLastIndex(t=>(t.value==='×'||t.value==='÷')&&eligible(t));
      if(at<0)at=bag.findLastIndex(t=>tilePool(t)===pool&&eligible(t));
      if(at<0)break;
      rack.push(bag.splice(at,1)[0]);count++;
+   }
+ }
+ if(bracketTarget&&rack.filter(t=>tilePool(t)==='brackets').length<2){
+   const heldPair=rack.find(t=>tilePool(t)==='brackets')?.pairId;
+   const pairs=new Map();
+   for(const tile of bag){
+     if(tilePool(tile)!=='brackets'||!tile.pairId)continue;
+     const members=pairs.get(tile.pairId)||[];members.push(tile);pairs.set(tile.pairId,members);
+   }
+   const chosen=heldPair?pairs.get(heldPair):[...pairs.values()].find(m=>
+     m.length===2&&m.some(t=>t.value==='(')&&m.some(t=>t.value===')'));
+   if(chosen)for(const tile of chosen){
+     const at=bag.findIndex(candidate=>candidate.id===tile.id);
+     if(at>=0)rack.push(bag.splice(at,1)[0]);
    }
  }
  const drawn=rack.slice(held.length);
@@ -130,17 +156,20 @@ function validProgress(progress){
 function validSnapshot(data){
  if(!data||typeof data!=='object'||data.version!==SAVE_VERSION)return false;
  const mode=data.mode||'sector';
+ const tileSet=normalizeTileSet(data.tileSet);
  if(!['sector','rogue'].includes(mode))return false;
  if(mode==='rogue'&&!validRogueState(data.rogue,data.sector,data.phase))return false;
  if(mode==='sector'&&data.rogue!=null)return false;
  const limit=mode==='rogue'?turnLimit(data.rogue):6;
- const maxRack=mode==='rogue'?rackSlots(data.rogue):HAND_SIZE;
+ const maxRack=(mode==='rogue'?rackSlots(data.rogue):HAND_SIZE)+(hasBracketPair(tileSet)?2:0);
  if(!validInteger(data.freeSwapTurn??0,0,limit))return false;
  if(!validInteger(data.savedAt,0,4102444800000)||
     !validInteger(data.sector,1,MAX_SECTORS)||
     !validInteger(data.turn,1,limit)||
     !validInteger(data.score,0,10000000)||
     !['playing','won','lost'].includes(data.phase))return false;
+ if(data.tileSet!==undefined&&data.tileSet!==tileSet)return false;
+ if(mode==='rogue'&&data.rogue.tileSet!==undefined&&data.rogue.tileSet!==tileSet)return false;
  if(!Array.isArray(data.board)||data.board.length!==SIZE*SIZE||
     !data.board.every(tile=>tile===null||validTile(tile,'placed')))return false;
  if(!Array.isArray(data.rack)||data.rack.length>maxRack||!data.rack.every(t=>validTile(t,'supply')))return false;
@@ -150,7 +179,8 @@ function validSnapshot(data){
  if(entries.length>maxRack+3)return false;
  if(!Array.isArray(data.placementOrder)||data.placementOrder.length>maxRack+3)return false;
  if(!entries.every(([i,t])=>/^(0|[1-9]\d*)$/.test(i)&&
-      Number(i)<SIZE*SIZE&&data.board[Number(i)]===null&&validTile(t,'placed')))return false;
+      Number(i)<SIZE*SIZE&&data.board[Number(i)]===null&&validTile(t,'placed')&&
+      (t.blank||tileValueAllowed(tileSet,t.value))))return false;
  if(mode==='rogue'){
    const boss=bossForSector(data.rogue,data.sector);
    if(boss){
@@ -165,7 +195,19 @@ function validSnapshot(data){
  const ids=new Set();
  const physical=[...data.bag,...data.rack,...data.board.filter(Boolean).filter(t=>t.value!=='=')];
  if(physical.length!==151)return false;
- for(const tile of physical){if(ids.has(tile.id))return false;ids.add(tile.id);}
+ const pairs=new Map();
+ for(const tile of physical){
+   if(ids.has(tile.id))return false;ids.add(tile.id);
+   if(!tile.blank&&!tileValueAllowed(tileSet,tile.value))return false;
+   if(['(',')'].includes(tile.value)){
+     if(!hasBracketPair(tileSet)||typeof tile.pairId!=='string'||!/^paren-[0-7]$/.test(tile.pairId))return false;
+     const faces=pairs.get(tile.pairId)||[];faces.push(tile.value);pairs.set(tile.pairId,faces);
+   }else if(tile.pairId!==undefined)return false;
+ }
+ if(hasBracketPair(tileSet)){
+   if(pairs.size!==8||[...pairs.values()].some(f=>
+     f.length!==2||!f.includes('(')||!f.includes(')')))return false;
+ }else if(pairs.size)return false;
  for(const [index,tile] of entries){
    if(tile.value==='='){if(tile.points!==0) return false;continue;}
    const match=data.rack.find(t=>t.id===tile.id);
@@ -189,7 +231,7 @@ export function snapshotRun(state){
    freeSwapTurn:state.freeSwapTurn??0,
   phase:state.phase,placementOrder:state.placementOrder,
   stats:state.stats,progress:state.progress,
-  mode:state.mode||'sector',rogue:state.mode==='rogue'?state.rogue:null
+  mode:state.mode||'sector',tileSet:normalizeTileSet(state.tileSet),rogue:state.mode==='rogue'?state.rogue:null
  };
 }
 export function saveRun(storage,state){

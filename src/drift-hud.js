@@ -39,6 +39,6 @@ export function renderDriftHud(rogue,itemTarget,onTemp,onInfo){
  }));
  $('temporary-hint').textContent=itemTarget?
    'SELECT A RACK TILE for '+TEMP_ITEM_BY_ID[itemTarget].name+'. Tap again to cancel.':
-   temporary.length?'Tap a power-up to arm it, or select a rack tile.':
-   'Buy up to two single-use powers in the Salvage Bay.';
+   temporary.length?'Tap a Mission Gadget to arm it, or select a rack tile.':
+   'Buy up to two Mission Gadgets in the Salvage Bay.';
 }

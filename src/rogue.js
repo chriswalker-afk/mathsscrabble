@@ -1,6 +1,7 @@
 // The Drift: self-contained roguelike economy, anomalies and scoring.
-import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat} from './engine.js';
+import {bonusAt,coords,isBlank,isDigit,scoreMove,nextTarget,TURNS_PER_SECTOR,randomFloat,tilePool} from './engine.js';
 import {BOSS_BY_ID,zoneBoss,bossForSector,bossField,restrictedDraws,validateBossMove} from './drift-bosses.js';
+import {normalizeTileSet,hasBracketPair,kitRackOptions} from './tile-sets.js';
 
 export const ROGUE_SAVE_KEY='equa-nova.drift.v1';
 export const ACTIVE_MODE_KEY='equa-nova.last-mode.v1';
@@ -34,8 +35,8 @@ export const TEMP_ITEMS=Object.freeze([
  {id:'pulse-charge',name:'Pulse Capacitor',cost:3,kind:'SCORE BOOST',icon:'⚡',description:'Arm for +12 flat energy on your next valid equation.',action:'score'},
  {id:'double-score',name:'Double Reactor',cost:7,kind:'SCORE BOOST',icon:'×2',description:'Arm to double the total energy of your next valid equation.',action:'score'},
  {id:'power-surge',name:'Power Surge',cost:5,kind:'SCORE BOOST',icon:'+50%',description:'Arm to add 50% more energy to your next valid equation.',action:'score'},
- {id:'step-up',name:'Step Up',cost:3,kind:'TILE SWAP',icon:'↑1',description:'Choose a number tile; swap it for one numbered 1 higher from the bag.',action:'tile'},
- {id:'step-down',name:'Step Down',cost:3,kind:'TILE SWAP',icon:'↓1',description:'Choose a number tile; swap it for one numbered 1 lower from the bag.',action:'tile'},
+ {id:'step-up',name:'Step Up',cost:3,kind:'TILE SWAP',icon:'↑1',description:'Exchange an integer or fraction for a physical number exactly 1 greater, if available in the bag.',action:'tile'},
+ {id:'step-down',name:'Step Down',cost:3,kind:'TILE SWAP',icon:'↓1',description:'Exchange an integer or fraction for a physical number exactly 1 smaller, if available in the bag.',action:'tile'},
  {id:'operator-shift',name:'Operator Shift',cost:3,kind:'TILE SWAP',icon:'⇆',description:'Choose a physical operator; exchange + for × or − for ÷ (and reverse) if available.',action:'tile'},
  {id:'wildcard-hunt',name:'Wildcard Hunt',cost:5,kind:'TILE SWAP',icon:'◇',description:'Choose a rack tile; swap it for a wildcard from its own bag.',action:'tile'},
  {id:'recycle-tile',name:'Recycle Tile',cost:2,kind:'TILE SWAP',icon:'↻',description:'Choose one tile; replace it with a different tile from the same bag.',action:'tile'}
@@ -44,7 +45,7 @@ export const TEMP_ITEM_BY_ID=Object.freeze(Object.fromEntries(TEMP_ITEMS.map(ite
 export const PULSE_ITEM=TEMP_ITEMS[0];
 export const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function turnLimit(rogue){return 6+Number(owns(rogue,'extra-turn'));}
-export function rackSlots(rogue){return 8+Number(owns(rogue,'wide-rack'));}
+export function rackSlots(rogue){return 8+Number(owns(rogue,'wide-rack'))+(hasBracketPair(rogue?.tileSet)?2:0);}
 export function shopTemperatures(sector){
  // Every Salvage Bay offers a score boost and a tile manipulation choice.
  const boosts=TEMP_ITEMS.filter(item=>item.action==='score'&&item.id!==PULSE_ITEM.id);
@@ -89,10 +90,10 @@ export function targetForSector(mode,sector,rogue){
  return mode==='rogue'&&anomalyForSector(sector,rogue)?.id==='critical'?
    Math.ceil(base*1.2):base;
 }
-export function makeRogueState(){
+export function makeRogueState(tileSet='natural'){
  return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,
    pulse:0,pulseBought:0,pulseUsed:0,tempSlots:[],tempBought:[],tempUsed:[],
-   armed:null,swapTurn:0,swapsUsed:0,echoed:[],zoneBosses:[],forcedTile:null};
+   armed:null,swapTurn:0,swapsUsed:0,echoed:[],zoneBosses:[],forcedTile:null,tileSet:normalizeTileSet(tileSet)};
 }
 export function shopOffers(sector,rogue){
  const unowned=ROGUE_ITEMS.filter(item=>!owns(rogue,item.id));
@@ -162,10 +163,11 @@ export function consumeTemporary(rogue,id){
 }
 export function consumePulse(rogue){return consumeTemporary(rogue,PULSE_ITEM.id);}
 export function rogueRackOptions(rogue,sector){
- return {minBlanks:owns(rogue,'wild-beacon')?2:1,
+ return {...kitRackOptions(rogue?.tileSet),minBlanks:owns(rogue,'wild-beacon')?2:1,
          preferAdvancedOperators:owns(rogue,'operator-reserve'),
          numberSlots:owns(rogue,'wide-rack')?6:5,
-         forbiddenValues:restrictedDraws(rogue,sector)};
+         forbiddenValues:restrictedDraws(rogue,sector),
+         bracketPairs:hasBracketPair(rogue?.tileSet)?1:0};
 }
 export function consumeBoardEcho(rogue,used=[]){
  if(!used.length)return rogue;
@@ -184,22 +186,31 @@ export function earnMoveFlux(rogue,pending){
  if(!earned)return {rogue,amount:0};
  return {rogue:{...rogue,flux:rogue.flux+earned,earned:rogue.earned+earned},amount:earned};
 }
+// Compare physical signed integers and fractions by exact integer arithmetic.
+const physicalRational=value=>{
+ if(typeof value!=='string'||!/^−?\d+(?:\/\d+)?$/.test(value))return null;
+ const [n,d='1']=value.replace('−','-').split('/');
+ return {n:BigInt(n),d:BigInt(d)};
+};
 export function useTileTemporary(rogue,rack,bag,id,tileId,random=randomFloat){
  const item=TEMP_ITEM_BY_ID[id];
  if(item?.action!=='tile'||!heldConsumables(rogue).includes(id))
    return {ok:false,reason:'That tile tool is unavailable.',rogue,rack,bag};
  const tile=rack.find(t=>t.id===tileId);
  if(!tile)return {ok:false,reason:'Choose a tile from your rack.',rogue,rack,bag};
- const samePool=t=>((t.blank==='blank-operator'||['+','−','×','÷'].includes(t.value))?
-   'operators':'numbers')===((tile.blank==='blank-operator'||['+','−','×','÷'].includes(tile.value))?
-   'operators':'numbers');
- const plainDigit=/^[0-9]$/.test(tile.value)&&!tile.blank;
+ if(tilePool(tile)==='brackets')
+   return {ok:false,reason:'Bracket halves are linked. Play both together; gadgets cannot split them.',rogue,rack,bag};
+ const samePool=t=>tilePool(t)===tilePool(tile);
  let match=()=>false;
  if(id==='step-up'||id==='step-down'){
-   if(!plainDigit)return {ok:false,reason:'Choose a physical number tile.',rogue,rack,bag};
-   const next=Number(tile.value)+(id==='step-up'?1:-1);
-   if(next<0||next>9)return {ok:false,reason:'The number must stay between 0 and 9.',rogue,rack,bag};
-   match=t=>!t.blank&&t.value===String(next);
+   const value=tile.blank?null:physicalRational(tile.value);
+   if(!value)return {ok:false,reason:'Choose a physical integer or fraction tile.',rogue,rack,bag};
+   const next=value.n+(id==='step-up'?value.d:-value.d);
+   match=t=>{
+     if(t.blank||tilePool(t)!=='numbers')return false;
+     const other=physicalRational(t.value);
+     return Boolean(other)&&other.n*value.d===next*other.d;
+   };
  }else if(id==='operator-shift'){
    const map={'+':'×','×':'+','−':'÷','÷':'−'};
    if(tile.blank||!map[tile.value])
@@ -235,7 +246,7 @@ export function rewardSector(rogue,sector,score,turn){
  }};
 }
 export function scoreRogueMove(board,pending,move,rogue,sector){
- const base=scoreMove(board,pending,move);
+ const base=scoreMove(board,pending,move,{rackSize:rackSlots(rogue)});
  let adjustedBase=base.base,multiplier=base.multiplier,additional=0,boost=0;
  const tileScores=base.tileScores.map(tile=>({...tile}));
  const effects=[],echoedIndices=[];
@@ -379,6 +390,7 @@ export function validRogueState(rogue,sector,phase){
  }else if(bought.length||used.length)return false;
  if(rogue.armed!=null&&(!expected.includes(rogue.armed)||
     TEMP_ITEM_BY_ID[rogue.armed]?.action!=='score'))return false;
+ if(rogue.tileSet!==undefined&&rogue.tileSet!==normalizeTileSet(rogue.tileSet))return false;
  if(!integer(rogue.swapTurn??0,0,7)||!integer(rogue.swapsUsed??0,0,2))return false;
  if(rogue.zoneBosses!==undefined&&(!Array.isArray(rogue.zoneBosses)||
      rogue.zoneBosses.length>33||!rogue.zoneBosses.every(id=>Boolean(BOSS_BY_ID[id]))))return false;
