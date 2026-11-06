@@ -1,0 +1,122 @@
+/* E2 — Signal Clash online rooms; inherits the physical-board design. */
+.online-body .online-app{max-width:100%;min-height:100dvh}
+.online-body .side-panel{min-width:0}
+.online-body .online-app .left-panel{display:flex;flex-direction:column;gap:8px}
+.online-room-box{padding:10px;border:1px solid #5d8789;border-radius:7px;background:linear-gradient(145deg,#234655,#193444);display:flex;flex-direction:column;gap:4px}
+.online-room-box small{font-size:9px;color:#94d8cf;letter-spacing:.15em;font-weight:900}
+.online-room-box strong{color:#ffdea2;font-size:clamp(19px,2.1vw,27px);font-weight:950;letter-spacing:.2em;line-height:1.15}
+.online-app .local-scores{display:flex;flex-direction:column;gap:5px}
+.online-app .local-score-row{width:100%}
+.online-app .local-score-row.is-active{border-color:#84edce}
+.online-connection{border:1px solid #587a87;border-radius:5px;padding:5px 9px;color:#9ec2c7;font-size:9px;font-weight:850;letter-spacing:.08em;white-space:nowrap}
+.online-connection.is-live{color:#b1f3d8;border-color:#5baf8e;background:#214b42}
+.online-connection.is-reconnecting{color:#e9d08c;border-color:#937e53}
+.online-current{padding:7px 9px;border-left:2px solid #8bcbaf;background:#123040;color:#cee1da;font-size:11px;line-height:1.55}
+.online-bag{display:flex;flex-direction:column;gap:4px;width:100%;align-items:flex-start;min-height:55px}
+.online-bag small{width:100%}
+.online-bag strong{font-size:19px}
+.online-app #online-log{font-size:11px;line-height:1.5;max-height:75px;overflow-y:auto}
+.online-app #online-moves{display:flex;flex-direction:column;min-height:0;gap:3px;overflow:hidden}
+.online-app #online-moves .history-row{margin:0}
+.online-app .right-panel .command-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.online-app .right-panel .command-group button{min-width:0}
+.online-app .right-panel .command-group .primary-command{grid-column:1/-1}
+.online-app .right-panel .command-group .secondary-command:last-child{grid-column:1/-1}
+.online-app .right-panel .legend{margin-top:12px}
+.online-app .right-panel .panel-divider{margin:11px 0}
+.online-gate{position:fixed;inset:0;z-index:80;background:radial-gradient(circle at 50% 20%,#1c4656f6,#061827fa 77%);display:grid;place-items:center;overflow-y:auto;overscroll-behavior:contain;padding:20px}
+.online-gate[hidden],.online-entry[hidden],.online-lobby[hidden],.online-gate-error[hidden],.online-restore[hidden],#online-dialog[hidden],#ceremony-readout[hidden]{display:none!important}
+.online-gate-card{width:min(770px,100%);max-height:calc(100dvh - 30px);overflow:auto;background:linear-gradient(145deg,#234656,#0f2838 80%);padding:clamp(16px,3vw,30px);border:1px solid #79a9ac;border-radius:15px;box-shadow:inset 0 1px #ffffff23,0 24px 75px #0009}
+.online-gate-kicker{display:block;color:#9bd9cb;font-size:11px;letter-spacing:.18em;font-weight:900;margin-bottom:5px}
+.online-gate h1{font-size:clamp(24px,4vw,38px);line-height:1.12;letter-spacing:-.025em;color:#ffebc8;margin:6px 0 8px}
+.online-gate-card>p{color:#bad1d3;line-height:1.55;margin:0 0 15px;font-size:12px}
+.online-gate-forms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.online-form{display:flex;flex-direction:column;align-items:stretch;min-width:0;gap:8px;padding:16px;border:1px solid #476b77;border-radius:9px;background:#102c3c}
+.online-form>strong{font-size:13px;letter-spacing:.11em;color:#d5ecde;margin-bottom:2px}
+.online-form label{font-weight:850;color:#9fc8ca;font-size:10px;letter-spacing:.08em;display:block}
+.online-form input,.online-form select{display:block;box-sizing:border-box;width:100%;height:40px;border-radius:5px;background:#1b3b4b;border:1px solid #63888b;color:#f9eacc;padding:8px 10px;font:inherit;font-size:13px}
+.online-form input:focus-visible,.online-form select:focus-visible{outline:2px solid #a8ead7;outline-offset:1px}
+.online-form input::placeholder{color:#8caeb0}
+.online-form-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.online-form-duo>div{display:grid;gap:5px}
+.online-form>button{margin-top:auto;min-height:42px}
+.online-form .secondary-command{border-color:#8ec4c0;background:#204555;color:#e6eddc}
+.online-gate-error{padding:11px 13px;background:#51343a;border:1px solid #cf9192;color:#ffe0db;border-radius:6px;margin-top:12px!important;font-size:12px!important}
+.online-back{display:inline-flex;margin-top:14px;color:#92d4c6;font-weight:800;font-size:10px;text-decoration:none;letter-spacing:.05em}
+.online-back:hover{text-decoration:underline;color:#e7f9ed}
+.online-restore{display:block;width:100%;text-align:center;margin:12px auto 0;background:transparent;border:1px solid #678b8f;border-radius:5px;color:#c2e0d6;padding:10px 14px;font-weight:800;letter-spacing:.07em;font-size:10px}
+.online-restore:hover{border-color:#b4dfd6;background:#32505b}
+.online-code-card{border:1px solid #9aaf8f;background:linear-gradient(140deg,#254b4e,#3d4a46);border-radius:9px;padding:16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.online-code-card small{grid-column:1/-1;color:#bee7d8;letter-spacing:.13em;font-size:10px;font-weight:850}
+.online-code-card strong{font-size:clamp(27px,5vw,40px);letter-spacing:.2em;line-height:1;color:#ffdfa8}
+.online-code-card button{font-size:10px;padding:9px 12px;max-width:220px}
+.online-lobby-head{display:flex;justify-content:space-between;margin:14px 0 7px;color:#a9d9d3;font-size:11px;letter-spacing:.09em;font-weight:850}
+.online-lobby-players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.online-lobby-player{display:flex;gap:9px;align-items:center;min-width:0;background:#17394a;border-radius:6px;border:1px solid #4b6d78;padding:10px;color:#e8efde;font-weight:800}
+.online-lobby-player .local-score-avatar{flex-shrink:0}
+.online-lobby-player strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.online-lobby-player small{font-size:9px;color:#8ed6c8;margin-left:auto}
+.online-lobby #online-lobby-note{color:#acc8ca;font-size:11px;line-height:1.5;margin:10px 0}
+.online-lobby #online-start-match{width:100%;min-height:44px}
+.online-lobby #online-start-match:disabled{opacity:.5;cursor:not-allowed}
+.online-dialog{border:none;max-width:min(560px,95vw);max-height:90dvh;border-radius:13px;background:#193a4b;color:#f4e8cd;padding:0;box-shadow:0 15px 60px #000b}
+.online-dialog::backdrop{background:#061625d9}
+.online-dialog .modal-content{max-height:88dvh;overflow:auto}
+.online-dialog .modal-content h2{color:#f6dfb6}
+.online-results{display:grid;gap:7px;margin:12px 0}
+.online-result{display:grid;grid-template-columns:25px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:9px;background:#213d4b;border:1px solid #56757b;border-radius:6px;font-size:11px}
+.online-result.is-winner{border-color:#ecc587;background:#4c4a41}
+.online-result strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.online-result span{text-align:right;font-variant-numeric:tabular-nums}
+.online-wild-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.online-wild-grid button{padding:11px 0;background:#2d5960;color:#f4e3c5;border:1px solid #8dc8bd;border-radius:5px;font-size:17px;font-weight:900}
+.online-wild-grid button:hover,.online-wild-grid button:focus-visible{background:#497f78;outline:2px solid #dbf7ce}
+.online-app .cell.scoring-lift .board-tile{animation:scoreTileSettle var(--ceremony-speed,320ms) cubic-bezier(.21,.72,.26,1) both}
+.online-app[data-online-turn="false"] .rack-row{filter:saturate(.7)}
+.online-app[data-online-turn="false"] #rack .tile{opacity:.75}
+@media(min-width:731px) and (max-height:760px){
+ .online-app .online-room-box{padding:6px}
+ .online-app .online-room-box strong{font-size:18px}
+ .online-app #online-log{max-height:50px}
+ .online-app #online-moves .history-row:nth-child(n+3){display:none}
+ .online-app .local-score-row{padding:4px}
+ .online-app .right-panel .legend{margin-top:6px}
+}
+@media(max-width:730px){
+ .online-app .left-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;padding:7px 9px;align-items:center}
+ .online-app .left-panel>.panel-heading,.online-app .left-panel .panel-divider,.online-app .left-panel #online-log,.online-app .left-panel #online-moves{display:none}
+ .online-app .left-panel .online-room-box{display:none}
+ .online-app .left-panel .local-score-header{grid-column:1;grid-row:1}
+ .online-app .left-panel .local-score-header>strong{font-size:9px}
+ .online-app .left-panel .local-score-header>span{font-size:9px}
+ .online-app .left-panel #online-scores{display:flex;grid-column:1;grid-row:2;flex-direction:row;gap:4px}
+ .online-app .left-panel #online-scores .local-score-row{flex:1;min-width:0;display:flex;flex-direction:column;gap:0;padding:3px 2px}
+ .online-app .left-panel .local-score-avatar{display:none}
+ .online-app .left-panel .local-score-name{font-size:9px}
+ .online-app .left-panel .local-score-points strong{font-size:14px}
+ .online-app .left-panel .local-score-points small{display:none}
+ .online-app .left-panel .online-current{display:none}
+ .online-app .left-panel .online-bag{grid-column:2;grid-row:1/3;width:64px;height:57px;padding:5px 7px}
+ .online-app .right-panel .online-commands{display:grid;grid-template-columns:1.1fr repeat(3,minmax(0,1fr));gap:4px}
+ .online-app .right-panel .online-commands button{font-size:9px;letter-spacing:0;min-width:0;padding:8px 2px;white-space:nowrap}
+ .online-app .right-panel .online-commands .primary-command{grid-column:auto}
+ .online-app .right-panel .online-commands .primary-command small{display:none}
+ .online-app .right-panel .online-commands .secondary-command:last-child{grid-column:auto}
+ .online-app .right-panel .online-commands strong{font-size:9px}
+ .online-body .online-gate-forms{grid-template-columns:1fr;gap:9px}
+ .online-body .online-form{gap:6px;padding:11px}
+ .online-body .online-form input,.online-body .online-form select{height:35px}
+ .online-body .online-form>button{min-height:37px}
+ .online-body .online-gate-card{max-height:95dvh;padding:16px}
+ .online-body .online-gate h1{font-size:25px}
+ .online-body .online-lobby-players{grid-template-columns:1fr 1fr}
+}
+@media(max-width:400px){
+ .online-connection{font-size:0;padding:5px}
+ .online-connection::before{content:"●";font-size:10px}
+ .online-gate{padding:8px}
+ .online-gate-card{border-radius:8px}
+ .online-form-duo{gap:5px}
+ .online-code-card{grid-template-columns:1fr;gap:6px}
+ .online-code-card button{max-width:100%}
+}

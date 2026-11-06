@@ -12,6 +12,31 @@ jobs:
         with:
           node-version: '22'
       - run: npm run check
+  worker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Cloudflare Vite build tool and CLI
+        run: npm install --no-package-lock
+      - name: Validate Durable Object Worker without deploying
+        run: npx cf deploy --dry-run
+      - name: Exercise actual local Durable Object runtime
+        run: |
+          npx cf dev >/tmp/equanova-cf-dev.log 2>&1 &
+          WORKER_PID=$!
+          trap 'kill $WORKER_PID 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8787/api/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8787/api/health || (cat /tmp/equanova-cf-dev.log && exit 1)
+          node tests/online-worker-runtime.mjs
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -32,6 +57,7 @@ jobs:
           node tests/rogue-browser.mjs
           node tests/ceremony-browser.mjs
           node tests/local-browser.mjs
+          node tests/online-browser.mjs
       - name: Upload layout screenshots
         if: always()
         uses: actions/upload-artifact@v4

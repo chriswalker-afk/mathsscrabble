@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Online Signal Clash</title>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/online.css">
+<script type="module" src="./src/online-ui.js"></script></head>
+<body class="online-body">
+<div class="stars" aria-hidden="true"></div>
+<div id="app" class="online-app">
+<header class="topbar">
+ <div class="brand"><div class="brand-icon" aria-hidden="true"><img src="./assets/reactor-mark.svg" alt="" width="46" height="46"></div><div><strong>EQUA<span>//</span>NOVA</strong><small>ONLINE // SIGNAL CLASH</small></div></div>
+ <div class="top-readout"><span id="online-dot" class="status-dot"></span><span id="online-title">SIGNAL CLASH · CONNECTING</span></div>
+ <div class="top-actions"><span class="online-connection" id="online-connection" role="status" aria-live="polite">OFFLINE</span>
+  <button id="online-share" class="quiet-button" type="button">⧉ SHARE</button>
+  <button id="online-help" class="quiet-button" type="button">? RULES</button>
+  <a class="quiet-button" href="./index.html">◈ MODES</a></div>
+</header>
+<main class="game-shell">
+ <aside class="side-panel left-panel" aria-label="Match standings">
+  <div class="panel-heading">PILOT TELEMETRY</div>
+  <div class="online-room-box"><small>ROOM CODE</small><strong id="online-room-code">······</strong></div>
+  <div class="local-score-header"><strong>LIVE STANDINGS</strong><span id="online-clock">--:--</span></div>
+  <div id="online-scores" class="local-scores" aria-label="Online player scores"></div>
+  <div class="online-current" id="online-current">Waiting for the reactor signal.</div>
+  <button id="online-bag" type="button" class="mini-stat bag-stat online-bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="online-bag-count">—</strong></button>
+  <div class="panel-divider"></div><div class="panel-heading">SIGNAL LOG</div>
+  <div id="online-log" role="status" aria-live="polite">Create a match or enter a room code to begin.</div>
+  <div id="online-moves" class="history-mini" aria-label="Latest moves"></div>
+ </aside>
+ <section class="arena" aria-label="Shared equation board">
+  <div class="board-frame" id="board-frame">
+   <div id="board" class="board" role="grid" aria-label="Shared 13 by 13 equation grid"></div>
+   <div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div>
+   <div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div>
+   <div id="energy-burst" class="energy-burst" aria-hidden="true"></div>
+  </div>
+  <div class="rack-section">
+   <div class="rack-heading"><span id="online-rack-label">YOUR PRIVATE RACK</span>
+    <div class="rack-actions"><button id="online-undo" class="rack-undo" type="button">↶ UNDO</button><span id="online-rack-count">0 / 7</span></div>
+   </div>
+   <div class="rack-row"><div id="rack" class="rack" aria-label="Only your private tiles"></div>
+    <div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" aria-label="Select free equals sign"><span>=</span><sub>0</sub></button></div>
+   </div>
+  </div>
+ </section>
+ <aside class="side-panel right-panel" aria-label="Online match commands">
+  <div class="panel-heading">COMMAND CONSOLE</div>
+  <div id="equation-preview" class="equation-preview" data-state="empty">
+   <div class="preview-led" aria-hidden="true"></div>
+   <div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="online-expression">—</strong></div><span id="online-preview-status">Join a room to play.</span></div>
+   <div class="preview-points"><small>IF VALID</small><strong id="online-potential">—</strong></div>
+   <div id="ceremony-readout" class="ceremony-readout" hidden aria-label="Verified equation scoring">
+    <div class="ceremony-heading"><span>ENERGY TRANSFER</span><span id="ceremony-tile-count">0 / 0</span></div>
+    <div class="ceremony-values"><strong id="ceremony-count">+0</strong><span id="ceremony-step">SCORING</span></div>
+    <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
+    <button id="skip-ceremony" type="button" class="ceremony-skip">SKIP »</button>
+   </div>
+  </div>
+  <div class="command-group online-commands">
+   <button id="online-score" class="primary-command" type="button"><strong>⚡ SCORE</strong><small>SERVER CHECKS BIDMAS</small></button>
+   <button id="online-clear" class="secondary-command" type="button">↶ CLEAR</button>
+   <button id="online-pass" class="secondary-command" type="button">↪ PASS</button>
+   <button id="online-swap" class="secondary-command" type="button">⇄ SWAP</button>
+  </div>
+  <div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div>
+  <div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div>
+  <div><i class="legend-square ttt">3T</i><span>Triple tile</span></div>
+  <div><i class="legend-square ee">2E</i><span>Double equation</span></div>
+  <div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
+  <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div>
+  <p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p>
+  <p class="rules-note">The server checks each equation. Only your rack can be used; other players' tiles stay private.</p>
+ </aside>
+</main>
+<footer class="bottom-strip"><span id="online-footer">⟡ SIGNAL CLASH // REAL-TIME ROOMS</span>
+<span>ONE SHARED BOARD · PRIVATE RACKS</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
+</div>
+
+<div id="online-gate" class="online-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+ <div class="online-gate-card">
+  <span class="online-gate-kicker">EQUA//NOVA · SIGNAL CLASH</span>
+  <h1 id="gate-title">Play together, from anywhere.</h1>
+  <p id="gate-description">Host a private room or enter a six-character code. Each player uses their own device and only sees their own rack.</p>
+  <div id="online-entry" class="online-entry">
+   <div class="online-gate-forms">
+    <form id="online-create-form" class="online-form">
+     <strong>CREATE A ROOM</strong>
+     <label for="online-host-name">YOUR PILOT NAME</label>
+     <input id="online-host-name" autocomplete="nickname" required maxlength="20" placeholder="Pilot name">
+     <div class="online-form-duo">
+      <div><label for="online-player-limit">PILOTS</label><select id="online-player-limit"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option></select></div>
+      <div><label for="online-timer-settings">TURN TIMER</label><select id="online-timer-settings">
+       <option value="0">Off</option><option value="60">60 sec</option><option value="90" selected>90 sec</option><option value="120">120 sec</option></select></div>
+     </div>
+     <button id="online-create-button" type="submit" class="primary-command">CREATE ROOM →</button>
+    </form>
+    <form id="online-join-form" class="online-form">
+     <strong>JOIN A ROOM</strong>
+     <label for="online-join-name">YOUR PILOT NAME</label><input id="online-join-name" required maxlength="20" autocomplete="nickname" placeholder="Pilot name">
+     <label for="online-join-code">SIX-CHARACTER CODE</label><input id="online-join-code" required maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF">
+     <button id="online-join-button" type="submit" class="secondary-command">JOIN ROOM →</button>
+    </form>
+   </div>
+  </div>
+  <div id="online-lobby" class="online-lobby" hidden>
+   <div class="online-code-card"><small>SHARE THIS ROOM CODE</small><strong id="lobby-code">······</strong>
+    <button id="lobby-copy" type="button" class="secondary-command">⧉ COPY INVITE LINK</button></div>
+   <div class="online-lobby-head"><span>PILOTS CONNECTED</span><span id="online-lobby-count">1 / 4</span></div>
+   <div id="online-lobby-players" class="online-lobby-players"></div>
+   <p id="online-lobby-note">At least two pilots are needed before starting.</p>
+   <button id="online-start-match" type="button" class="primary-command">START MATCH →</button>
+   <button id="online-leave-lobby" type="button" class="online-restore">LEAVE LOBBY</button>
+  </div>
+  <p id="online-gate-error" class="online-gate-error" role="alert" hidden></p>
+  <a class="online-back" href="./index.html">← BACK TO OTHER MODES</a>
+ </div>
+</div>
+<dialog id="online-dialog" class="online-dialog"><div class="modal-content">
+ <div class="modal-heading"><span id="online-dialog-eyebrow">TRANSMISSION</span><button id="online-dialog-close" class="modal-x" type="button" aria-label="Close">×</button></div>
+ <h2 id="online-dialog-title"></h2><div id="online-dialog-body"></div>
+ <div id="online-dialog-actions" class="modal-actions"></div>
+</div></dialog>
+</body></html>
