@@ -1,6 +1,6 @@
 # EQUA//NOVA — Maths Scrabble
 
-A **playable three-mode prototype** of a sci-fi equation-building board game. Students build mathematically correct equations, guided by **BIDMAS**, and score by using numbered/operator tiles, premium squares, and equation length.
+A **playable four-mode prototype** of a sci-fi equation-building board game. Students build mathematically correct equations, guided by **BIDMAS**, and score by using numbered/operator tiles, premium squares, and equation length.
 
 ## Play
 
@@ -42,6 +42,16 @@ The animation runs only while the current view is active. Use **SKIP** in the co
 
 The game remembers the most recent opening rack pattern separately for Sector Run, The Drift and Local Match; if a new opening would look identical to the previous one, it is reshuffled (and if necessary rearranged). **No physical tiles are invented, duplicated or removed to avoid repetition.** A new game also creates an independent bag order, so later draws are not locked into a tutorial sequence. The opening pattern history is local to this browser and is not a competitive seed, server record or cross-device guarantee.
 
+## Alien Lab — Pass B multiplayer pilot identities
+
+Alien Lab now supplies original **cute alien pilots throughout multiplayer**. Before a **Local Match**, choose a different alien for each of the 2–4 players (Bloop/Orbit/Niblet/Glimmer starter, Surprise Me, or the last alien saved in [Alien Lab](alien-lab.html)). Private hot-seat handovers, the active score strip, game reports and final podium display each player's own alien.
+
+In **Online Signal Clash**, choose an alien before creating or joining a room. While waiting in the lobby, each player can change **only their own** design and everyone sees the update. When the host starts, those designs lock for that match; reloading or reconnecting restores the server-held alien. Icons appear on room cards, the active turn, scoreboards and final results. Small phone-sized portraits remain visible in score strips without shrinking the board.
+
+The [shared profile contract](src/alien/profiles.js) accepts only the versioned 7-part + 3-palette identifiers in \`alien-manifest.json\`. The server validates and stores these cosmetic identifiers in each player's Durable Object seat; it never accepts an uploaded SVG, arbitrary image URL, script or score modification. Existing local saves/old online clients without avatars receive safe starter aliens. The original animal Critter Lab stays unchanged. **Online rooms still require separate Cloudflare Worker deployment** before public multiplayer can work.
+
+For setup instructions and security checks see [Alien Lab profile integration](docs/ALIEN_AVATAR.md) and [Online Rooms deployment](docs/ONLINE_MULTIPLAYER.md).
+
 ## Alien Lab — A1 artwork + A2 interactive creator
 
 The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **30 original, interchangeable SVG components** (four each for heads, eyes, mouths, bodies, arms and legs/movement; six optional accessories) plus **six independent colour palettes**. The shared transparent **320×360** canvas and anatomical anchors let all **28,672 base combinations** connect cleanly. Face elements, shoulder seams, neck seams and hip seams are independently tested, and the renderer keeps high-contrast outlines at small scoreboard sizes.
@@ -50,7 +60,7 @@ The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **
 
 **Pass A3 visual polish:** category thumbnails now zoom to the chosen feature (eyes, mouths, arms, legs and extras) instead of shrinking the whole creature; the **48px player portrait** and **72px lobby bust** are framed for readable expressions, while the downloadable SVG stays full-body and transparent. A previous/next category guide makes it easier to finish all seven decisions, and the colours have been adjusted for stronger contrast. The large creature blinks and gently floats (respecting reduced-motion settings), but player icons do not animate. Automated [A3 visual quality tests](tests/alien-a3-browser.mjs) review 64 face variants, 64 body/arm/leg combinations, 42 accessory–palette pairings, 24 skin/head colourways, all front overlays and six screen sizes; labeled contact sheets are uploaded by CI for human design review. Pass A2 now provides live previews, clickable SVG thumbnails for **heads, faces (eyes and mouth), bodies, arms, movement, extras** and **three independently selectable colours**; the four curated starters, **Surprise Me**, reset, undo/redo, browser-only save/restore and a fully transparent **SVG export**. The editor works on desktop/tablet and stacks with a compact sticky preview on phones. Art remains in the reviewable [A1 Specimen Vault](alien-preview.html).
 
-The underlying safe `src/alien/model.js` supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art. **A2 does not yet attach the alien to a multiplayer seat**; Local Match / Online Rooms avatar integration remains Pass B, after the A3 art and usability review.
+The underlying safe `src/alien/model.js` supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art. Pass B connects these safe designs to Local Match and Online Rooms seats, including reconnects, scoreboards and results.
 
 See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The existing standalone animal **Critter Lab** and the EQUA//NOVA game modes are unchanged.
 
@@ -104,7 +114,7 @@ Try a first equation such as **8 + 4 = 12** crossing the centre **when those til
 
 **Pass C — Core solo gameplay** adds balanced rack replenishment, autosave/restore, sector reports, persistent cumulative run progress, a first-visit guide and contextual hints. The target curve is a prototype calibration; before locking the difficulty, collect classroom playtest observations as described in [docs/SOLO_BALANCE.md](docs/SOLO_BALANCE.md).
 
-**Pass D — Roguelike progression** adds The Drift: separate mode selection, Salvage Bay purchases, permanent and one-use upgrades, real tile/rack/board multipliers, rotating boss-sector anomalies, run-specific Flux and death/restart rules. **Pass E1 — local multiplayer** adds 2–4 player hot-seat play with private rack handovers, optional turn timers, shared scoring, finite bag, pass/exchange rules and endgame penalties. **Pass E2 will be online multiplayer** with private room codes, reconnection and server-authoritative turns. Existing solo saves remain independent. Calibrate shop and anomaly difficulty with real students before fixing the final economy.
+**Pass D — Roguelike progression** adds The Drift: separate mode selection, Salvage Bay purchases, permanent and one-use upgrades, real tile/rack/board multipliers, rotating boss-sector anomalies, run-specific Flux and death/restart rules. **Pass E1 — local multiplayer** adds 2–4 player hot-seat play with private rack handovers, optional turn timers, shared scoring, finite bag, pass/exchange rules and endgame penalties. **Pass E2 adds online multiplayer** with private room codes, reconnection and server-authoritative turns; see the separate Cloudflare deployment guide. Existing solo saves remain independent. Calibrate shop and anomaly difficulty with real students before fixing the final economy.
 
 ## Saved games and privacy
 
