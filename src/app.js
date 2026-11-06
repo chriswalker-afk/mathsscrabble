@@ -1321,6 +1321,8 @@ function restoreMode(mode,{initial=false}={}){
  const previous=loadRun(storage,mode);
  if(previous){
    Object.assign(state,previous);
+   // Old saved games predate the per-turn free-swap marker.
+   state.freeSwapTurn=previous.freeSwapTurn??0;
    state.mode=mode;
    state.rogue=mode==='rogue'?previous.rogue:null;
    state.ended=state.phase!=='playing';state.busy=false;
