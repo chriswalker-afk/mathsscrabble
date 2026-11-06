@@ -18,7 +18,7 @@ function card(avatar,library,{name,label,size=178,kind='preview'}={}){
  return wrapper;
 }
 async function start(){
- const library=await loadAlienLibrary('../../');
+ const library=await loadAlienLibrary('./'); // relative to gallery document, including GitHub Pages subpaths
  const {manifest}=library;
  $('hero-alien').append(renderAlienSVG(presetAlien(manifest,'bloop'),library,
   {width:290,height:326}));
