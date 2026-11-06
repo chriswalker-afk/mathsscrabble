@@ -142,6 +142,8 @@ test('rack passives change draw constraints while retaining all physical IDs',()
  const equipped=dealPlayableRack([],bag,rogueRackOptions(boosted(['wild-beacon','operator-reserve'])));
  assert.equal(defaultRack.rack.length,8);
  assert.equal(equipped.rack.length,8);
+ assert.ok(equipped.rack.filter(t=>t.value==='×'||t.value==='÷').length>=2,
+   'Operator Reserve should favour × and ÷ rather than duplicate the base operator quota');
  assert.ok(equipped.rack.filter(t=>t.blank).length>=2,'two flexible tiles');
  assert.ok(equipped.rack.filter(t=>['+','−','×','÷'].includes(t.value)||['blank-any','blank-operator'].includes(t.blank)).length>=2);
  assert.equal(new Set([...equipped.rack,...equipped.bag].map(t=>t.id)).size,151);
