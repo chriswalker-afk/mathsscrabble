@@ -230,6 +230,7 @@ async function refreshRoom(){
  try{
    const response=await requestApi(roomPath()+'/state',{auth:true});
    saveRoomFromServer(response);
+   updated=true;
    if(state.connection!=='live')setConnection('polling');
  }catch(err){
    setConnection('reconnecting');
