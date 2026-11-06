@@ -6,13 +6,13 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const url='http://127.0.0.1:4173/play.html?mode=rogue';
 const key='equa-nova.drift.v1';
 const get=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
-const set=async fn=>{
- await page.evaluate(({key,code})=>{
+const set=async ({boss,forced=false,sector=3})=>{
+ await page.evaluate(({key,boss,forced,sector})=>{
    const state=JSON.parse(localStorage.getItem(key));
-   const patch=(new Function('save',code))(state);
-   if(patch)Object.assign(state,patch);
+   state.sector=sector;state.turn=1;state.score=0;state.phase='playing';
+   state.rogue.zoneBosses=[boss];state.rogue.forcedTile=forced?state.rack[0].id:null;
    localStorage.setItem(key,JSON.stringify(state));
- },{key,code:fn});
+ },{key,boss,forced,sector});
  await page.reload({waitUntil:'networkidle'});
 };
 try{
@@ -36,7 +36,7 @@ try{
 
  // The Warden's eight impassable squares must reject an actual attempted
  // physical placement, including dragged tiles and the unlimited equals sign.
- await set("save=>{save.sector=3;save.turn=1;save.rogue.zoneBosses=['grid-warden'];save.rogue.forcedTile=null;save.phase='playing';}");
+ await set({boss:'grid-warden'});
  assert.equal(await page.locator('.cell.boss-blocked').count(),8);
  assert.equal(await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width),boardWidth);
  await page.locator('#equals-tile').click();
@@ -48,12 +48,12 @@ try{
  await page.screenshot({path:'/tmp/equanova-drift-grid-warden.png',fullPage:true});
  await page.locator('#modal-actions button').last().click();
 
- await set("save=>{save.rogue.zoneBosses=['curse-weaver'];}");
+ await set({boss:'curse-weaver'});
  assert.equal(await page.locator('.cell.boss-rift').count(),8);
  assert.equal(await page.locator('.cell.boss-blocked').count(),0);
  await page.screenshot({path:'/tmp/equanova-drift-curse-weaver.png',fullPage:true});
 
- await set("save=>{save.rogue.zoneBosses=['forced-relic'];save.rogue.forcedTile=save.rack[0].id;}");
+ await set({boss:'forced-relic',forced:true});
  assert.equal(await page.locator('#rack .boss-required').count(),1);
  await page.locator('#swap-btn').click();
  await page.locator('#rack .boss-required').click();
@@ -62,7 +62,7 @@ try{
  assert.equal((await get()).turn,1);
  await page.locator('#undo-btn').click();
 
- await set("save=>{save.rogue.zoneBosses=['plus-embargo'];save.rogue.forcedTile=null;}");
+ await set({boss:'plus-embargo'});
  await page.locator('#bag-details-btn').click();
  assert.match(await page.locator('#modal-body').textContent(),/BOSS EMBARGO/i);
  assert.match(await page.locator('#modal-body').textContent(),/sealed from draws/i);
