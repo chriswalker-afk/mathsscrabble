@@ -345,9 +345,106 @@ function renderPreview(){
    `Potential score ${points.total} if the equation is mathematically correct`:
    'No potential score yet');
 }
+function formatLocalClock(deadline){
+ const seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+ return String(Math.floor(seconds/60)).padStart(2,'0')+':'+
+   String(seconds%60).padStart(2,'0');
+}
+function showLocalHandover(){
+ if(!isLocal()||!state.localMatch)return;
+ const match=state.localMatch;
+ const hidden=match.phase==='handover'&&!state.localDeferPrivacy;
+ $('local-privacy').hidden=!hidden;
+ $('app').dataset.private=String(hidden);
+ if(!hidden)return;
+ const player=match.players[match.current];
+ $('local-handover-title').textContent=player.name+' · YOUR TURN';
+ $('local-handover-description').textContent=
+   'Pass the device to '+player.name+' first. Tap Ready to reveal this player’s private rack.';
+ const last=match.history.at(-1);
+ $('local-handover-context').textContent=last?
+   (last.type==='score'?
+     'Previous move: '+match.players[last.player].name+' scored +'+last.points:
+     'Previous move: '+(last.type==='timeout'?'time expired':last.type.replaceAll('-',' ')))+
+   ' · Turn '+match.turnNumber:
+   'Turn '+match.turnNumber+' · Shared board, private racks';
+ $('local-ready-btn').focus({preventScroll:true});
+}
+function renderLocalStatus(){
+ const match=state.localMatch;
+ if(!match)return;
+ $('app').dataset.mode='local';
+ $('app').dataset.anomaly='none';
+ $('local-panel').hidden=false;
+ $('local-pass-btn').hidden=false;
+ $('rogue-summary').hidden=true;
+ $('anomaly-banner').hidden=true;
+ $('mode-btn').textContent='◈ LOCAL';
+ $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
+ $('sector-label').textContent=match.phase==='finished'?'LOCAL MATCH · FINAL SCORES':
+   state.ceremony&&state.localScoringPlayer!==null?
+     'LOCAL MATCH · SCORING':
+     'LOCAL MATCH · '+match.players[match.current].name.toUpperCase();
+ $('target').textContent='—';
+ $('turn').textContent=String(match.turnNumber);
+ $('bag-count').textContent=match.bag.length;
+ $('bag-details-btn').disabled=state.busy||match.phase!=='playing';
+ $('bag-details-btn').setAttribute('aria-label','View '+match.bag.length+' remaining tiles in the shared bag');
+ $('score-btn').disabled=state.busy||match.phase!=='playing'||state.swapping||!Object.keys(state.pending).length;
+ $('local-pass-btn').disabled=state.busy||match.phase!=='playing';
+ $('local-pass-btn').textContent=match.turnSeconds?'↪ PASS / END TURN':'↪ PASS TURN';
+ $('new-btn').disabled=false;
+ const time=$('local-time-remaining');
+ if(match.phase==='playing'&&match.turnSeconds){
+   time.textContent=formatLocalClock(match.deadline);
+   time.classList.toggle('local-time-urgent',match.deadline-Date.now()<15000);
+ }else{
+   time.textContent=match.turnSeconds?match.turnSeconds+'s timer':'NO TIMER';
+   time.classList.remove('local-time-urgent');
+ }
+ const scoringIndex=state.ceremony&&state.localScoringPlayer!==null?
+   state.localScoringPlayer:match.current;
+ const displayScores=match.players.map((p,i)=>i===scoringIndex&&state.ceremony?
+   state.ceremony.startScore+state.ceremony.awarded:p.score);
+ const leading=Math.max(...displayScores);
+ $('local-scores').replaceChildren(...match.players.map((player,index)=>{
+   const row=document.createElement('div');
+   row.className='local-score-row'+
+     (index===scoringIndex&&match.phase!=='finished'?' is-active':'')+
+     (player.score===leading&&player.score>0?' is-leader':'');
+   const avatar=document.createElement('span');avatar.className='local-score-avatar';avatar.textContent=index+1;
+   const name=document.createElement('span');name.className='local-score-name';name.textContent=player.name;
+   const points=document.createElement('span');points.className='local-score-points';
+   const total=document.createElement('strong');total.textContent=displayScores[index];
+   const unit=document.createElement('small');unit.textContent='POINTS';
+   points.append(total,unit);
+   row.append(avatar,name,points);
+   row.setAttribute('aria-label',player.name+': '+displayScores[index]+' points');
+   return row;
+ }));
+ const status=$('local-game-status');
+ status.textContent=match.phase==='finished'?
+   'Match complete. Remaining rack values have been deducted.':
+   match.phase==='handover'?'Privacy handover: next player has not revealed their rack.':
+   'Turn '+match.turnNumber+' · '+match.players[match.current].name+' builds an equation.';
+ $('run-summary').textContent=match.players.length+' players · '+match.history.filter(x=>x.type==='score').length+' equations';
+ $('score').textContent=displayScores[scoringIndex]??0;
+ $('progress').style.width='0%';
+ $('preview-status').setAttribute('aria-live','polite');
+ showLocalHandover();
+}
 function render(){
  state.preview=inspectPlacement(state.board,state.pending);
  renderBoard();renderRack();renderPreview();
+ if(isLocal()){
+   renderLocalStatus();
+   if(!state.busy)persistRun();
+   return;
+ }
+ $('local-privacy').hidden=true;
+ $('app').dataset.private='false';
+ $('local-panel').hidden=true;
+ $('local-pass-btn').hidden=true;
  const target=currentTarget(),remaining=Math.max(0,target-state.score);
  const turnsAvailable=state.phase==='playing'?
    Math.max(1,TURNS_PER_SECTOR-state.turn+1):0;
