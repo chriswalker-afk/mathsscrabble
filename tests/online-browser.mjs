@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {makeOnlineLobby,joinOnlineLobby,startOnlineMatch,takeOnlineAction,
-  timeOutOnlineTurn,viewOnlineRoom,leaveOnlineLobby,OnlineError} from '../src/online-rules.js';
+  timeOutOnlineTurn,viewOnlineRoom,leaveOnlineLobby,updateOnlinePilot,OnlineError} from '../src/online-rules.js';
+import {defaultPilotAlien} from '../src/alien/profiles.js';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const hostContext=await browser.newContext({viewport:{width:1366,height:768}});
@@ -47,7 +48,7 @@ async function routeApi(route){
    if(parts.length===2&&method==='POST'){
      backend.created++;
      backend.room=makeOnlineLobby({code:'GHJKLM',hostName:body.name,
-       hostHash:'a'.repeat(64),maxPlayers:body.maxPlayers,
+       hostHash:'a'.repeat(64),hostAvatar:body.avatar,maxPlayers:body.maxPlayers,
        turnSeconds:body.turnSeconds,now:Date.now()});
      const token='A'.repeat(43);backend.auth.set(token,'a'.repeat(64));
      result={room:viewOnlineRoom(backend.room,'a'.repeat(64)),token};
@@ -60,12 +61,16 @@ async function routeApi(route){
      if(t.changed)backend.room=t.room;
      if(op==='join'){
        backend.joined++;
-       backend.room=joinOnlineLobby(backend.room,body.name,'b'.repeat(64),clock);
+       backend.room=joinOnlineLobby(backend.room,body.name,'b'.repeat(64),clock,body.avatar);
        const token='B'.repeat(43);backend.auth.set(token,'b'.repeat(64));
        result={room:viewOnlineRoom(backend.room,'b'.repeat(64)),token};
        status=201;
      }else if(op==='state'){
        result={room:viewOnlineRoom(backend.room,hash,clock)};
+     }else if(op==='profile'){
+       const next=updateOnlinePilot(backend.room,hash,body,clock);
+       backend.room=next.room;
+       result={room:viewOnlineRoom(backend.room,hash),event:next.result};
      }else if(op==='start'){
        const next=startOnlineMatch(backend.room,hash,body,clock,()=>0.37);
        backend.room=makeGoodRack(next.room);
