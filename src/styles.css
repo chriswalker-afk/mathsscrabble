@@ -828,3 +828,15 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
  #app[data-mode="rogue"] .rack .tile{width:clamp(25px,7vw,45px);font-size:clamp(16px,4vw,26px)}
 }
 @media(prefers-reduced-motion:reduce){#app[data-mode="rogue"] #rack .tile.consumable-target{animation:none}}
+
+/* Nine-tile Drift loadout keeps the original 13x13 board size unchanged. */
+#app[data-expanded-rack="true"] .rack{gap:clamp(2px,.38vw,6px)}
+#app[data-expanded-rack="true"] .rack-row{padding-left:5px;padding-right:5px;gap:5px}
+#app[data-expanded-rack="true"] .rack .tile{width:clamp(26px,3.1vw,43px)}
+@media(max-width:390px){
+ #app[data-expanded-rack="true"] .rack{gap:2px}
+ #app[data-expanded-rack="true"] .rack-row{padding-left:3px;padding-right:3px;gap:3px}
+ #app[data-expanded-rack="true"] .rack .tile{width:clamp(23px,7vw,27px);font-size:17px}
+ #app[data-expanded-rack="true"] .equals-bank{padding-left:3px}
+ #app[data-expanded-rack="true"] .equals-tile{width:36px}
+}
