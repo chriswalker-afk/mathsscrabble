@@ -334,7 +334,8 @@ function renderPreview(){
  const box=$('equation-preview');
  box.dataset.state=state.swapping?'swap':preview.status;
  $('preview-equation').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
- const freeReason=freeExchangeReason(state.rack);
+ const freeReason=freeExchangeReason(state.rack)&&
+   !(isLocal()&&state.localMatch?.freeExchangeUsed);
  $('preview-status').textContent=state.swapping?
    (freeReason?`Choose tiles to replace — ${freeReason}-only rack, no turn used.`:
      'Choose tiles to replace — this uses a turn.'):
