@@ -149,7 +149,7 @@ function validSnapshot(data){
       (match.blank?!BLANK_KINDS[match.blank].choices.includes(tile.value):match.value!==tile.value))return false;
  }
  if(!validStats(data.stats)||!validProgress(data.progress))return false;
- if(data.progress.completed.some(x=>x.sector>=data.sector))return false;
+ if(data.progress.completed.some(x=>x.sector>data.sector||(x.sector===data.sector&&data.phase!=='won')))return false;
  if(data.phase==='won'&&data.score<nextTarget(data.sector))return false;
  if(data.phase==='lost'&&(data.score>=nextTarget(data.sector)||data.turn!==6))return false;
  if(data.phase==='playing'&&(data.score>=nextTarget(data.sector)||data.turn>6))return false;
