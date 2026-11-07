@@ -32,7 +32,7 @@ try{
  await waitReady(page);
  assert.equal(await page.locator('#section-tabs [role="tab"]').count(),7);
  assert.equal(await page.locator('#starter-options .preset-button').count(),4);
- assert.equal(await page.locator('#editor-options .part-choice').count(),4);
+ assert.equal(await page.locator('#editor-options .part-choice').count(),11);
  assert.equal(await mainPart(page,'head'),'orb');
  assert.equal(await mainPart(page,'body'),'bean');
  assert.equal(await mainPart(page,'legs'),'stubs');
@@ -59,7 +59,7 @@ try{
  // Face is intentionally a single section with separate eyes and mouth rows.
  await clickTab(page,'face');
  assert.equal(await page.locator('#editor-options .option-group').count(),2);
- assert.equal(await page.locator('#editor-options .part-choice').count(),8);
+ assert.equal(await page.locator('#editor-options .part-choice').count(),15);
  await choice(page,'eyes','cyclops').click();
  await choice(page,'mouth','zigzag').click();
  assert.equal(await mainPart(page,'eyes'),'cyclops');
@@ -78,7 +78,7 @@ try{
 
  // Three independent allowlisted colour roles are reflected by the SVG.
  await clickTab(page,'colours');
- assert.equal(await page.locator('#editor-options .palette-choice').count(),18);
+ assert.equal(await page.locator('#editor-options .palette-choice').count(),30);
  await palette(page,'skin','coral').click();
  await palette(page,'outfit','aqua').click();
  await palette(page,'accent','cosmic-blue').click();
@@ -204,8 +204,8 @@ try{
  const launchContext=await browser.newContext({viewport:{width:1366,height:768}});
  const gamePage=await launchContext.newPage();
  await gamePage.goto(ORIGIN+'/index.html',{waitUntil:'networkidle'});
- assert.equal(await gamePage.locator('.alien-lab-card').count(),1);
- await gamePage.locator('.alien-lab-card').click();
+ assert.equal(await gamePage.locator('.alien-lab-card').count(),2);
+ await gamePage.locator('.alien-lab-card').first().click();
  await gamePage.waitForURL(/alien-lab\.html$/);
  await waitReady(gamePage);
  await launchContext.close();
