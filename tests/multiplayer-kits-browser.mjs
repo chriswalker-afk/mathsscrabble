@@ -122,7 +122,7 @@ try{
    assert.equal(await host.locator('#rack .tile').count(),11);
    assert.equal(await host.locator('#online-rack-count').textContent(),'11 / 11');
    assert.equal(await host.locator('#rack .bracket-tile').count(),2);
-   assert.ok(await host.locator('#rack .fraction-tile .frac-denominator').count()>=2);
+   assert.equal(await host.locator('#rack .fraction-tile').count(),0,'Quantum must not draw fractions');
    assert.ok(await host.locator('#rack .advanced-tile').count()>=1);
    await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
    await guest.locator('#online-gate').waitFor({state:'hidden'});
