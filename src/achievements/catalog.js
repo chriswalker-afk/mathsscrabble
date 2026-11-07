@@ -4,6 +4,7 @@
  * game event adapters are wired in Passes C and D.
  * `event` names are stable integration points for `engine.js`.
  */
+import {CALLOUT_BY_ID} from '../online-callouts.js';
 export const ACHIEVEMENT_MODES=Object.freeze(['sector','drift','local','online']);
 export const ACHIEVEMENT_TIERS=Object.freeze(['easy','moderate','hard']);
 export const ACHIEVEMENT_VERSION=1;
@@ -662,7 +663,19 @@ const DEFS=[
       "event": "match-finished",
       "target": 3
     }
-  }
+  },
+  {"id":"O11","mode":"online","tier":"easy","title":"First Contact",
+   "description":"Send your first alien transmission in a live Signal Clash match.",
+   "reward":{"collection":"callouts","id":"squid","name":"Galactic Squid"},
+   "rule":{"event":"callout-sent","target":1}},
+  {"id":"O12","mode":"online","tier":"moderate","title":"Radio Regular",
+   "description":"Send 3 transmissions across different turns of a single Signal Clash match.",
+   "reward":{"collection":"callouts","id":"jelly","name":"Floating Jelly"},
+   "rule":{"event":"callout-sent","target":3}},
+  {"id":"O13","mode":"online","tier":"hard","title":"Deep Space Broadcaster",
+   "description":"Send 8 transmissions across different turns of a single Signal Clash match.",
+   "reward":{"collection":"callouts","id":"rainbow","name":"Cosmic Rainbow"},
+   "rule":{"event":"callout-sent","target":8}}
 ];
 export const ACHIEVEMENTS=Object.freeze(DEFS.map(item=>Object.freeze({
  ...item,reward:Object.freeze({...item.reward}),rule:Object.freeze({...item.rule})
@@ -677,19 +690,23 @@ export function achievementForReward(collection,id){
  return ACHIEVEMENTS.find(a=>a.reward.collection===collection&&a.reward.id===id)??null;
 }
 export function assertAchievementCatalog(){
- if(ACHIEVEMENTS.length!==40||new Set(ACHIEVEMENTS.map(a=>a.id)).size!==40)
-  throw Error('Achievement catalog must have 40 unique IDs.');
+ if(ACHIEVEMENTS.length!==43||new Set(ACHIEVEMENTS.map(a=>a.id)).size!==43)
+  throw Error('Achievement catalog must have 43 unique IDs.');
  const prizes=new Set();
  for(const [mode,definitions] of Object.entries(ACHIEVEMENTS_BY_MODE)){
-  if(definitions.length!==10||definitions.filter(a=>a.tier==='easy').length!==6||
-     definitions.filter(a=>a.tier==='moderate').length!==3||
-     definitions.filter(a=>a.tier==='hard').length!==1)
+  (()=>{const originals=definitions.filter(a=>Number(a.id.slice(1))<=10);
+    return definitions.length!==(mode==='online'?13:10)||originals.length!==10||
+      originals.filter(a=>a.tier==='easy').length!==6||
+      originals.filter(a=>a.tier==='moderate').length!==3||
+      originals.filter(a=>a.tier==='hard').length!==1;})()
     throw Error('Achievement tiers are unbalanced for '+mode+'.');
   for(const a of definitions){
    if(!a.id.match(/^[SDLO][0-9]{2}$/)||!a.title||!a.description||!a.rule.event||
-      !Number.isInteger(a.rule.target)||a.rule.target<1||a.rule.target>5||
-      !Object.hasOwn(FREE_ALIEN_OPTIONS,a.reward.collection)||
-      isFreeAlienOption(a.reward.collection,a.reward.id))
+      !Number.isInteger(a.rule.target)||a.rule.target<1||a.rule.target>8||
+      (a.reward.collection==='callouts'?
+       CALLOUT_BY_ID[a.reward.id]?.unlock!==a.id:
+       !Object.hasOwn(FREE_ALIEN_OPTIONS,a.reward.collection)||
+       isFreeAlienOption(a.reward.collection,a.reward.id)))
     throw Error('Invalid award definition '+a.id+'.');
    const prize=a.reward.collection+'/'+a.reward.id;
    if(prizes.has(prize))throw Error('Duplicate reward '+prize);
