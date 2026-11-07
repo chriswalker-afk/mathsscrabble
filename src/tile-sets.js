@@ -9,8 +9,8 @@ export const TILE_SETS=Object.freeze([
   numbers:'−9 to 9',operations:'+ − × ÷',brackets:false,advanced:false},
  {id:'rational',title:'RATIONAL NUMBERS',short:'Nebula',icon:'½',tier:'03',desc:'Seven friendly positive fractions, four basic operations, six number tiles and a matched bracket pair.',sample:'(½ + ½) × 2 = 2',
   numbers:'Positive fractions & integers',operations:'+ − × ÷, ( )',brackets:true,advanced:false},
- {id:'advanced',title:'ADVANCED OPERATIONS',short:'Quantum',icon:'√',tier:'04',desc:'Rational number tiles, bracket pairs and powers, square roots and factorials.',sample:'√9 + 3! = 9',
-  numbers:'Fractions & integers',operations:'+ − × ÷ ^ √ !, ( )',brackets:true,advanced:true}
+ {id:'advanced',title:'ADVANCED OPERATIONS',short:'Quantum',icon:'√',tier:'04',desc:'Digits 0–9 (no fractions), matched brackets, powers, square roots and factorials.',sample:'√9 + 3! = 9',
+  numbers:'Digits 0–9 only',operations:'+ − × ÷ ^ √ !, ( )',brackets:true,advanced:true}
 ]);
 export const TILE_SET_BY_ID=Object.freeze(Object.fromEntries(TILE_SETS.map(x=>[x.id,x])));
 export const normalizeTileSet=id=>Object.hasOwn(TILE_SET_BY_ID,id)?id:'natural';
@@ -37,10 +37,8 @@ export function tileValueAllowed(id,value){
  if(/^[0-9]$/.test(value)||NATURAL_SYMBOLS.includes(value))return true;
  if(value.startsWith('blank-'))return true;
  if(set==='integer')return /^−[1-9]$/.test(value);
- if(set==='rational'||set==='advanced')
-   return FRACTION_VALUES.includes(value)||
-     (hasBracketPair(set)&&['(',')'].includes(value))||
-     (set==='advanced'&&ADVANCED_SYMBOLS.includes(value));
+ if(set==='rational')return FRACTION_VALUES.includes(value)||['(',')'].includes(value);
+ if(set==='advanced')return ['(',')'].includes(value)||ADVANCED_SYMBOLS.includes(value);
  return false;
 }
 
@@ -49,6 +47,6 @@ export function kitRackOptions(id){
  const kit=normalizeTileSet(id);
  return {bracketPairs:hasBracketPair(kit)?1:0,numberSlots:kitNumberSlots(kit),
    minNegativeNumbers:kit==='integer'?2:0,
-   minFractionNumbers:hasBracketPair(kit)?2:0,
+   minFractionNumbers:kit==='rational'?2:0,
    minAdvancedOperators:kit==='advanced'?1:0};
 }
