@@ -23,7 +23,7 @@ function assertPrivate(state,ownIndex){
  assert.equal(match.rack.length,8);
  assert.equal(state.room.you.index,ownIndex);
  assert.ok(match.players.every(p=>p.rack===undefined));
- assert.equal(match.board.length,169);
+ assert.equal(match.board.length,361);
  assert.ok(Array.isArray(match.bagInventory.groups));
  assert.equal(JSON.stringify(state.room).includes('tokenHash'),false);
  return match;

@@ -22,17 +22,17 @@ test('rejects invalid, empty, or dishonest equations',()=>{
 test('first equation must cross centre',()=>{
  const board=Array(SIZE*SIZE).fill(null);
  assert.throws(()=>validateMove(board,place(['1','=','1'],'h',0,0)),/central/i);
- const pending=place(['8','+','4','=','1','2'],'h',3);
+ const pending=place(['8','+','4','=','1','2'],'h',6);
  const move=validateMove(board,pending);assert.equal(move.text,'8+4=12');assert.equal(move.indices.length,6);
 });
 test('second equation connects to locked tile and does not span unrelated row segments',()=>{
  const board=Array(SIZE*SIZE).fill(null);
- const first=place(['8','+','4','=','1','2'],'h',3);
+ const first=place(['8','+','4','=','1','2'],'h',6);
  Object.entries(first).forEach(([i,t])=>board[i]=t);
- const next=place(['+','3','=','1','1'],'v',CENTER+1,3);
+ const next=place(['+','3','=','1','1'],'v',CENTER+1,6);
  const move=validateMove(board,next);assert.equal(move.text,'8+3=11');
  // Further board content elsewhere on the same row must not join a separate contiguous equation.
- board[pos(2,10)]=makeTile('9');
+ board[pos(5,13)]=makeTile('9');
  const newMove=validateMove(board,{...next});assert.equal(newMove.text,'8+3=11');
 });
 test('rejects gaps, diagonal placement, disconnected equations and equals-only turns',()=>{
@@ -40,20 +40,20 @@ test('rejects gaps, diagonal placement, disconnected equations and equals-only t
  assert.throws(()=>validateMove(board,place(['='],'h',CENTER,CENTER)));
  const gap={...place(['1','=','1'],'h',CENTER-1)};
  delete gap[pos(CENTER,CENTER)];assert.throws(()=>validateMove(board,gap));
- const diagonal={[pos(5,5)]:makeTile('1'),[pos(6,6)]:makeTile('2')};assert.throws(()=>validateMove(board,diagonal));
- const first=place(['1','=','1'],'h',5);Object.entries(first).forEach(([i,t])=>board[i]=t);
+ const diagonal={[pos(8,8)]:makeTile('1'),[pos(9,9)]:makeTile('2')};assert.throws(()=>validateMove(board,diagonal));
+ const first=place(['1','=','1'],'h',8);Object.entries(first).forEach(([i,t])=>board[i]=t);
  assert.throws(()=>validateMove(board,place(['2','=','2'],'h',1,1)),/connect/i);
 });
 test('score calculation respects premium squares, length and full hand',()=>{
  const board=Array(SIZE*SIZE).fill(null);
- const pending=place(['8','+','4','=','1','2'],'h',3);
+ const pending=place(['8','+','4','=','1','2'],'h',6);
  const move=validateMove(board,pending);
  const score=scoreMove(board,pending,move);
  assert.equal(score.base,15); // 11 natural tile points + 4 for the Double Tile under 8
  assert.ok(score.bonuses.includes('Double tile'));assert.equal(score.length,3);assert.equal(score.sweep,0);
  assert.equal(score.equation,5);assert.equal(score.crossing,0);
  assert.equal(score.total,score.base*score.multiplier+3+5);
- assert.equal(bonusAt(0,0),'3E');
+ assert.equal(bonusAt(3,3),'3E');
 });
 test('bag refilling, turn targets and rack clear bookkeeping',()=>{
  const bag=makeBag(()=>0.5);assert.ok(bag.length>100);const draw=refill([],bag);assert.equal(draw.rack.length,8);
@@ -66,27 +66,27 @@ test('placement inspection guides students without answering the arithmetic',()=
  const board=Array(SIZE*SIZE).fill(null);
  const empty=inspectPlacement(board,{});
  assert.equal(empty.status,'empty');
- const pending=place(['8','+','4','=','1','2'],'h',3);
+ const pending=place(['8','+','4','=','1','2'],'h',6);
  const ready=inspectPlacement(board,pending);
  assert.equal(ready.status,'ready');
  assert.equal(ready.ready,true);
  assert.equal(ready.text,'8+4=12');
  assert.equal(ready.indices.length,6);
- const incorrect=place(['8','+','4','=','1','3'],'h',3);
+ const incorrect=place(['8','+','4','=','1','3'],'h',6);
  assert.equal(inspectPlacement(board,incorrect).ready,true);
  assert.throws(()=>validateMove(board,incorrect),/not balanced/i);
- const noEquals=place(['8','+','4'],'h',4);
+ const noEquals=place(['8','+','4'],'h',7);
  assert.equal(inspectPlacement(board,noEquals).status,'building');
- const gap={...pending};delete gap[pos(CENTER,5)];
+ const gap={...pending};delete gap[pos(CENTER,8)];
  assert.equal(inspectPlacement(board,gap).status,'gap');
  const offCentre=place(['1','=','1'],'h',0,0);
  assert.equal(inspectPlacement(board,offCentre).status,'centre');
 });
 test('preview follows existing tiles when an equation is connected',()=>{
  const board=Array(SIZE*SIZE).fill(null);
- const first=place(['8','+','4','=','1','2'],'h',3);
+ const first=place(['8','+','4','=','1','2'],'h',6);
  Object.entries(first).forEach(([i,t])=>board[i]=t);
- const second=place(['+','3','=','1','1'],'v',CENTER+1,3);
+ const second=place(['+','3','=','1','1'],'v',CENTER+1,6);
  const preview=inspectPlacement(board,second);
  assert.equal(preview.text,'8+3=11');
  assert.equal(preview.ready,true);
@@ -118,8 +118,8 @@ test('blank number, operator and any accept only their allowed symbols',()=>{
  assert.throws(()=>resolveBlank(number,'+'),/cannot be assigned/i);
  assert.throws(()=>resolveBlank(operation,'3'),/cannot be assigned/i);
  assert.equal(resolveBlank(number,'6').points,0);
- const pending=place(['2','+','4','=','6'],'h',4);
- const index=pos(CENTER,6);
+ const pending=place(['2','+','4','=','6'],'h',7);
+ const index=pos(CENTER,9);
  pending[index]=resolveBlank(number,'4');
  const board=Array(SIZE*SIZE).fill(null);
  const move=validateMove(board,pending);

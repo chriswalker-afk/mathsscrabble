@@ -4,6 +4,7 @@ import {SIZE,HAND_SIZE,tilePool,POINTS,BLANK_KINDS,isDigit,isOperator,makeBag,va
 import {dealPlayableRack} from './solo.js';
 import {acceptPilotAlien,isValidPilotAlien} from './alien/profiles.js';
 import {TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize,kitRackOptions,tileValueAllowed} from './tile-sets.js';
+import {migrateBoardState} from './board-migration.js';
 
 export const LOCAL_SAVE_KEY='equa-nova.local-match.v1';
 export const LOCAL_VERSION=1;
@@ -257,7 +258,7 @@ export function loadLocalMatch(storage,{privateOnResume=true}={}){
  try{
    const raw=storage?.getItem(LOCAL_SAVE_KEY);
    if(!raw||raw.length>300000)return null;
-   const match=JSON.parse(raw);
+   const match=migrateBoardState(JSON.parse(raw));
    if(!validLocalMatch(match))return null;
    // After a reload, rack visibility must require a new handover tap; retain
    // unfinished placements for the SAME player and pause their turn timer.

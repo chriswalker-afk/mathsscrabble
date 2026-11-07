@@ -22,7 +22,7 @@ try{
   assert.equal(saved.tileSet,kit);
   assert.equal(saved.bag.length+saved.rack.length,151);
   assert.equal(new Set([...saved.bag,...saved.rack].map(t=>t.id)).size,151);
-  assert.equal(await page.locator('#board .cell').count(),169);
+  assert.equal(await page.locator('#board .cell').count(),361);
   const pairExpected=['rational','advanced'].includes(kit);
   if(kit==='rational')assert.ok([...saved.bag,...saved.rack].every(t=>!(t.value?.startsWith('−')&&t.value?.includes('/'))),'Nebula supplies positive fractions only');
   assert.equal(saved.rack.length,pairExpected?11:8);
@@ -43,17 +43,8 @@ try{
   if(kit==='integer')assert.match(bag,/NEGATIVE INTEGER TILES/);
   await page.locator('#modal-actions button').last().click();
   if(pairExpected){
-   // Seed a fraction on the rack from the bag (one number for one number).
-   await page.evaluate(key=>{
-    const save=JSON.parse(localStorage.getItem(key));
-    const at=save.bag.findIndex(t=>typeof t.value==='string'&&t.value.includes('/'));
-    const target=save.rack.findIndex(t=>!t.blank&&!t.pairId&&/^[0-9]$/.test(t.value));
-    if(at<0||target<0)throw Error('Could not find a seeded fraction and a physical digit');
-    const replacement=save.bag.splice(at,1)[0];
-    save.bag.push(save.rack[target]);
-    save.rack[target]=replacement;
-    localStorage.setItem(key,JSON.stringify(save));
-   },KEY);
+   // The fraction kits now guarantee at least two fraction tiles in the opening rack.
+   assert.ok((await get(page)).rack.filter(t=>t.value?.includes('/')).length>=2);
    await page.reload({waitUntil:'networkidle'});
    assert.equal(await page.locator('#rack .bracket-tile').count(),2);
    assert.ok(await page.locator('#rack .fraction-tile .frac-numerator').count()>=1);

@@ -7,7 +7,7 @@ export const TILE_SETS=Object.freeze([
   numbers:'0–9',operations:'+ − × ÷',brackets:false,advanced:false},
  {id:'integer',title:'INTEGERS',short:'Orbit',icon:'±',tier:'02',desc:'Includes negative-number tiles as single values, alongside the basic operators.',sample:'−3 + 7 = 4',
   numbers:'−9 to 9',operations:'+ − × ÷',brackets:false,advanced:false},
- {id:'rational',title:'RATIONAL NUMBERS',short:'Nebula',icon:'½',tier:'03',desc:'Positive-only fractions, all basic operations, six number tiles and a matched pair of bracket tiles.',sample:'(½ + ½) × 2 = 2',
+ {id:'rational',title:'RATIONAL NUMBERS',short:'Nebula',icon:'½',tier:'03',desc:'Seven friendly positive fractions, four basic operations, six number tiles and a matched bracket pair.',sample:'(½ + ½) × 2 = 2',
   numbers:'Positive fractions & integers',operations:'+ − × ÷, ( )',brackets:true,advanced:false},
  {id:'advanced',title:'ADVANCED OPERATIONS',short:'Quantum',icon:'√',tier:'04',desc:'Rational number tiles, bracket pairs and powers, square roots and factorials.',sample:'√9 + 3! = 9',
   numbers:'Fractions & integers',operations:'+ − × ÷ ^ √ !, ( )',brackets:true,advanced:true}
@@ -28,7 +28,7 @@ export const FRACTION_VALUES=Object.freeze([
 ]);
 // New Nebula bags use two copies of each positive fraction instead of a
 // positive/negative mix. Keep FRACTION_VALUES for existing saved Nebula runs.
-export const POSITIVE_FRACTION_VALUES=Object.freeze(FRACTION_VALUES.filter(v=>!v.startsWith('−')));
+export const POSITIVE_FRACTION_VALUES=Object.freeze(['1/2','1/4','3/4','5/4','3/2','1/3','2/3']);
 export const NATURAL_SYMBOLS=Object.freeze(['+','−','×','÷']);
 export const ADVANCED_SYMBOLS=Object.freeze(['^','√','!']);
 export function tileValueAllowed(id,value){

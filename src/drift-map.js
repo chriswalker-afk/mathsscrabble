@@ -86,3 +86,17 @@ export function zoneVictoryMarkup(rogue,sector){
   bossArtwork(info.boss.id)+'<span><strong>ZONE '+info.number+' CONQUERED</strong>'+
   '<small>'+info.boss.name+' defeated · '+info.boss.zone+'</small></span></div>';
 }
+
+// A compact current-zone overview for the round-end screen: three stages,
+// the saved guardian and a clear route into the next sector.
+export function zoneIntermissionMarkup(rogue,sector,phase){
+ const info=zoneInfo(rogue,sector),boss=info.boss;
+ const next=isBossSector(sector)?'NEXT · UNCHARTED ZONE':'NEXT · SECTOR '+String(sector+1).padStart(2,'0');
+ return '<div class="drift-map-feature" style="--zone-accent:'+bossAccent(boss.id)+'">'+
+  '<div class="drift-map-feature-art" aria-hidden="true">'+bossArtwork(boss.id)+'</div>'+
+  '<div class="drift-map-feature-info"><span class="drift-feature-kicker">ZONE '+String(info.number).padStart(2,'0')+
+  ' · '+(isBossSector(sector)?'GUARDIAN DEFEATED':'ROUTE PROGRESS')+'</span>'+
+  '<strong>'+boss.zone+'</strong><span class="drift-feature-boss">'+boss.name+'</span>'+
+  route(sector,phase,info,true)+
+  '<small class="drift-map-next">'+next+'</small></div></div>';
+}

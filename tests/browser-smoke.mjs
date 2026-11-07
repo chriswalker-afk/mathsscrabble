@@ -7,7 +7,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768},deviceScaleFactor:1});
 const pageErrors=[];
 page.on('pageerror',error=>pageErrors.push(error.message));
-const boardIndex=(r,c)=>r*13+c;
+const boardIndex=(r,c)=>(r+3)*19+(c+3);
 const cell=(r,c)=>page.locator('.cell[data-index="'+boardIndex(r,c)+'"]');
 async function selectRackTile(value){
   await page.locator('#rack .tile').evaluateAll((buttons,symbol)=>{
@@ -41,7 +41,7 @@ try{
   const initialSave=await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1'));
   assert.ok(initialSave?.length>1000,'the initial run should be saved');
   assert.match(await page.locator('#save-status').textContent(),/autosaved/i);
-  assert.equal(await page.locator('.cell').count(),169);
+  assert.equal(await page.locator('.cell').count(),361);
   assert.equal(await page.locator('#rack .tile').count(),8);
   assert.equal(await page.locator('#bag-count').textContent(),String(143));
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
@@ -121,7 +121,7 @@ try{
   // Touch-style PointerEvents must also place physical tiles without native DnD.
   const touchResult=await page.evaluate(()=>{
     const src=document.querySelector('#rack .tile:not(.wildcard)');
-    const dst=document.querySelector('.cell[data-index="'+(4*13+10)+'"]');
+    const dst=document.querySelector('.cell[data-index="'+((4+3)*19+(10+3))+'"]');
     const a=src.getBoundingClientRect(),b=dst.getBoundingClientRect();
     const p=(x,y)=>({bubbles:true,cancelable:true,pointerId:92,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y});
     src.dispatchEvent(new PointerEvent('pointerdown',p(a.x+a.width/2,a.y+a.height/2)));
@@ -173,7 +173,18 @@ try{
     console.log('Layout',size,geometry);
     const minimum=size.height>=768?575:520;
     assert.ok(geometry.boardWidth>=minimum,'board must be legible and enlarged on classroom laptops');
-    assert.ok(geometry.boardFont>=24,'maths glyphs should fill enough of each board cell');
+    assert.ok(geometry.boardFont>=18,'unzoomed 19×19 tiles must remain recognizable');
+    const currentBoardWidth=geometry.boardWidth;
+    await page.locator('#board-zoom-in').click();
+    await page.locator('#board-zoom-in').click();
+    const zoomed=await page.evaluate(()=>({
+      font:parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize),
+      frameWidth:document.querySelector('.board-frame').getBoundingClientRect().width
+    }));
+    assert.ok(zoomed.font>=24,'zoom controls should enlarge mathematical glyphs on demand');
+    assert.equal(zoomed.frameWidth,currentBoardWidth,'zoom must not enlarge the board frame');
+    await page.locator('#board-zoom-out').click();
+    await page.locator('#board-zoom-out').click();
     assert.ok(geometry.rackBottom<=geometry.height-20,'rack must remain on screen');
     assert.ok(geometry.scrollHeight<=geometry.height+3,'desktop should not need vertical scrolling');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'desktop should not need horizontal scrolling');

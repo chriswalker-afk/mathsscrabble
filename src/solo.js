@@ -5,6 +5,7 @@ import {
 import {ROGUE_SAVE_KEY,targetForSector,validRogueState,turnLimit,rackSlots} from './rogue.js';
 import {bossField,bossForSector} from './drift-bosses.js';
 import {normalizeTileSet,hasBracketPair,kitRackSize,tileValueAllowed} from './tile-sets.js';
+import {migrateBoardState} from './board-migration.js';
 
 export const SAVE_KEY='equa-nova.sector-run.v1';
 export const INTRO_KEY='equa-nova.intro.seen.v1';
@@ -248,7 +249,7 @@ export function loadRun(storage,mode='sector'){
    if(!['sector','rogue'].includes(mode))return null;
    const raw=storage?.getItem(mode==='rogue'?ROGUE_SAVE_KEY:SAVE_KEY);
    if(!raw||raw.length>250000)return null;
-   const data=JSON.parse(raw);
+   const data=migrateBoardState(JSON.parse(raw));
    return validSnapshot(data)&&(data.mode||'sector')===mode?data:null;
  }catch{return null;}
 }

@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeTile,BLANK_ANY,pos,validateMove,scoreMove,bonusAt} from '../src/engine.js';
+import {SIZE,CENTER,makeTile,BLANK_ANY,pos,validateMove,scoreMove,bonusAt} from '../src/engine.js';
 import {makeRogueState,scoreRogueMove,anomalyForSector} from '../src/rogue.js';
 import {buildScoringCeremony,ceremonyDurationMs} from '../src/score-ceremony.js';
 
-const makeEquation=(values,row=6,col=3)=>{
- const board=Array(169).fill(null),pending={};
+const makeEquation=(values,row=CENTER,col=CENTER-3)=>{
+ const board=Array(SIZE*SIZE).fill(null),pending={};
  values.forEach((value,i)=>pending[pos(row,col+i)]=makeTile(value));
  return {board,pending,move:validateMove(board,pending)};
 };
@@ -25,12 +25,12 @@ test('each equation cell receives its exact score before equation bonuses',()=>{
  assert.ok(stages.every(x=>Number.isSafeInteger(x.amount)));
 });
 test('an equation multiplier is applied exactly once to every tile',()=>{
- const board=Array(169).fill(null);
+ const board=Array(SIZE*SIZE).fill(null);
  // A connected perpendicular equation reuses an existing tile.
  const start=makeEquation(['8','+','4','=','1','2']);
  for(const [i,tile] of Object.entries(start.pending))board[Number(i)]=tile;
  const down={};for(const [offset,value] of ['+','3','=','1','1'].entries()){
-   down[pos(7+offset,3)]=makeTile(value);
+   down[pos(10+offset,6)]=makeTile(value);
  }
  const connected=validateMove(board,down);
  const points=scoreMove(board,down,connected);
@@ -41,32 +41,32 @@ test('an equation multiplier is applied exactly once to every tile',()=>{
 });
 test('a real 2E square doubles each tile contribution once, including a locked crossing tile',()=>{
  const first=makeEquation(['8','+','4','=','1','2']);
- const board=Array(169).fill(null);
+ const board=Array(SIZE*SIZE).fill(null);
  for(const [index,tile] of Object.entries(first.pending))board[Number(index)]=tile;
  // The newly placed multiplication symbol occupies (9,3), a 2E square.
  // 8+0×1=8 is valid BIDMAS, connects to the locked 8 and fits through row 12.
  const pending={};
  for(const [offset,value] of ['+','0','×','1','=','8'].entries())
-   pending[pos(7+offset,3)]=makeTile(value);
+   pending[pos(10+offset,6)]=makeTile(value);
  const move=validateMove(board,pending);
  const points=scoreMove(board,pending,move);
  assert.equal(points.multiplier,2);
  const stages=buildScoringCeremony(points);
- const reused=stages.find(stage=>stage.index===pos(6,3));
+ const reused=stages.find(stage=>stage.index===pos(9,6));
  assert.equal(reused.existing,true);
- assert.equal(reused.amount,board[pos(6,3)].points*2);
- const operator=stages.find(stage=>stage.index===pos(9,3));
+ assert.equal(reused.amount,board[pos(9,6)].points*2);
+ const operator=stages.find(stage=>stage.index===pos(12,6));
  assert.equal(operator.value,'×');
  assert.equal(operator.premium,'2E');
- assert.equal(operator.amount,pending[pos(9,3)].points*2);
+ assert.equal(operator.amount,pending[pos(12,6)].points*2);
  assert.equal(total(stages),points.total);
 });
 test('programmed zero-point wildcards and a reused tile stay in the ceremony',()=>{
  const {board,pending,move}=makeEquation(['8','+','4','=','1','2']);
- pending[pos(6,5)]={...makeTile(BLANK_ANY),value:'4',points:0};
+ pending[pos(9,8)]={...makeTile(BLANK_ANY),value:'4',points:0};
  const revised=validateMove(board,pending);
  const result=buildScoringCeremony(scoreMove(board,pending,revised));
- const wildcard=result.find(stage=>stage.kind==='tile'&&stage.index===pos(6,5));
+ const wildcard=result.find(stage=>stage.kind==='tile'&&stage.index===pos(9,8));
  assert.equal(wildcard.amount,0);
  assert.match(wildcard.label,/WILDCARD/);
  assert.equal(total(result),scoreMove(board,pending,revised).total);
@@ -88,10 +88,10 @@ test('Drift equipment and anomaly stages always sum to the authoritative score',
 });
 test('amplifier and other tile upgrades allocate energy to the correct tile stage',()=>{
  const {board,pending,move}=makeEquation(['8','+','4','=','1','2']);
- assert.equal(bonusAt(6,3),'2T');
+ assert.equal(bonusAt(9,6),'2T');
  const plain=scoreRogueMove(board,pending,move,makeRogueState(),1);
  const amped=scoreRogueMove(board,pending,move,{...makeRogueState(),upgrades:['amplifier']},1);
- const index=pos(6,3);
+ const index=pos(9,6);
  const a=buildScoringCeremony(plain).find(x=>x.index===index);
  const b=buildScoringCeremony(amped).find(x=>x.index===index);
  assert.equal(b.amount-a.amount,4);

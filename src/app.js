@@ -1,5 +1,6 @@
 import {SIZE,CENTER,HAND_SIZE,TURNS_PER_SECTOR,pos,coords,bonusAt,makeTile,makeBag,randomFloat,refill,tilePool,validateMove,inspectPlacement,scoreMove,nextTarget,BLANK_NUMBER,BLANK_OPERATOR,BLANK_ANY,BLANK_KINDS,isBlank,freeExchangeReason,reorderRack,isOperator,isDigit,resolveBlank} from './engine.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {initBoardZoom} from './board-zoom.js';
 import {SAVE_KEY,INTRO_KEY,dealPlayableRack,freshStats,freshProgress,recordMove,sectorReport,completeProgress,saveRun,loadRun} from './solo.js';
 import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  MAX_PERMANENT_SLOTS,MAX_TEMPORARY_SLOTS,makeRogueState,anomalyForSector,targetForSector,
@@ -10,7 +11,7 @@ import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
-import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup} from './drift-map.js';
+import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup,zoneIntermissionMarkup} from './drift-map.js';
 import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitNumberSlots,kitRackSize,kitRackOptions} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
@@ -654,7 +655,7 @@ function render(){
  }
  const coach=$('coach-hint');
  const placed=Object.keys(state.pending).length;
- if(state.phase==='won')coach.textContent=isDrift()?'Reactor stabilised. Spend Flux in the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
+ if(state.phase==='won')coach.textContent=isDrift()?'Sector cleared. Review your results and zone route, or visit the Salvage Bay.':'Reactor stabilised. Open the sector report to advance.';
  else if(state.phase==='lost')coach.textContent=isDrift()?'Run ended. Review the final report; upgrades reset on a new Drift.':'Review your moves and retry this sector.';
  else if(state.swapping)coach.textContent=
    isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
@@ -675,11 +676,11 @@ function showModal(eyebrow,title,body,buttons){
 }
 function showZoneMap(){
  if(!isDrift())return;
- const returnAction=state.phase==='won'?showShop:
+ const returnAction=state.phase==='won'?showSectorOutcome:
    state.phase==='lost'?showSectorOutcome:undefined;
  showModal('GALACTIC ROUTE','The Drift · Zone Map',
    zoneMapMarkup(state.rogue,state.sector,state.phase),
-   [{text:'BACK TO '+(state.phase==='won'?'SALVAGE BAY':state.phase==='lost'?'REPORT':'BOARD'),primary:true,fn:returnAction}]);
+   [{text:'BACK TO '+(state.phase==='won'?'ROUND RESULTS':state.phase==='lost'?'REPORT':'BOARD'),primary:true,fn:returnAction}]);
 }
 function showBossEncounter(){
  if(!isDrift()||!isBossSector(state.sector))return;
@@ -1028,36 +1029,96 @@ function reportRows(moves){
    `<div class="report-move"><span class="report-turn">T${m.turn}</span><strong>${escapeText(m.equation)}</strong><span>+${m.points}</span></div>`
  ).join('')+'</div>';
 }
+function showDriftHub(eyebrow,title,body,buttons,view){
+ const hub=$('drift-hub');
+ if($('modal').open)$('modal').close();
+ hub.dataset.view=view;
+ $('drift-hub-eyebrow').textContent=eyebrow;
+ $('drift-hub-title').textContent=title;
+ $('drift-hub-body').innerHTML=body;
+ $('drift-hub-actions').replaceChildren(...buttons.map(({text,fn,kind})=>{
+   const button=document.createElement('button');button.type='button';
+   button.className=kind==='go'?'drift-go':kind==='bay'?'drift-bay':'drift-back';
+   button.textContent=text;
+   button.onclick=()=>{hub.close();fn?.();};
+   return button;
+ }));
+ $('drift-hub-close').onclick=()=>hub.close();
+ if(!hub.open)hub.showModal();
+ $('drift-hub-body').scrollTop=0;
+}
+function showDriftRoundSummary(report){
+ if(!isDrift()||state.phase!=='won')return;
+ const progress=state.progress,info=zoneInfo(state.rogue,state.sector);
+ const best=report.best?escapeText(report.best.equation)+' · +'+report.best.points+' energy':'No scored equations';
+ const content=`<div class="drift-summary">
+ <p class="drift-summary-heading">MISSION COMPLETE · ${escapeText(info.name)} · SECTOR ${String(state.sector).padStart(2,'0')}</p>
+ <div class="drift-summary-energy">
+   <div><small>ENERGY COLLECTED</small><strong>${report.score}</strong></div>
+   <div><small>SECTOR TARGET</small><strong>${report.target}</strong></div>
+   <div class="drift-flux-award"><small>FLUX SALVAGED</small><strong>+${state.rogue.lastReward}</strong></div>
+ </div>
+ <div class="drift-summary-meter" aria-label="${Math.min(100,Math.round(100*report.score/report.target))}% of sector target"><div style="width:${Math.min(100,Math.round(100*report.score/report.target))}%"></div></div>
+ <div class="drift-summary-layout">
+   <section class="drift-summary-card drift-summary-map" aria-label="Zone map after this round">
+     <h3>YOUR POSITION IN THE DRIFT</h3>
+     ${zoneIntermissionMarkup(state.rogue,state.sector,'won')}
+     <button type="button" id="drift-full-map" class="drift-map-full">EXPLORE FULL ZONE MAP ↗</button>
+   </section>
+   <section class="drift-summary-card" aria-label="Round scoring breakdown">
+     <h3>ROUND TELEMETRY</h3>
+     <div class="drift-summary-stats">
+       <div><small>EQUATIONS</small><strong>${report.equations}</strong></div>
+       <div><small>TURNS USED</small><strong>${report.turnsUsed}/${maxTurns()}</strong></div>
+       <div><small>FREE SWAPS</small><strong>${report.freeExchanges}</strong></div>
+     </div>
+     <p class="drift-summary-best"><strong>BEST CALCULATION</strong><br>${best}</p>
+     <div class="drift-summary-recent"><h3>RECENT SCORING MOVES</h3>${reportRows(report.moves.slice(-3))}</div>
+   </section>
+ </div>
+ </div>`;
+ showDriftHub('THE DRIFT · SECTOR '+String(state.sector).padStart(2,'0')+' CLEAR',
+   isBossSector(state.sector)?'Zone guardian defeated':'Reactor stabilised',
+   content,[
+     {text:'⛭ VISIT SALVAGE BAY',kind:'bay',fn:showShop},
+     {text:'CONTINUE TO SECTOR '+String(state.sector+1).padStart(2,'0')+' →',kind:'go',fn:()=>freshSector(state.sector+1)}
+   ],'results');
+ $('drift-full-map').onclick=()=>{$('drift-hub').close();showZoneMap();};
+}
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
- const offers=shopOffers(state.sector,state.rogue);
- const consumables=shopTemperatures(state.sector);
+ const offers=shopOffers(state.sector,state.rogue),consumables=shopTemperatures(state.sector);
  const occupied=heldConsumables(state.rogue).length;
- const intro=`${isBossSector(state.sector)?zoneVictoryMarkup(state.rogue,state.sector):''}<div class="salvage-intro">
-   <div class="salvage-flux"><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
-   <div><strong>SECTOR ${state.sector} STABILISED</strong>
-   <p>+${state.rogue.lastReward} Flux. Choose your build: only four ship systems and two one-use mission gadgets fit on the reactor. Installed ship systems last until this Drift run ends.</p></div>
-   </div>
-   <div class="salvage-loadout"><strong>SHIP SYSTEMS ${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong>
-     <strong>GADGETS ${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
-   <div class="salvage-section-heading">SHIP SYSTEMS <small>FOUR ROTATING OFFERS</small></div>
-   <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Ship Systems offered in the Salvage Bay"></div>
-   <div class="salvage-section-heading">MISSION GADGETS <small>USE ONCE · UP TO TWO HELD</small></div>
-   <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Mission Gadgets offered in the Salvage Bay"></div>
-   <p id="salvage-feedback" class="salvage-feedback">Categories distinguish board-space, tile-type, length, rack, economy and tactical abilities. Tap installed Ship Systems for details or activate Mission Gadgets while playing.</p>`;
- showModal('SALVAGE BAY',`Upgrade before sector ${state.sector+1}`,intro,[
-   {text:'RUN REPORT',fn:showRunReport},
-   {text:'ENTER NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}
- ]);
+ const intro=`<div class="drift-salvage-hero">
+    <img src="./assets/salvage-bay.svg" width="1200" height="470" alt="A detailed orbital repair bay: the reactor ship suspended on a maintenance cradle, welding arms and illuminated salvage modules.">
+    <div class="drift-salvage-caption">
+      <span>BAY 07 · ORBITAL MAINTENANCE DOCK</span><strong>REBUILD FOR THE NEXT JUMP</strong>
+      <p>Install a ship system or stock a mission gadget, then launch when you're ready. Shopping is optional.</p>
+    </div>
+ </div>
+ <div class="drift-shop-budget" aria-label="Salvage budget and equipped items">
+   <div><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
+   <div><span>SHIP SYSTEMS</span><strong>${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong></div>
+   <div><span>MISSION GADGETS</span><strong>${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
+ </div>
+ <h3 class="drift-shop-tab-title">SHIP SYSTEMS · STAY INSTALLED FOR THIS DRIFT</h3>
+ <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Four rotating Ship System offers"></div>
+ <h3 class="drift-shop-tab-title">MISSION GADGETS · USE ONCE, CARRY TWO</h3>
+ <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Available Mission Gadgets"></div>
+ <p id="salvage-feedback" class="salvage-feedback" role="status" aria-live="polite">
+  Choose what helps your next sector. Your installed equipment is also shown on the main reactor HUD.
+ </p>`;
+ showDriftHub('THE DRIFT · OPTIONAL UPGRADE STOP',
+  'Salvage Bay · Deck 07',intro,[
+    {text:'← ROUND RESULTS',kind:'back',fn:showSectorOutcome},
+    {text:'CONTINUE TO SECTOR '+String(state.sector+1).padStart(2,'0')+' →',kind:'go',fn:()=>freshSector(state.sector+1)}
+  ],'salvage');
  const permanentGrid=$('salvage-grid');
- if(!offers.length){
-   const end=document.createElement('p');end.className='salvage-empty';
-   end.textContent='No unowned permanent modules remain.';
-   permanentGrid.append(end);
- }
+ if(!offers.length){const end=document.createElement('p');end.className='salvage-empty';
+   end.textContent='All available ship systems have been installed.';permanentGrid.append(end);}
  function makeCard(item,temporary=false){
-   const card=document.createElement('div');card.className='salvage-card'+
-     (temporary?' salvage-consumable':'');
+   const card=document.createElement('div');
+   card.className='salvage-card'+(temporary?' salvage-consumable':'');
    card.dataset.category=item.kind;card.dataset.itemId=item.id;
    const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
    const icon=document.createElement('div');icon.className='salvage-icon';icon.innerHTML=equipmentArt(item.id);
@@ -1069,23 +1130,21 @@ function showShop(){
      state.rogue.upgrades.length>=MAX_PERMANENT_SLOTS;
    buy.disabled=full||state.rogue.flux<item.cost;
    buy.textContent=item.cost+' FLUX · '+(full?'SLOTS FULL':
-     state.rogue.flux<item.cost?'NOT ENOUGH':temporary?'STORE':'INSTALL');
-   buy.setAttribute('aria-label',(temporary?'Store ':'Install ')+item.name+
-     ' for '+item.cost+' Flux');
+     state.rogue.flux<item.cost?'NOT ENOUGH':temporary?'STORE GADGET':'INSTALL SYSTEM');
+   buy.setAttribute('aria-label',(temporary?'Store ':'Install ')+item.name+' for '+item.cost+' Flux');
    buy.onclick=()=>{
      const result=temporary?purchaseTemporary(state.rogue,item.id,state.sector):
        purchaseUpgrade(state.rogue,item.id,state.sector);
      if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
      state.rogue=result.rogue;persistRun();render();showShop();
      $('salvage-feedback').textContent=result.reason+
-       (temporary?'. Stored in your Mission Gadget slots.':
-         '. Equipped for the remainder of this run.');
+       (temporary?'. Stored in Mission Gadget inventory.':'. Installed for the remainder of this Drift.');
    };
    card.append(tag,icon,title,description,buy);return card;
  }
- for(const item of offers)permanentGrid.append(makeCard(item));
- const temporaryGrid=$('salvage-temporary-grid');
- for(const item of consumables)temporaryGrid.append(makeCard(item,true));
+ offers.forEach(item=>permanentGrid.append(makeCard(item)));
+ const gadgetGrid=$('salvage-temporary-grid');
+ consumables.forEach(item=>gadgetGrid.append(makeCard(item,true)));
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
@@ -1107,7 +1166,7 @@ function showSectorOutcome(){
  <p class="report-best">Best calculation: ${best}</p>
  ${reportRows(report.moves)}
  <p class="report-note">${message}</p></div>`;
- if(isDrift()&&won){showShop();return;}
+ if(isDrift()&&won){showDriftRoundSummary(report);return;}
  if(won){
    showModal('SECTOR STABILISED',`Sector ${state.sector} complete!`,body,[
     {text:'VIEW RUN',fn:showRunReport},
@@ -1145,8 +1204,8 @@ function showRunReport(){
  <div class="report-moves">${rows||'<p>No sectors cleared yet. Start by reaching your first target.</p>'}</div></div>`;
  const buttons=state.phase==='won'?
    isDrift()?
-     [{text:'SALVAGE BAY',primary:true,fn:showShop},
-      {text:'NEXT SECTOR →',fn:()=>freshSector(state.sector+1)}]:
+     [{text:'ROUND RESULTS',primary:true,fn:showSectorOutcome},
+      {text:'SALVAGE BAY',fn:showShop}]:
      [{text:'BACK TO SECTOR REPORT',fn:showSectorOutcome},
       {text:'NEXT SECTOR →',primary:true,fn:()=>freshSector(state.sector+1)}]:
    state.phase==='lost'?
@@ -1215,7 +1274,7 @@ function showScoreResult(points,move){
       {text:state.localMatch.phase==='finished'?'FINAL STANDINGS →':'HAND OVER DEVICE →',
        primary:true,fn:finishLocalPresentation}:
       {text:state.phase==='playing'?'CONTINUE →':
-        isDrift()&&state.phase==='won'?'SALVAGE BAY →':'VIEW SECTOR REPORT →',
+        isDrift()&&state.phase==='won'?'VIEW ROUND RESULTS →':'VIEW SECTOR REPORT →',
        primary:true,fn:()=>{if(state.phase!=='playing')showSectorOutcome();}}]);
 }
 function finishScoringCeremony(ctl){
@@ -1483,9 +1542,9 @@ function showDriftIntro(){
  showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
    `<div class="training-steps">
      <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators. Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
+       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators (six numbers in Nebula/Quantum). Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
      <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>Survive a sector to enter the <strong>Salvage Bay</strong>. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
+       <p>After each cleared sector, review your energy, Flux reward and zone route. You can <strong>continue immediately</strong> or visit the illustrated <strong>Salvage Bay</strong> to buy upgrades. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
      <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
        <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
    </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
@@ -1652,3 +1711,5 @@ $('modal').addEventListener('cancel',e=>{
  if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
 });
 startSolo();
+
+initBoardZoom();

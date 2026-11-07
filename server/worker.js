@@ -1,6 +1,7 @@
 // Cloudflare Worker + one SQLite-backed hibernating Durable Object per room.
 // Browser clients never send authoritative scores or see opponents' racks.
 import {DurableObject} from 'cloudflare:workers';
+import {migrateOnlineRoom} from '../src/board-migration.js';
 import {roomCode,cleanRoomCode,OnlineError,makeOnlineLobby,joinOnlineLobby,
   leaveOnlineLobby,startOnlineMatch,takeOnlineAction,timeOutOnlineTurn,
   viewOnlineRoom,roomWakeAt,updateOnlinePilot} from '../src/online-rules.js';
@@ -152,7 +153,9 @@ export class GameRoom extends DurableObject {
    }
  }
  async load(){
-   const room=await this.ctx.storage.get('room');
+   const stored=await this.ctx.storage.get('room');
+   const room=migrateOnlineRoom(stored);
+   if(room!==stored)await this.ctx.storage.put('room',room);
    if(room&&room.expiresAt<=Date.now()){
      await this.ctx.storage.delete('room');
      await this.ctx.storage.deleteAlarm();

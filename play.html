@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor — Play</title>
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
 <body>
 <div class="stars" aria-hidden="true"></div>
 <div id="app">
@@ -33,7 +33,7 @@
 <div class="side-footer"><button id="run-report-btn" type="button" class="run-overview" aria-label="View the overall solo run report"><span>RUN SUMMARY</span><strong id="run-summary">0 sectors · 0 energy</strong></button></div>
 </aside>
 <section class="arena" aria-label="Equation playing area">
-<div class="board-frame" id="board-frame"><div id="board" class="board" role="grid" aria-label="13 by 13 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
+<div class="board-zoom-toolbar" role="group" aria-label="Board zoom controls"><span class="board-zoom-label">REACTOR VIEW · 19×19</span><button type="button" id="board-zoom-out" aria-label="Zoom out board" title="Zoom out">−</button><output id="board-zoom-level" aria-live="polite">100%</output><button type="button" id="board-zoom-in" aria-label="Zoom in board" title="Zoom in">+</button><button type="button" id="board-zoom-fit" title="Fit the full board">FIT</button><button type="button" id="board-zoom-center" title="Return to centre">⌖</button></div><div class="board-frame" id="board-frame"><div class="board-viewport" id="board-viewport" tabindex="0" aria-label="Pan the 19 by 19 board to view different areas. Zoom with the controls."><div id="board" class="board" role="grid" aria-label="19 by 19 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
 <div class="rack-section"><div class="rack-heading"><span>YOUR TILE RACK <span class="rack-sub">· MOVE TILES FREELY</span></span><div class="rack-actions"><button id="undo-last-btn" class="rack-undo" type="button" title="Undo last tile (Backspace)">↶ UNDO TILE</button><span id="rack-count">8 / 8</span></div></div>
 <div class="rack-row"><div id="rack" class="rack" aria-label="Your physical tile rack"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div></div>
 </section>
@@ -71,5 +71,12 @@
     <button id="local-switch-btn" type="button" class="local-privacy-switch">SWITCH GAME MODE</button>
   </div>
 </div>
+<dialog id="drift-hub" class="drift-hub" aria-labelledby="drift-hub-title">
+ <div class="drift-hub-shell">
+ <header class="drift-hub-header"><div><span id="drift-hub-eyebrow">THE DRIFT · AFTER ACTION</span><h2 id="drift-hub-title">Sector results</h2></div>
+ <button type="button" id="drift-hub-close" class="drift-hub-close" aria-label="Close this screen and return to the board">×</button></header>
+ <div id="drift-hub-body" class="drift-hub-body"></div>
+ <footer id="drift-hub-actions" class="drift-hub-actions"></footer>
+ </div></dialog>
 <dialog id="modal"><div class="modal-content"><div class="modal-heading"><span id="modal-eyebrow">TRANSMISSION</span><button id="modal-close" class="modal-x" type="button" aria-label="Close">×</button></div><h2 id="modal-title"></h2><div id="modal-body"></div><div id="modal-actions" class="modal-actions"></div></div></dialog>
 </body></html>

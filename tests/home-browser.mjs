@@ -42,7 +42,7 @@ try{
  await page.locator('.cell').first().waitFor();
  if(await page.locator('#modal[open]').count())
    await page.locator('#modal-actions button').last().click();
- assert.equal(await page.locator('#board .cell').count(),169);
+ assert.equal(await page.locator('#board .cell').count(),361);
  await page.locator('#mode-btn').click();
  await page.waitForURL(/index\.html$/);
  assert.match(await page.locator('[data-save="sector"]').textContent(),/CONTINUE/);
@@ -81,7 +81,7 @@ try{
    await page.locator('#modal-actions button').last().click();
  assert.equal(await page.locator('#rack .bracket-tile').count(),2);
  assert.equal(await page.locator('#rack-count').textContent(),'11 / 11');
- assert.equal(await page.locator('#board .cell').count(),169);
+ assert.equal(await page.locator('#board .cell').count(),361);
  assert.deepEqual(errors,[],'all home-page navigation must be free of script errors');
  console.log('Mission home browser passed: four full-card keyboard/click routes, save/resume, Local setup back, online and Alien Lab, 4 viewport widths.');
  await page.close();

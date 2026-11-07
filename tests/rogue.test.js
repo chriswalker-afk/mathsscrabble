@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeBag,makeTile,bonusAt,pos,nextTarget,scoreMove,validateMove,BLANK_ANY} from '../src/engine.js';
+import {SIZE,CENTER,makeBag,makeTile,bonusAt,pos,nextTarget,scoreMove,validateMove,BLANK_ANY} from '../src/engine.js';
 import {dealPlayableRack,saveRun,loadRun,freshStats,freshProgress,sectorReport,completeProgress} from '../src/solo.js';
 import {
  ROGUE_SAVE_KEY,ROGUE_ITEMS,ROGUE_ITEM_BY_ID,makeRogueState,anomalyForSector,
@@ -15,7 +15,7 @@ const storage=()=>{
 const makeState=(mode='rogue')=>{
  const original=makeBag(()=>0.25);
  const draw=dealPlayableRack([],original);
- return {board:Array(169).fill(null),pending:{},rack:draw.rack,bag:draw.bag,
+ return {board:Array(SIZE*SIZE).fill(null),pending:{},rack:draw.rack,bag:draw.bag,
    sector:1,turn:1,score:0,phase:'playing',placementOrder:[],
    stats:freshStats(),progress:freshProgress(),
    mode,rogue:mode==='rogue'?makeRogueState():null};
@@ -28,8 +28,8 @@ function boosted(upgrades=[],extra={}) {
  state.flux=state.earned-state.spent;
  return state;
 }
-function moveAt(values,startCol=3,row=6){
- const board=Array(169).fill(null),pending={};
+function moveAt(values,startCol=CENTER-3,row=CENTER){
+ const board=Array(SIZE*SIZE).fill(null),pending={};
  values.map(makeTile).forEach((tile,i)=>pending[pos(row,startCol+i)]=tile);
  const move=validateMove(board,pending);
  return {board,pending,move};
@@ -74,20 +74,20 @@ test('no double Flux rewards after refreshing a completed sector',()=>{
  assert.equal(second.rogue.flux,first.reward+second.reward);
 });
 test('different passives affect tangible score without changing mathematical truth',()=>{
- const sample=moveAt(['7','+','1','=','8'],4);
+ const sample=moveAt(['7','+','1','=','8'],7);
  const standard=scoreMove(sample.board,sample.pending,sample.move);
  const plain=scoreRogueMove(sample.board,sample.pending,sample.move,makeRogueState(),1);
  assert.equal(plain.total,standard.total);
  const ion=scoreRogueMove(sample.board,sample.pending,sample.move,boosted(['ion-seven']),1);
  assert.ok(ion.total>=plain.total+3);
- const operator=moveAt(['3','×','2','=','6'],4);
+ const operator=moveAt(['3','×','2','=','6'],7);
  const vanilla=scoreRogueMove(operator.board,operator.pending,operator.move,makeRogueState(),1);
  const boostedOperator=scoreRogueMove(operator.board,operator.pending,operator.move,boosted(['operator-core']),1);
  assert.ok(boostedOperator.total>=vanilla.total+3);
 });
 test('wildcards remain zero point even when symbol matches an equipped upgrade',()=>{
- const {board,pending,move}=moveAt(['7','+','1','=','8'],4);
- const index=pos(6,4);
+ const {board,pending,move}=moveAt(['7','+','1','=','8'],7);
+ const index=pos(9,7);
  pending[index]={...makeTile(BLANK_ANY),value:'7',points:0};
  const corrected=validateMove(board,pending);
  const score=scoreRogueMove(board,pending,corrected,boosted(['ion-seven']),1);
@@ -95,37 +95,37 @@ test('wildcards remain zero point even when symbol matches an equipped upgrade',
  assert.equal(score.total,unboosted.total);
 });
 test('Amplifier Array upgrades every newly placed 2T into a 3T',()=>{
- const {board,pending,move}=moveAt(['8','+','4','=','1','2'],3);
- assert.equal(bonusAt(6,3),'2T');
+ const {board,pending,move}=moveAt(['8','+','4','=','1','2'],6);
+ assert.equal(bonusAt(9,6),'2T');
  const vanilla=scoreRogueMove(board,pending,move,makeRogueState(),1);
  const boostedScore=scoreRogueMove(board,pending,move,boosted(['amplifier']),1);
  assert.equal(boostedScore.base-vanilla.base,4);
  assert.equal(boostedScore.total-vanilla.total,4*vanilla.multiplier);
 });
 test('Crosslink and Longwave add energy only in relevant contexts',()=>{
- const first=moveAt(['8','+','4','=','1','2'],3);
+ const first=moveAt(['8','+','4','=','1','2'],6);
  const board=[...first.board];
  for(const [index,tile] of Object.entries(first.pending))board[Number(index)]=tile;
  const pending={};
- for(const [j,value] of ['+','3','=','1','1'].entries())pending[pos(7+j,3)]=makeTile(value);
+ for(const [j,value] of ['+','3','=','1','1'].entries())pending[pos(10+j,6)]=makeTile(value);
  const move=validateMove(board,pending);
  const without=scoreRogueMove(board,pending,move,makeRogueState(),1);
  const withCross=scoreRogueMove(board,pending,move,boosted(['crosslink']),1);
  assert.equal(withCross.total-without.total,5);
  assert.equal(scoreRogueMove(first.board,first.pending,first.move,boosted(['crosslink']),1).total,
    scoreRogueMove(first.board,first.pending,first.move,makeRogueState(),1).total);
- const long=moveAt(['1','2','+','3','=','1','5'],3);
+ const long=moveAt(['1','2','+','3','=','1','5'],6);
  const wave=scoreRogueMove(long.board,long.pending,long.move,boosted(['longwave']),1);
  assert.equal(wave.total-scoreRogueMove(long.board,long.pending,long.move,makeRogueState(),1).total,7);
 });
 test('Echo Generator counts placed physical tiles above four',()=>{
- const {board,pending,move}=moveAt(['8','+','4','=','1','2'],3);
+ const {board,pending,move}=moveAt(['8','+','4','=','1','2'],6);
  const vanilla=scoreRogueMove(board,pending,move,makeRogueState(),1);
  const echo=scoreRogueMove(board,pending,move,boosted(['echo']),1);
  assert.equal(echo.total-vanilla.total,2);
 });
 test('anomalies change actual scoring; Leak Shield negates only Power Leak',()=>{
- const {board,pending,move}=moveAt(['8','+','4','=','1','2'],3);
+ const {board,pending,move}=moveAt(['8','+','4','=','1','2'],6);
  const scoreBase=scoreRogueMove(board,pending,move,makeRogueState(),1);
  const leak=scoreRogueMove(board,pending,move,makeRogueState(),3);
  assert.equal(leak.total,scoreBase.total-Math.floor(scoreBase.total*.15));
@@ -191,7 +191,7 @@ test('single-use capacitor is purchased with Flux and consumed exactly once',()=
  assert.equal(after.rogue.pulseBought,1);
  assert.equal(after.rogue.flux,reward.rogue.flux-PULSE_ITEM.cost);
  assert.equal(validRogueState(after.rogue,1,'won'),true);
- const {board,pending,move}=moveAt(['8','+','4','=','1','2'],3);
+ const {board,pending,move}=moveAt(['8','+','4','=','1','2'],6);
  const plain=scoreRogueMove(board,pending,move,reward.rogue,1);
  const charged=scoreRogueMove(board,pending,move,after.rogue,1);
  assert.equal(charged.total-plain.total,12);

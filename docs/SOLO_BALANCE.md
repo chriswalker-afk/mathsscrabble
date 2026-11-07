@@ -31,7 +31,7 @@ Beyond sector 8 the target grows by about 18% each sector. These averages **are 
 2. Let students attempt at least two connected equations. Record whether they understand how a pre-existing tile joins the new expression and whether they use premium squares deliberately.
 3. Watch for unproductive all-number, all-operation, or mixed-but-unusable racks. Note how often students exchange tiles and whether they recognise the free exchange.
 4. At each sector completion, record total points, turns, equations, invalid attempts and exchanges from the report. Avoid relying only on whether they beat the target.
-5. Ask whether every symbol on the enlarged 13×13 board is readable on an ordinary school laptop (1366×768, 1280×720), portrait tablet and phone. Confirm that board tile points no longer obscure mathematical notation.
+5. Ask whether every symbol on the enlarged 19×19 board is readable on an ordinary school laptop (1366×768, 1280×720), portrait tablet and phone. Confirm that board tile points no longer obscure mathematical notation.
 6. Reload mid-move and immediately after submitting an equation, then confirm rack order, pending tiles, score, turn and completed-sector history are intact.
 
 ### Signals that warrant adjustment

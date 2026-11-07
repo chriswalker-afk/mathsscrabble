@@ -33,12 +33,23 @@ test('four levels each produce exactly 151 unique, playable physical tile IDs',(
    }
  }
 });
+test('Nebula uses precisely seven positive fractions, with four pieces each',()=>{
+ const bag=makeBag(random,'rational');
+ const fractions=bag.filter(tile=>tile.value?.includes('/'));
+ const wanted=['1/2','1/4','3/4','5/4','3/2','1/3','2/3'];
+ assert.equal(fractions.length,28);
+ assert.deepEqual([...new Set(fractions.map(tile=>tile.value))].sort(),wanted.slice().sort());
+ for(const value of wanted)assert.equal(fractions.filter(t=>t.value===value).length,4,
+  value+' must appear four times in the finite bag');
+ assert.ok(bag.some(tile=>tile.value==='0'));
+ assert.ok(bag.some(tile=>tile.value==='9'));
+});
 test('Nebula supplies only positive fractions while Quantum keeps signed fractions',()=>{
  const nebula=makeBag(random,'rational'),quantum=makeBag(random,'advanced');
  const nebulaFractions=nebula.filter(t=>t.value?.includes('/'));
  assert.equal(nebulaFractions.length,28);
  assert.ok(nebulaFractions.every(t=>!t.value.startsWith('−')));
- assert.equal(new Set(nebulaFractions.map(t=>t.value)).size,14);
+ assert.equal(new Set(nebulaFractions.map(t=>t.value)).size,7);
  assert.ok(quantum.some(t=>t.value?.startsWith('−')&&t.value.includes('/')));
 });
 test('integer kit contains signed whole-number tiles but only basic operations',()=>{
@@ -120,11 +131,11 @@ test('a scored bracket equation requires both linked physical halves in one turn
  const tiles=[open,makeTile('1/2'),makeTile('+'),makeTile('1/2'),close,
   makeTile('×'),makeTile('2'),makeTile('='),makeTile('2')];
  const board=Array(SIZE*SIZE).fill(null),pending={};
- for(let i=0;i<tiles.length;i++)pending[pos(CENTER,2+i)]=tiles[i];
+ for(let i=0;i<tiles.length;i++)pending[pos(CENTER,5+i)]=tiles[i];
  const valid=validateMove(board,pending);
  assert.equal(valid.text,'(1/2+1/2)×2=2');
  assert.ok(scoreMove(board,pending,valid,{rackSize:11}).total>0);
- delete pending[pos(CENTER,2)];
+ delete pending[pos(CENTER,5)];
  assert.throws(()=>validateMove(board,pending),/bracket|gap/i);
 });
 test('bag scan groups fractions and linked brackets without hiding physical counts',()=>{
@@ -141,7 +152,7 @@ test('rational and quantum solo saves survive an exact local validation round tr
   const hand=dealPlayableRack([],makeBag(random,id),kitRackOptions(id),random);
   const map=new Map(),storage={setItem:(k,v)=>map.set(k,v),getItem:k=>map.get(k)};
   const state={mode:'sector',tileSet:id,rogue:null,sector:1,score:0,turn:1,freeSwapTurn:0,
-    phase:'playing',board:Array(169).fill(null),rack:hand.rack,bag:hand.bag,
+    phase:'playing',board:Array(SIZE*SIZE).fill(null),rack:hand.rack,bag:hand.bag,
     pending:{},placementOrder:[],stats:freshStats(),progress:freshProgress()};
   assert.equal(saveRun(storage,state),true,id+' should save');
   assert.equal(loadRun(storage,'sector').tileSet,id);

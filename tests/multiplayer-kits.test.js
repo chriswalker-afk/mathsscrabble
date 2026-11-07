@@ -24,7 +24,7 @@ function prepared(match,wanted){
   }
   return {...match,bag,players:match.players.map((p,i)=>i===0?{...p,rack}:p)};
 }
-function placements(match,values,startColumn=3){
+function placements(match,values,startColumn=CENTER-3){
   const pending={},used=new Set(),rack=match.players[0].rack;
   for(const [i,value] of values.entries()){
     const tile=value==='='?makeTile('='):
@@ -70,7 +70,7 @@ test('a real Nebula equation scores with both physical brackets and a six-number
   match=prepared(match,['1/2','1/2','+','×','2','2']);
   assert.ok(validLocalMatch(match));
   const pending=placements(match,values,2);
-  const broken={...pending};delete broken[pos(CENTER,6)];
+  const broken={...pending};delete broken[pos(CENTER,9)];
   assert.throws(()=>scoreLocalTurn(match,broken),/bracket|gap/i);
   const before=match.players[0].score;
   const scored=scoreLocalTurn(match,pending);
@@ -119,9 +119,9 @@ test('online host kit is authoritative, immutable after creation, and hidden han
     assert.ok(tile);
     assert.throws(()=>takeOnlineAction(started,hashA,
       {id:'spoof-maths-tile-1234',revision:started.revision,type:'score',
-       placements:[{index:pos(6,5),tileId:tile.id,value:'999'},
-                   {index:pos(6,6),tileId:'=',value:'='},
-                   {index:pos(6,7),tileId:tile.id,value:tile.value}]},1400,rng),
+       placements:[{index:pos(9,8),tileId:tile.id,value:'999'},
+                   {index:pos(9,9),tileId:'=',value:'='},
+                   {index:pos(9,10),tileId:tile.id,value:tile.value}]},1400,rng),
       /cannot be changed|only once/i);
     assert.equal(started.match.players[0].score,0);
     assert.equal(started.revision,lobby.revision+1);
@@ -133,7 +133,7 @@ test('Cloudflare rules accept exact positive rational mathematics and score the 
   room=startOnlineMatch(room,hashA,{id:'start-rational-12345',revision:room.revision},1200,rng).room;
   room={...room,match:prepared(room.match,['1/2','+','1/2','1'])};
   assert.ok(validLocalMatch(room.match));
-  const pending=placements(room.match,['1/2','+','1/2','=','1'],4);
+  const pending=placements(room.match,['1/2','+','1/2','=','1'],7);
   const packet=Object.entries(pending).map(([index,t])=>({
     index:Number(index),tileId:t.value==='='?'=':t.id,value:t.value
   }));

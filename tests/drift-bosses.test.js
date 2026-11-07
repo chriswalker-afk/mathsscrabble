@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeBag,makeTile,pos,validateMove} from '../src/engine.js';
+import {SIZE,CENTER,makeBag,makeTile,pos,validateMove} from '../src/engine.js';
 import {makeRogueState,scoreRogueMove,anomalyForSector,targetForSector,rogueRackOptions} from '../src/rogue.js';
 import {dealPlayableRack} from '../src/solo.js';
 import {buildScoringCeremony} from '../src/score-ceremony.js';
@@ -10,8 +10,8 @@ import {
  selectForcedTile,validateBossMove,resolveBossScore
 } from '../src/drift-bosses.js';
 const withBoss=(id)=>({...makeRogueState(),zoneBosses:[id]});
-const equation=(values=['8','+','4','=','1','2'],row=6,col=3)=>{
- const board=Array(169).fill(null),pending={};
+const equation=(values=['8','+','4','=','1','2'],row=CENTER,col=CENTER-3)=>{
+ const board=Array(SIZE*SIZE).fill(null),pending={};
  values.forEach((v,i)=>pending[pos(row,col+i)]=makeTile(v));
  return {board,pending,move:validateMove(board,pending)};
 };
@@ -77,7 +77,7 @@ test('addition and subtraction embargoes remove only the sealed operator from el
 test('grid warden has a consistent, accessible, center-safe blockade',()=>{
  const rogue=withBoss('grid-warden'),field=bossField(rogue,3);
  assert.equal(field.blocked.size,8);
- assert.equal(field.blocked.has(pos(6,6)),false);
+ assert.equal(field.blocked.has(pos(9,9)),false);
  assert.equal(bossField(rogue,2).blocked.size,0);
  const {board,pending,move}=equation();
  assert.doesNotThrow(()=>validateBossMove(board,pending,move,rogue,3));
@@ -88,7 +88,7 @@ test('rift squares drain energy exactly once per newly placed physical tile',()=
  const {board,pending,move}=equation();
  const plain=scoreRogueMove(board,pending,move,withBoss('grid-warden'),3);
  const rogue=withBoss('curse-weaver');
- assert.ok(bossField(rogue,3).rifts.has(pos(6,3)));
+ assert.ok(bossField(rogue,3).rifts.has(pos(9,6)));
  const cursed=scoreRogueMove(board,pending,move,rogue,3);
  assert.equal(cursed.total,plain.total-6);
  assert.equal(cursed.anomalyPenalty,6);
@@ -118,7 +118,7 @@ test('relic collector requires one highlighted tile until it is scored, not on e
  assert.doesNotThrow(()=>validateBossMove(board,without,move,rogue,3));
 });
 test('Circuit Serpent rejects equations longer than eight spaces',()=>{
- const {board,pending,move}=equation(['1','2','+','3','+','4','=','1','9'],6,2);
+ const {board,pending,move}=equation(['1','2','+','3','+','4','=','1','9'],CENTER,CENTER-4);
  assert.equal(move.indices.length,9);
  assert.throws(()=>validateBossMove(board,pending,move,withBoss('short-circuit'),3),/eight squares/i);
  assert.doesNotThrow(()=>validateBossMove(board,pending,move,withBoss('short-circuit'),2));

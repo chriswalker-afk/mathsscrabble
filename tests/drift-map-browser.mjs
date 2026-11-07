@@ -72,7 +72,7 @@ try{
  await page.reload({waitUntil:'networkidle'});
  assert.equal(await page.locator('#drift-zone-map').isVisible(),true);
  assert.equal(await page.locator('#drift-zone-map .zone-node').count(),3);
- assert.equal(await page.locator('#board .cell').count(),169);
+ assert.equal(await page.locator('#board .cell').count(),361);
  assert.ok((await page.evaluate(()=>document.documentElement.scrollWidth))<=392,
     'zone strip and boss controls must not horizontally overflow a phone');
  await page.locator('#drift-zone-map').click();

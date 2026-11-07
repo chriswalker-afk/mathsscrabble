@@ -123,3 +123,5 @@
  .online-code-card{grid-template-columns:1fr;gap:6px}
  .online-code-card button{max-width:100%}
 }
+
+.online-app .board-zoom-toolbar{max-width:665px}

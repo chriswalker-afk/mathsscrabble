@@ -92,7 +92,7 @@ async function routeApi(route){
 for(const context of [hostContext,guestContext])
  await context.route('http://127.0.0.1:8787/api/**',routeApi);
 
-const cell=(page,r,c)=>page.locator('.cell[data-index="'+(13*r+c)+'"]');
+const cell=(page,r,c)=>page.locator('.cell[data-index="'+((r+3)*19+(c+3))+'"]');
 async function place(page,symbol,r,c){
  if(symbol==='=')await page.locator('#equals-tile').click();
  else await page.locator('#rack .tile').evaluateAll((buttons,value)=>{
@@ -167,7 +167,7 @@ try{
  assert.equal(await host.locator('#rack .tile').count(),8);
  assert.equal(await host.locator('#online-bag-count').textContent(),'135');
  assert.equal(await active(host),false,'cannot score until an equation is placed');
- assert.equal(backend.room.match.board.length,169);
+ assert.equal(backend.room.match.board.length,361);
 
  await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
  await guest.locator('#online-gate').waitFor({state:'hidden'});

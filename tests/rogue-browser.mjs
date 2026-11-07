@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
-const cell=(row,col)=>page.locator('.cell[data-index="'+(row*13+col)+'"]');
+const cell=(row,col)=>page.locator('.cell[data-index="'+((row+3)*19+(col+3))+'"]');
 async function put(symbol,row,col){
  if(symbol==='='){await page.locator('#equals-tile').click();}
  else {
@@ -57,15 +57,47 @@ try{
  assert.match(await page.locator('#preview-equation').textContent(),/8\+4=12/);
  await page.locator('#score-btn').click();
  await page.reload({waitUntil:'networkidle'});
- assert.match(await page.locator('#modal-title').textContent(),/upgrade before sector 2/i);
- assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
+ assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
+ assert.equal(await page.locator('#drift-hub .drift-map-feature').count(),1,
+   'round results must show a map and saved zone boss');
+ assert.equal(await page.locator('#drift-hub .drift-summary-energy strong').count(),3,
+   'round results must include energy, target and Flux reward');
+ const visibleButtons=await page.locator('#drift-hub-actions button').allTextContents();
+ const wonSave=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
+ // Verify that the player may bypass shopping entirely without paying Flux.
+ const skipBay=await browser.newPage({viewport:{width:1366,height:768}});
+ await skipBay.addInitScript(raw=>{
+   localStorage.setItem('equa-nova.drift.v1',raw);
+   localStorage.setItem('equa-nova.last-mode.v1','rogue');
+ },wonSave);
+ await skipBay.goto('http://127.0.0.1:4173/play.html?mode=rogue',{waitUntil:'networkidle'});
+ assert.equal(await skipBay.locator('#drift-hub').isVisible(),true);
+ await skipBay.locator('#drift-hub-actions .drift-go').click();
+ const bypassed=await skipBay.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.drift.v1')));
+ assert.equal(bypassed.sector,2);
+ assert.equal(bypassed.rogue.upgrades.length,0);
+ assert.equal(bypassed.rogue.flux,Number(JSON.parse(wonSave).rogue.flux));
+ await skipBay.close();
+ assert.ok(visibleButtons.some(t=>/salvage bay/i.test(t)));
+ assert.ok(visibleButtons.some(t=>/continue to sector 02/i.test(t)));
+ await page.locator('#drift-hub-actions .drift-bay').click();
+ assert.match(await page.locator('#drift-hub-title').textContent(),/salvage bay/i);
+ assert.equal(await page.locator('.drift-salvage-hero img').count(),1);
+ await page.locator('.drift-salvage-hero img').evaluate(async img=>{
+   await img.decode();
+ });
+ assert.ok(await page.locator('.drift-salvage-hero img').evaluate(img=>img.naturalWidth>0),
+   'the illustrated hangar must fully decode as a real SVG asset');
+ await page.locator('#drift-hub-actions .drift-back').click();
+ assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
+ await page.locator('#drift-hub-actions .drift-bay').click();
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
  assert.equal(await page.locator('.salvage-card').count(),7);
  await page.setViewportSize({width:390,height:844});
  const shopOnPhone=await page.evaluate(()=>{
-   const actions=document.querySelector('#modal-actions').getBoundingClientRect();
-   const dialog=document.querySelector('#modal').getBoundingClientRect();
+   const actions=document.querySelector('#drift-hub-actions').getBoundingClientRect();
+   const dialog=document.querySelector('#drift-hub').getBoundingClientRect();
    return {actionsBottom:actions.bottom,dialogTop:dialog.top,dialogBottom:dialog.bottom,
      scrollWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth,viewportHeight:innerHeight};
  });
@@ -92,11 +124,13 @@ try{
  assert.equal(installed.rogue.pulse,1);
  assert.equal(installed.rogue.pulseBought,1);
  await page.reload({waitUntil:'networkidle'});
- assert.match(await page.locator('#modal-eyebrow').textContent(),/salvage bay/i);
+ assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
+ await page.locator('#drift-hub-actions .drift-bay').click();
+ assert.match(await page.locator('#drift-hub-title').textContent(),/salvage bay/i);
  assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-7));
  assert.match(await page.locator('.salvage-consumable').first().textContent(),/1\/2/);
  assert.equal(await page.locator('.salvage-card').filter({hasText:'Ionised Sevens'}).count(),0);
- await page.locator('#modal-actions button').last().click();
+ await page.locator('#drift-hub-actions .drift-go').click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
  assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
  assert.equal(await page.locator('#permanent-count').textContent(),'1 / 4');

@@ -2,8 +2,8 @@
 import {normalizeTileSet,hasBracketPair,FRACTION_VALUES,POSITIVE_FRACTION_VALUES,BRACKET_PAIRS_PER_BAG} from './tile-sets.js';
 import {checkEquation} from './expression-parser.js';
 export {checkEquation};
-export const SIZE = 13;
-export const CENTER = 6;
+export const SIZE = 19;
+export const CENTER = 9;
 export const HAND_SIZE = 8;
 export const NUMBER_SLOTS = 5;
 export const OPERATOR_SLOTS = 3;
@@ -61,8 +61,8 @@ export function bonusAt(r,c) {
  const a=Math.abs(r-CENTER),b=Math.abs(c-CENTER);
  const near=Math.min(a,b),far=Math.max(a,b);
  if(a===0 && b===0) return 'START';
- if(near===6 && far===6) return '3E';
- if((near===5 && far===5)||(near===3 && far===3)) return '2E';
+ if((near===9 && far===9)||(near===6 && far===6)) return '3E';
+ if((near===8 && far===8)||(near===5 && far===5)||(near===3 && far===3)) return '2E';
  if(near===1 && far===4) return '3T';
  if((near===0 && (far===3||far===6)) ||
     (near===1 && far===1) ||
@@ -89,7 +89,7 @@ export function randomFloat(){
 /** All kits contain 151 physical tiles; 16 digits become 8 bracket pairs. */
 export function makeBag(random=randomFloat,tileSet='natural') {
  const kit=normalizeTileSet(tileSet),values=[];
- const fractions=kit==='rational'?[...POSITIVE_FRACTION_VALUES,...POSITIVE_FRACTION_VALUES]:FRACTION_VALUES;
+ const fractions=kit==='rational'?Array.from({length:28},(_,i)=>POSITIVE_FRACTION_VALUES[i%POSITIVE_FRACTION_VALUES.length]):FRACTION_VALUES;
  let fractionIndex=0,bracketIndex=0;
  for(let digit=0;digit<=9;digit++){
    const copies=digit<=4?9:7;
