@@ -232,9 +232,10 @@ function addPartGroup(parent,field){
  const grid=document.createElement('div');grid.className='part-choices';
  for(const id of available){
    const selected=current()[field]===id;
+   const entitled=owns(PART_COLLECTIONS[field],id);
    const button=makeButton({
-     className:'part-choice',
-     ariaLabel:'Choose '+humanize(id)+' '+(field==='accessory'?'accessory':field),
+     className:'part-choice'+(entitled?'':' is-locked'),
+     ariaLabel:(entitled?'Choose ':'Preview locked ')++humanize(id)+' '+(field==='accessory'?'accessory':field),
      pressed:selected
    });
    button.dataset.field=field;button.dataset.option=id;
@@ -245,8 +246,11 @@ function addPartGroup(parent,field){
      framing:framingForPart(field,id)
    });
    const name=document.createElement('span');name.className='option-name';name.textContent=humanize(id);
-   button.append(scene,name);
-   button.addEventListener('click',()=>selectPart(field,id));
+   const tag=document.createElement('small');tag.className='reward-tag';
+   tag.textContent=isFreeAlienOption(PART_COLLECTIONS[field],id)?'FREE':entitled?'EARNED':'LOCKED';
+   button.append(scene,name,tag);
+   if(!entitled){const hint=document.createElement('span');hint.className='reward-hint';hint.textContent=labelReward(PART_COLLECTIONS[field],id);button.append(hint);}
+   button.addEventListener('click',()=>entitled?selectPart(field,id):previewLocked(field,id));
    grid.append(button);
  }
  group.append(head,grid);parent.append(group);
@@ -261,9 +265,10 @@ function addPaletteGroup(parent,role){
  const grid=document.createElement('div');grid.className='palette-choices';
  for(const [id,palette] of Object.entries(state.library.manifest.palettes)){
    const chosen=current().colours[role]===id;
+   const entitled=owns('palettes',id);
    const button=makeButton({
-     className:'palette-choice',
-     ariaLabel:'Apply '+humanize(id)+' to '+role,
+     className:'palette-choice'+(entitled?'':' is-locked'),
+     ariaLabel:(entitled?'Apply ':'Preview locked ')++humanize(id)+' to '+role,
      pressed:chosen
    });
    button.dataset.colourRole=role;button.dataset.palette=id;
@@ -272,8 +277,11 @@ function addPaletteGroup(parent,role){
      palette.primary+' 55%,'+palette.dark+' 100%)';
    const name=document.createElement('span');
    name.className='palette-name';name.textContent=humanize(id);
-   button.append(dot,name);
-   button.addEventListener('click',()=>selectColour(role,id));
+   const tag=document.createElement('small');tag.className='reward-tag';
+   tag.textContent=isFreeAlienOption('palettes',id)?'FREE':entitled?'EARNED':'LOCKED';
+   button.append(dot,name,tag);
+   if(!entitled){const hint=document.createElement('span');hint.className='reward-hint';hint.textContent=labelReward('palettes',id);button.append(hint);}
+   button.addEventListener('click',()=>entitled?selectColour(role,id):previewLockedColour(role,id));
    grid.append(button);
  }
  const description=document.createElement('p');description.className='palette-explanation';
@@ -370,6 +378,8 @@ function performRedo(){
  notify('Redid that change.');
 }
 function save(){
+ for(const [field,collection] of Object.entries(PART_COLLECTIONS))if(!owns(collection,current()[field])){notify('Locked parts cannot be saved. Choose an earned or free part.',true);return;}
+ for(const id of Object.values(current().colours))if(!owns('palettes',id)){notify('Locked colours cannot be saved.',true);return;}
  const successful=saveAlienToStorage(maybeStorage(),current(),state.library.manifest);
  if(!successful){notify('Unable to save on this device. You can still export an SVG file.',true);return;}
  state.saved=configJSON(current());
@@ -432,6 +442,7 @@ function startStatusMessage(loaded){
 async function boot(){
  try{
    state.library=await loadAlienLibrary('./');
+   refreshEntitlements();
    const loaded=loadSavedAlien(maybeStorage(),state.library.manifest);
    state.storageState=loaded.status;
    state.history=makeEditHistory(loaded.alien,state.library.manifest);
