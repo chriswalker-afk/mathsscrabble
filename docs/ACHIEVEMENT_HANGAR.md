@@ -165,3 +165,25 @@ On create/join, the browser binds that authenticated seat to the **currently act
 The site and the Cloudflare room Worker **both** need to be deployed from the same merged Pass D code. Merging only GitHub Pages will not update the Worker. Before inviting students, verify the Worker health endpoint, server-authenticated milestone responses and the browser's named-pilot label.
 
 Run \`npm run check\`, \`tests/achievement-pass-d.test.js\`, \`tests/achievement-pass-d-local-browser.mjs\`, the enhanced \`tests/online-browser.mjs\` and \`tests/online-worker-runtime.mjs\` via the CI workflow. Also retest 390px phone layouts and local-private handovers. Pass E remains the full cross-combination and accessibility release audit.
+
+## Pass E — Release-quality audit and change log (2026-11-07)
+
+### Verified implementation contract
+
+- **40/40 conditions**: New `tests/achievement-release-pass-e.test.js` exercises every award ID and includes negative checks for unearned types, wrong conditions, failed mathematical submissions, duplicate receipts, distinct winning matches/rooms and separate pilots. Existing Pass C/D tests additionally verify actual gameplay transitions, security checks, successful Worker-authoritative scores, same-device ownership and refresh.
+- **Cosmetic compatibility**: All previously free part IDs, palettes and presets remain available. The 36 new allowlisted SVG parts and four palettes are validated at the manifest and rendering layers. `tests/achievement-pass-e-browser.mjs` produces a 40-reward composite specimen sheet in the `equanova-alien-gallery` GitHub Actions artifact.
+- **Hangar accessibility**: Fixed an error where locked reward cards referenced SVG nodes for styling but the actual thumbnails were images. Locked thumbnails now become real muted/silhouette previews; earned ones return to full-colour. Added keyboard arrow/Home/End navigation, labelled tab panels and clear focus outlines.
+- **Alien Lab ownership**: Editor now checks pilot entitlements immediately before customisation, randomisation and saving; returns from Hangar, visibility changes and cross-tab storage changes refresh the locked/earned badges. A guest cannot save a cosmetic that was unlocked by a different pilot.
+- **Responsive UI**: Added narrow-width safeguards and ran the dedicated Hangar/Alien Lab browser audit at 320, 390, 768 and 1366px. Local and online multiplayer browser tests continue checking private rack visibility, score ceremony sequencing and 390px controls.
+
+### Cloudflare multiplayer deployment
+
+Cloudflare account's existing `equanova-rooms` Worker was found deployed from **PR #20** (version `72313a32-a289-4a7e-a3a4-1f819c90b102`). On 2026-11-07 the Worker was updated by uploading **Pass D GitHub main commit `09ce14af2481d23071d2e2a80fd2f64e61aadd5b`** and deploying version **`577c8b41-3944-4fd2-8494-e3e3afaed4df`** at 100% traffic. Cloudflare confirmed deployment **`a1e1170a-f143-4802-8655-9390e7433be1`**. The `GameRoom` Durable Object export and SQLite backend were preserved with no destructive migration or deletion.
+
+The direct Cloudflare API requires a JavaScript module payload for the static alien manifest; the upload replaces the manifest's *module representation only* in the Worker bundle (`alien-manifest-worker.js`) and adjusts that one bundled import. GitHub source, asset IDs, validation and runtime schema remain unchanged. The Worker still uses the project's existing compatibility date `2026-11-01`.
+
+**Production acceptance still recommended:** verify `https://rooms.mrwalkermaths.com/api/health` from a browser, create a room, join with a second pilot, check authenticated `achievementReceipts`, score a valid equation, reconnect and complete a match. Avoid using a real class until these checks have passed on production. The GitHub CI Worker runtime and two-device online browser suites are the automated baseline, but they do not by themselves verify DNS, live CORS, or production routing.
+
+### Further maintenance
+
+Local pilot profiles and rewards remain device-local; cloud account login and fully tamper-resistant cross-device progression were deliberately excluded. If the game later adds identity, design a deliberate server-side storage migration, not a silent switch away from local saves. Monitor storage capacity with long-running student accounts, especially when many completed-room receipts accumulate. Keep the existing invitation-code and opponent-rack secrecy checks in CI.
