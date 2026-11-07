@@ -674,16 +674,21 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 19×19 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
-  ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
-  ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
-  ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
+  ['Join on separate devices','The host creates a room; other pilots join with the code. The host chooses the kit and starts when at least two players have joined.'],
+  ['Place a real equation','Tap or drag tiles onto a row or column. The first equation crosses the centre; later ones join locked tiles. The = sign is free; blanks can take a chosen value.'],
+  ['Score, swap or pass','Press Score to check BIDMAS. Premium squares and connections boost points. Swap one tile free per turn when available, or pass if stuck.'],
+  ['Win on net points','The match ends when the bag empties and a player clears their rack, or after two rounds without scoring. Unused rack tile points are deducted.']
  ];
  for(const [i,[title,body]] of rules.entries()){
    const row=document.createElement('div');row.className='training-step';
    const num=document.createElement('span');num.textContent=String(i+1).padStart(2,'0');
    const detail=document.createElement('div');const t=document.createElement('strong');t.textContent=title;
    const p=document.createElement('p');p.textContent=body;detail.append(t,p);row.append(num,detail);wrap.append(row);
+ }
+ if(hasBracketPair(state.view?.tileSet||$('online-tile-kit').value)){
+  const note=document.createElement('p');note.className='training-footnote';
+  note.textContent='Place or exchange both ( and ) together as a matched pair.';
+  wrap.append(note);
  }
  showDialog('FLIGHT MANUAL','Online Signal Clash',wrap,[{label:'BACK TO BOARD',primary:true}]);
 };
