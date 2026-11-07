@@ -32,10 +32,8 @@ try{
  await page.locator('#help-btn').click();
  assert.match(await page.locator('#modal-actions button').textContent(),/BACK TO GAME/);
  await page.locator('#modal-actions button').click();
- await page.locator('#tile-set-btn').click();
- assert.match(await page.locator('#modal-body').textContent(),/6 numbers \+ 3 operators/);
- assert.match(await page.locator('#modal-body').textContent(),/matched \( \) pair/);
- await page.locator('#modal-actions button').last().click();
+ assert.equal(await page.locator('#tile-set-btn').count(),0,'tile kit is chosen during game setup');
+ assert.equal(await page.locator('#drift-zone-map').isHidden(),true,'zone navigation is Drift-only');
 
  await page.goto(BASE+'play.html?mode=rogue&tiles=rational',{waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-title').textContent(),/Clear sectors, upgrade and face bosses/i);
