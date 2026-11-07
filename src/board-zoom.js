@@ -38,7 +38,12 @@ export function initBoardZoom(){
    if(!view.clientWidth||!view.clientHeight)return;
    setCell(fitSize());focus();
  };
- const zoom=change=>{autoFit=false;setCell(cell+change);};
+ const zoom=change=>{
+   setCell(cell+change);
+   // Returning to exactly the fitted size restores responsive auto-fit.
+   autoFit=Math.abs(cell-fitSize())<1/64;
+   if(autoFit)focus();
+ };
  const byId=id=>document.getElementById(id);
  byId('board-zoom-out')?.addEventListener('click',()=>zoom(-STEP));
  byId('board-zoom-in')?.addEventListener('click',()=>zoom(STEP));
