@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor — Play</title>
 <link rel="stylesheet" href="./src/design-system.css"><link rel="stylesheet" href="./src/achievements/celebration.css">
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/reactor-pass-c.css"><link rel="stylesheet" href="./src/drift-world.css"><link rel="stylesheet" href="./src/salvage-workshop.css"><link rel="stylesheet" href="./src/finish-pass-f.css"><script type="module" src="./src/app.js"></script></head>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/reactor-pass-c.css"><link rel="stylesheet" href="./src/drift-world.css"><link rel="stylesheet" href="./src/salvage-workshop.css"><link rel="stylesheet" href="./src/finish-pass-f.css"><link rel="stylesheet" href="./src/play-controls.css"><script type="module" src="./src/app.js"></script></head>
 <body>
 <div class="stars" aria-hidden="true"></div>
 <div id="app">
@@ -26,12 +26,6 @@
 <div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div id="energy-progress" class="progress-track" role="progressbar" aria-label="Sector energy collected" aria-valuemin="0" aria-valuemax="45" aria-valuenow="0"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><button id="bag-details-btn" class="mini-stat bag-stat" type="button" aria-label="Show remaining tiles in the bag" title="View which tiles remain in the bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="bag-count">0</strong></button></div>
 <button id="drift-zone-map" class="drift-zone-strip" type="button" hidden aria-label="Open the Drift zone map"></button>
-<div id="rogue-summary" class="rogue-summary" hidden>
- <div class="rogue-head"><span>THE DRIFT · BUILD</span><strong id="flux-count">0 <small>FLUX</small></strong></div>
- <div class="equipment-label"><strong>SHIP SYSTEMS</strong><span id="permanent-count">0 / 4</span></div>
- <div id="permanent-slots" class="permanent-slots" role="group" aria-label="Four installed ship system slots"></div>
- <div id="upgrade-summary" class="upgrade-summary">No upgrades equipped</div>
-</div>
 <div class="panel-divider"></div><div class="panel-heading">REACTOR LOG</div><div id="log" role="status" aria-live="polite">Place your first equation through the glowing centre tile.</div>
 <div id="coach-hint" class="coach-hint" role="note"></div>
 <div id="history-mini" class="history-mini" aria-label="Recent equations"></div>
@@ -47,8 +41,22 @@
  <div class="board-zoom-toolbar" role="group" aria-label="Board zoom controls"><span class="board-zoom-label">REACTOR VIEW · 19×19</span><button type="button" id="board-zoom-out" aria-label="Zoom out board" title="Zoom out">−</button><output id="board-zoom-level" aria-live="polite">100%</output><button type="button" id="board-zoom-in" aria-label="Zoom in board" title="Zoom in">+</button><button type="button" id="board-zoom-fit" title="Fit the full board">FIT</button><button type="button" id="board-zoom-center" title="Return to centre">⌖</button></div>
  <div class="reactor-transfer-track" aria-hidden="true"><span id="reactor-transfer-fill"></span></div>
 </div><div class="board-frame" id="board-frame"><div class="board-viewport" id="board-viewport" tabindex="0" aria-label="Pan the 19 by 19 board to view different areas. Zoom with the controls."><div id="board" class="board" role="grid" aria-label="19 by 19 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div></div>
-<div class="rack-section"><div class="rack-heading"><span>YOUR TILE RACK <span class="rack-sub">· MOVE TILES FREELY</span></span><div class="rack-actions"><button id="undo-last-btn" class="rack-undo" type="button" title="Undo last tile (Backspace)">↶ UNDO TILE</button><span id="rack-count">8 / 8</span></div></div>
-<div class="rack-row"><div id="rack" class="rack" aria-label="Your physical tile rack"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div></div>
+<div class="rack-section">
+ <div class="rack-heading"><span>YOUR TILE RACK <span class="rack-sub">· MOVE TILES FREELY</span></span>
+  <div class="rack-actions" role="group" aria-label="Rack tools">
+   <button id="undo-last-btn" class="rack-undo" type="button" title="Undo last placed tile (Backspace)" aria-label="Undo last placed tile">↶ UNDO</button>
+   <button id="shuffle-rack-btn" class="rack-undo" type="button" title="Shuffle the rack without spending a turn" aria-label="Shuffle rack tiles">⤨ SHUFFLE</button>
+   <button id="undo-btn" class="rack-undo" type="button" title="Return all unscored tiles" aria-label="Clear all unscored placements">× CLEAR</button>
+   <span id="rack-count" class="rack-count">8 / 8</span>
+  </div>
+ </div>
+ <div class="rack-row"><div id="rack" class="rack" aria-label="Your physical tile rack"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div>
+ <div class="rack-commit-actions" role="group" aria-label="Turn actions">
+  <button id="swap-btn" class="rack-swap-button" type="button">⇄ SWAP TILES</button>
+  <button id="local-pass-btn" class="rack-pass-button" type="button" hidden>↪ PASS TURN</button>
+  <button id="score-btn" class="primary-command rack-score-button" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
+ </div>
+</div>
 </section>
 <aside class="side-panel right-panel" aria-label="Game controls"><div class="panel-heading">COMMAND CONSOLE</div>
 <div id="equation-preview" class="equation-preview" aria-label="Equation placement preview"><div class="preview-led" aria-hidden="true"></div><div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="preview-equation" aria-label="Equation preview">—</strong></div><span id="preview-status" role="status" aria-live="polite">Tap a rack tile, then a board square.</span></div><div class="preview-points"><small>IF BALANCED</small><strong id="potential-score">—</strong></div>
@@ -59,17 +67,29 @@
   <button id="skip-ceremony" type="button" class="ceremony-skip" aria-label="Skip scoring animation and view results">SKIP <span aria-hidden="true">»</span></button>
 </div></div>
 <div id="anomaly-banner" class="anomaly-banner" hidden role="note"><img id="anomaly-scene" class="anomaly-scene" alt="" aria-hidden="true" width="960" height="360" decoding="async"><div id="boss-banner-art" class="boss-banner-art" aria-hidden="true"></div><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
-<div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
-<button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
-<button id="local-pass-btn" class="secondary-command local-pass-btn" type="button" hidden>↪ PASS TURN</button>
-<button id="swap-btn" class="secondary-command" type="button">⇄ SWAP TILES</button></div>
+<div id="drift-loadout" class="drift-loadout" hidden aria-label="The Drift ship equipment">
+<div id="rogue-summary" class="rogue-summary" hidden>
+ <div class="rogue-head"><span>THE DRIFT · BUILD</span><strong id="flux-count">0 <small>FLUX</small></strong></div>
+ <div class="equipment-label"><strong>SHIP SYSTEMS</strong><span id="permanent-count">0 / 4</span></div>
+ <div id="permanent-slots" class="permanent-slots" role="group" aria-label="Four installed ship system slots"></div>
+ <div id="upgrade-summary" class="upgrade-summary">No upgrades equipped</div>
+</div>
 <div id="drift-temporary" class="drift-temporary" hidden>
  <div class="equipment-label"><strong>MISSION GADGETS</strong><span id="temporary-count">0 / 2</span></div>
  <div id="temporary-slots" class="temporary-slots" role="group" aria-label="Two mission gadget slots"></div>
  <p id="temporary-hint">Activate a one-use gadget or apply it to a rack tile.</p>
 </div>
-<div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div><div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile</span></div><div><i class="legend-square ee">2E</i><span>Double equation</span></div><div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
-<div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div><p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p><p class="rules-note" id="operator-rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p><div class="keys-guide">KEYS <kbd>1–9</kbd> rack (if available) <kbd>=</kbd> equals <kbd>←↑↓→</kbd> grid <kbd>⌫</kbd> undo</div></aside>
+</div>
+<details class="play-rule-reference"><summary>◇ GRID MULTIPLIERS &amp; BIDMAS <span aria-hidden="true">⌄</span></summary>
+ <div class="play-rule-body">
+  <p class="play-rule-note">Only newly placed tiles activate a multiplier square.</p>
+  <div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile points</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile points</span></div><div><i class="legend-square ee">2E</i><span>Double equation tile subtotal</span></div><div><i class="legend-square eee">3E</i><span>Triple equation tile subtotal</span></div></div>
+  <div class="play-rule-heading">BIDMAS PRIORITY</div>
+  <p class="rules-note">Brackets → Indices → Division &amp; Multiplication → Addition &amp; Subtraction.</p>
+  <p class="rules-note" id="operator-rules-note">Use +, −, × or ÷. Equals signs are unlimited and free.</p>
+  <p class="play-rule-note">Open <strong>? HOW TO PLAY</strong> for full examples.</p>
+ </div>
+</details></aside>
 </main><footer class="bottom-strip"><span id="footer-mode">⟡ REACTOR ARRAY // SECTOR RUN</span><span id="footer-text">FIRST EQUATION MUST CROSS THE CENTRAL SQUARE</span><span>MR WALKER MATHS</span></footer>
 </div>
 <div id="local-privacy" class="local-privacy" hidden role="dialog" aria-modal="true"
