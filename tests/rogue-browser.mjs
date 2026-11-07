@@ -83,8 +83,11 @@ try{
  await page.locator('#drift-hub-actions .drift-bay').click();
  assert.match(await page.locator('#drift-hub-title').textContent(),/salvage bay/i);
  assert.equal(await page.locator('.drift-salvage-hero img').count(),1);
- assert.equal(await page.locator('.drift-salvage-hero img').evaluate(img=>img.complete&&img.naturalWidth>0),true,
-   'the illustrated hangar should load as a real SVG asset');
+ await page.locator('.drift-salvage-hero img').evaluate(async img=>{
+   await img.decode();
+ });
+ assert.ok(await page.locator('.drift-salvage-hero img').evaluate(img=>img.naturalWidth>0),
+   'the illustrated hangar must fully decode as a real SVG asset');
  await page.locator('#drift-hub-actions .drift-back').click();
  assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
  await page.locator('#drift-hub-actions .drift-bay').click();
