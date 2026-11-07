@@ -26,7 +26,7 @@ const state={
  ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
  reconnectTimer:null,refreshing:false,wantedRevision:0,ceremony:null,focusIndex:pos(CENTER,CENTER),
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:'',
- lastCalloutId:null,calloutTimer:null,pendingOnlineAwards:[]
+ lastCalloutId:null,calloutTimer:null,lastErrorAt:0,pendingOnlineAwards:[]
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 state.alienDraft=alienFromStorage(storage,0);
@@ -141,6 +141,7 @@ const visibleRack=()=>{
  return ordered;
 };
 const showNotice=(message,bad=false,tone='info')=>{
+ if(bad)state.lastErrorAt=Date.now();
  state.notice=message;
  paintFeedback($('online-log'),message,bad?'error':tone);
 };
@@ -256,7 +257,9 @@ const setConnection=mode=>{
    mode==='reconnecting'||mode==='polling'?'#ead28e':'#7c94a0';
  // Announce transitions, not every polling refresh. The existing log is the
  // accessible status region and is now visible on phones as well as desktop.
- if(previous!==mode&&state.code){
+ // A failed equation needs to remain readable; connection state is always
+ // available in its own badge even while this notice is temporarily retained.
+ if(previous!==mode&&state.code&&Date.now()-state.lastErrorAt>=5000){
    if(mode==='reconnecting'||mode==='polling'){
      showNotice(detail.description,false,'warning');
    }else if(mode==='live'&&(previous==='reconnecting'||previous==='polling')){
@@ -315,7 +318,7 @@ function connectSocket(){
 function clearSession(){
  disconnectSockets();state.view=null;state.code=null;state.token=null;
  if(state.calloutTimer)clearTimeout(state.calloutTimer);
- state.calloutTimer=null;state.lastCalloutId=null;
+ state.calloutTimer=null;state.lastCalloutId=null;state.lastErrorAt=0;
  $('online-callout-live').textContent='';
  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
  state.busy=false;state.wantedRevision=0;state.ceremony=null;state.shownResults=false;
