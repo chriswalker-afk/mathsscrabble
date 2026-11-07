@@ -157,3 +157,33 @@ test('server finished evidence is scoped to a completed room and validates host/
  assert.equal(a[0].data.participated,true);
  assert.equal(registerOnlineFinish(r).achievementMilestones.length,r.achievementMilestones.length);
 });
+
+test('Kit Hopper and Galactic Champion require different authenticated rooms and completed results',()=>{
+ const {storage,registry}=profiles();
+ const rooms=[
+  {code:'GHJKLM',kit:'natural',now:1000},
+  {code:'JKLMNP',kit:'rational',now:2000},
+  {code:'QRSTUV',kit:'natural',now:3000}
+ ];
+ for(const {code,kit,now} of rooms){
+  let r=room(code,kit,now);
+  r=startOnlineMatch(r,H,{id:'start-room-12345',revision:r.revision},now+2,()=>.37).room;
+  r=registerOnlineScored(r,0,{
+   board:r.match.board,pending:{0:{value:'8',points:2},1:{value:'4',points:1}},
+   move:{indices:[0,1]},points:{total:20,tileScores:[{index:0,existing:false,premium:null}]}
+  });
+  const players=r.match.players.map((p,i)=>({...p,scoredMoves:i===0?1:0,score:i===0?200:0}));
+  const finished={...r.match,players,phase:'finished',finishedReason:'stalled'};
+  finished.finalScores=localStandings(finished);
+  r=registerOnlineFinish({...r,phase:'finished',match:finished});
+  const view=viewOnlineRoom(r,H,now+3);
+  bindOnlineRoom(storage,view);
+  assert.equal(ingestOnlineEvidence(storage,view).status,'recorded');
+  assert.equal(ingestOnlineEvidence(storage,view).awarded.length,0,'reconnect is idempotent');
+ }
+ const earned=unlocks(storage,registry,A);
+ assert.ok(earned.includes('O08'),'two different mathematical kits in separate rooms');
+ assert.ok(earned.includes('O10'),'three unique completed winning rooms');
+ assert.equal(achievementProgress(loadAchievementStore(storage,registry).store,A,'O10').current,3);
+ assert.equal(unlocks(storage,registry,B).length,0);
+});
