@@ -91,7 +91,9 @@ const personalityFor=alien=>({
  pear:'CURIOUS COSMIC SPROUT',
  jelly:'SQUISHY LITTLE EXPLORER',
  facet:'BRAVE STAR PILOT'
-})[alien.head]+(alien.accessory==='companion'?' + ORBIT BUDDY':alien.legs==='hover'?' · FLOATING FREE':'');
+})[alien.head]??'COSMIC EXPLORER';
+/* decorated name below */
+const personalityLabelFor=alien=>personalityFor(alien)+(alien.accessory==='companion'?' + ORBIT BUDDY':alien.legs==='hover'?' · FLOATING FREE':'');
 function renderPresets(){
  const grid=$('starter-options');
  const fragment=document.createDocumentFragment();
@@ -119,7 +121,7 @@ function renderPreview(animate=false){
  },{once:true});
  art.append(svg);
  art.setAttribute('aria-label','Full size preview: '+alienDescription(alien,state.library.manifest));
- $('alien-personality').textContent=personalityFor(alien);
+ $('alien-personality').textContent=personalityLabelFor(alien);
  $('tiny-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
    width:48,height:48,accessible:false,framing:'portrait'
  }));
