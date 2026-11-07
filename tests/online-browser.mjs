@@ -259,7 +259,7 @@ try{
   const a=JSON.parse(localStorage.getItem('equa-nova.achievements.v1')||'null');
   const unlocked=a?.pilots?.[p?.activeId]?.unlocked||[];
   return ['O06','O07','O09'].every(id=>unlocked.includes(id));
- },{timeout:6000});
+ },null,{timeout:6000});
  const earnedEnd=await awards(host);
  assert.ok(earnedEnd.includes('O06'),'scoring pilot receives Remote Explorer');
  assert.ok(earnedEnd.includes('O07'),'host receives Room Captain');
