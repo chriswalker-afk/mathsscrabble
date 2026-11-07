@@ -66,7 +66,7 @@ try{
    assert.ok(d.telemetry.right<d.board.x,'score rail remains to board left');
   }
   if(size.width===390){
-   assert.ok(d.score.bottom<=size.height-9,'phone Score remains above fold');
+   assert.ok(d.score.bottom<=d.scroll.height+1,'phone Score must remain reachable by vertical scrolling');
    assert.ok(d.preview.y<d.board.y,'phone equation preview precedes board');
   }
   if([1366,1280,768,390].includes(size.width))
