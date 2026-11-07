@@ -389,29 +389,54 @@ function showLobby(){
    (ready?'Ready to start, or wait for more pilots.':'Another pilot must join before you can start.'):
    'Waiting for '+v.people[0].name+' to start the match.';
 }
+function renderCalloutStage(){
+ const stage=$('online-callout-stage'),latest=recentCallouts().at(-1);
+ if(stage.dataset.messageId===(latest?.id||''))return;
+ stage.dataset.messageId=latest?.id||'';
+ stage.replaceChildren();
+ if(!latest)return;
+ const sender=current().players[latest.by],item=CALLOUT_BY_ID[latest.calloutId];
+ if(!sender||!item)return;
+ const avatar=document.createElement('span');avatar.className='local-score-avatar';
+ paintPilotAvatar(avatar,sender.avatar,latest.by,{size:39,framing:'portrait'});
+ const words=document.createElement('span');words.className='online-radio-person';
+ const name=document.createElement('strong');name.textContent=sender.name;
+ const speech=document.createElement('span');speech.textContent=item.glyph;
+ words.append(name,speech);stage.append(avatar,words);
+}
 function renderStandings(){
  const v=state.view,match=v?.match;
  const container=$('online-scores');container.replaceChildren();
  if(!match)return;
  const displayed=match.players.map((p,i)=>({...p,displayScore:
-   state.ceremony&&i===state.ceremony.player?
-     state.ceremony.start+state.ceremony.awarded:p.score}));
+  state.ceremony&&i===state.ceremony.player?
+   state.ceremony.start+state.ceremony.awarded:p.score}));
  const top=Math.max(...displayed.map(x=>x.displayScore));
+ const recent=new Map(recentCallouts().map(x=>[x.by,x]));
  for(const p of displayed){
-   const row=document.createElement('div');
-   row.className='local-score-row'+(p.index===match.current&&v.phase==='playing'?' is-active':'')+
-     (p.displayScore===top&&p.displayScore>0?' is-leader':'');
-   row.dataset.playerIndex=String(p.index);
-   const avatar=document.createElement('span');avatar.className='local-score-avatar';
-   paintPilotAvatar(avatar,p.avatar,p.index,{size:38,framing:'portrait'});
-   const name=document.createElement('span');name.className='local-score-name';name.textContent=p.name+
-     (p.index===v.you.index?' · YOU':'');
-   const score=document.createElement('span');score.className='local-score-points';
-   const strong=document.createElement('strong');strong.textContent=p.displayScore;
-   const small=document.createElement('small');small.textContent=p.rackCount+' TILES';
-   score.append(strong,small);row.append(avatar,name,score);
-   row.setAttribute('aria-label',p.name+': '+p.displayScore+' points');
-   container.append(row);
+  const line=recent.get(p.index),signal=CALLOUT_BY_ID[line?.calloutId];
+  const row=document.createElement('div');
+  row.className='local-score-row'+(p.index===match.current&&v.phase==='playing'?' is-active':'')+
+   (p.displayScore===top&&p.displayScore>0?' is-leader':'')+
+   (signal?' has-callout':'');
+  row.dataset.playerIndex=String(p.index);
+  const avatar=document.createElement('span');avatar.className='local-score-avatar';
+  paintPilotAvatar(avatar,p.avatar,p.index,{size:38,framing:'portrait'});
+  const name=document.createElement('span');name.className='local-score-name';name.textContent=p.name+
+   (p.index===v.you.index?' · YOU':'');
+  const score=document.createElement('span');score.className='local-score-points';
+  const strong=document.createElement('strong');strong.textContent=p.displayScore;
+  const small=document.createElement('small');small.textContent=p.rackCount+' TILES';
+  score.append(strong,small);row.append(avatar,name,score);
+  if(signal){
+   const bubble=document.createElement('span');
+   bubble.className='online-speech-bubble';bubble.textContent=signal.glyph;
+   bubble.title=p.name+' says '+signal.label;
+   bubble.setAttribute('aria-hidden','true');
+   row.append(bubble);
+  }
+  row.setAttribute('aria-label',p.name+': '+p.displayScore+' points');
+  container.append(row);
  }
 }
 function renderBoard(){
@@ -419,7 +444,7 @@ function renderBoard(){
  const lockedBoard=match?.board||EMPTY_BOARD;
  const focus=board.contains(document.activeElement);
  const preview=inspectPlacement(lockedBoard,state.pending);
- const playing=myTurn(),nodes=[];
+ const playing=canPlan(),nodes=[];
  for(let i=0;i<SIZE*SIZE;i++){
    const [r,c]=coords(i),locked=lockedBoard[i],pending=state.pending[i];
    const tile=pending||locked,bonus=bonusAt(r,c);
@@ -462,7 +487,7 @@ function renderRack(){
  const v=state.view,match=v?.match;
  const all=visibleRack();
  const used=new Set(Object.values(state.pending).filter(t=>t.value!=='=').map(t=>t.id));
- const rack=all.filter(t=>!used.has(t.id)),enabled=myTurn();
+ const rack=all.filter(t=>!used.has(t.id)),enabled=canPlan();
  const root=$('rack');root.replaceChildren();
  for(const [index,tile] of rack.entries()){
    const button=document.createElement('button');button.type='button';
@@ -502,23 +527,23 @@ function renderRack(){
 function renderPreview(){
  const board=current()?.board||EMPTY_BOARD,preview=inspectPlacement(board,state.pending);
  const eligible=Boolean(freeExchangeReason(current()?.rack||[]))&&!current()?.freeExchangeUsed&&state.swapIds.size<=1;
+ const can=myTurn(),planning=canPlan();
  $('equation-preview').dataset.state=state.swapping?'swap':preview.status;
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
  $('ceremony-readout').hidden=!state.ceremony;
  $('online-expression').textContent=state.swapping?'TILE EXCHANGE':preview.text||'—';
  $('online-preview-status').textContent=state.swapping?
-   (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
-   myTurn()?preview.feedback:'Wait for your turn. Only the current pilot can submit.';
+  (eligible?'Select one tile for a free swap; swapping several costs your turn.':'Choose tiles to replace; exchanging uses the turn.'):
+  can?preview.feedback:planning?'PRIVATE DRAFT · '+preview.feedback:'Wait for the match to begin.';
  $('online-potential').textContent=preview.ready&&!state.swapping?
-   '+'+scoreMove(board,state.pending,preview,{rackSize:kitRackSize(state.view?.tileSet)}).total:'—';
- const can=myTurn();
+  '+'+scoreMove(board,state.pending,preview,{rackSize:kitRackSize(state.view?.tileSet)}).total:'—';
  $('online-score').disabled=!can||state.swapping||!Object.keys(state.pending).length;
- $('online-clear').disabled=!can||(!state.swapping&&!Object.keys(state.pending).length);
+ $('online-clear').disabled=!planning||(!state.swapping&&!Object.keys(state.pending).length);
  $('online-pass').disabled=!can;
  $('online-swap').disabled=!can||(current()?.bagCount||0)<1;
  $('online-swap').textContent=state.swapping?
-   '⇄ CONFIRM ('+state.swapIds.size+')':eligible?'⇄ FREE SWAP':'⇄ SWAP';
- $('online-undo').disabled=!can||!state.order.length;
+  '⇄ CONFIRM ('+state.swapIds.size+')':eligible?'⇄ FREE SWAP':'⇄ SWAP';
+ $('online-undo').disabled=!planning||!state.order.length;
 }
 function render(){
  const v=state.view,match=v?.match;
@@ -541,7 +566,7 @@ function render(){
  const currentText=document.createElement('span');
  currentText.textContent=v?.phase==='finished'?'Match finished. Check the final standings.':
    match?(myTurn()?'Your turn: build a correct BIDMAS equation.':
-      match.players[match.current].name+' is choosing their move.'):'Waiting for pilots to join.';
+      match.players[match.current].name+' is playing. Prepare a private draft while you wait.'):'Waiting for pilots to join.';
  if(match&&v.phase==='playing'){
    const portrait=document.createElement('span');
    paintPilotAvatar(portrait,match.players[match.current].avatar,match.current,
@@ -552,6 +577,12 @@ function render(){
  $('online-bag-count').textContent=match?.bagCount??'—';
  $('online-bag').disabled=!match;
  $('app').dataset.onlineTurn=String(myTurn());
+ $('online-rack-hint').textContent=match&&v.phase==='playing'?
+  (myTurn()?'YOUR TURN · READY TO SCORE':'PRACTICE · ONLY YOU SEE THIS'):'';
+ $('online-callout-open').disabled=!match||v.phase!=='playing'||state.busy;
+ $('online-callout-status').textContent=match&&v.phase==='playing'?
+  (match.sentCalloutThisTurn?'Sent · ready next turn':'1 available this turn'):
+  'One transmission per turn';
  const recent=match?.lastMoves||[];
  $('online-moves').replaceChildren(...recent.slice(-3).reverse().map(m=>{
    const row=document.createElement('div');row.className='history-row';
@@ -560,7 +591,7 @@ function render(){
      (m.type==='timeout'?'TIME OUT':m.type.toUpperCase().replace('-',' '));
    row.append(who,what);return row;
  }));
- renderStandings();renderBoard();renderRack();renderPreview();
+ renderStandings();renderCalloutStage();renderBoard();renderRack();renderPreview();
 }
 function removePending(i){
  if(!state.pending[i])return;
