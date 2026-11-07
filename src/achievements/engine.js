@@ -136,6 +136,7 @@ function isEarnedByEvent(a,event,state){
   case 'O08':return state.onlineKits.some(x=>state.onlineKits.some(y=>
     x.roomId!==y.roomId&&x.kit!==y.kit));
   case 'O10':return state.onlineWins.length>=3;
+  case 'O11':case 'O12':case 'O13':return d.sentCount>=a.rule.target;
   default:return true; // Only the catalog's matching, verified event can award.
  }
 }
@@ -178,6 +179,9 @@ export function achievementProgress(store,pilotId,id){
    case 'L10':count=p.localWins.length;break;
    case 'O08':count=new Set(p.onlineKits.map(x=>x.kit)).size;break;
    case 'O10':count=p.onlineWins.length;break;
+   case 'O11':case 'O12':case 'O13':
+    count=Math.max(0,...p.seen.map(x=>Number(/-callout-sent-count-(\d+)$/.exec(x)?.[1]||0)));
+    break;
   }
  }
  return {id,mode:a.mode,tier:a.tier,unlocked:achieved,current:Math.min(count,target),
