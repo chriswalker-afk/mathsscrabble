@@ -174,22 +174,30 @@ try{
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
  assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.equal(await page.locator('#anomaly-banner').isVisible(),true);
- assert.match(await page.locator('#upgrade-summary').textContent(),/1 charge/);
- // A capacitor appears in the prediction but must not be used on a bad move.
+ assert.equal(await page.locator('#temporary-slots [data-equipment-id="'+cheapestGadget.id+'"]').count(),1,
+   'the purchased gadget remains equipped through the boss encounter');
+ // Invalid mathematics must not consume a stored mission gadget.
  for(const [symbol,row,col] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7]])await put(symbol,row,col);
  await page.locator('#rack .wildcard-blank-any').click();
  await cell(6,8).click();
  await page.locator('#wildcard-choices button',{hasText:'3'}).first().click();
  await page.locator('#score-btn').click();
  assert.match(await page.locator('#log').textContent(),/not balanced/i);
- assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulse,1);
+ assert.ok(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')))
+   .rogue.tempSlots.includes(cheapestGadget.id));
  await cell(6,8).click();
  await cell(6,8).click();
  await page.locator('#wildcard-choices button',{hasText:'2'}).first().click();
  await page.locator('#score-btn').click();
  await page.reload({waitUntil:'networkidle'});
- assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulse,0);
- assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'))).rogue.pulseUsed,1);
+ const afterValid=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ if(cheapestGadget.id==='pulse-charge'){
+   assert.equal(afterValid.rogue.pulse,0);
+   assert.equal(afterValid.rogue.pulseUsed,1);
+ }else{
+   assert.ok(afterValid.rogue.tempSlots.includes(cheapestGadget.id),
+     'unarmed gadgets must not disappear after a normal scored move');
+ }
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
 
  // Switching modes must restore the untouched original classroom save.
