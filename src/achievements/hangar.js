@@ -4,7 +4,7 @@ import {loadAchievementStore,exportPilotAchievements,restorePilotAchievements} f
 import {loadPilots,savePilots,addPilot,choosePilot,securePilotId} from './pilots.js';
 import {getSavedPilotAlien} from '../alien/profiles.js';
 const $=id=>document.getElementById(id);
-const MODE_NAMES={sector:'Sector Run',drift:'The Drift',local:'Local Multiplayer',online:'Online Signal Clash'};
+const MODE_NAMES={sector:'Sector Run',drift:'The Drift',local:'Local Match',online:'Online Signal Clash'};
 let mode='sector',filter='all',registry,store,library=null;
 function message(value,error=false){$('pilot-status').textContent=value;$('pilot-status').style.color=error?'#ffb4a9':'#c5f3d9';}
 function refresh(){const p=loadPilots(localStorage);registry=p.registry;const a=loadAchievementStore(localStorage,registry);store=a.store;if(p.status==='invalid'||a.status==='invalid')message('Stored data could not be verified. Import a trusted backup or use a new device profile.',true);renderPilots();render();}
