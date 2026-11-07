@@ -3,3 +3,6 @@
 .workshop-panel,.section-tabs,.lab-shell{min-width:0;max-width:100%}
 .section-tabs{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
 @media(max-width:600px){.topbar{min-width:0}.header-actions{flex-shrink:0}.header-actions .quiet-link:not(.exit-link){display:none}.brand{min-width:0}.brand-text{min-width:0}.brand-text strong{font-size:clamp(13px,4vw,17px)}.section-tabs{max-width:calc(100vw - 46px)}}
+
+/* Pass B mobile containment: horizontally scrolling tab buttons must not widen the page. */
+@media(max-width:740px){.lab-app,.workshop-panel{overflow-x:clip}.section-tabs{min-width:0;width:100%;max-width:100%;overflow-x:auto}.section-tab{flex:0 0 auto}.mission-counter strong{white-space:nowrap}}
