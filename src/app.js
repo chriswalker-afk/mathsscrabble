@@ -23,6 +23,7 @@ import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLo
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired,
   finishTimedMatch,isGameTimerExpired} from './multiplayer.js';
 import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
+import {shuffleAvailableRack} from './rack-shuffle.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
  nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
@@ -455,7 +456,10 @@ function renderRack(){
  $('swap-btn').classList.toggle('free-exchange',Boolean(eligible));
  $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
- $('undo-btn').textContent=state.swapping?'× CANCEL SWAP':'↶ CLEAR PLACEMENT';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'× CLEAR';
+ $('undo-btn').disabled=state.busy||state.ended||(!state.swapping&&!state.itemTarget&&
+   !state.selected&&!Object.keys(state.pending).length);
+ $('shuffle-rack-btn').disabled=state.busy||state.ended||state.swapping||Boolean(state.itemTarget)||available.length<2;
  $('undo-last-btn').disabled=state.ended||state.busy||!state.placementOrder.length;
  $('new-btn').disabled=state.busy;
 }
@@ -540,7 +544,7 @@ function renderLocalStatus(){
  $('local-pass-btn').disabled=state.busy||match.phase!=='playing';
  $('local-pass-btn').textContent='↪ PASS';
  $('score-btn').querySelector('strong').textContent='⚡ SCORE';
- $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'× CLEAR';
  const eligible=!match.freeExchangeUsed&&state.swapSet.size<=1;
  $('swap-btn').textContent=state.swapping?
    '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
@@ -686,6 +690,7 @@ function render(){
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
+ $('drift-loadout').hidden=!isDrift();
  $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector,state.rogue);
  if(isDrift()){
    const anomaly=anomalyForSector(state.sector,state.rogue);
@@ -1616,6 +1621,17 @@ function clear(){
  }
  render();
 }
+function shuffleRack(){
+ if(state.ended||state.busy||state.swapping||state.itemTarget)return;
+ const placed=new Set(Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id));
+ const visible=state.rack.filter(tile=>!placed.has(tile.id));
+ if(visible.length<2)return;
+ state.rack=shuffleAvailableRack(state.rack,placed);
+ state.selected=null;state.recentlyPlaced=null;
+ announce('Rack shuffled. Tiles and turn unchanged.');
+ render();
+}
+$('shuffle-rack-btn').onclick=shuffleRack;
 $('score-btn').onclick=score;
 $('swap-btn').onclick=swap;
 $('undo-btn').onclick=clear;
