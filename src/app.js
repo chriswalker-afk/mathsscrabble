@@ -8,6 +8,7 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  armedConsumable,armTemporary,consumeTemporary,useTileTemporary,earnMoveFlux,consumeBoardEcho,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
+import {salvageWorkshopMarkup,mountSalvageWorkshop} from './salvage-workshop.js';
 import {renderDriftHud} from './drift-hud.js';
 import {paintReactorIndicators,paintReactorTransfer} from './reactor-presentation.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
@@ -1102,64 +1103,23 @@ function showDriftRoundSummary(report){
 }
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
- const offers=shopOffers(state.sector,state.rogue),consumables=shopTemperatures(state.sector,state.rogue);
- const occupied=heldConsumables(state.rogue).length;
- const intro=`<div class="drift-salvage-hero">
-    <img src="./assets/salvage-bay.svg" width="1200" height="470" alt="A detailed orbital repair bay: the reactor ship suspended on a maintenance cradle, welding arms and illuminated salvage modules.">
-    <div class="drift-salvage-caption">
-      <span>BAY 07 · ORBITAL MAINTENANCE DOCK</span><strong>REBUILD FOR THE NEXT JUMP</strong>
-      <p>Install a ship system or stock a mission gadget, then launch when you're ready. Shopping is optional.</p>
-    </div>
- </div>
- <div class="drift-shop-budget" aria-label="Salvage budget and equipped items">
-   <div><span>FLUX AVAILABLE</span><strong>${state.rogue.flux}</strong></div>
-   <div><span>SHIP SYSTEMS</span><strong>${state.rogue.upgrades.length}/${MAX_PERMANENT_SLOTS}</strong></div>
-   <div><span>MISSION GADGETS</span><strong>${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
- </div>
- <h3 class="drift-shop-tab-title">SHIP SYSTEMS · STAY INSTALLED FOR THIS DRIFT</h3>
- <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Four randomly selected Ship System offers"></div>
- <h3 class="drift-shop-tab-title">MISSION GADGETS · USE ONCE, CARRY TWO</h3>
- <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Randomly selected Mission Gadgets"></div>
- <p id="salvage-feedback" class="salvage-feedback" role="status" aria-live="polite">
-  Fresh salvage stock is rolled after each sector. This bay’s selection stays fixed until you launch. Installed equipment also appears on the reactor HUD.
- </p>`;
  showDriftHub('THE DRIFT · OPTIONAL UPGRADE STOP',
-  'Salvage Bay · Deck 07',intro,[
+  'Salvage Bay · Deck 07',salvageWorkshopMarkup(),[
     {text:'← ROUND RESULTS',kind:'back',fn:showSectorOutcome},
     {text:'CONTINUE TO SECTOR '+String(state.sector+1).padStart(2,'0')+' →',kind:'go',fn:()=>freshSector(state.sector+1)}
   ],'salvage');
- const permanentGrid=$('salvage-grid');
- if(!offers.length){const end=document.createElement('p');end.className='salvage-empty';
-   end.textContent='All available ship systems have been installed.';permanentGrid.append(end);}
- function makeCard(item,temporary=false){
-   const card=document.createElement('div');
-   card.className='salvage-card'+(temporary?' salvage-consumable':'');
-   card.dataset.category=item.kind;card.dataset.itemId=item.id;
-   const tag=document.createElement('span');tag.className='salvage-type';tag.textContent=item.kind;
-   const icon=document.createElement('div');icon.className='salvage-icon';icon.innerHTML=equipmentArt(item.id);
-   const title=document.createElement('strong');
-   title.textContent=item.name+(temporary?' · '+heldConsumables(state.rogue).filter(id=>id===item.id).length+'/'+MAX_TEMPORARY_SLOTS:'');
-   const description=document.createElement('p');description.textContent=item.description;
-   const buy=document.createElement('button');buy.className='salvage-buy';buy.type='button';
-   const full=temporary?heldConsumables(state.rogue).length>=MAX_TEMPORARY_SLOTS:
-     state.rogue.upgrades.length>=MAX_PERMANENT_SLOTS;
-   buy.disabled=full||state.rogue.flux<item.cost;
-   buy.textContent=item.cost+' FLUX · '+(full?'SLOTS FULL':
-     state.rogue.flux<item.cost?'NOT ENOUGH':temporary?'STORE GADGET':'INSTALL SYSTEM');
-   buy.setAttribute('aria-label',(temporary?'Store ':'Install ')+item.name+' for '+item.cost+' Flux');
-   buy.onclick=()=>{
-     const result=temporary?purchaseTemporary(state.rogue,item.id,state.sector):
-       purchaseUpgrade(state.rogue,item.id,state.sector);
-     if(!result.ok){$('salvage-feedback').textContent=result.reason;return;}
-     state.rogue=result.rogue;persistRun();render();showShop();
-     $('salvage-feedback').textContent=result.reason+
-       (temporary?'. Stored in Mission Gadget inventory.':'. Installed for the remainder of this Drift.');
-   };
-   card.append(tag,icon,title,description,buy);return card;
- }
- offers.forEach(item=>permanentGrid.append(makeCard(item)));
- const gadgetGrid=$('salvage-temporary-grid');
- consumables.forEach(item=>gadgetGrid.append(makeCard(item,true)));
+ mountSalvageWorkshop({
+   rogue:state.rogue,sector:state.sector,
+   onPurchase:(id,temporary)=>{
+     const result=temporary?purchaseTemporary(state.rogue,id,state.sector):
+       purchaseUpgrade(state.rogue,id,state.sector);
+     if(result.ok){
+       state.rogue=result.rogue;
+       persistRun();render();
+     }
+     return result;
+   }
+ });
 }
 function showSectorOutcome(){
  const won=state.phase==='won';
