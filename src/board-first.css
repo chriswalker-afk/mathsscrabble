@@ -183,3 +183,82 @@
  #app .board-first .arena .rack-commit-actions .rack-pass-button{flex-basis:55px}
 }
 @media(prefers-reduced-motion:reduce){#app .board-first .board-info-popover *{transition:none!important}}
+
+/* Wide-laptop board-first enhancement: the tile dock sits *within* the
+   central stage, not in a second command rail. This uses spare horizontal
+   space to restore a nearly square, significantly larger board viewport. */
+@media(min-width:1180px) and (min-height:650px){
+ #app .board-first>.arena{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(286px,324px);
+  grid-template-rows:34px minmax(0,1fr) auto;
+  align-content:stretch;align-items:center;justify-items:stretch;
+  column-gap:clamp(9px,1vw,16px);row-gap:6px;
+  position:relative;
+ }
+ #app .board-first .arena .reactor-console-head,
+ #app .board-first .arena>.board-zoom-toolbar{
+  grid-column:1;grid-row:1;justify-self:center;width:min(100%,720px);max-width:720px;
+  min-width:0;margin:0;
+ }
+ #app .board-first .arena>.board-frame{
+  grid-column:1;grid-row:2/4;justify-self:center;align-self:center;
+  width:min(100%,calc(100dvh - 138px),720px);height:auto;
+  aspect-ratio:1;max-height:calc(100dvh - 138px);
+  min-height:0;flex:none;
+ }
+ #app .board-first .arena>.equation-preview{
+  grid-column:2;grid-row:2;align-self:end;justify-self:stretch;
+  width:100%;max-width:none;margin:0;min-height:50px;
+ }
+ #app .board-first .arena>.rack-section{
+  grid-column:2;grid-row:3;align-self:end;justify-self:stretch;
+  width:100%;max-width:none;margin:0;padding:0;
+ }
+ #app .board-first .arena .rack-heading{
+  display:flex;flex-wrap:wrap;justify-content:space-between;
+  gap:4px;min-height:28px;
+ }
+ #app .board-first .arena .rack-heading>span:first-child{font-size:8px;letter-spacing:.02em}
+ #app .board-first .arena .rack-sub{display:none}
+ #app .board-first .arena .rack-actions{gap:3px}
+ #app .board-first .arena .rack-actions .rack-undo{font-size:8px;min-height:28px;padding:4px 5px}
+ #app .board-first .arena .rack-count{font-size:8px}
+ #app .board-first .arena .rack-row{min-height:96px;align-items:stretch;padding:7px 6px}
+ #app .board-first .arena .rack-row .rack{
+  flex:1 1 auto;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-auto-rows:minmax(38px,auto);
+  justify-items:center;justify-content:center;align-content:center;
+  gap:5px 3px;min-width:0;
+ }
+ #app .board-first .arena .rack-row .rack .tile{
+  width:min(100%,48px);height:43px;min-width:0;
+  font-size:clamp(16px,1.6vw,23px);margin:0;
+ }
+ #app .board-first .arena .equals-bank{justify-content:center;padding-left:6px}
+ #app .board-first .arena .rack-commit-actions{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:none;
+ }
+ #app .board-first .arena .rack-commit-actions .rack-score-button{
+  flex:1 1 100%;max-width:none;order:-1;min-height:44px;
+ }
+ #app .board-first .arena .rack-commit-actions .rack-swap-button,
+ #app .board-first .arena .rack-commit-actions .rack-pass-button{flex:1 1 90px;min-height:38px}
+ #app .board-first .arena .rack-and-gadgets{display:flex;flex-direction:column;gap:5px}
+ #app .board-first .arena .gadget-drawer{
+  flex:0 0 auto;width:100%;padding:4px 7px;
+ }
+ #app .board-first .arena .gadget-drawer .temporary-slots{display:flex;gap:5px}
+ #app .board-first .arena .gadget-drawer .temporary-slots .equipment-slot{flex:1 1 0;min-height:45px}
+ #app .board-first .arena .gadget-drawer summary{min-height:24px}
+ #app .board-first .arena .equation-preview .preview-top{display:block}
+ #app .board-first .arena .equation-preview .preview-label{margin:0 0 3px}
+ #app .board-first .arena .equation-preview #preview-equation,
+ #app .board-first .arena .equation-preview #online-expression{font-size:16px}
+ #app .board-first .arena .equation-preview #preview-status,
+ #app .board-first .arena .equation-preview #online-preview-status{
+  white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:2;overflow:hidden;
+ }
+ #app .board-first .arena .equation-preview.ceremony-active{min-height:78px}
+}
