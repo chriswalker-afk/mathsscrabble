@@ -35,3 +35,6 @@
 .local-achievement-owner>strong{display:block;font-size:12px;letter-spacing:.04em;color:#dbeced;
  margin:13px 0 5px}
 .local-achievement-owner .achievement-reveal{margin:0 0 9px}
+
+
+.achievement-new-callout{display:inline-grid;place-items:center;min-width:62px;min-height:72px;font-size:46px;line-height:1.2}
