@@ -68,7 +68,7 @@ test('saved local pilot IDs are opaque, unique and persist independent of Alien 
  p=addPilot(p,{id:P2,name:'Bea',now:101});
  assert.deepEqual(p.pilots.map(x=>x.name),['Ari','Bea']);
  assert.throws(()=>addPilot(p,{id:P2,name:'Another'}),/unique/i);
- assert.throws(()=>addPilot(p,{id:'pilot-'+'33'.repeat(12),name:'ari'}),/different name/i);
+ assert.throws(()=>addPilot(p,{id:'pilot-'+'33'.repeat(12),name:'ari'}),/different pilot name/i);
  assert.throws(()=>addPilot(p,{id:'pilot-'+'33'.repeat(12),name:'<script>alert(1)</script>'}),/1–20|1-20/);
  const s=storage();
  assert.equal(savePilots(s,p),true);
