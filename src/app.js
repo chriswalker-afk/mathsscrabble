@@ -23,6 +23,7 @@ import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLo
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired,
   finishTimedMatch,isGameTimerExpired} from './multiplayer.js';
 import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
+import {shuffleAvailableRack} from './rack-shuffle.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
  nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
@@ -455,7 +456,11 @@ function renderRack(){
  $('swap-btn').classList.toggle('free-exchange',Boolean(eligible));
  $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
- $('undo-btn').textContent=state.swapping?'× CANCEL SWAP':'↶ CLEAR PLACEMENT';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'× CLEAR';
+ $('undo-btn').setAttribute('aria-label',state.swapping?'Cancel tile swap':state.itemTarget?'Cancel gadget targeting':'Clear all unscored placements');
+ $('undo-btn').disabled=state.busy||state.ended||(!state.swapping&&!state.itemTarget&&
+   !state.selected&&!Object.keys(state.pending).length);
+ $('shuffle-rack-btn').disabled=state.busy||state.ended||state.swapping||Boolean(state.itemTarget)||available.length<2;
  $('undo-last-btn').disabled=state.ended||state.busy||!state.placementOrder.length;
  $('new-btn').disabled=state.busy;
 }
@@ -524,6 +529,7 @@ function renderLocalStatus(){
  $('local-panel').hidden=false;
  $('local-pass-btn').hidden=false;
  $('rogue-summary').hidden=true;
+ $('drift-loadout').hidden=true;
  $('anomaly-banner').hidden=true;
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
@@ -540,7 +546,7 @@ function renderLocalStatus(){
  $('local-pass-btn').disabled=state.busy||match.phase!=='playing';
  $('local-pass-btn').textContent='↪ PASS';
  $('score-btn').querySelector('strong').textContent='⚡ SCORE';
- $('undo-btn').textContent=state.swapping?'× CANCEL':'↶ CLEAR';
+ $('undo-btn').textContent=state.swapping?'× CANCEL':'× CLEAR';
  const eligible=!match.freeExchangeUsed&&state.swapSet.size<=1;
  $('swap-btn').textContent=state.swapping?
    '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
@@ -686,6 +692,7 @@ function render(){
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent=isDrift()?'⟡ REACTOR ARRAY // THE DRIFT':'⟡ REACTOR ARRAY // SECTOR RUN';
  $('rogue-summary').hidden=!isDrift();
+ $('drift-loadout').hidden=!isDrift();
  $('anomaly-banner').hidden=!isDrift()||!anomalyForSector(state.sector,state.rogue);
  if(isDrift()){
    const anomaly=anomalyForSector(state.sector,state.rogue);
@@ -1616,6 +1623,17 @@ function clear(){
  }
  render();
 }
+function shuffleRack(){
+ if(state.ended||state.busy||state.swapping||state.itemTarget)return;
+ const placed=new Set(Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id));
+ const visible=state.rack.filter(tile=>!placed.has(tile.id));
+ if(visible.length<2)return;
+ state.rack=shuffleAvailableRack(state.rack,placed);
+ state.selected=null;state.recentlyPlaced=null;
+ announce('Rack shuffled. Tiles and turn unchanged.');
+ render();
+}
+$('shuffle-rack-btn').onclick=shuffleRack;
 $('score-btn').onclick=score;
 $('swap-btn').onclick=swap;
 $('undo-btn').onclick=clear;
@@ -1650,7 +1668,7 @@ function showTraining(firstVisit=false){
    <div class="training-step"><span>01</span><div><strong>Start at the centre</strong>
      <p>Build a true equation through the glowing centre square, such as <em>8 + 4 = 12</em>. Use BIDMAS; <em>3 = 3</em> alone does not score.</p></div></div>
    <div class="training-step"><span>02</span><div><strong>Place your tiles</strong>
-     <p>Tap a rack tile, then a square (or drag it). The <strong>=</strong> sign is free. Blank tiles let you choose a number or operator.</p></div></div>
+     <p>Tap a rack tile, then a square (or drag it). The <strong>=</strong> sign is free. Rack tools let you undo, clear, or shuffle tiles without spending a turn. Blank tiles let you choose a number or operator.</p></div></div>
    <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
      <p>Press <strong>Score Equation</strong> to check your maths. Later equations must join a locked tile. Reach the target within six turns; one single-tile swap is free each turn.</p></div></div>
   </div>${bracketNote}
@@ -1668,10 +1686,10 @@ function showLocalHelp(){
     <div class="training-step"><span>01</span><div><strong>Handover privately</strong>
       <p>Pass the device before tapping <strong>Ready</strong>. Only the current player sees their rack.</p></div></div>
     <div class="training-step"><span>02</span><div><strong>Score or swap</strong>
-      <p>Start through the centre; later equations join locked tiles. Use the free <strong>=</strong>, then press <strong>Score</strong> to check BIDMAS. You may pass or swap.</p></div></div>
+      <p>Start through the centre; later equations join locked tiles. Use the free <strong>=</strong>, then press <strong>Score</strong> to check BIDMAS. You may shuffle your rack for free, pass, or swap.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Highest net score wins</strong>
       <p>The match ends when someone empties their rack after the bag runs out, or after two rounds without scoring. Unused tile points are deducted.</p></div></div>
-   </div>${bracketNote}<p class="training-footnote">Timers are optional and start after Ready. A timeout counts as a pass.</p>`,
+   </div>${bracketNote}<p class="training-footnote">The turn timer starts after Ready; a turn timeout counts as a pass. The optional overall game timer continues through handovers and ends the match.</p>`,
   [{text:'BACK TO MATCH',primary:true}]);
 }
 function showDriftIntro(firstVisit=false){
@@ -1680,7 +1698,7 @@ function showDriftIntro(firstVisit=false){
  showModal('THE DRIFT · PILOT BRIEFING','Clear sectors, upgrade and face bosses',
   `<div class="training-steps">
     <div class="training-step"><span>01</span><div><strong>Reach the target</strong>
-      <p>Tap or drag tiles to build true BIDMAS equations: first through the centre, then joined to locked tiles. The = sign is free. Reach each target in six turns (seven with Time Dilator).</p></div></div>
+      <p>Tap or drag tiles to build true BIDMAS equations: first through the centre, then joined to locked tiles. The = sign is free; rack shuffling costs no turn. Reach each target in six turns (seven with Time Dilator).</p></div></div>
     <div class="training-step"><span>02</span><div><strong>Spend Flux or continue</strong>
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>

@@ -3,6 +3,7 @@ import {SIZE,CENTER,coords,pos,bonusAt,inspectPlacement,scoreMove,
   BLANK_KINDS,isBlank,reorderRack,freeExchangeReason} from './engine.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
+import {shuffleAvailableRack} from './rack-shuffle.js';
 import {initBoardZoom} from './board-zoom.js';
 import {paintFeedback,connectionFeedback} from './mission-feedback.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
@@ -527,6 +528,7 @@ function renderRack(){
    root.append(button);
  }
  $('online-rack-count').textContent=rack.length+' / '+kitRackSize(v?.tileSet);
+ $('online-shuffle').disabled=!enabled||state.swapping||rack.length<2;
  $('equals-tile').disabled=!enabled||state.swapping;
  $('equals-tile').classList.toggle('selected',state.selected==='equals');
  $('online-rack-label').textContent=match?'YOUR PRIVATE RACK · '+v.you.name.toUpperCase():'YOUR PRIVATE RACK';
@@ -545,7 +547,9 @@ function renderPreview(){
  $('online-potential').textContent=preview.ready&&!state.swapping?
   '+'+scoreMove(board,state.pending,preview,{rackSize:kitRackSize(state.view?.tileSet)}).total:'—';
  $('online-score').disabled=!can||state.swapping||!Object.keys(state.pending).length;
- $('online-clear').disabled=!planning||(!state.swapping&&!Object.keys(state.pending).length);
+ $('online-clear').disabled=!planning||(!state.swapping&&!state.selected&&!Object.keys(state.pending).length);
+ $('online-clear').textContent=state.swapping?'× CANCEL':'× CLEAR';
+ $('online-clear').setAttribute('aria-label',state.swapping?'Cancel tile swap':'Clear all unscored placements');
  $('online-pass').disabled=!can;
  $('online-swap').disabled=!can||(current()?.bagCount||0)<1;
  $('online-swap').textContent=state.swapping?
@@ -850,6 +854,16 @@ $('equals-tile').onclick=()=>{if(!canPlan()||state.swapping)return;
  state.selected=state.selected==='equals'?null:'equals';render();};
 $('online-undo').onclick=()=>{if(!canPlan()||!state.order.length)return;
  removePending(state.order.at(-1));};
+$('online-shuffle').onclick=()=>{
+ if(!canPlan()||state.swapping)return;
+ const placed=new Set(Object.values(state.pending).filter(tile=>tile.value!=='=').map(tile=>tile.id));
+ const all=visibleRack();
+ if(all.filter(tile=>!placed.has(tile.id)).length<2)return;
+ state.rackOrder=shuffleAvailableRack(all,placed).map(tile=>tile.id);
+ state.selected=null;
+ render();
+ showNotice('Your rack was shuffled privately. No turn used.');
+};
 $('online-clear').onclick=()=>{
  if(!canPlan())return;
  state.pending={};state.order=[];state.swapIds.clear();state.swapping=false;
