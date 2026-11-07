@@ -1,0 +1,125 @@
+/* EQUA//NOVA · Pass C — illustrated reactor console.
+ * Decorative styles are confined to the frame and side instruments,
+ * never behind mathematical glyphs, tiles, or premium square labels.
+ */
+.reactor-console-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;width:min(100%,665px);min-height:34px;margin:0 0 4px;padding:3px 5px 5px;border:1px solid #71979c;border-radius:9px 9px 6px 6px;background:linear-gradient(165deg,#315763,#193848 70%,#112e3f);box-shadow:inset 0 1px #dafff034,0 4px 12px #061c2a5e}
+.reactor-console-head::before{content:"";position:absolute;left:7px;right:7px;bottom:1px;height:1px;background:linear-gradient(90deg,var(--nova-teal),transparent);pointer-events:none}
+.reactor-console-readout{display:flex;align-items:center;gap:6px;min-width:0;flex:1;position:relative}
+.reactor-console-mark{width:24px;height:24px;flex:0 0 24px;display:grid;place-items:center;border:1px solid #8ec5bc;border-radius:50%;background:#113a46;box-shadow:0 0 8px #62e0c94a}
+.reactor-console-mark img{width:22px;height:22px;display:block}
+.reactor-console-titles{display:flex;flex-direction:column;min-width:0;gap:1px}
+.reactor-console-titles strong{font-size:10px;letter-spacing:.08em;font-weight:950;color:#f8e1b4;white-space:nowrap}
+.reactor-console-titles small{font-size:9px;letter-spacing:.035em;color:#c0e1d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reactor-console-head .board-zoom-toolbar{width:auto;max-width:none;flex:0 0 auto;margin:0;min-height:24px;gap:3px}
+.reactor-console-head .board-zoom-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.reactor-console-head .board-zoom-toolbar button{min-width:27px;min-height:25px;padding:2px 5px;border:1px solid #7ba2a5;border-radius:6px;color:#ffeed0;background:linear-gradient(150deg,#325b69,#1a3f4f);box-shadow:inset 0 1px #f3fff01d}
+.reactor-console-head .board-zoom-toolbar button:hover{background:#366775;border-color:var(--nova-gold)}
+.reactor-console-head #board-zoom-level{min-width:40px;font-size:10px;color:#ffe2ad}
+.reactor-transfer-track{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 6px 6px;overflow:hidden;background:#13313b;pointer-events:none;opacity:0}
+.reactor-transfer-track>span{display:block;width:0;height:100%;background:linear-gradient(90deg,#75ddc6,#ffe3a5);box-shadow:0 0 9px #f4d49b;transition:width .14s linear}
+#app[data-reactor-phase="transfer"] .reactor-transfer-track{opacity:1}
+#app[data-reactor-phase="ready"] #reactor-phase-label{color:#a6ffe0}
+#app[data-reactor-phase="warning"] #reactor-phase-label{color:#ffd198}
+#app[data-reactor-phase="transfer"] #reactor-phase-label{color:#ffe4ad}
+#app[data-reactor-phase="stable"] #reactor-phase-label{color:#b5f5bf}
+#app[data-reactor-phase="offline"] #reactor-phase-label{color:#f7b5aa}
+#app[data-reactor-phase="exchange"] #reactor-phase-label{color:#d8bff4}
+#app[data-reactor-phase="ready"] .reactor-console-mark{border-color:#adffe1;box-shadow:0 0 12px #72e6bf70}
+.board-frame{border-color:#9daca8;background:linear-gradient(138deg,#8ca8a6 0%,#365766 10%,#193647 19%,#162d3e 83%,#527a7b 94%,#8faaa3);box-shadow:0 13px 35px #0009,0 0 0 2px #153441,inset 0 1px #f7fff083;transition:border-color .2s,box-shadow .2s}
+.board-frame::before{inset:5px;border-color:#b4ead73b}
+.board-frame::after{inset:-3px;border-color:#5e8586ad}
+.board-frame .board-corner{width:15px;height:15px;opacity:.94;border-color:#f0dba9}
+#app[data-reactor-phase="ready"] .board-frame{border-color:#adf7df;box-shadow:0 13px 35px #0009,0 0 0 2px #2d5d5e,0 0 17px #70d8b437}
+#app[data-reactor-phase="transfer"] .board-frame{border-color:#f5db9e;box-shadow:0 13px 35px #0009,0 0 0 2px #7b6039,0 0 17px #efd2934b}
+#app[data-reactor-phase="stable"] .board-frame{border-color:#c2e5bb}
+#app[data-reactor-phase="warning"] .board-frame{border-color:#c3a180}
+#app .board-viewport:focus-visible{outline:2px dashed var(--nova-focus);outline-offset:-3px}
+/* The concluding reward floats from the instrument readout, not across tiles. */
+.reactor-console-readout .energy-burst{position:absolute;top:-2px;left:0;z-index:5;max-width:163px;font-size:12px;line-height:1.2;letter-spacing:.02em;padding:5px 8px;background:linear-gradient(150deg,#3c6159,#183c47);color:#fff1be;border:1px solid #f5dda2;border-radius:6px;box-shadow:0 5px 14px #051520a8;transform:translate(0,0)}
+.reactor-console-readout .energy-burst.burst-active{animation:reactorReward .72s ease-out both}
+@keyframes reactorReward{0%{opacity:0;transform:translateY(5px) scale(.93)}25%,72%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px)}}
+/* Energy readout and panels use one hull material and clear values. */
+.left-panel .stat-block{position:relative;overflow:hidden;padding:11px 10px 10px;border:1px solid #749994;border-radius:10px;background:radial-gradient(ellipse at 95% 0%,#6fbb9a38,transparent 54%),linear-gradient(150deg,#274956,#122f40);box-shadow:inset 0 1px #ecffe52a,0 4px 13px #02151c46}
+.left-panel .stat-block::after{content:"";position:absolute;top:-49px;right:-58px;width:120px;height:120px;border:1px solid #d5f8e12b;border-radius:50%;box-shadow:0 0 0 18px #8df3d40b,0 0 0 35px #8df3d404;pointer-events:none}
+.left-panel .stat-block>*{position:relative;z-index:1}
+.left-panel .stat-label{font-size:10px;color:#b8ebda;font-weight:900}
+.left-panel .score-row strong{color:#fff0cc;font-weight:950;letter-spacing:-.03em;text-shadow:0 2px 9px #f4d49b2b}
+.left-panel .score-row b{color:var(--nova-gold)}
+.progress-track{position:relative;height:10px;border:1px solid #7da5a0;border-radius:30px;background:#102d3b;overflow:hidden}
+.progress-track>div{background:linear-gradient(90deg,#288d91,#71ddc5 72%,#b6f3d3);box-shadow:0 0 9px #69ddc77b;transition:width .22s var(--nova-ease)}
+.progress-track::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.28;background:repeating-linear-gradient(90deg,transparent 0,transparent 9%,#0b1d2c 9%,#0b1d2c 10%)}
+.left-panel .mini-stat{border-color:#658c91;background:linear-gradient(145deg,#234556,#123142);box-shadow:inset 0 1px #eaffef19}
+.left-panel .mini-stat strong{color:#fff0cc;font-variant-numeric:tabular-nums}
+.left-panel .stat-note{color:#c3dfdb}
+.side-panel{border-color:#72989b;box-shadow:var(--nova-shadow-panel)}
+.side-panel>.panel-heading{color:#b0d9d0;letter-spacing:.13em}
+.side-panel>.panel-heading::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#8cdcc9;vertical-align:1px;box-shadow:0 0 7px #72e7cf80}
+.side-panel .panel-divider{background:linear-gradient(90deg,#88b5a370,transparent)}
+.left-panel #log{color:#d6e6e0;line-height:1.48}
+.left-panel #log.error{color:#ffc3b8}
+/* The Alien Lab pilot is shown on desktop, using a core badge as fallback. */
+.pilot-emblem{position:relative;isolation:isolate;overflow:hidden;border-color:#acd2bb;background:radial-gradient(circle,#427a77,#102e41 75%);box-shadow:0 0 0 5px #1d3f4b80,0 0 22px #87e8c63c}
+.pilot-emblem .pilot-reactor-core{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pilot-emblem .pilot-portrait{position:absolute;z-index:2;inset:6% 7% 15%;display:grid;place-items:center;font-size:initial;filter:drop-shadow(0 3px 5px #0619299e)}
+.pilot-emblem .pilot-portrait .alien-player-avatar{display:grid;place-items:center;width:100%;height:100%;font-size:initial}
+.pilot-emblem .pilot-portrait .alien-player-avatar svg{display:block;max-width:100%;max-height:100%;width:100%;height:100%}
+.pilot-emblem .pilot-portrait .alien-avatar-fallback{color:#f8deb1;font-size:29px}
+.pilot-emblem .pilot-orbit{z-index:3;inset:7px;border-color:#e2efd061}
+.pilot-emblem .pilot-medallion-index{position:absolute;z-index:4;bottom:4px;left:50%;transform:translateX(-50%);padding:2px 5px;border-radius:4px;background:#143c49d9;color:#f7e4bf;font-weight:900;font-size:7px;letter-spacing:.06em;white-space:nowrap}
+.pilot-name{font-size:10px;letter-spacing:.1em;color:#aeebd0;margin-bottom:15px}
+/* Preview status reflects geometric readiness, never mathematical validity. */
+.equation-preview{border-color:#668f95;background:linear-gradient(140deg,#254a58,#132e40);box-shadow:inset 0 1px #e2ffe527}
+.equation-preview[data-state="ready"]{border-color:#92dcc9;box-shadow:inset 0 0 0 1px #6edec33a,0 0 8px #5acdac29}
+.equation-preview[data-state="gap"],.equation-preview[data-state="alignment"],.equation-preview[data-state="centre"],.equation-preview[data-state="connect"]{border-color:#be9d77}
+.preview-points strong{color:#ffe2a6}
+.primary-command{border-color:#f7d7a2;box-shadow:inset 0 1px #fff8db,0 4px #8a623c}
+#app[data-reactor-phase="ready"] .primary-command:not(:disabled){box-shadow:inset 0 1px #fff8db,0 4px #8a623c,0 0 17px #e8c67f55}
+/* Distinct installed hardware plates remain within the existing rail slots. */
+.rogue-summary,.drift-temporary{border:1px solid #6f949a;background:linear-gradient(145deg,#284954,#142f3f);border-radius:10px;box-shadow:inset 0 1px #e2ffe524}
+.equipment-label strong{font-size:10px;color:#e4efe3;letter-spacing:.08em}
+.equipment-label>span{font-size:11px;color:#f8dbaa}
+.equipment-slot{position:relative;isolation:isolate;overflow:hidden;border:1px solid #75989d;background:linear-gradient(145deg,#34535e,#193646);border-radius:9px;box-shadow:inset 0 1px #dffdec25,inset 0 -2px #0a1c29;transition:border-color .15s,box-shadow .15s}
+.equipment-slot::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:currentColor;opacity:.65;pointer-events:none}
+.equipment-slot.is-empty{border-color:#577a817d;background:repeating-linear-gradient(135deg,#142e3d,#142e3d 9px,#1a3645 9px,#1a3645 18px)}
+.equipment-slot.is-empty::before{opacity:.15}
+.equipment-slot .equip-artwork{display:grid;place-items:center;position:relative;z-index:1;flex:0 0 auto}
+.equipment-slot .equip-svg{filter:drop-shadow(0 0 5px #b4f9d34c)}
+.equipment-slot .equip-name{position:relative;z-index:1;color:#f4e6c8;font-weight:850;line-height:1.25}
+.equipment-slot .equip-state{position:relative;z-index:1;color:#ffedbc;background:#66503a;border:1px solid #e6cd96;border-radius:5px;padding:2px 4px;font-weight:950;font-size:9px;letter-spacing:.05em;white-space:nowrap}
+.temporary-slots .equipment-slot.is-armed::after{display:none}
+.temporary-slots .equipment-slot.is-armed{border-color:#f4d495;background:linear-gradient(145deg,#6a533d,#2d3f48)}
+.temporary-slots .equipment-slot.is-target{border-color:#a0e9cf;background:linear-gradient(145deg,#2e6b62,#1c424b)}
+.temporary-slots .equipment-slot.is-target .equip-state{background:#c5f5df;color:#184842;border-color:#b3ffe2}
+#app[data-mode="rogue"] .upgrade-summary{color:#c8e8dc;font-size:10px;line-height:1.4}
+/* A verified equation ends in a tactile certificate, not a cluttered popup. */
+#modal:has(.score-breakdown){border-color:#b2c2ad;background:radial-gradient(circle at 95% 0%,#47746455,transparent 42%),linear-gradient(145deg,#264653,#142b3d)}
+#modal:has(.score-breakdown) h2{color:var(--nova-gold)}
+#modal:has(.score-breakdown) .equation-result{overflow-wrap:anywhere;border:1px solid #8bafa1;border-radius:8px;padding:12px;background:#294b54;color:#fff0cc!important}
+#modal:has(.score-breakdown) .score-breakdown{border:1px solid #6a9691;border-radius:9px;background:#13303f;padding:9px 12px;gap:6px}
+#modal:has(.score-breakdown) .score-breakdown>div b{color:#ffe2aa;font-variant-numeric:tabular-nums}
+#modal:has(.score-breakdown) .score-breakdown .total{border-color:#a1c6b7;padding-top:10px}
+#modal:has(.score-breakdown) .score-breakdown .total b{font-size:21px}
+@media(max-width:1050px){.reactor-console-titles strong{font-size:9px}.reactor-console-titles small{font-size:8px}.reactor-console-head .board-zoom-toolbar button{min-width:25px}.left-panel .stat-block{padding:8px}}
+@media(max-width:730px){
+ .reactor-console-head{width:min(100%,550px);min-height:30px;padding:2px 4px 4px;margin-bottom:3px}
+ .reactor-console-readout{gap:4px}
+ .reactor-console-mark{width:21px;height:21px;flex-basis:21px}.reactor-console-mark img{width:20px;height:20px}
+ .reactor-console-head .board-zoom-toolbar{gap:2px}
+ .reactor-console-head .board-zoom-toolbar button{min-width:25px;min-height:24px;padding:2px 4px}
+ .reactor-console-head #board-zoom-level{min-width:36px;font-size:9px}
+ .left-panel .stat-block{padding:6px 8px}.left-panel .progress-track{height:8px}
+ #app[data-mode="rogue"] .left-panel .upgrade-summary{display:block!important;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;margin-top:2px;font-size:10px}
+ #app[data-mode="rogue"] .temporary-slots .equipment-slot .equip-state{position:absolute;bottom:0;right:1px;padding:1px 3px;font-size:8px}
+ .right-panel .equation-preview #preview-status{font-size:10px}
+}
+@media(max-width:390px){
+ .reactor-console-head{gap:3px}
+ .reactor-console-titles strong{font-size:8px;letter-spacing:0}
+ .reactor-console-titles small{font-size:7px}
+ .reactor-console-head .board-zoom-toolbar button{min-width:22px;padding:1px 3px}
+ .reactor-console-head #board-zoom-level{min-width:32px;font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .board-frame,.reactor-console-head .board-zoom-toolbar button,.equipment-slot,.reactor-transfer-track>span{transition:none!important}
+ .reactor-console-readout .energy-burst.burst-active{animation:none!important;opacity:0}
+}
