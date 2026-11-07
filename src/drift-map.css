@@ -119,8 +119,11 @@ dialog:has(.boss-reveal){width:min(660px,calc(100vw - 24px))}
  #app[data-mode="rogue"] .right-panel .boss-banner-art{width:42px;height:42px}
  #app[data-mode="rogue"] .right-panel .anomaly-label{display:none}
  #app[data-mode="rogue"] .right-panel .anomaly-banner strong{font-size:10px}
- dialog:has(.zone-map-scroll){max-height:92dvh}
- .zone-map-scroll{max-height:56dvh}
+ dialog:has(.zone-map-scroll){max-height:92dvh;overflow:hidden}
+ dialog:has(.zone-map-scroll) .modal-content{display:flex;flex-direction:column;min-height:0;max-height:calc(92dvh - 2px);padding:14px}
+ dialog:has(.zone-map-scroll) #modal-body{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+ dialog:has(.zone-map-scroll) .zone-map-scroll{flex:1;min-height:0;max-height:none;overflow:auto}
+ dialog:has(.zone-map-scroll) #modal-actions{flex-shrink:0;margin-top:8px;padding-top:8px;border-top:1px solid #456877}
  .zone-map-card{grid-template-columns:76px minmax(0,1fr);min-height:110px;padding:8px}
  .zone-map-card::after{left:38px}
  .zone-map-portrait .boss-art{max-height:80px}
