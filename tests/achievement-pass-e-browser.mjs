@@ -66,6 +66,7 @@ try{
  assert.ok(await shortcut.evaluate(el=>el.getBoundingClientRect().bottom>20),
   'skip link must become visible when keyboard-focused');
  await page.keyboard.press('Enter');
+ await page.waitForURL(/#hangar$/,{timeout:3000});
  assert.match(page.url(),/#hangar$/,'skip link must jump to achievement content');
  await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  // Roving keyboard focus is mandatory for accessible role=tablist navigation.
