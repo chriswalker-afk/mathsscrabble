@@ -657,6 +657,7 @@ function render(){
    ceremony:Boolean(state.ceremony),mode:state.mode,
    score:state.score,target:isLocal()?null:currentTarget()
  });
+ $('gadget-drawer').hidden=!isDrift();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
  // Both solo and local competition share the same scoring ceremony display.
@@ -1892,6 +1893,14 @@ $('modal-close').onclick=()=>{
 $('modal').addEventListener('cancel',e=>{
  if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
 });
+// Secondary drawers start collapsed at mobile widths to protect board space.
+const boardFirstNarrow=window.matchMedia('(max-width:730px)');
+const updateEquipmentDrawers=()=>{
+ $('ship-systems-drawer').open=!boardFirstNarrow.matches;
+ $('gadget-drawer').open=!boardFirstNarrow.matches;
+};
+updateEquipmentDrawers();
+boardFirstNarrow.addEventListener('change',updateEquipmentDrawers);
 startSolo();
 
 initBoardZoom();
