@@ -20,7 +20,8 @@ import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {summarizeBag} from './bag-inventory.js';
 import {LOCAL_SAVE_KEY,LOCAL_TIMER_OPTIONS,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
- passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired} from './multiplayer.js';
+ passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,isLocalTimerExpired,
+  finishTimedMatch,isGameTimerExpired} from './multiplayer.js';
 import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from './random-start.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
  nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
@@ -512,6 +513,7 @@ function showLocalHandover(){
      'Previous move: '+(last.type==='timeout'?'time expired':last.type.replaceAll('-',' ')))+
    ' · Turn '+match.turnNumber:
    'Turn '+match.turnNumber+' · Shared board, private racks';
+ if(match.gameDeadline)$('local-handover-context').textContent+=' · Game '+formatLocalClock(match.gameDeadline);
  $('local-ready-btn').focus({preventScroll:true});
 }
 function renderLocalStatus(){
@@ -543,6 +545,10 @@ function renderLocalStatus(){
  $('swap-btn').textContent=state.swapping?
    '⇄ CONFIRM'+(eligible?' FREE':''):'⇄ '+(eligible?'FREE SWAP':'SWAP');
  $('new-btn').disabled=false;
+ const gameClock=$('local-game-remaining');
+ gameClock.textContent=match.gameDeadline?formatLocalClock(match.gameDeadline):
+   match.gameSeconds?Math.ceil(match.gameSeconds/60)+' min game':'NO GAME LIMIT';
+ gameClock.classList.toggle('local-time-urgent',match.gameDeadline>0&&match.gameDeadline-Date.now()<60000);
  const time=$('local-time-remaining');
  if(match.phase==='playing'&&match.turnSeconds){
    time.textContent=formatLocalClock(match.deadline);
@@ -815,6 +821,7 @@ function showBagInventory(){
 }
 $('bag-details-btn').onclick=showBagInventory;
 function localStateFromMatch(match,{privateTurn=true}={}){
+ match=finishTimedMatch(match);
  prepareLocalArtwork();
  state.mode='local';state.localMatch=match;state.tileSet=normalizeTileSet(match.tileSet);
  state.modalEpoch++;state.ceremony=null;state.localScoringPlayer=null;
@@ -866,6 +873,7 @@ function showLocalSetup({fromHome=false}={}){
  const players=saved?.players.map(p=>p.name)||['Pilot 1','Pilot 2','Pilot 3','Pilot 4'];
  const count=saved?.players.length||2;
  const seconds=saved?.turnSeconds||0;
+ const gameSeconds=saved?.gameSeconds||0;
  const queryKit=new URLSearchParams(location.search).get('tiles');
  const selectedKit=TILE_SET_BY_ID[queryKit]?queryKit:normalizeTileSet(saved?.tileSet||storage?.getItem(TILE_SET_STORAGE_KEY));
  localSetupAliens=Array.from({length:4},(_,i)=>safePilotAlien(saved?.players?.[i]?.avatar,i));
@@ -882,7 +890,9 @@ function showLocalSetup({fromHome=false}={}){
     <div class="local-setup-row"><label for="local-tile-set">MATHEMATICAL KIT</label>
       <select id="local-tile-set">${TILE_SETS.map(kit=>'<option value="'+kit.id+'">'+kit.tier+' · '+kit.short.toUpperCase()+' — '+kit.title+'</option>').join('')}</select></div>
      <div id="local-setup-names" class="local-setup-names"></div>
-    <div class="local-setup-row"><label for="local-turn-seconds">TURN TIMER</label>
+    <div class="local-setup-row"><label for="local-game-seconds">GAME TIMER</label>
+      <select id="local-game-seconds"><option value="0">Off</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="900">15 minutes</option><option value="1200">20 minutes</option><option value="1800">30 minutes</option></select></div>
+     <div class="local-setup-row"><label for="local-turn-seconds">TURN TIMER</label>
       <select id="local-turn-seconds">
         <option value="0">Off · take your time</option>
         <option value="60">60 seconds</option>
@@ -895,10 +905,12 @@ function showLocalSetup({fromHome=false}={}){
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
-      startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds,tileSet:$('local-tile-set').value});
+      startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds,
+        gameSeconds:Number($('local-game-seconds').value),tileSet:$('local-tile-set').value});
    }}]);
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
+ $('local-game-seconds').value=String(gameSeconds);
  $('local-tile-set').value=selectedKit;
  const describeKit=()=>{
    const kit=TILE_SET_BY_ID[$('local-tile-set').value];
@@ -993,6 +1005,9 @@ function showLocalSetup({fromHome=false}={}){
 }
 function readyLocalPlayer(){
  if(!isLocal()||state.localMatch?.phase!=='handover')return;
+ if(isGameTimerExpired(state.localMatch)){
+  finishLocalTurn(finishTimedMatch(state.localMatch),'Game timer expired. Final standings are ready.');return;
+ }
  try{
    const match=readyLocalTurn(state.localMatch,Date.now());
    state.localMatch=match;state.board=match.board;state.bag=match.bag;
@@ -1070,7 +1085,9 @@ function showLocalResults(){
  const match=state.localMatch;
  const standing=match.finalScores||localStandings(match);
  const winners=standing.filter(p=>p.winner).map(p=>p.name);
- const summary=match.finishedReason==='stalled'?
+ const summary=match.finishedReason==='time-limit'?
+  'The game timer expired. All players’ remaining rack points are deducted.':
+  match.finishedReason==='stalled'?
    'Two full circuits of passes or paid exchanges ended the match.':
    'A player emptied their rack with no tiles left in the bag.';
  const rows=standing.map(entry=>
@@ -1772,7 +1789,7 @@ function startSolo(){
        [0,60,90,120].includes(config.turnSeconds)&&TILE_SET_BY_ID[config.tileSet]){
       localSetupOwnerIds=[null,null,null,null];
       startNewLocalMatch({names:config.names,avatars:config.avatars,
-       turnSeconds:config.turnSeconds,tileSet:config.tileSet});
+       turnSeconds:config.turnSeconds,gameSeconds:config.gameSeconds??0,tileSet:config.tileSet});
       return;
      }
     }catch{/* Fall back to the existing safe match or setup dialog. */}
@@ -1797,9 +1814,16 @@ function startSolo(){
  restoreMode(mode,{initial:mode==='sector'});
 }
 window.setInterval(()=>{
- if(!isLocal()||!state.localMatch||state.localMatch.phase!=='playing'||state.busy||state.ended)return;
+ if(!isLocal()||!state.localMatch||state.ended)return;
  const match=state.localMatch;
- if(match.turnSeconds===0)return;
+ if(match.gameDeadline){
+  $('local-game-remaining').textContent=formatLocalClock(match.gameDeadline);
+  $('local-game-remaining').classList.toggle('local-time-urgent',match.gameDeadline-Date.now()<60000);
+ }
+ if(isGameTimerExpired(match)){
+  finishLocalTurn(finishTimedMatch(match),'The game timer expired. Final standings are ready.');return;
+ }
+ if(match.phase!=='playing'||state.busy||match.turnSeconds===0)return;
  $('local-time-remaining').textContent=formatLocalClock(match.deadline);
  $('local-time-remaining').classList.toggle('local-time-urgent',match.deadline-Date.now()<15000);
  if(!isLocalTimerExpired(match,Date.now()))return;
