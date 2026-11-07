@@ -54,7 +54,7 @@ test('Mode manuals are action-first, brief and cover the required mechanics',()=
  const rows=online.split('\n').filter(s=>s.trim().startsWith("['"));
  assert.equal(rows.length,4,'online rules should be four short steps');
  for(const row of rows)assert.ok(words(row)<=45,'online rule is too long: '+row);
- for(const re of [/centre/,/BIDMAS/,/Score/,/rack/,/two rounds/,/Brackets/])
+ for(const re of [/centre/,/BIDMAS/,/Score/,/rack/,/two rounds/,/matched pair/])
   assert.match(online,re);
 });
 test('New users receive the correct next action, not two competing start buttons',()=>{
