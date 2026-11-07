@@ -56,6 +56,7 @@ try{
  await page.locator('#launch-button').click();
  await page.waitForURL(/play\.html\?mode=rogue&tiles=advanced$/);
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT/);
+ if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  await page.locator('#mode-btn').click();
  await page.locator('#home-multi').click();
  await page.waitForURL(/choose\.html\?type=multi$/);
