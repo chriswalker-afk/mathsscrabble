@@ -82,7 +82,7 @@ main{flex:1;width:100%;padding:24px 0 16px}
 
 /* Visual identity A: shared hull panels and restrained orbital details. */
 .home-intro{position:relative;isolation:isolate}
-.home-intro::before{content:"";position:absolute;inset:-25px -30px -10px -36px;z-index:-1;
+.home-intro::before{content:"";position:absolute;inset:-25px 0 -10px 0;z-index:-1;
  background:radial-gradient(ellipse at 36% 20%,#32596928,transparent 67%);
  pointer-events:none}
 .home-eyebrow{color:var(--nova-teal);letter-spacing:.18em}
