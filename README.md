@@ -108,6 +108,8 @@ checks (`tests/mission-feedback.test.js`,
 connection states, local/online errors, keyboard/touch affordances and
 reduced-motion behaviour. No Cloudflare Worker changes are needed.
 
+**Achievement Hangar — Pass A foundation ([Issue #27](https://github.com/chriswalker-afk/mathsscrabble/issues/27)).** A separate 40-achievement, four-mode registry (6 easy / 3 moderate / 1 hard per mode) and **device-local per-pilot** reward engine are now in place. All original Alien Lab parts, palettes and presets remain **free** and the strict avatar manifest, existing saves and multiplayer rules are unchanged. The new engine supports verified-action event contracts, deduplicated progress, clean Sector Run / guardian / distinct-match milestones, guest seat isolation, legacy Alien Lab avatar copying and opt-in JSON progress backups. **Pass A is infrastructure only:** the 40 new cosmetics, Achievement Hangar page and gameplay event adapters are scheduled for Passes B–D. See [docs/ACHIEVEMENT_HANGAR.md](docs/ACHIEVEMENT_HANGAR.md) for details.
+
 ## Play
 
 Serve the project root using a static web server:
