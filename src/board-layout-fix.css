@@ -225,6 +225,7 @@
  #app .board-first>.arena{grid-column:1;grid-row:2}
  #app .board-first .arena>.board-frame{width:min(100%,580px);max-width:100%}
  #app .board-first .arena .rack-commit-actions{flex-wrap:wrap}
+ #app .board-first .arena .rack-commit-actions button{min-height:44px}
  #app .board-first .arena .rack-commit-actions .rack-score-button{
   flex:1 1 150px;max-width:none;min-width:120px;
  }
