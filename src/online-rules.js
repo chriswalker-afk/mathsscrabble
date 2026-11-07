@@ -60,14 +60,17 @@ function identity(room,hash){
 function shortReceipt(room,index,reqId){
  return room.receipts.find(p=>p.who===index&&p.id===reqId);
 }
-function validateMutation(room,index,request){
+function validateMutation(room,index,request,{allowCosmeticLag=false}={}){
  if(!request||typeof request!=='object'||Array.isArray(request))
   throw new OnlineError('Invalid request.');
  if(typeof request.id!=='string'||!/^[a-zA-Z0-9-]{12,80}$/.test(request.id))
   throw new OnlineError('Invalid action identifier.');
  const replay=shortReceipt(room,index,request.id);
  if(replay)return replay;
- if(!number(request.revision,1,1000000)||request.revision!==room.revision)
+ const stable=number(room.gameplayRevision,1,1000000)?room.gameplayRevision:room.revision;
+ if(!number(request.revision,1,1000000)||
+   request.revision!==room.revision&&
+   !(allowCosmeticLag&&request.revision>=stable&&request.revision<room.revision))
   throw new OnlineError('Room updated since your last view. Refresh and try again.',409);
  return null;
 }
@@ -150,7 +153,8 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  match=readyLocalTurn(match,now);
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
-   callouts:[],calloutStats:room.people.map(()=>({sent:0,lastTurn:0})),
+   gameplayRevision:room.revision+1,
+  callouts:[],calloutStats:room.people.map(()=>({sent:0,lastTurn:0})),
    updatedAt:now,expiresAt:now+GAME_LIFETIME},index,request,result);
  return {room:registerOnlineStart(updated),result};
 }
@@ -184,7 +188,7 @@ function receivedPlacement(match,placements){
 }
 export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloat){
  requireRoom(room,now);
- const index=identity(room,hash),replay=validateMutation(room,index,request);
+ const index=identity(room,hash),replay=validateMutation(room,index,request,{allowCosmeticLag:true});
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')throw new OnlineError('The match is not accepting turns.',409);
  if(index!==room.match.current)throw new OnlineError('It is not your turn.',403);
@@ -218,7 +222,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  if(match.phase==='handover')match=readyLocalTurn(match,now);
  const phase=match.phase==='finished'?'finished':'playing';
  const updated=addReceipt({...room,match,phase,revision:room.revision+1,
-   updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)},
+   gameplayRevision:room.revision+1,updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)},
    index,request,result);
  const recorded=scored?registerOnlineScored(updated,index,scored):updated;
  return {room:registerOnlineFinish(recorded),result};
@@ -229,7 +233,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  */
 export function sendOnlineCallout(room,hash,request,now=Date.now()){
  requireRoom(room,now);
- const index=identity(room,hash),replay=validateMutation(room,index,request);
+ const index=identity(room,hash),replay=validateMutation(room,index,request,{allowCosmeticLag:true});
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')
   throw new OnlineError('Alien Radio is only available during a match.',409);
@@ -246,6 +250,7 @@ export function sendOnlineCallout(room,hash,request,now=Date.now()){
  const result={type:'callout',by:index,calloutId:request.calloutId,sentCount:sent,turn};
  const next=addReceipt({...room,
   calloutStats:nextStats,
+  gameplayRevision:room.gameplayRevision??room.revision,
   callouts:last([...(room.callouts||[]),callout],MAX_ROOM_CALLOUTS),
   revision:room.revision+1,updatedAt:now,expiresAt:now+GAME_LIFETIME
  },index,request,result);
@@ -259,7 +264,7 @@ export function timeOutOnlineTurn(room,now=Date.now()){
  if(match.phase==='handover')match=readyLocalTurn(match,now);
  const phase=match.phase==='finished'?'finished':'playing';
  return {room:registerOnlineFinish({...room,match,phase,revision:room.revision+1,
-  updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)}),changed:true};
+  gameplayRevision:room.revision+1,updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)}),changed:true};
 }
 export function viewOnlineRoom(room,hash,now=Date.now()){
  requireRoom(room,now);
@@ -323,6 +328,7 @@ export function verifyOnlineRoom(room){
    (!room.match||normalizeTileSet(room.match.tileSet)!==normalizeTileSet(room.tileSet)||
       room.match.players.length!==room.people.length||
      room.match.players.some((p,i)=>p.name!==room.people[i].name)))return false;
+ if(room.gameplayRevision!==undefined&&!number(room.gameplayRevision,1,room.revision))return false;
  if(room.calloutStats!==undefined&&(!Array.isArray(room.calloutStats)||
    room.calloutStats.length!==room.people.length||
    room.calloutStats.some(s=>!s||!number(s.sent,0,ROOM_MAX_ACTIONS)||
