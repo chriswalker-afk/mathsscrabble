@@ -11,12 +11,15 @@ page.on('pageerror',e=>errors.push(e.message));
 const BASE='http://127.0.0.1:4173/';
 try{
  await page.goto(BASE+'index.html',{waitUntil:'networkidle'});
- assert.match(await page.locator('.home-description').textContent(),/Build true equations/i);
- assert.equal(await page.locator('.home-missions-sub').count(),0,'no duplicate choose-mode caption');
+ assert.equal(await page.locator('.choice-card').count(),2,'two clear first-screen choices');
+ assert.equal(await page.locator('.mini-cell').count(),49,'small decorative equation board');
+ assert.match(await page.locator('#home-save-status').textContent(),/save automatically/i);
+ await page.locator('#home-single').click();
+ await page.waitForURL(/choose\\.html\\?type=single$/);
+ assert.equal(await page.locator('.mode-option').count(),2);
+ assert.equal(await page.locator('.kit-option').count(),4);
  await page.locator('[data-tile-kit="rational"]').click();
- assert.equal(await page.locator('#home-number-rule').textContent(),'6 NUMBER TILES');
- assert.match(await page.locator('.tile-kit-intro').textContent(),/Saved games keep their original kit/);
- assert.match(await page.locator('.alien-lab-card[href="./achievement-hangar.html"]').textContent(),/before playing/);
+ assert.match(await page.locator('#kit-description').textContent(),/fractions/i);
 
  await page.goto(BASE+'play.html?mode=sector&tiles=natural',{waitUntil:'networkidle'});
  assert.equal(await page.locator('#modal').evaluate(el=>el.open),true);
@@ -49,7 +52,7 @@ try{
  assert.match(await page.locator('#modal-title').textContent(),/Set up a local match/);
  await page.locator('#local-tile-set').selectOption('rational');
  assert.match(await page.locator('#local-kit-description').textContent(),/6 numbers, 3 operators and a matched \( \) pair/);
- assert.match(await page.locator('.alien-setup-note').textContent(),/saved pilot for each seat/);
+ assert.match(await page.locator('.alien-setup-note').textContent(),/save automatically by player name/i);
  await page.locator('#modal-actions button').last().click();
  await page.locator('#local-ready-btn').click();
  await page.locator('#help-btn').click();
