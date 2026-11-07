@@ -694,7 +694,7 @@ export function assertAchievementCatalog(){
   throw Error('Achievement catalog must have 43 unique IDs.');
  const prizes=new Set();
  for(const [mode,definitions] of Object.entries(ACHIEVEMENTS_BY_MODE)){
-  (()=>{const originals=definitions.filter(a=>Number(a.id.slice(1))<=10);
+  if((()=>{const originals=definitions.filter(a=>Number(a.id.slice(1))<=10);
     return definitions.length!==(mode==='online'?13:10)||originals.length!==10||
       originals.filter(a=>a.tier==='easy').length!==6||
       originals.filter(a=>a.tier==='moderate').length!==3||
