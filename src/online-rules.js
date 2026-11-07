@@ -191,6 +191,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  const index=identity(room,hash),replay=validateMutation(room,index,request,{allowCosmeticLag:true});
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')throw new OnlineError('The match is not accepting turns.',409);
+ if(isGameTimerExpired(room.match,now))throw new OnlineError('The game timer has expired; refresh the room.',409);
  if(index!==room.match.current)throw new OnlineError('It is not your turn.',403);
  if(room.turnSeconds&&isLocalTimerExpired(room.match,now))
   throw new OnlineError('Your timer has expired; refresh the room.',409);
@@ -237,6 +238,7 @@ export function sendOnlineCallout(room,hash,request,now=Date.now()){
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')
   throw new OnlineError('Alien Radio is only available during a match.',409);
+ if(isGameTimerExpired(room.match,now))throw new OnlineError('The game timer has expired; refresh the room.',409);
  if(typeof request.calloutId!=='string'||!Object.hasOwn(CALLOUT_BY_ID,request.calloutId))
   throw new OnlineError('Choose a listed alien transmission.');
  const turn=room.match.turnNumber;
