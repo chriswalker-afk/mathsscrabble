@@ -12,6 +12,7 @@ import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitR
 import {renderTileFace,tileFaceClass} from './tile-face.js';
 import {CALLOUTS,CALLOUT_BY_ID,isCalloutUnlocked} from './online-callouts.js';
 import {pilotAchievements} from './achievements/engine.js';
+import {getAchievement} from './achievements/catalog.js';
 import {loadAchievementStore} from './achievements/storage.js';
 import {bindOnlineRoom,loadOnlineBinding,ingestOnlineEvidence} from './achievements/online-adapter.js';
 import {loadPilots} from './achievements/pilots.js';
@@ -601,7 +602,7 @@ function removePending(i){
  render();
 }
 function placeAt(index){
- if(!myTurn()||state.swapping)return;
+ if(!canPlan()||state.swapping)return;
  if(state.pending[index])return removePending(index);
  if(current()?.board[index]||!state.selected)return;
  if(state.selected==='equals'){
@@ -620,7 +621,7 @@ function placeAt(index){
  state.pending[index]=tile;state.order.push(index);state.selected=null;render();
 }
 function onTileDrop(payload,target){
- if(!myTurn()||state.swapping)return;
+ if(!canPlan()||state.swapping)return;
  if(target.kind==='board'){
    if(payload.kind==='pending'){
      if(payload.index===target.index)return;
@@ -747,6 +748,58 @@ function showResults(){
      clearSession();showEntry();
    }}]);
 }
+function showCalloutPicker(){
+ if(state.view?.phase!=='playing'||!current())return;
+ const sent=current().sentCalloutThisTurn,unlocked=unlockedCalloutAchievements();
+ const wrap=document.createElement('div');
+ const intro=document.createElement('p');intro.className='online-radio-intro';
+ intro.textContent=sent?'You have transmitted this turn. Your next signal is available after the turn changes.':
+   'Pick one symbol. Everyone will see your alien say it.';
+ wrap.append(intro);
+ for(const [heading,options] of [
+  ['FREE TRANSMISSIONS',CALLOUTS.filter(item=>!item.unlock)],
+  ['ACHIEVEMENT TRANSMISSIONS',CALLOUTS.filter(item=>item.unlock)]
+ ]){
+  const subtitle=document.createElement('div');subtitle.className='online-radio-subtitle';
+  subtitle.textContent=heading;wrap.append(subtitle);
+  const grid=document.createElement('div');grid.className='online-radio-grid';
+  for(const item of options){
+   const locked=!isCalloutUnlocked(item.id,unlocked);
+   const button=document.createElement('button');button.type='button';
+   button.className='online-radio-choice'+(locked?' is-locked':'');
+   button.disabled=locked||sent||state.busy;
+   button.title=locked?'Unlock '+getAchievement(item.unlock)?.title+' in the Achievement Hangar':item.label;
+   button.setAttribute('aria-label',locked?item.label+' locked: '+getAchievement(item.unlock)?.title:item.label);
+   const glyph=document.createElement('span');glyph.className='online-radio-glyph';glyph.textContent=item.glyph;
+   const label=document.createElement('span');label.className='online-radio-name';label.textContent=item.label;
+   button.append(glyph,label);
+   if(item.unlock){
+    const note=document.createElement('small');
+    note.textContent=locked?'◇ '+getAchievement(item.unlock)?.title:'✦ UNLOCKED';
+    button.append(note);
+   }
+   button.onclick=()=>{
+    $('online-dialog').close();
+    void mutate('callout',{calloutId:item.id}).then(result=>{
+     if(result?.event?.type==='callout')showNotice('Alien transmission sent.',false,'success');
+    });
+   };
+   grid.append(button);
+  }
+  wrap.append(grid);
+ }
+ const latest=(current()?.callouts||[]).slice(-3).reverse();
+ if(latest.length){
+  const subtitle=document.createElement('div');subtitle.className='online-radio-subtitle';
+  subtitle.textContent='RECENT TRANSMISSIONS';wrap.append(subtitle);
+  const log=document.createElement('p');log.className='online-radio-intro';
+  log.textContent=latest.map(item=>(current().players[item.by]?.name||'Pilot')+
+    ': '+(CALLOUT_BY_ID[item.calloutId]?.glyph||'')).join('  ·  ');
+  wrap.append(log);
+ }
+ showDialog('ALIEN RADIO','Send a transmission',wrap);
+}
+$('online-callout-open').onclick=showCalloutPicker;
 $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
@@ -754,7 +807,8 @@ $('online-help').onclick=()=>{
   ['Join on separate devices','The host creates a room; other pilots join with the code. The host chooses the kit and starts when at least two players have joined.'],
   ['Place a real equation','Tap or drag tiles onto a row or column. The first equation crosses the centre; later ones join locked tiles. The = sign is free; blanks can take a chosen value.'],
   ['Score, swap or pass','Press Score to check BIDMAS. Premium squares and connections boost points. Swap one tile free per turn when available, or pass if stuck.'],
-  ['Win on net points','The match ends when the bag empties and a player clears their rack, or after two rounds without scoring. Unused rack tile points are deducted.']
+  ['Wait, plan and transmit','While others play, rearrange your rack or try a private equation on the board. Send one Alien Radio symbol per turn; every pilot sees your alien speak.'],
+   ['Win on net points','The match ends when the bag empties and a player clears their rack, or after two rounds without scoring. Unused rack tile points are deducted.']
  ];
  for(const [i,[title,body]] of rules.entries()){
    const row=document.createElement('div');row.className='training-step';
@@ -783,12 +837,12 @@ async function copyInvite(){
 $('online-share').onclick=copyInvite;
 $('lobby-copy').onclick=copyInvite;
 $('online-bag').onclick=showBag;
-$('equals-tile').onclick=()=>{if(!myTurn()||state.swapping)return;
+$('equals-tile').onclick=()=>{if(!canPlan()||state.swapping)return;
  state.selected=state.selected==='equals'?null:'equals';render();};
-$('online-undo').onclick=()=>{if(!myTurn()||!state.order.length)return;
+$('online-undo').onclick=()=>{if(!canPlan()||!state.order.length)return;
  removePending(state.order.at(-1));};
 $('online-clear').onclick=()=>{
- if(!myTurn())return;
+ if(!canPlan())return;
  state.pending={};state.order=[];state.swapIds.clear();state.swapping=false;
  state.selected=null;render();
 };
@@ -806,7 +860,7 @@ async function mutate(endpoint,payload){
    return result;
  }catch(err){
    showNotice(err.message,true);
-   if(err.status===409||err.status===403)state.pendingRequest=null;
+   if([403,409,429].includes(err.status))state.pendingRequest=null;
    // Allow the conflict recovery request while the action spinner is active.
    state.busy=false;
    await refreshRoom();
@@ -1061,7 +1115,7 @@ document.addEventListener('visibilitychange',()=>{
  if(!state.busy)void refreshRoom();
 });
 window.addEventListener('keydown',event=>{
- if($('online-dialog').open||!$('online-gate').hidden||!myTurn())return;
+ if($('online-dialog').open||!$('online-gate').hidden||!canPlan())return;
  if(event.key==='='||event.key==='Enter'&&document.activeElement===$('equals-tile')){
    state.selected='equals';render();return;
  }
