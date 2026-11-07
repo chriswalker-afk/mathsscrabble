@@ -3,6 +3,10 @@
  * No account, remote API, avatar upload or existing match data is modified.
  */
 import {loadAlienLibrary,renderAlienSVG,serializeAlienSVG,framingForPart} from './renderer.js';
+import {FREE_ALIEN_OPTIONS,achievementForReward,isFreeAlienOption} from '../achievements/catalog.js';
+import {ownsAlienOption} from '../achievements/engine.js';
+import {loadPilots} from '../achievements/pilots.js';
+import {loadAchievementStore} from '../achievements/storage.js';
 import {
  ALIEN_COLOUR_FIELDS,ALIEN_PART_FIELDS,defaultAlien,randomAlien,presetAlien,
  serializeAlien,alienDescription
@@ -44,6 +48,19 @@ function notify(text,error=false){
  element.classList.toggle('is-error',error);
 }
 const current=()=>state.history?.present;
+function refreshEntitlements(){
+ const pilots=loadPilots(maybeStorage());
+ const awards=loadAchievementStore(maybeStorage(),pilots.registry);
+ state.entitlements={pilots:pilots.registry,awards:awards.store};
+}
+function owns(collection,id){
+ const e=state.entitlements;
+ return !e||ownsAlienOption(e.awards,e.pilots.activeId,collection,id);
+}
+function labelReward(collection,id){
+ const a=achievementForReward(collection,id);
+ return a?`${a.title} · ${a.mode.toUpperCase()} · ${a.description}`:'Free for all pilots';
+}
 const configJSON=alien=>serializeAlien(alien,state.library.manifest);
 const isDirty=()=>state.saved!==null&&configJSON(current())!==state.saved;
 const isFresh=()=>state.saved===null;
@@ -208,7 +225,7 @@ function addPartGroup(parent,field){
  label.textContent=field==='eyes'?'EYES':field==='mouth'?'MOUTH':'CHOOSE '+humanize(field).toUpperCase();
  const caption=document.createElement('span');
  const available=state.library.manifest.parts[PART_COLLECTIONS[field]];
- caption.textContent=available.length+' AVAILABLE';
+ caption.textContent=available.filter(id=>owns(PART_COLLECTIONS[field],id)).length+' AVAILABLE · '+available.length+' TOTAL';
  head.append(label,caption);
  const grid=document.createElement('div');grid.className='part-choices';
  for(const id of available){
@@ -301,13 +318,25 @@ function renderChange(next,{focusSelector=null,message='',animate=true}={}){
  updateSaveUI();
  if(message)notify(message);
 }
+function previewLocked(field,id){
+ const preview=updateAlienPart(current(),state.library.manifest,field,id);
+ const art=$('alien-art');art.replaceChildren(renderAlienSVG(preview,state.library,{width:270,height:304}));
+ notify('Preview only: '+labelReward(PART_COLLECTIONS[field],id)+' — earn it to save this part.');
+}
+function previewLockedColour(role,id){
+ const preview=updateAlienColour(current(),state.library.manifest,role,id);
+ $('alien-art').replaceChildren(renderAlienSVG(preview,state.library,{width:270,height:304}));
+ notify('Preview only: '+labelReward('palettes',id)+' — earn it to save this colour.');
+}
 function selectPart(field,id){
+ if(!owns(PART_COLLECTIONS[field],id)){previewLocked(field,id);return;}
  const next=updateAlienPart(current(),state.library.manifest,field,id);
  const selector='[data-field="'+field+'"][data-option="'+id+'"]';
  renderChange(next,{focusSelector:selector,
    message:humanize(id)+' selected. Your alien is looking good!'});
 }
 function selectColour(role,palette){
+ if(!owns('palettes',palette)){previewLockedColour(role,palette);return;}
  const next=updateAlienColour(current(),state.library.manifest,role,palette);
  renderChange(next,{focusSelector:
    '[data-colour-role="'+role+'"][data-palette="'+palette+'"]',
