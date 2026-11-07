@@ -8,6 +8,7 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  armedConsumable,armTemporary,consumeTemporary,useTileTemporary,earnMoveFlux,consumeBoardEcho,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
+import {paintFeedback} from './mission-feedback.js';
 import {salvageWorkshopMarkup,mountSalvageWorkshop} from './salvage-workshop.js';
 import {renderDriftHud} from './drift-hud.js';
 import {paintReactorIndicators,paintReactorTransfer} from './reactor-presentation.js';
@@ -31,7 +32,7 @@ const state={
  focusedIndex:pos(CENTER,CENTER),placementOrder:[],recentlyPlaced:null,
  lockedFlash:new Set(),preview:null,modalEpoch:0,phase:'playing',
  stats:freshStats(),progress:freshProgress(),saveAvailable:false,mode:'sector',rogue:null,ceremony:null,
- localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural'
+ localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural',saveWarningShown:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
 let localSetupAliens=[];
@@ -62,9 +63,18 @@ function persistRun(){
   if(state.saveAvailable){try{storage?.setItem(ACTIVE_MODE_KEY,state.mode);}catch{/* storage unavailable */}}
   $('save-status').textContent=state.saveAvailable?'✓ AUTOSAVED':'LOCAL SAVE OFF';
   $('save-status').classList.toggle('unavailable',!state.saveAvailable);
-  $('save-status').title=state.saveAvailable?
+  const saveDescription=state.saveAvailable?
     'Your current run, rack and unscored tiles are saved on this device.':
     'Your browser could not save this run. Keep this tab open to avoid losing progress.';
+  $('save-status').title=saveDescription;
+  $('save-status').setAttribute('aria-label',saveDescription);
+  if(!state.saveAvailable&&!state.saveWarningShown){
+    state.saveWarningShown=true;
+    announce('LOCAL SAVE UNAVAILABLE. Keep this tab open; your progress may be lost on refresh.',true);
+  }else if(state.saveAvailable&&state.saveWarningShown){
+    state.saveWarningShown=false;
+    announce('Local saving restored. Your current run is saved on this device.',false,'success');
+  }
 }
 const names=['ORIGIN','POLARIS','THE OUTER RING','THE VOID','ION STORM','NEBULA','DARK MATTER','BEYOND'];
 const isDrift=()=>state.mode==='rogue';
@@ -79,9 +89,8 @@ const isChargedTile=tile=>isDrift()&&tile&&!tile.blank&&
 const calculateMove=move=>isDrift()?
   scoreRogueMove(state.board,state.pending,move,state.rogue,state.sector):
   scoreMove(state.board,state.pending,move,{rackSize:rackCapacity()});
-function announce(message,isError=false){
- $('log').textContent=message;
- $('log').classList.toggle('error',isError);
+function announce(message,isError=false,tone='info'){
+ paintFeedback($('log'),message,isError?'error':tone);
  $('footer-text').textContent=message.toUpperCase();
  if(isError){
    $('equation-preview').dataset.state='error';
@@ -1334,7 +1343,7 @@ function scoreLocal(){
      tileCount:stages.filter(x=>x.kind==='tile').length,
      completedTiles:0,epoch,finished:false};
    state.ceremony=ctl;
-   announce(match.players[oldIndex].name+' scored a correct equation! Transferring +'+points.total+' points.');
+   announce(match.players[oldIndex].name+' scored a correct equation! Transferring +'+points.total+' points.',false,'success');
    persistRun();render();
    setCeremonyReadout(ctl,'READY TO TRANSFER');
    void playScoringCeremony(ctl);
@@ -1378,7 +1387,7 @@ function score(){
      completedTiles:0,epoch,finished:false};
    state.ceremony=ctl;
    completeTurn();
-   announce('Equation verified. Transferring '+points.total+' energy tile by tile.');
+   announce('Equation verified. Transferring '+points.total+' energy tile by tile.',false,'success');
    render();
    setCeremonyReadout(ctl,'READY TO TRANSFER');
    void playScoringCeremony(ctl);
@@ -1437,12 +1446,12 @@ function swap(){
    if(isDrift())state.rogue=markFreeSwap(state.rogue,state.turn,state.freeSwapTurn);
    state.freeSwapTurn=state.turn;
    state.swapping=false;state.swapSet.clear();state.selected=null;
-   announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`);
+   announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`,false,'success');
    render();
  }else{
    state.stats.paidExchanges++;
    completeTurn();
-   announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`);
+   announce(`Exchanged ${exchanged.length} tile(s). Turn spent.`,false,'success');
    render();
    if(state.phase!=='playing')showSectorOutcome();
  }
@@ -1568,7 +1577,7 @@ function startChosenTileSet(id){
  state.tileSet=normalizeTileSet(id);
  try{storage?.setItem(TILE_SET_STORAGE_KEY,state.tileSet);}catch{/* optional storage */}
  freshSector(1,{newRun:true});
- announce(TILE_SET_BY_ID[id].title+' tile kit engaged. New shuffled supply ready.');
+ announce(TILE_SET_BY_ID[id].title+' tile kit engaged. New shuffled supply ready.',false,'success');
 }
 function confirmTileSetChange(id){
  const set=TILE_SET_BY_ID[id];
