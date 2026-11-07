@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 180" role="img" aria-labelledby="kit-orbit-title">
+<title id="kit-orbit-title">orbit equipment illustration</title>
+<defs><linearGradient id="kit-orbit-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2c5474"/><stop offset="1" stop-color="#20294e"/></linearGradient>
+<radialGradient id="kit-orbit-glow"><stop stop-color="#e6fff0" stop-opacity=".48"/><stop offset="1" stop-color="#d3ffe1" stop-opacity="0"/></radialGradient></defs>
+<rect width="400" height="180" rx="14" fill="url(#kit-orbit-bg)"/>
+<ellipse cx="232" cy="96" rx="160" ry="133" fill="url(#kit-orbit-glow)"/>
+<circle cx="274.4" cy="75.8" r="2.7" fill="#ffe3b4" opacity="0.61"/><circle cx="22.4" cy="139.5" r="1" fill="#c0f1e7" opacity="0.44"/><circle cx="323.8" cy="149.1" r="1" fill="#c0f1e7" opacity="0.74"/><circle cx="229.9" cy="66.3" r="1.65" fill="#c0f1e7" opacity="0.45"/><circle cx="207.0" cy="78.3" r="1" fill="#c0f1e7" opacity="0.67"/><circle cx="242.9" cy="137.3" r="1" fill="#c0f1e7" opacity="0.75"/><circle cx="107.6" cy="151.1" r="1.65" fill="#ffe3b4" opacity="0.37"/><circle cx="219.9" cy="64.6" r="2.7" fill="#c0f1e7" opacity="0.24"/><circle cx="221.7" cy="79.6" r="1" fill="#c0f1e7" opacity="0.39"/><circle cx="121.5" cy="136.3" r="1.65" fill="#c0f1e7" opacity="0.66"/><circle cx="138.2" cy="151.7" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="346.8" cy="64.4" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="64.9" cy="79.4" r="1.65" fill="#ffe3b4" opacity="0.53"/><circle cx="174.1" cy="137.0" r="1" fill="#c0f1e7" opacity="0.56"/><circle cx="241.6" cy="150.4" r="2.7" fill="#c0f1e7" opacity="0.69"/><circle cx="62.3" cy="66.3" r="1.65" fill="#c0f1e7" opacity="0.71"/><circle cx="168.5" cy="76.9" r="1" fill="#c0f1e7" opacity="0.60"/>
+
+ <circle cx="196" cy="95" r="58" fill="#48759b" stroke="#c0c9df" stroke-width="5"/>
+ <circle cx="196" cy="95" r="41" fill="#9fbce1"/>
+ <path d="M154 84Q187 61 225 90M153 112Q184 123 234 104" fill="none" stroke="#476892" stroke-width="8"/>
+ <ellipse cx="196" cy="95" rx="116" ry="30" fill="none" stroke="#f1d6ab" stroke-width="10" transform="rotate(-24 196 95)"/>
+ <ellipse cx="196" cy="95" rx="116" ry="30" fill="none" stroke="#fbf1da" stroke-opacity=".7" stroke-width="2" transform="rotate(-24 196 95)"/>
+ <circle cx="97" cy="135" r="16" fill="#c3a8dd" stroke="#e7d4f6" stroke-width="4"/>
+ <path d="M273 37L296 14M280 42L314 35" stroke="#d3e0dc" stroke-width="4" stroke-linecap="round"/>
+
+<rect x="5" y="5" width="390" height="170" rx="11" fill="none" stroke="#e0fff0" stroke-opacity=".29" stroke-width="3"/>
+</svg>

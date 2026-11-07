@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 180" role="img" aria-labelledby="kit-quantum-title">
+<title id="kit-quantum-title">quantum equipment illustration</title>
+<defs><linearGradient id="kit-quantum-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#47556c"/><stop offset="1" stop-color="#2e2552"/></linearGradient>
+<radialGradient id="kit-quantum-glow"><stop stop-color="#e6fff0" stop-opacity=".48"/><stop offset="1" stop-color="#d3ffe1" stop-opacity="0"/></radialGradient></defs>
+<rect width="400" height="180" rx="14" fill="url(#kit-quantum-bg)"/>
+<ellipse cx="232" cy="96" rx="160" ry="133" fill="url(#kit-quantum-glow)"/>
+<circle cx="207.0" cy="130.0" r="2.7" fill="#ffe3b4" opacity="0.52"/><circle cx="242.9" cy="53.0" r="1" fill="#c0f1e7" opacity="0.46"/><circle cx="107.6" cy="122.5" r="1" fill="#c0f1e7" opacity="0.29"/><circle cx="219.9" cy="63.2" r="1.65" fill="#c0f1e7" opacity="0.65"/><circle cx="221.7" cy="109.7" r="1" fill="#c0f1e7" opacity="0.51"/><circle cx="121.5" cy="78.7" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="138.2" cy="91.7" r="1.65" fill="#ffe3b4" opacity="0.50"/><circle cx="346.8" cy="99.3" r="2.7" fill="#c0f1e7" opacity="0.57"/><circle cx="64.9" cy="68.4" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="174.1" cy="125.1" r="1.65" fill="#c0f1e7" opacity="0.42"/><circle cx="241.6" cy="40.1" r="1" fill="#c0f1e7" opacity="0.71"/><circle cx="62.3" cy="156.0" r="1" fill="#c0f1e7" opacity="0.72"/><circle cx="168.5" cy="150.7" r="1.65" fill="#ffe3b4" opacity="0.43"/><circle cx="146.1" cy="47.9" r="1" fill="#c0f1e7" opacity="0.25"/><circle cx="187.0" cy="112.3" r="2.7" fill="#c0f1e7" opacity="0.37"/><circle cx="87.4" cy="88.7" r="1.65" fill="#c0f1e7" opacity="0.44"/><circle cx="198.1" cy="69.1" r="1" fill="#c0f1e7" opacity="0.62"/>
+
+ <rect x="103" y="54" width="191" height="93" rx="18" fill="#28455b" stroke="#cab1e7" stroke-width="8"/>
+ <rect x="121" y="70" width="156" height="65" rx="12" fill="#172f46" stroke="#88cfd0" stroke-width="3"/>
+ <ellipse cx="200" cy="102" rx="51" ry="24" fill="#a89bde" opacity=".65"/>
+ <circle cx="200" cy="102" r="27" fill="#f3dcae" stroke="#ded5f1" stroke-width="5"/>
+ <circle cx="200" cy="102" r="12" fill="#8bd9ce"/>
+ <path d="M149 102L121 102M251 102L279 102M200 75V48M200 130V153" stroke="#d5f8e7" stroke-width="6" stroke-linecap="round"/>
+ <path d="M92 88L72 68 86 49M302 117L323 133 315 155M177 37L191 16 208 34" fill="none" stroke="#ffe0ac" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+ <g fill="#c6a9f5"><circle cx="91" cy="38" r="5"/><circle cx="325" cy="46" r="6"/></g>
+
+<rect x="5" y="5" width="390" height="170" rx="11" fill="none" stroke="#e0fff0" stroke-opacity=".29" stroke-width="3"/>
+</svg>
