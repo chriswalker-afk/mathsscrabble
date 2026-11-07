@@ -27,6 +27,7 @@ import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {bindSoloRun,emitSoloAchievement,soloScoredEvidence,soloClearEvidence} from './achievements/solo-adapter.js';
 import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
+import {loadPilots} from './achievements/pilots.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -43,6 +44,9 @@ function startAchievementRun(fresh=false){
  if(state.mode==='local')return;
  achievementRun=bindSoloRun(storage,{mode:state.mode==='rogue'?'drift':'sector',
   startedAt:state.progress.startedAt,fresh});
+ const pilot=loadPilots(storage).registry.pilots.find(p=>p.id===achievementRun?.pilotId);
+ const label=$('achievement-pilot');
+ if(label)label.textContent=pilot?'EARNING FOR '+pilot.name.toUpperCase():'GUEST RUN · NO PERMANENT REWARDS';
  pendingSoloAwards=[];
 }
 function awardSolo(type,suffix,data,{defer=false,quiet=false}={}){
@@ -609,6 +613,7 @@ function applyTileTemporary(tileId){
  render();
 }
 function render(){
+ $('achievement-hangar-link').hidden=isLocal();
  state.preview=inspectPlacement(state.board,state.pending);
  $('app').dataset.tileSet=state.tileSet;
  $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
