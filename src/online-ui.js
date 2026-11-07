@@ -10,6 +10,9 @@ import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
+import {bindOnlineRoom,loadOnlineBinding,ingestOnlineEvidence} from './achievements/online-adapter.js';
+import {loadPilots} from './achievements/pilots.js';
+import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
 
 const $=id=>document.getElementById(id);
 const EMPTY_BOARD=Array(SIZE*SIZE).fill(null);
@@ -18,10 +21,22 @@ const state={
  selected:null,swapping:false,swapIds:new Set(),busy:false,
  ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
  reconnectTimer:null,refreshing:false,wantedRevision:0,ceremony:null,focusIndex:pos(CENTER,CENTER),
- lastResultRevision:0,shownResults:false,pendingRequest:null,notice:''
+ lastResultRevision:0,shownResults:false,pendingRequest:null,notice:'',
+ pendingOnlineAwards:[]
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 state.alienDraft=alienFromStorage(storage,0);
+function updateOnlineAwardLabel(){
+ const label=$('online-achievement-status');
+ if(!label)return;
+ const profiles=loadPilots(storage).registry;
+ const linked=state.view?loadOnlineBinding(storage,state.view):null;
+ const id=state.view?linked?.pilotId:profiles.activeId;
+ const profile=profiles.pilots.find(p=>p.id===id);
+ label.textContent=profile?
+   '✦ Achievements for '+profile.name+' · '+(state.view?'this room':'your next room'):
+   '✦ Guest · no saved achievement progress. Create or select a pilot in the Hangar.';
+}
 const requestedKit=new URLSearchParams(location.search).get('tiles');
 $('online-tile-kit').value=normalizeTileSet(requestedKit||storage?.getItem(TILE_SET_STORAGE_KEY));
 const describeSelectedKit=()=>{
@@ -169,6 +184,13 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
    }
  }
  state.view=view;state.code=view.code;state.lastRevision=view.revision;
+  const gained=ingestOnlineEvidence(storage,view).awarded;
+  if(gained.length){
+   if(payload?.event?.type==='scored'||state.ceremony||view.phase==='finished')
+    state.pendingOnlineAwards.push(...gained);
+   else showAchievementToast(gained);
+  }
+  updateOnlineAwardLabel();
  if(view.you?.avatar)state.alienDraft=safePilotAlien(view.you.avatar,view.you.index);
  if(!state.ceremony)render();
  if(view.phase==='finished'&&!state.shownResults&&!state.ceremony&&!state.busy){
@@ -250,6 +272,7 @@ function clearSession(){
  disconnectSockets();state.view=null;state.code=null;state.token=null;
  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
  state.busy=false;state.wantedRevision=0;state.ceremony=null;state.shownResults=false;
+ state.pendingOnlineAwards=[];
  history.replaceState(null,'',location.pathname);
  sessionStore();setConnection('offline');
  render();gateError('');
@@ -278,6 +301,7 @@ async function refreshRoom(){
  }
 }
 function showEntry(){
+ updateOnlineAwardLabel();
  if($('online-pilot-picker').parentElement!==$('online-avatar-entry-slot'))
   $('online-avatar-entry-slot').append($('online-pilot-picker'));
  renderPilotPicker();
@@ -632,6 +656,12 @@ function showResults(){
    row.append(rank,portrait,name,gross,net);table.append(row);
  }
  content.append(table);
+ const medals=state.pendingOnlineAwards.splice(0);
+ if(medals.length){
+  const award=document.createElement('div');
+  award.innerHTML=achievementRevealMarkup(medals);
+  content.append(award);
+ }
  const note=document.createElement('p');
  note.textContent='The winner has the highest final score after subtracting leftover rack tile points. Tied top scores share first place.';
  content.append(note);
@@ -765,6 +795,12 @@ function endScoring(ctl){
    const val=document.createElement('b');val.textContent=amount;row.append(title,val);breakdown.append(row);
  }
  content.append(equation,breakdown);
+ const medals=state.pendingOnlineAwards.splice(0);
+ if(medals.length){
+   const reveal=document.createElement('div');
+   reveal.innerHTML=achievementRevealMarkup(medals);
+   content.append(reveal);
+ }
  showDialog('SERVER VERIFIED','+'+ctl.total+' points',content,[{label:'CONTINUE',primary:true,action:()=>{
    if(state.view?.phase==='finished')showResults();
  }}]);
@@ -868,7 +904,11 @@ $('online-create-form').onsubmit=async e=>{
      return;
    }
    state.token=data.token;saveRoomFromServer(data,{reset:true});
-   sessionStore();history.replaceState(null,'','#'+state.code);
+    bindOnlineRoom(storage,state.view);
+    const rewards=ingestOnlineEvidence(storage,state.view).awarded;
+    if(rewards.length)showAchievementToast(rewards);
+    updateOnlineAwardLabel();
+    sessionStore();history.replaceState(null,'','#'+state.code);
    connectSocket();showNotice('Room created. Share the code and invite your pilots.',false,'success');
  }catch(err){gateError(err.message);}
  finally{$('online-create-button').disabled=false;}
@@ -883,7 +923,11 @@ $('online-join-form').onsubmit=async e=>{
      method:'POST',body:{name:$('online-join-name').value,avatar:state.alienDraft}
    });
    state.token=data.token;saveRoomFromServer(data,{reset:true});
-   sessionStore();history.replaceState(null,'','#'+state.code);
+    bindOnlineRoom(storage,state.view);
+    const rewards=ingestOnlineEvidence(storage,state.view).awarded;
+    if(rewards.length)showAchievementToast(rewards);
+    updateOnlineAwardLabel();
+    sessionStore();history.replaceState(null,'','#'+state.code);
    connectSocket();showNotice('Joined room '+code+'. Waiting for the host.',false,'success');
  }catch(err){gateError(err.message);}
  finally{$('online-join-button').disabled=false;}
