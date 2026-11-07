@@ -46,11 +46,57 @@ export const PULSE_ITEM=TEMP_ITEMS[0];
 export const owns=(rogue,id)=>Boolean(rogue?.upgrades?.includes(id));
 export function turnLimit(rogue){return 6+Number(owns(rogue,'extra-turn'));}
 export function rackSlots(rogue){return kitRackSize(rogue?.tileSet)+Number(owns(rogue,'wide-rack'));}
-export function shopTemperatures(sector){
- // Every Salvage Bay offers a score boost and a tile manipulation choice.
- const boosts=TEMP_ITEMS.filter(item=>item.action==='score'&&item.id!==PULSE_ITEM.id);
- const swaps=TEMP_ITEMS.filter(item=>item.action==='tile');
- return [PULSE_ITEM,boosts[(sector-1)%boosts.length],swaps[(sector-1)%swaps.length]];
+// A private random seed is created once per Drift run. Shop stock is rolled
+// when a sector is cleared, then saved with the run. Revisiting, reloading,
+// buying one offer, or changing browser tabs never rerolls the other offers.
+const SHOP_FALLBACK_SEED=0x2e61a5b7;
+function shopRandom(seed,sector){
+ let n=((Number.isSafeInteger(seed)?seed:SHOP_FALLBACK_SEED)^Math.imul(sector,0x9e3779b9))>>>0;
+ return ()=>{
+   n=(n+0x6d2b79f5)>>>0;
+   let t=n;t=Math.imul(t^(t>>>15),t|1);
+   t^=t+Math.imul(t^(t>>>7),t|61);
+   return ((t^(t>>>14))>>>0)/4294967296;
+ };
+}
+function shuffleStock(items,random){
+ const list=[...items];
+ for(let i=list.length-1;i>0;i--){
+   const j=Math.floor(random()*(i+1));
+   [list[i],list[j]]=[list[j],list[i]];
+ }
+ return list;
+}
+function preferFresh(items,oldIds,random){
+ const previous=new Set(oldIds||[]);
+ // Shuffle first: stable sorting merely prioritises novelty, not fixed catalog
+ // ordering. Previous-sector repeats are avoided where alternatives exist.
+ return shuffleStock(items,random).sort((a,b)=>Number(previous.has(a.id))-Number(previous.has(b.id)));
+}
+function rollShopStock(sector,rogue){
+ const random=shopRandom(rogue?.shopSeed,sector);
+ const previous=rogue?.shopStock?.sector===sector-1?rogue.shopStock:null;
+ const candidates=preferFresh(ROGUE_ITEMS.filter(item=>!owns(rogue,item.id)),
+   previous?.systems,random);
+ const systems=[],kinds=new Set();
+ for(const item of candidates)if(!kinds.has(item.kind)&&systems.length<4){
+   systems.push(item.id);kinds.add(item.kind);
+ }
+ for(const item of candidates)if(systems.length<4&&!systems.includes(item.id))
+   systems.push(item.id);
+ const gadgets=[],past=previous?.gadgets;
+ const boosters=preferFresh(TEMP_ITEMS.filter(item=>item.action==='score'),past,random);
+ const manipulations=preferFresh(TEMP_ITEMS.filter(item=>item.action==='tile'),past,random);
+ if(boosters.length)gadgets.push(boosters[0].id);
+ if(manipulations.length)gadgets.push(manipulations[0].id);
+ const remaining=preferFresh(TEMP_ITEMS.filter(item=>!gadgets.includes(item.id)),past,random);
+ if(remaining.length)gadgets.push(remaining[0].id);
+ return {sector,systems,gadgets};
+}
+export function shopTemperatures(sector,rogue){
+ const stock=rogue?.shopStock?.sector===sector?rogue.shopStock:
+   rollShopStock(sector,{...rogue,upgrades:[]});
+ return stock.gadgets.map(id=>TEMP_ITEM_BY_ID[id]).filter(Boolean);
 }
 // A pre-upgrade save may only contain the old Pulse counter. Its charges
 // remain usable, but new purchases obey the two-slot maximum.
@@ -90,29 +136,21 @@ export function targetForSector(mode,sector,rogue){
  return mode==='rogue'&&anomalyForSector(sector,rogue)?.id==='critical'?
    Math.ceil(base*1.2):base;
 }
-export function makeRogueState(tileSet='natural'){
+export function makeRogueState(tileSet='natural',random=randomFloat){
+ const sample=Math.min(.999999999999,Math.max(0,Number(random())||0));
+ const shopSeed=Math.floor(sample*4294967296);
  return {flux:0,earned:0,spent:0,upgrades:[],shopSector:0,lastReward:0,
+   shopSeed,shopStock:null,
    pulse:0,pulseBought:0,pulseUsed:0,tempSlots:[],tempBought:[],tempUsed:[],
    armed:null,swapTurn:0,swapsUsed:0,echoed:[],zoneBosses:[],forcedTile:null,tileSet:normalizeTileSet(tileSet)};
 }
 export function shopOffers(sector,rogue){
- const unowned=ROGUE_ITEMS.filter(item=>!owns(rogue,item.id));
- if(!unowned.length)return [];
- // Four curated offers; the four-slot build limit makes stock choices matter.
- if(sector===1)return unowned.slice(0,4);
- // Early waves deliberately expose distinct build archetypes, not just the
- // next four entries in a long catalog. Players can see economy, board, time,
- // rack and free-swap decisions before their four slots are all occupied.
- const featured={
-   2:['extra-swap','flux-recycler','amplifier','odd-charge'],
-   3:['bonus-echo','wide-rack','extra-turn','length-matrix'],
-   4:['precision-pay','premium-dividend','operator-core','starter-spark']
- };
- const start=((sector-1)*3)%ROGUE_ITEMS.length;
- const rotated=[...ROGUE_ITEMS.slice(start),...ROGUE_ITEMS.slice(0,start)];
- const candidates=[...(featured[sector]||[]).map(id=>ROGUE_ITEM_BY_ID[id]),...rotated];
- return [...new Map(candidates.map(item=>[item.id,item])).values()]
-   .filter(item=>!owns(rogue,item.id)).slice(0,4);
+ const stock=rogue?.shopStock?.sector===sector?rogue.shopStock:
+   // Older saves had no stored stock. Derive a reproducible selection from
+   // their saved seed (or fixed legacy seed), never reroll on shop reopening.
+   rollShopStock(sector,{...rogue,upgrades:[]});
+ return stock.systems.map(id=>ROGUE_ITEM_BY_ID[id])
+   .filter(item=>item&&!owns(rogue,item.id));
 }
 export function purchaseUpgrade(rogue,id,sector){
  const item=ROGUE_ITEM_BY_ID[id];
@@ -135,7 +173,7 @@ export function purchaseTemporary(rogue,id,sector){
  if(!item)return {ok:false,reason:'Unknown temporary equipment.',rogue};
  if(!Number.isInteger(sector)||sector<1||rogue.shopSector!==sector)
    return {ok:false,reason:'The Salvage Bay is not open.',rogue};
- if(!shopTemperatures(sector).some(offer=>offer.id===id))
+ if(!shopTemperatures(sector,rogue).some(offer=>offer.id===id))
    return {ok:false,reason:'This consumable is not offered this sector.',rogue};
  if(heldConsumables(rogue).length>=MAX_TEMPORARY_SLOTS)
    return {ok:false,reason:'Both temporary equipment slots are full.',rogue};
@@ -240,9 +278,10 @@ export function fluxReward(score,turn,rogue){
 export function rewardSector(rogue,sector,score,turn){
  if(rogue.shopSector>=sector)return {rogue,reward:0};
  const amount=fluxReward(score,turn,rogue);
+ const shopStock=rollShopStock(sector,rogue);
  return {reward:amount,rogue:{
    ...rogue,flux:rogue.flux+amount,earned:rogue.earned+amount,
-   lastReward:amount,shopSector:sector
+   lastReward:amount,shopSector:sector,shopStock
  }};
 }
 export function scoreRogueMove(board,pending,move,rogue,sector){
@@ -365,6 +404,19 @@ export function validRogueState(rogue,sector,phase){
  if(!integer(rogue.flux,0,100000000)||!integer(rogue.earned,0,100000000)||
     !integer(rogue.spent,0,100000000)||rogue.flux!==rogue.earned-rogue.spent)return false;
  if(!integer(rogue.shopSector,0,99)||rogue.shopSector>sector||!integer(rogue.lastReward,0,10000))return false;
+ if(rogue.shopSeed!==undefined&&!integer(rogue.shopSeed,0,4294967295))return false;
+ if(rogue.shopStock!=null){
+   const stock=rogue.shopStock;
+   if(!stock||typeof stock!=='object'||Array.isArray(stock)||
+      !integer(stock.sector,1,99)||stock.sector!==rogue.shopSector||
+      !Array.isArray(stock.systems)||stock.systems.length>4||
+      !Array.isArray(stock.gadgets)||stock.gadgets.length>3||
+      new Set(stock.systems).size!==stock.systems.length||
+      new Set(stock.gadgets).size!==stock.gadgets.length||
+      !stock.systems.every(id=>typeof id==='string'&&Boolean(ROGUE_ITEM_BY_ID[id]))||
+      !stock.gadgets.every(id=>typeof id==='string'&&Boolean(TEMP_ITEM_BY_ID[id])))
+     return false;
+ }
  // Old saves can still carry up to three capacitors; no new shop purchases
  // may ever exceed two temporary slots.
  if(!integer(rogue.pulse,0,3)||!integer(rogue.pulseBought,0,10000)||
