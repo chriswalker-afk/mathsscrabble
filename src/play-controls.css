@@ -1,0 +1,95 @@
+/* In-game controls: put frequent actions beside the rack, keep the board visible. */
+.rack-section{padding-top:8px}
+.rack-heading{gap:6px;margin-bottom:5px;min-height:29px}
+.rack-heading>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rack-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex:0 0 auto;min-width:0}
+.rack-actions .rack-undo{display:inline-flex;align-items:center;justify-content:center;min-height:29px;width:auto;padding:5px 7px;white-space:nowrap;font-size:9px;letter-spacing:.015em;line-height:1.05;border-radius:6px;touch-action:manipulation}
+.rack-actions .rack-undo:hover:not(:disabled){background:#2a5662}
+.rack-actions .rack-undo:focus-visible,.rack-commit-actions button:focus-visible,.play-rule-reference summary:focus-visible{outline:2px solid #ffe0a0;outline-offset:2px}
+.rack-count{flex:0 0 auto;color:#f1e1b7;font-size:10px;font-weight:850;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rack-commit-actions{display:flex;align-items:stretch;gap:7px;margin-top:7px;width:100%;max-width:660px}
+.rack-commit-actions button{touch-action:manipulation;min-height:41px;min-width:0;border-radius:8px;font-weight:850;line-height:1.15}
+.rack-commit-actions .rack-swap-button,.rack-commit-actions .rack-pass-button{
+ background:linear-gradient(145deg,#294c5b,#1b3544);border:1px solid #658c92;color:#d9eee9;
+ padding:7px 9px;font-size:10px;letter-spacing:.025em;box-shadow:inset 0 1px #effff017;
+}
+.rack-commit-actions .rack-swap-button{flex:1 1 0}
+.rack-commit-actions .rack-pass-button{flex:0 1 100px}
+.rack-commit-actions .rack-swap-button.free-exchange{border-color:#92baac;color:#f4e1af}
+.rack-commit-actions .rack-swap-button:not(:disabled):hover,.rack-commit-actions .rack-pass-button:not(:disabled):hover{background:#335e68;border-color:#a8dbcd}
+.rack-commit-actions .rack-score-button{flex:0 1 198px;max-width:215px;width:auto;padding:8px 10px;text-align:center;font-size:12px;letter-spacing:.035em}
+.rack-commit-actions .rack-score-button strong{font-size:inherit;white-space:nowrap}
+.rack-commit-actions .rack-score-button small{margin-top:3px;font-size:8px}
+.rack-commit-actions button:disabled{opacity:.48;cursor:default;box-shadow:none}
+.rack-commit-actions button[hidden],#drift-loadout[hidden],#rogue-summary[hidden],#drift-temporary[hidden]{display:none!important}
+/* The equation readout stays to the right; the primary action follows the rack. */
+.right-panel>.panel-heading:first-child{margin-bottom:8px}
+.play-rule-reference{margin-top:13px;border:1px solid #486d78;border-radius:8px;background:#183546;min-width:0;flex:0 0 auto}
+.play-rule-reference summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;list-style:none;padding:9px 10px;font-size:10px;font-weight:900;letter-spacing:.045em;color:#bddbd7;line-height:1.35}
+.play-rule-reference summary::-webkit-details-marker{display:none}
+.play-rule-reference summary span{font-size:14px;color:#cbd7b6;transform-origin:center;transition:transform .18s}
+.play-rule-reference[open] summary span{transform:rotate(180deg)}
+.play-rule-body{border-top:1px solid #426474;padding:9px 10px 11px}
+.play-rule-body .legend{margin:7px 0 10px;gap:6px}
+.play-rule-body .legend>div{font-size:10px;gap:7px}
+.play-rule-body .legend-square{width:25px;height:25px;font-size:9px}
+.play-rule-body .rules-note{margin:5px 0 0;font-size:10px;line-height:1.45}
+.play-rule-note{margin:5px 0;color:#9ac1c4;font-size:10px;line-height:1.45}
+.play-rule-heading{border-top:1px solid #3f626e;margin-top:10px;padding-top:9px;color:#c0dfd8;font-size:9px;font-weight:900;letter-spacing:.09em}
+#app[data-mode="rogue"] .right-panel .play-rule-reference{margin-top:9px}
+/* Drift: installed systems immediately above one-use gadgets, same command rail. */
+.drift-loadout{display:grid;gap:8px;margin-top:10px;min-width:0}
+#app[data-mode="rogue"] .right-panel .drift-loadout .rogue-summary{
+ display:flex;flex-direction:column;min-width:0;margin:0;padding:8px;
+}
+#app[data-mode="rogue"] .right-panel .drift-loadout .drift-temporary{margin:0;padding:8px;min-width:0}
+#app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equipment-slot{min-height:59px;gap:2px;padding:4px 2px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equip-svg{width:31px;height:31px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equip-name{font-size:8px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .temporary-slots .equipment-slot{min-height:55px;padding:4px 2px;gap:3px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .temporary-slots .equip-svg{width:30px;height:30px}
+#app[data-mode="rogue"] .right-panel .drift-loadout .temporary-slots .equip-name{font-size:8px}
+#app[data-mode="rogue"] .right-panel .drift-loadout #temporary-hint{font-size:9px;margin-top:4px;line-height:1.3}
+@media(min-width:731px){
+ #app[data-mode="rogue"] .right-panel{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#548285 transparent}
+ .arena .board-frame{width:min(100%,calc(100dvh - 335px),650px)}
+ .online-app .arena .board-frame{width:min(100%,calc(100dvh - 315px),650px)}
+}
+@media(max-width:1050px){
+ .rack-actions{gap:4px}
+ .rack-actions .rack-undo{padding:4px 5px;font-size:8px}
+ .rack-count{font-size:9px}
+}
+@media(max-width:730px){
+ .rack-section{padding-top:6px}
+ .rack-heading{min-height:28px;margin-bottom:4px}
+ .rack-heading>span:first-child{font-size:9px}
+ .rack-actions{gap:4px}
+ .rack-actions .rack-undo{min-height:29px;padding:5px 6px;font-size:9px}
+ .rack-commit-actions{gap:5px;margin-top:5px}
+ .rack-commit-actions button{min-height:39px}
+ .rack-commit-actions .rack-score-button{flex-basis:160px;max-width:none;padding:8px 6px;font-size:11px}
+ .rack-commit-actions .rack-score-button small{display:none}
+ .rack-commit-actions .rack-swap-button,.rack-commit-actions .rack-pass-button{padding:6px 4px;font-size:9px}
+ .rack-commit-actions .rack-pass-button{flex-basis:70px}
+ .right-panel .play-rule-reference{margin-top:6px}
+ .right-panel .play-rule-reference summary{min-height:31px;padding:7px 9px;font-size:9px}
+ .online-app .rack-heading>span:first-child{max-width:145px}
+ #app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots{grid-template-columns:repeat(4,minmax(0,1fr))}
+ #app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equipment-slot{min-height:45px;padding:3px}
+ #app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equip-svg{width:35px;height:35px}
+ #app[data-mode="rogue"] .right-panel .drift-loadout .permanent-slots .equip-name{display:none}
+ #app[data-mode="rogue"] .right-panel .drift-loadout .temporary-slots .equipment-slot{min-height:46px}
+ .right-panel>.panel-heading:first-child{display:none}
+}
+@media(max-width:390px){
+ .rack-heading>span:first-child{font-size:8px;letter-spacing:0}
+ .rack-actions{gap:3px}
+ .rack-actions .rack-undo{padding:4px 5px;font-size:8px}
+ .rack-count{font-size:9px}
+ .rack-commit-actions .rack-score-button{flex-basis:142px;font-size:10px}
+ .rack-commit-actions .rack-pass-button{flex-basis:56px}
+ .rack-commit-actions .rack-swap-button,.rack-commit-actions .rack-pass-button{font-size:8px;letter-spacing:0}
+}
+@media(prefers-reduced-motion:reduce){.play-rule-reference summary span{transition:none!important}}
