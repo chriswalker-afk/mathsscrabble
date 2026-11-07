@@ -304,7 +304,7 @@ try{
   assert.ok(item.opaque>=350&&item.colours>=8,
    'Small pilot portrait should remain detailed and nonblank '+JSON.stringify(item));
  }
- assert.equal(metrics.parts.length,31);
+ assert.equal(metrics.parts.length,67);
  assert.equal(metrics.sheets.length,5);
  for(const section of metrics.sheets){
    await page.locator('#a3-proof [data-sheet="'+section+'"]').screenshot({
