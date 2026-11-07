@@ -341,12 +341,16 @@ try{
    width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
    boardWidth:document.querySelector('#board-frame').getBoundingClientRect().width,
    bagRight:document.querySelector('#online-bag').getBoundingClientRect().right,
-   scoreBottom:document.querySelector('#online-score').getBoundingClientRect().bottom
+   scoreBottom:document.querySelector('#online-score').getBoundingClientRect().bottom,
+   rackHintHeight:document.querySelector('#online-rack-hint').getBoundingClientRect().height,
+   radioHeight:document.querySelector('#online-radio-control').getBoundingClientRect().height,
+   scoreStripHeight:document.querySelector('.left-panel').getBoundingClientRect().height,
+   boardTop:document.querySelector('#board-frame').getBoundingClientRect().top
  }));
  assert.ok(mobile.scrollWidth<=mobile.width+3,'online mode must not overflow on mobile');
  assert.ok(mobile.boardWidth>=335);
  assert.ok(mobile.bagRight<=mobile.width+3);
- assert.ok(mobile.scoreBottom<=844,'primary buttons must be visible above phone fold');
+ assert.ok(mobile.scoreBottom<=844,'primary buttons must be visible above phone fold; layout '+JSON.stringify(mobile));
  assert.deepEqual(errors,[]);
  console.log('Online two-device browser passed: create, join, host start, private racks, server rejection, BIDMAS scoring, reconnect, timers, game over, mobile.');
 }finally{
