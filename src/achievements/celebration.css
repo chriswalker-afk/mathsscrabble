@@ -1,0 +1,19 @@
+/* Pass C: medals never cover equation tiles, scoring animation or the mathematical working. */
+.achievement-reveal{border:1px solid #d4b87d;border-radius:14px;background:linear-gradient(140deg,#163846,#254854);margin:16px 0;padding:12px;color:#f4f6ef;box-shadow:inset 0 0 20px #e6b45914}
+.achievement-reveal-top{font-size:11px;font-weight:900;letter-spacing:.12em;color:#ffdf9a;margin:3px 0 10px}
+.achievement-reveal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.achievement-reveal-item{display:flex;align-items:center;gap:10px;background:#0e2937;border:1px solid #638790;border-radius:10px;padding:7px;min-height:82px}
+.achievement-reveal-item img{flex:none;width:58px;height:65px;object-fit:contain}
+.achievement-reveal-item>div{display:grid;gap:3px;min-width:0}
+.achievement-reveal-item span{font-size:9px;letter-spacing:.09em;color:#f4ca85}
+.achievement-reveal-item strong{font-size:13px;line-height:1.22;overflow-wrap:anywhere}
+.achievement-reveal-item small{font-size:10px;color:#b4e8d6;line-height:1.4}
+.achievement-new-palette{width:51px;height:51px;border:5px solid #f6f2df;border-radius:50%;background:var(--badge-colour);box-shadow:0 0 0 3px #334e59;flex:none}
+.achievement-reveal-link{display:inline-block;margin-top:10px;color:#ffdf9a;font-size:11px;font-weight:850;text-decoration:underline;text-underline-offset:3px}
+.achievement-toast{position:fixed;bottom:16px;right:16px;width:min(315px,calc(100vw - 32px));padding:16px 38px 15px 16px;border:1px solid #f4c979;border-radius:14px;background:#143544;color:#f8f1dc;box-shadow:0 14px 35px #03141cba;z-index:1100}
+.achievement-toast strong{font-size:12px;letter-spacing:.06em;color:#ffe4a4}
+.achievement-toast p{font-size:12px;line-height:1.4;margin:7px 0}
+.achievement-toast a{font-size:11px;color:#b9f8db}
+.achievement-toast-close{position:absolute;right:9px;top:7px;background:transparent;border:0;color:#f4ead5;font-size:25px;cursor:pointer}
+@media(max-width:540px){.achievement-toast{bottom:8px;right:8px;width:min(280px,calc(100vw - 16px))}.achievement-reveal-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.achievement-toast,.achievement-reveal{animation:none!important;transition:none!important}}
