@@ -8,13 +8,13 @@ import {
 } from './model.js';
 
 export const EDITOR_SECTIONS=Object.freeze([
- Object.freeze({id:'head',label:'HEADS',fields:['head'],hint:'Find a silhouette with personality.'}),
- Object.freeze({id:'face',label:'FACE',fields:['eyes','mouth'],hint:'Give your pilot an expression.'}),
- Object.freeze({id:'body',label:'BODIES',fields:['body'],hint:'Choose a shape for their middle.'}),
- Object.freeze({id:'arms',label:'ARMS',fields:['arms'],hint:'Mittens, claws, waves or tentacles.'}),
- Object.freeze({id:'legs',label:'MOVEMENT',fields:['legs'],hint:'Little feet or a gravity-defying hover ring.'}),
- Object.freeze({id:'accessory',label:'EXTRAS',fields:['accessory'],hint:'Add a little cosmic flourish.'}),
- Object.freeze({id:'colours',label:'COLOURS',fields:['skin','outfit','accent'],hint:'A whole galaxy of colour combinations.'})
+ Object.freeze({id:'head',label:'HEADS',fields:['head'],hint:''}),
+ Object.freeze({id:'face',label:'FACE',fields:['eyes','mouth'],hint:'Eyes and mouth are selected separately.'}),
+ Object.freeze({id:'body',label:'BODIES',fields:['body'],hint:''}),
+ Object.freeze({id:'arms',label:'ARMS',fields:['arms'],hint:''}),
+ Object.freeze({id:'legs',label:'MOVEMENT',fields:['legs'],hint:''}),
+ Object.freeze({id:'accessory',label:'EXTRAS',fields:['accessory'],hint:'Accessories are optional.'}),
+ Object.freeze({id:'colours',label:'COLOURS',fields:['skin','outfit','accent'],hint:'Skin, outfit and accents can have different colours.'})
 ]);
 export const PART_COLLECTIONS=Object.freeze({
  head:'heads',eyes:'eyes',mouth:'mouths',body:'bodies',
