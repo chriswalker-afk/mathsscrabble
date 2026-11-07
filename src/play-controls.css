@@ -69,7 +69,7 @@
  .rack-actions{gap:4px}
  .rack-actions .rack-undo{min-height:29px;padding:5px 6px;font-size:9px}
  .rack-commit-actions{gap:5px;margin-top:5px}
- .rack-commit-actions button{min-height:39px}
+ .rack-commit-actions button{min-height:42px}
  .rack-commit-actions .rack-score-button{flex-basis:160px;max-width:none;padding:8px 6px;font-size:11px}
  .rack-commit-actions .rack-score-button small{display:none}
  .rack-commit-actions .rack-swap-button,.rack-commit-actions .rack-pass-button{padding:6px 4px;font-size:9px}
