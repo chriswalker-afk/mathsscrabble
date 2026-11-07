@@ -7,7 +7,7 @@ import {ROGUE_ITEM_BY_ID} from '../src/rogue.js';
 const root=new URL('../',import.meta.url);
 const read=path=>readFileSync(new URL(path,root),'utf8');
 const files=Object.fromEntries([
- 'index.html','play.html','online.html','alien-lab.html','achievement-hangar.html',
+ 'index.html','choose.html','play.html','online.html','alien-lab.html','achievement-hangar.html',
  'src/app.js','src/online-ui.js','src/alien/editor.js','src/rogue.js','src/drift-map.js'
 ].map(p=>[p,read(p)]));
 const between=(s,start,end)=>{
@@ -20,7 +20,9 @@ const words=value=>textOnly(value).split(/\s+/).filter(Boolean).length;
 test('Launch copy has no obsolete build labels or misleading rack/sector claims',()=>{
  const all=Object.values(files).join('\n');
  assert.doesNotMatch(all,/ALPHA LAB|BACK TO MISSIONS|original 5 number \/ 3 operator balance|nine total|Sector three is the randomly selected zone boss/i);
- assert.match(files['index.html'],/before playing to earn and keep 43 cosmetic rewards/);
+ assert.match(files['index.html'],/Achievements are saved automatically on this device/);
+ assert.match(files['choose.html'],/SINGLE PLAYER/);
+ assert.match(files['choose.html'],/MULTIPLAYER/);
  assert.match(files['achievement-hangar.html'],/Guests can play but cannot earn permanent rewards/);
  assert.match(files['src/app.js'],/every third sector has a random boss/i);
  assert.match(files['src/drift-map.js'],/Your installed Ship Systems/);
@@ -67,16 +69,17 @@ test('New users receive the correct next action, not two competing start buttons
  assert.match(online,/id="online-gate-help"/);
  assert.match(files['src/online-ui.js'],/BACK TO LOBBY/);
  assert.match(files['src/online-ui.js'],/BACK TO SETUP/);
- assert.match(files['src/app.js'],/(choose|select) a pilot in the Hangar before starting a new run/i);
+ assert.match(files['src/app.js'],/Achievement progress is saved automatically to your pilot on this device/);
 });
 test('No page repeats a superfluous long intro or falsely promises synced pilot data',()=>{
  const home=files['index.html'],hangar=files['achievement-hangar.html'];
- const intro=(home.match(/<p class="home-description">([^<]*)<\/p>/)||[])[1];
- const tileIntro=(home.match(/<p class="tile-kit-intro">([^<]*)<\/p>/)||[])[1];
- assert.ok(intro&&words(intro)<=22);
- assert.ok(tileIntro&&words(tileIntro)<=21);
- assert.doesNotMatch(home,/home-missions-sub/);
- assert.match(home,/Saved games keep their original kit/);
+ const intro=(home.match(/<p class="hero-tagline">([^<]*)<\/p>/)||[])[1];
+ assert.ok(intro&&words(intro)<=7);
+ assert.equal((home.match(/class="choice-card /g)||[]).length,2);
+ assert.equal((home.match(/class="extra-card"/g)||[]).length,2);
+ assert.doesNotMatch(home,/home-missions-sub|home-tile-kits|tile-kit-picker/);
+ assert.match(files['choose.html'],/Choose your game mode/);
+ assert.match(files['choose.html'],/Choose your tile set/);
  assert.doesNotMatch(hangar,/synced between devices|online accounts included/i);
  assert.match(hangar,/Achievements save on this device/);
  assert.match(files['alien-lab.html'],/save your alien for matches/i);
