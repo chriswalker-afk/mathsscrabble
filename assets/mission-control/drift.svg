@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" role="img" aria-labelledby="m-drift-title m-drift-desc">
+<title id="m-drift-title">The Drift illustration</title>
+<desc id="m-drift-desc">An original illustrated EQUA NOVA mission environment.</desc>
+<defs>
+ <linearGradient id="m-drift-space" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#45325e"/><stop offset=".55" stop-color="#182c50"/><stop offset="1" stop-color="#0b1d2e"/></linearGradient>
+ <radialGradient id="m-drift-light"><stop stop-color="#a98bdb" stop-opacity=".63"/><stop offset="1" stop-color="#a98bdb" stop-opacity="0"/></radialGradient>
+ <linearGradient id="m-drift-floor" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#365769"/><stop offset="1" stop-color="#112838"/></linearGradient>
+ <filter id="m-drift-soft"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<rect width="700" height="400" fill="url(#m-drift-space)"/>
+<ellipse cx="480" cy="125" rx="300" ry="260" fill="url(#m-drift-light)"/>
+<circle cx="555.2" cy="172.2" r="2.7" fill="#ffe3b4" opacity="0.67"/><circle cx="508.3" cy="38.7" r="1" fill="#c0f1e7" opacity="0.31"/><circle cx="57.6" cy="197.7" r="1" fill="#c0f1e7" opacity="0.54"/><circle cx="440.1" cy="354.5" r="1.65" fill="#c0f1e7" opacity="0.46"/><circle cx="466.7" cy="268.6" r="1" fill="#c0f1e7" opacity="0.44"/><circle cx="56.0" cy="260.9" r="1" fill="#c0f1e7" opacity="0.46"/><circle cx="391.2" cy="21.0" r="1.65" fill="#ffe3b4" opacity="0.63"/><circle cx="281.0" cy="121.8" r="2.7" fill="#c0f1e7" opacity="0.63"/><circle cx="83.5" cy="182.9" r="1" fill="#c0f1e7" opacity="0.41"/><circle cx="555.5" cy="301.1" r="1.65" fill="#c0f1e7" opacity="0.27"/><circle cx="528.0" cy="26.4" r="1" fill="#c0f1e7" opacity="0.45"/><circle cx="321.4" cy="70.7" r="1" fill="#c0f1e7" opacity="0.27"/><circle cx="362.3" cy="279.6" r="1.65" fill="#ffe3b4" opacity="0.33"/><circle cx="318.9" cy="158.7" r="1" fill="#c0f1e7" opacity="0.74"/><circle cx="284.7" cy="214.5" r="2.7" fill="#c0f1e7" opacity="0.27"/><circle cx="314.7" cy="200.8" r="1.65" fill="#c0f1e7" opacity="0.69"/><circle cx="645.2" cy="195.3" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="284.1" cy="197.1" r="1" fill="#c0f1e7" opacity="0.66"/><circle cx="608.0" cy="222.0" r="1.65" fill="#ffe3b4" opacity="0.35"/><circle cx="211.4" cy="147.4" r="1" fill="#c0f1e7" opacity="0.65"/><circle cx="306.8" cy="294.6" r="1" fill="#c0f1e7" opacity="0.66"/><circle cx="639.5" cy="51.8" r="2.7" fill="#c0f1e7" opacity="0.58"/><circle cx="543.2" cy="49.3" r="1" fill="#c0f1e7" opacity="0.28"/><circle cx="471.4" cy="274.0" r="1" fill="#c0f1e7" opacity="0.54"/><circle cx="351.5" cy="214.1" r="1.65" fill="#ffe3b4" opacity="0.52"/><circle cx="77.7" cy="86.2" r="1" fill="#c0f1e7" opacity="0.50"/><circle cx="246.7" cy="61.1" r="1" fill="#c0f1e7" opacity="0.72"/><circle cx="496.9" cy="216.1" r="1.65" fill="#c0f1e7" opacity="0.72"/><circle cx="624.8" cy="318.3" r="2.7" fill="#c0f1e7" opacity="0.60"/><circle cx="566.7" cy="299.7" r="1" fill="#c0f1e7" opacity="0.68"/><circle cx="54.5" cy="257.9" r="1.65" fill="#ffe3b4" opacity="0.33"/><circle cx="446.6" cy="337.0" r="1" fill="#c0f1e7" opacity="0.42"/><circle cx="304.0" cy="243.8" r="1" fill="#c0f1e7" opacity="0.42"/>
+
+ <path d="M225 24Q379 110 544 21" stroke="#d7b1e9" stroke-opacity=".35" stroke-width="18" fill="none"/>
+ <ellipse cx="476" cy="173" rx="166" ry="155" fill="#8863ab" opacity=".25" filter="url(#m-drift-soft)"/>
+ <circle cx="514" cy="160" r="121" fill="#2a2d52" stroke="#c4a5d6" stroke-width="6"/>
+ <circle cx="514" cy="160" r="109" fill="#594772" stroke="#b3a2de" stroke-width="3"/>
+ <path d="M411 109Q520 45 627 124M402 173Q517 231 630 150M441 214Q507 245 597 215" stroke="#b18acb" stroke-width="10" fill="none" opacity=".48"/>
+ <ellipse cx="515" cy="161" rx="178" ry="34" fill="none" stroke="#f5d19c" stroke-width="16" transform="rotate(-24 515 161)" opacity=".75"/>
+ <ellipse cx="515" cy="161" rx="178" ry="34" fill="none" stroke="#e0cdf6" stroke-width="3" transform="rotate(-24 515 161)" opacity=".6"/>
+ <path d="M221 313Q357 179 488 311T728 213" fill="none" stroke="#dcbce9" stroke-width="4" stroke-dasharray="5 13" opacity=".8"/>
+ <g transform="translate(329 267) rotate(-19) scale(0.68)">
+ <path d="M-115 12 Q-48-25 28-22 L119 0 31 29 Q-49 36-115 12Z" fill="#355f74" stroke="#dcefd9" stroke-width="6"/>
+ <path d="M-81-5 L-29-46 14-33 46 5M-57 21 L-23 44 18 36 37 13" fill="#507889" stroke="#d2dbd1" stroke-width="4"/>
+ <path d="M9-24 L34-58 57-5" fill="#6999a1" stroke="#e6dab9" stroke-width="5"/>
+ <ellipse cx="-3" cy="0" rx="39" ry="21" fill="#c7d4bf" stroke="#244b67" stroke-width="4"/>
+ <ellipse cx="2" cy="-1" rx="28" ry="12" fill="#25455a" stroke="#aae3e6" stroke-width="4"/>
+ <circle cx="-3" cy="-3" r="8" fill="#aae3e6" opacity=".8"/>
+ <path d="M-98 11 L-150-7 -148 33 Z" fill="#4fc9be" opacity=".9"/><path d="M-98 12 L-168 8 -163 24Z" fill="#ffe0a1" opacity=".92"/>
+ <g fill="#f4d6a2"><circle cx="-55" cy="-1" r="4"/><circle cx="68" cy="0" r="4"/></g></g>
+ <g transform="translate(628 291)">
+  <path d="M-46 17Q-64-36-24-54L0-83 28-48Q62-25 49 20Q28 60 0 53Q-34 59-46 17Z" fill="#523c70" stroke="#deb6ef" stroke-width="5"/>
+  <path d="M-40-32-64-55M39-31 66-50" stroke="#c9adeb" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="-18" cy="-3" rx="10" ry="12" fill="#ffe1a4"/><ellipse cx="18" cy="-3" rx="10" ry="12" fill="#ffe1a4"/>
+  <circle cx="-16" cy="-2" r="5" fill="#482b5e"/><circle cx="16" cy="-2" r="5" fill="#482b5e"/>
+  <path d="M-11 27Q0 36 11 27" stroke="#e5a9c8" stroke-width="4" fill="none"/>
+ </g>
+ <circle cx="283" cy="81" r="21" fill="#d1bce6" stroke="#eee1f8" stroke-width="3"/>
+ <path d="M272 76L286 67 295 85" fill="none" stroke="#9d8abd" stroke-width="4"/>
+
+<path d="M4 5H696V395H4Z" fill="none" stroke="#c9e7d0" stroke-opacity=".23" stroke-width="8" stroke-linejoin="round"/>
+</svg>
