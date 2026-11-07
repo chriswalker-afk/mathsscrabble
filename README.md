@@ -64,6 +64,27 @@ sectors, maths, tile bags and saved-game formats remain unchanged.
 `tests/drift-world.test.js` and `tests/drift-world-browser.mjs` cover all
 twelve worlds, the archive, mobile layout, accessibility and image rendering.
 
+**Pass E: Salvage Bay workshop.** An original repair-crew illustration and
+diagnostic drone now accompany the existing detailed hangar. The upgrade shop
+is a proper workshop showroom: seven items have individually illustrated
+physical chassis, categories and prices are easier to read, and the player's
+**four Ship System bays and two Mission Gadget bays** stay visible.
+All purchases update the existing dialog in place, including the Flux
+counter, installed equipment and availability, instead of resetting the
+screen and losing scroll/focus.
+
+The previously implemented seeded shop inventory remains unchanged: four
+system offers and three gadget offers are chosen when each sector is cleared,
+saved with the run, and never rerolled by reopening or purchasing items.
+This is purely an interface upgrade; prices, scoring, limits, mathematical
+rules, rack sizes and multiplayer Worker behaviour are untouched.
+Artwork and presentation live in `assets/salvage-workshop-crew.svg`,
+`src/workshop-art.js`, `src/salvage-workshop.js` and
+`src/salvage-workshop.css`. See tests
+`tests/salvage-workshop.test.js` and
+`tests/salvage-workshop-browser.mjs` for stock preservation, responsive
+layout, purchase updates and accessibility.
+
 ## Play
 
 Serve the project root using a static web server:
