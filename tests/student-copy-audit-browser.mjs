@@ -76,7 +76,7 @@ try{
 
  await page.goto(BASE+'alien-lab.html',{waitUntil:'networkidle'});
  await page.locator('#alien-app[data-ready="true"]').waitFor();
- assert.match(await page.locator('.mission-heading p').last().textContent(),/save your alien for matches/);
+ assert.match(await page.locator('.mission-bar > p').textContent(),/save your alien for matches/);
  await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  assert.match(await page.locator('.intro').textContent(),/Choose a pilot, complete challenges/);
  assert.match(await page.locator('.pilot-deck p').first().textContent(),/Achievements save on this device/);
