@@ -230,6 +230,7 @@ try{
  assert.equal(await guest.locator('.online-radio-choice').count(),11);
  assert.equal(await guest.locator('.online-radio-choice.is-locked').count(),3);
  await guest.locator('.online-radio-choice').first().click();
+ await guest.waitForFunction(()=>document.querySelector('#online-callout-status')?.textContent.startsWith('Sent'),null,{timeout:6000});
  assert.equal(backend.room.callouts.at(-1).by,1);
  assert.equal(backend.room.callouts.at(-1).calloutId,'zib');
  assert.equal(backend.room.match.current,0,'sending a callout never spends a turn');
