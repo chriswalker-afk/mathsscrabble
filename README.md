@@ -172,6 +172,12 @@ The underlying safe `src/alien/model.js` supports normalising, validating, rando
 
 See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The existing standalone animal **Critter Lab** and the EQUA//NOVA game modes are unchanged.
 
+## Entry flow (November 2026)
+
+The homepage is now intentionally minimal: an animated EQUA//NOVA identity and miniature equation board, then **Single Player** or **Multiplayer**, with Alien Lab and Achievement Hangar below. Clicking a play mode opens **choose.html**, the dedicated setup screen. Single Player offers Sector Run (quick match) or The Drift (campaign); Multiplayer offers Pass & Play, Host a Room or Join a Room. This second screen reveals only relevant settings (tile kit, pilot names/alien presets, number of players, room code and the supported per-turn timer). The overall **game timer** is shown as unavailable rather than claiming support that the rules engine does not provide.
+
+An anonymous-but-saved pilot profile is automatically created on the first visit; achievements are enabled by default on the current device. Each pass-and-play seat is also linked to a saved pilot by name (up to the 12-pilot storage limit). This is **not a login** and does not synchronize rewards between devices. Existing game and achievement saves are not deleted. Advanced Operations / Quantum uses only non-negative number tiles (digits 0–9); it retains paired brackets and powers, roots and factorials. Nebula remains the fraction kit.
+
 ## Pass E2 — Online Signal Clash
 
 **Online Rooms** extends multiplayer to two to four people on **different devices**. One pilot creates a six-character room code, others join with the link, and the host starts the match. Players see one shared 19×19 board, their **own private 8- or 11-tile rack**, live scoreboards and optional server-enforced turn timers. All completed equations are checked using BIDMAS and scored **by the Cloudflare server**, not the player's browser. Passes, free/paid swaps, finite bag, final rack-point deductions, tie handling, reconnection and the existing satisfying tile-scoring animation are supported.
