@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor — Play</title>
 <link rel="stylesheet" href="./src/design-system.css">
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><script type="module" src="./src/app.js"></script></head>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/reactor-pass-c.css"><script type="module" src="./src/app.js"></script></head>
 <body>
 <div class="stars" aria-hidden="true"></div>
 <div id="app">
@@ -12,14 +12,18 @@
 <main class="game-shell">
 <aside class="side-panel left-panel" aria-label="Sector information">
 <div class="panel-heading">MISSION TELEMETRY</div>
-<div class="pilot-emblem" aria-hidden="true"><span>✦</span><div class="pilot-orbit"></div></div>
-<div class="pilot-name">PILOT // NOVA</div>
+<div class="pilot-emblem" aria-hidden="true">
+ <img class="pilot-reactor-core" src="./assets/reactor/reactor-core.svg" alt="" width="120" height="120">
+ <span id="pilot-portrait" class="pilot-portrait"></span>
+ <div class="pilot-orbit"></div><span class="pilot-medallion-index">CREW · 01</span>
+</div>
+<div id="pilot-name" class="pilot-name">PILOT // NOVA</div>
 <div id="local-panel" class="local-panel" hidden aria-label="Local multiplayer scoreboard">
   <div class="local-score-header"><strong>LOCAL MATCH</strong><span id="local-time-remaining" aria-live="off">NO TIMER</span></div>
   <div id="local-scores" class="local-scores" aria-label="Player standings"></div>
   <div id="local-game-status" class="local-game-status">Pass the device to the next player.</div>
 </div>
-<div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div class="progress-track"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
+<div class="stat-block"><div class="stat-label">SECTOR ENERGY</div><div class="score-row"><strong id="score">0</strong><span>/ <b id="target">45</b> PT</span></div><div id="energy-progress" class="progress-track" role="progressbar" aria-label="Sector energy collected" aria-valuemin="0" aria-valuemax="45" aria-valuenow="0"><div id="progress"></div></div><div class="stat-note" id="remaining-label">45 points to stabilise</div></div>
 <div class="stat-grid"><div class="mini-stat"><small>TURN</small><strong id="turn">1 / 6</strong></div><button id="bag-details-btn" class="mini-stat bag-stat" type="button" aria-label="Show remaining tiles in the bag" title="View which tiles remain in the bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="bag-count">0</strong></button></div>
 <button id="drift-zone-map" class="drift-zone-strip" type="button" hidden aria-label="Open the Drift zone map"></button>
 <div id="rogue-summary" class="rogue-summary" hidden>
@@ -34,7 +38,14 @@
 <div class="side-footer"><button id="run-report-btn" type="button" class="run-overview" aria-label="View the overall solo run report"><span>RUN SUMMARY</span><strong id="run-summary">0 sectors · 0 energy</strong></button></div>
 </aside>
 <section class="arena" aria-label="Equation playing area">
-<div class="board-zoom-toolbar" role="group" aria-label="Board zoom controls"><span class="board-zoom-label">REACTOR VIEW · 19×19</span><button type="button" id="board-zoom-out" aria-label="Zoom out board" title="Zoom out">−</button><output id="board-zoom-level" aria-live="polite">100%</output><button type="button" id="board-zoom-in" aria-label="Zoom in board" title="Zoom in">+</button><button type="button" id="board-zoom-fit" title="Fit the full board">FIT</button><button type="button" id="board-zoom-center" title="Return to centre">⌖</button></div><div class="board-frame" id="board-frame"><div class="board-viewport" id="board-viewport" tabindex="0" aria-label="Pan the 19 by 19 board to view different areas. Zoom with the controls."><div id="board" class="board" role="grid" aria-label="19 by 19 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
+<div class="reactor-console-head" aria-label="Reactor viewport instruments">
+ <div class="reactor-console-readout">
+  <span class="reactor-console-mark" aria-hidden="true"><img src="./assets/reactor/reactor-core.svg" alt="" width="28" height="28"></span>
+  <span class="reactor-console-titles"><strong>REACTOR GRID</strong><small id="reactor-phase-label">SELECT TILES</small></span>
+ </div>
+ <div class="board-zoom-toolbar" role="group" aria-label="Board zoom controls"><span class="board-zoom-label">REACTOR VIEW · 19×19</span><button type="button" id="board-zoom-out" aria-label="Zoom out board" title="Zoom out">−</button><output id="board-zoom-level" aria-live="polite">100%</output><button type="button" id="board-zoom-in" aria-label="Zoom in board" title="Zoom in">+</button><button type="button" id="board-zoom-fit" title="Fit the full board">FIT</button><button type="button" id="board-zoom-center" title="Return to centre">⌖</button></div>
+ <div class="reactor-transfer-track" aria-hidden="true"><span id="reactor-transfer-fill"></span></div>
+</div><div class="board-frame" id="board-frame"><div class="board-viewport" id="board-viewport" tabindex="0" aria-label="Pan the 19 by 19 board to view different areas. Zoom with the controls."><div id="board" class="board" role="grid" aria-label="19 by 19 equation grid. Use arrow keys to move between squares, and Enter to place or pick up a tile."></div></div><div class="board-corner top-left" aria-hidden="true"></div><div class="board-corner top-right" aria-hidden="true"></div><div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div><div id="energy-burst" class="energy-burst" aria-hidden="true"></div></div>
 <div class="rack-section"><div class="rack-heading"><span>YOUR TILE RACK <span class="rack-sub">· MOVE TILES FREELY</span></span><div class="rack-actions"><button id="undo-last-btn" class="rack-undo" type="button" title="Undo last tile (Backspace)">↶ UNDO TILE</button><span id="rack-count">8 / 8</span></div></div>
 <div class="rack-row"><div id="rack" class="rack" aria-label="Your physical tile rack"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" draggable="true" aria-label="Select unlimited equals sign"><span>=</span><sub>0</sub></button></div></div></div>
 </section>

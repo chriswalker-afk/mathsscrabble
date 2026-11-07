@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title">
+<title id="title">Glowing equation reactor core medallion</title>
+<defs><radialGradient id="bg"><stop stop-color="#377c7c"/><stop offset=".55" stop-color="#1a4252"/><stop offset="1" stop-color="#0b2435"/></radialGradient>
+<radialGradient id="power"><stop stop-color="#f0fff0"/><stop offset=".33" stop-color="#a5fbe0"/><stop offset="1" stop-color="#4aaea9"/></radialGradient>
+<linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dde2c8"/><stop offset=".48" stop-color="#7ca5a8"/><stop offset="1" stop-color="#3a596e"/></linearGradient></defs>
+<circle cx="80" cy="80" r="77" fill="url(#bg)" stroke="#c0dac7" stroke-opacity=".78" stroke-width="4"/>
+<circle cx="80" cy="80" r="65" fill="none" stroke="#5c9398" stroke-width="8" stroke-dasharray="6 9"/>
+<circle cx="80" cy="80" r="57" fill="#133b4e" stroke="url(#steel)" stroke-width="8"/>
+<circle cx="80" cy="80" r="41" fill="#236368" stroke="#77cabc" stroke-width="4"/>
+<circle cx="80" cy="80" r="29" fill="url(#power)" stroke="#e3e0bc" stroke-width="3"/>
+<path d="M80 53V107M53 80H107" stroke="#2a7782" stroke-width="5" stroke-linecap="round"/>
+<g fill="#ffe2a5"><circle cx="80" cy="11" r="4"/><circle cx="80" cy="149" r="4"/><circle cx="11" cy="80" r="4"/><circle cx="149" cy="80" r="4"/></g>
+<path d="M34 32l12 12m68 68 12 12M126 32l-12 12m-68 68-12 12" stroke="#b5c4b4" stroke-width="5" stroke-linecap="round"/>
+</svg>

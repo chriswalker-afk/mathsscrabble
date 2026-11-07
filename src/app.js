@@ -9,6 +9,7 @@ import {ACTIVE_MODE_KEY,ROGUE_ITEM_BY_ID,ROGUE_ITEMS,TEMP_ITEM_BY_ID,TEMP_ITEMS,
  freeSwapsRemaining,markFreeSwap,turnLimit,rackSlots,rogueRackOptions,rewardSector,scoreRogueMove} from './rogue.js';
 import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
+import {paintReactorIndicators,paintReactorTransfer} from './reactor-presentation.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
 import {bossArtwork} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup,zoneIntermissionMarkup} from './drift-map.js';
@@ -527,6 +528,9 @@ function renderLocalStatus(){
  $('run-summary').textContent=match.players.length+' players · '+match.history.filter(x=>x.type==='score').length+' equations';
  $('score').textContent=displayScores[scoringIndex]??0;
  $('progress').style.width='0%';
+ $('energy-progress').setAttribute('role','presentation');
+ $('energy-progress').removeAttribute('aria-valuenow');
+ $('energy-progress').removeAttribute('aria-valuemax');
  $('preview-status').setAttribute('aria-live','polite');
  showLocalHandover();
 }
@@ -579,6 +583,11 @@ function render(){
      'Use +, −, × or ÷ with positive fractions and linked bracket pairs. Equals is unlimited.':
      'Use +, −, × or ÷. Equals signs are unlimited and free.';
  renderBoard();renderRack();renderPreview();
+ paintReactorIndicators({
+   preview:state.preview,phase:state.phase,swapping:state.swapping,
+   ceremony:Boolean(state.ceremony),mode:state.mode,
+   score:state.score,target:isLocal()?null:currentTarget()
+ });
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
  // Both solo and local competition share the same scoring ceremony display.
@@ -636,6 +645,10 @@ function render(){
  $('remaining-label').textContent=state.phase==='won'?'TARGET ACHIEVED':
    state.phase==='lost'?(`${remaining} energy short · try again`):
    `${remaining} to go · about ${Math.ceil(remaining/turnsAvailable)} per remaining turn`;
+ $('energy-progress').setAttribute('role','progressbar');
+ $('energy-progress').setAttribute('aria-valuemin','0');
+ $('energy-progress').setAttribute('aria-valuemax',String(target));
+ $('energy-progress').setAttribute('aria-valuenow',String(Math.max(0,Math.min(target,displayedScore))));
  $('progress').style.width=Math.min(100,displayedScore/target*100)+'%';
  $('progress').setAttribute('aria-label',`${displayedScore} of ${target} energy displayed`);
  $('equation-preview').classList.toggle('ceremony-active',Boolean(state.ceremony));
@@ -1243,6 +1256,7 @@ function setCeremonyReadout(ctl,label){
    const row=$('local-scores').querySelector('[data-player-index="'+state.localScoringPlayer+'"] .local-score-points strong');
    if(row)row.textContent=String(shown);
  }else{
+   $('energy-progress').setAttribute('aria-valuenow',String(Math.max(0,Math.min(currentTarget(),shown))));
    $('progress').style.width=Math.min(100,100*shown/currentTarget())+'%';
    $('progress').setAttribute('aria-label',shown+' of '+currentTarget()+' energy shown');
    $('remaining-label').textContent='TRANSFERRING · '+(ctl.awarded>=0?'+':'')+
@@ -1253,6 +1267,7 @@ function setCeremonyReadout(ctl,label){
  $('ceremony-tile-count').textContent=ctl.completedTiles+' / '+ctl.tileCount+' TILES';
  $('ceremony-meter-fill').style.width=
    Math.min(100,Math.max(0,100*ctl.awarded/Math.max(1,ctl.total)))+'%';
+ paintReactorTransfer(ctl.awarded,ctl.total);
  const ticker=$('score');ticker.classList.remove('energy-tick');
  void ticker.offsetWidth;ticker.classList.add('energy-tick');
 }
@@ -1713,3 +1728,12 @@ $('modal').addEventListener('cancel',e=>{
 startSolo();
 
 initBoardZoom();
+
+// The pilot's own Alien Lab creation joins the reactor HUD. Loading its SVG
+// parts never blocks gameplay or changes rack, board or saved-run state.
+void loadPilotArtwork().then(()=>{
+ if(isLocal())return;
+ const chosen=getSavedPilotAlien(storage)||defaultPilotAlien(0);
+ paintPilotAvatar($('pilot-portrait'),chosen,0,{size:94,framing:'bust'});
+ $('pilot-name').textContent='PILOT // YOUR ALIEN';
+});
