@@ -32,10 +32,10 @@ test('registry preserves EVERY current base-free alien choice, every palette and
  assert.equal(assertAchievementCatalog(),true);
  assert.equal(ACHIEVEMENTS.length,40);
  for(const [collection,ids] of Object.entries(manifest.parts)){
-  assert.deepEqual(FREE_ALIEN_OPTIONS[collection],ids);
-  for(const id of ids)assert.equal(isFreeAlienOption(collection,id),true);
+  assert.deepEqual(ids.slice(0,FREE_ALIEN_OPTIONS[collection].length),FREE_ALIEN_OPTIONS[collection]);
+  for(const id of FREE_ALIEN_OPTIONS[collection])assert.equal(isFreeAlienOption(collection,id),true);
  }
- assert.deepEqual(FREE_ALIEN_OPTIONS.palettes,Object.keys(manifest.palettes));
+ assert.deepEqual(FREE_ALIEN_OPTIONS.palettes,Object.keys(manifest.palettes).slice(0,FREE_ALIEN_OPTIONS.palettes.length));
  assert.deepEqual(FREE_ALIEN_PRESETS,Object.keys(manifest.presets));
  assert.equal(ownsAlienOption(emptyAchievementStore(),null,'heads','orb'),true);
  assert.equal(ownsAlienOption(emptyAchievementStore(),null,'accessories','none'),true);
@@ -44,8 +44,8 @@ test('registry preserves EVERY current base-free alien choice, every palette and
  for(const part of ACHIEVEMENTS){
   assert.equal(isFreeAlienOption(part.reward.collection,part.reward.id),false);
   assert.equal(achievementForReward(part.reward.collection,part.reward.id)?.id,part.id);
-  assert.ok(!manifest.parts[part.reward.collection]?.includes(part.reward.id),
-   'Pass A must NOT introduce missing SVGs into the strict production manifest');
+  assert.ok(part.reward.collection==='palettes'?Object.hasOwn(manifest.palettes,part.reward.id):manifest.parts[part.reward.collection]?.includes(part.reward.id),
+    'Pass B requires all 40 registered reward IDs');
  }
 });
 test('each of the four game modes has exactly 6 easy, 3 moderate and 1 hard rewards',()=>{

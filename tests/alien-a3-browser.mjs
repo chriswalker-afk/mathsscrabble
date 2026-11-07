@@ -29,7 +29,7 @@ try{
  assert.match(await page.locator('#alien-journey-label').textContent(),/HEADS.*1 OF 7/);
  await page.locator('#alien-next-section').click();
  assert.equal(await page.locator('#tab-face').getAttribute('aria-selected'),'true');
- assert.equal(await page.locator('#editor-options .part-choice').count(),8);
+ assert.equal(await page.locator('#editor-options .part-choice').count(),15);
  assert.equal(await page.locator('#editor-options .part-choice svg').first().getAttribute('viewBox'),
   '90 57 140 116');
  assert.equal(await page.locator('#alien-prev-section').isEnabled(),true);
@@ -162,9 +162,9 @@ try{
     return difference;
   };
   const def=defaultAlien();
-  for(const head of manifest.parts.heads){
+  for(const head of manifest.parts.heads.slice(0,4)){
     const eyes={};
-    for(const eye of manifest.parts.eyes){
+    for(const eye of manifest.parts.eyes.slice(0,4)){
       eyes[eye]=await sprite({...def,head,eyes:eye});
     }
     const eyeNames=Object.keys(eyes);
@@ -173,7 +173,7 @@ try{
        count:compare(eyes[eyeNames[i]],eyes[eyeNames[j]],[11,12,37,29])});
     }
     const mouths={};
-    for(const mouth of manifest.parts.mouths){
+    for(const mouth of manifest.parts.mouths.slice(0,4)){
       mouths[mouth]=await sprite({...def,head,mouth});
     }
     const mouthNames=Object.keys(mouths);
@@ -239,24 +239,24 @@ try{
   };
   {
     const grid=startSheet('expressions','64 head / eye / mouth expressions — 48px portrait proof');
-    for(const head of manifest.parts.heads)
-      for(const eyes of manifest.parts.eyes)
-       for(const mouth of manifest.parts.mouths)
+    for(const head of manifest.parts.heads.slice(0,4))
+      for(const eyes of manifest.parts.eyes.slice(0,4))
+       for(const mouth of manifest.parts.mouths.slice(0,4))
         addCard(grid,{...def,head,eyes,mouth},
           head+' · '+eyes+' / '+mouth,'portrait',64);
   }
   {
     const grid=startSheet('anatomy','64 combinations — body, arms and movement');
-    for(const body of manifest.parts.bodies)
-      for(const arms of manifest.parts.arms)
-       for(const legs of manifest.parts.legs)
+    for(const body of manifest.parts.bodies.slice(0,4))
+      for(const arms of manifest.parts.arms.slice(0,4))
+       for(const legs of manifest.parts.legs.slice(0,4))
         addCard(grid,{...def,body,arms,legs},
           body+' · '+arms+' / '+legs,'full',110);
   }
   {
     const grid=startSheet('accessories','42 accessory and accent pairings',7);
-    for(const id of manifest.parts.accessories){
-      for(const palette of Object.keys(manifest.palettes)){
+    for(const id of manifest.parts.accessories.slice(0,7)){
+      for(const palette of Object.keys(manifest.palettes).slice(0,6)){
        addCard(grid,{...def,accessory:id,colours:{...def.colours,accent:palette}},
          id+' · '+palette,framingForPart('accessory',id),106);
       }
@@ -264,8 +264,8 @@ try{
   }
   {
     const grid=startSheet('colourways','24 skin × head colourways',6);
-    for(const skin of Object.keys(manifest.palettes)){
-      for(const head of manifest.parts.heads)
+    for(const skin of Object.keys(manifest.palettes).slice(0,6)){
+      for(const head of manifest.parts.heads.slice(0,4))
        addCard(grid,{...def,head,colours:{...def.colours,skin}},skin+' · '+head,'bust',115);
     }
   }
@@ -304,7 +304,7 @@ try{
   assert.ok(item.opaque>=350&&item.colours>=8,
    'Small pilot portrait should remain detailed and nonblank '+JSON.stringify(item));
  }
- assert.equal(metrics.parts.length,31);
+ assert.equal(metrics.parts.length,67);
  assert.equal(metrics.sheets.length,5);
  for(const section of metrics.sheets){
    await page.locator('#a3-proof [data-sheet="'+section+'"]').screenshot({

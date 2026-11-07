@@ -3,6 +3,10 @@
  * No account, remote API, avatar upload or existing match data is modified.
  */
 import {loadAlienLibrary,renderAlienSVG,serializeAlienSVG,framingForPart} from './renderer.js';
+import {FREE_ALIEN_OPTIONS,achievementForReward,isFreeAlienOption} from '../achievements/catalog.js';
+import {ownsAlienOption} from '../achievements/engine.js';
+import {loadPilots} from '../achievements/pilots.js';
+import {loadAchievementStore} from '../achievements/storage.js';
 import {
  ALIEN_COLOUR_FIELDS,ALIEN_PART_FIELDS,defaultAlien,randomAlien,presetAlien,
  serializeAlien,alienDescription
@@ -44,6 +48,19 @@ function notify(text,error=false){
  element.classList.toggle('is-error',error);
 }
 const current=()=>state.history?.present;
+function refreshEntitlements(){
+ const pilots=loadPilots(maybeStorage());
+ const awards=loadAchievementStore(maybeStorage(),pilots.registry);
+ state.entitlements={pilots:pilots.registry,awards:awards.store};
+}
+function owns(collection,id){
+ const e=state.entitlements;
+ return !e||ownsAlienOption(e.awards,e.pilots.activeId,collection,id);
+}
+function labelReward(collection,id){
+ const a=achievementForReward(collection,id);
+ return a?`${a.title} · ${a.mode.toUpperCase()} · ${a.description}`:'Free for all pilots';
+}
 const configJSON=alien=>serializeAlien(alien,state.library.manifest);
 const isDirty=()=>state.saved!==null&&configJSON(current())!==state.saved;
 const isFresh=()=>state.saved===null;
@@ -74,7 +91,9 @@ const personalityFor=alien=>({
  pear:'CURIOUS COSMIC SPROUT',
  jelly:'SQUISHY LITTLE EXPLORER',
  facet:'BRAVE STAR PILOT'
-})[alien.head]+(alien.accessory==='companion'?' + ORBIT BUDDY':alien.legs==='hover'?' · FLOATING FREE':'');
+})[alien.head]??'COSMIC EXPLORER';
+/* decorated name below */
+const personalityLabelFor=alien=>personalityFor(alien)+(alien.accessory==='companion'?' + ORBIT BUDDY':alien.legs==='hover'?' · FLOATING FREE':'');
 function renderPresets(){
  const grid=$('starter-options');
  const fragment=document.createDocumentFragment();
@@ -102,7 +121,7 @@ function renderPreview(animate=false){
  },{once:true});
  art.append(svg);
  art.setAttribute('aria-label','Full size preview: '+alienDescription(alien,state.library.manifest));
- $('alien-personality').textContent=personalityFor(alien);
+ $('alien-personality').textContent=personalityLabelFor(alien);
  $('tiny-avatar').replaceChildren(renderAlienSVG(alien,state.library,{
    width:48,height:48,accessible:false,framing:'portrait'
  }));
@@ -208,14 +227,15 @@ function addPartGroup(parent,field){
  label.textContent=field==='eyes'?'EYES':field==='mouth'?'MOUTH':'CHOOSE '+humanize(field).toUpperCase();
  const caption=document.createElement('span');
  const available=state.library.manifest.parts[PART_COLLECTIONS[field]];
- caption.textContent=available.length+' AVAILABLE';
+ caption.textContent=available.filter(id=>owns(PART_COLLECTIONS[field],id)).length+' AVAILABLE · '+available.length+' TOTAL';
  head.append(label,caption);
  const grid=document.createElement('div');grid.className='part-choices';
  for(const id of available){
    const selected=current()[field]===id;
+   const entitled=owns(PART_COLLECTIONS[field],id);
    const button=makeButton({
-     className:'part-choice',
-     ariaLabel:'Choose '+humanize(id)+' '+(field==='accessory'?'accessory':field),
+     className:'part-choice'+(entitled?'':' is-locked'),
+     ariaLabel:(entitled?'Choose ':'Preview locked ')+humanize(id)+' '+(field==='accessory'?'accessory':field),
      pressed:selected
    });
    button.dataset.field=field;button.dataset.option=id;
@@ -226,8 +246,11 @@ function addPartGroup(parent,field){
      framing:framingForPart(field,id)
    });
    const name=document.createElement('span');name.className='option-name';name.textContent=humanize(id);
-   button.append(scene,name);
-   button.addEventListener('click',()=>selectPart(field,id));
+   const tag=document.createElement('small');tag.className='reward-tag';
+   tag.textContent=isFreeAlienOption(PART_COLLECTIONS[field],id)?'FREE':entitled?'EARNED':'LOCKED';
+   button.append(scene,name,tag);
+   if(!entitled){const hint=document.createElement('span');hint.className='reward-hint';hint.textContent=labelReward(PART_COLLECTIONS[field],id);button.append(hint);}
+   button.addEventListener('click',()=>entitled?selectPart(field,id):previewLocked(field,id));
    grid.append(button);
  }
  group.append(head,grid);parent.append(group);
@@ -237,14 +260,15 @@ function addPaletteGroup(parent,role){
  group.dataset.paletteRole=role;
  const head=document.createElement('div');head.className='option-group-header';
  const label=document.createElement('h4');label.textContent=roleLabels[role];
- const count=document.createElement('span');count.textContent='6 COLOUR WORLDS';
+ const count=document.createElement('span');count.textContent=Object.keys(state.library.manifest.palettes).filter(id=>owns('palettes',id)).length+' AVAILABLE';
  head.append(label,count);
  const grid=document.createElement('div');grid.className='palette-choices';
  for(const [id,palette] of Object.entries(state.library.manifest.palettes)){
    const chosen=current().colours[role]===id;
+   const entitled=owns('palettes',id);
    const button=makeButton({
-     className:'palette-choice',
-     ariaLabel:'Apply '+humanize(id)+' to '+role,
+     className:'palette-choice'+(entitled?'':' is-locked'),
+     ariaLabel:(entitled?'Apply ':'Preview locked ')+humanize(id)+' to '+role,
      pressed:chosen
    });
    button.dataset.colourRole=role;button.dataset.palette=id;
@@ -253,8 +277,11 @@ function addPaletteGroup(parent,role){
      palette.primary+' 55%,'+palette.dark+' 100%)';
    const name=document.createElement('span');
    name.className='palette-name';name.textContent=humanize(id);
-   button.append(dot,name);
-   button.addEventListener('click',()=>selectColour(role,id));
+   const tag=document.createElement('small');tag.className='reward-tag';
+   tag.textContent=isFreeAlienOption('palettes',id)?'FREE':entitled?'EARNED':'LOCKED';
+   button.append(dot,name,tag);
+   if(!entitled){const hint=document.createElement('span');hint.className='reward-hint';hint.textContent=labelReward('palettes',id);button.append(hint);}
+   button.addEventListener('click',()=>entitled?selectColour(role,id):previewLockedColour(role,id));
    grid.append(button);
  }
  const description=document.createElement('p');description.className='palette-explanation';
@@ -301,13 +328,25 @@ function renderChange(next,{focusSelector=null,message='',animate=true}={}){
  updateSaveUI();
  if(message)notify(message);
 }
+function previewLocked(field,id){
+ const preview=updateAlienPart(current(),state.library.manifest,field,id);
+ const art=$('alien-art');art.replaceChildren(renderAlienSVG(preview,state.library,{width:270,height:304}));
+ notify('Preview only: '+labelReward(PART_COLLECTIONS[field],id)+' — earn it to save this part.');
+}
+function previewLockedColour(role,id){
+ const preview=updateAlienColour(current(),state.library.manifest,role,id);
+ $('alien-art').replaceChildren(renderAlienSVG(preview,state.library,{width:270,height:304}));
+ notify('Preview only: '+labelReward('palettes',id)+' — earn it to save this colour.');
+}
 function selectPart(field,id){
+ if(!owns(PART_COLLECTIONS[field],id)){previewLocked(field,id);return;}
  const next=updateAlienPart(current(),state.library.manifest,field,id);
  const selector='[data-field="'+field+'"][data-option="'+id+'"]';
  renderChange(next,{focusSelector:selector,
    message:humanize(id)+' selected. Your alien is looking good!'});
 }
 function selectColour(role,palette){
+ if(!owns('palettes',palette)){previewLockedColour(role,palette);return;}
  const next=updateAlienColour(current(),state.library.manifest,role,palette);
  renderChange(next,{focusSelector:
    '[data-colour-role="'+role+'"][data-palette="'+palette+'"]',
@@ -320,7 +359,9 @@ function usePreset(id){
  });
 }
 function randomise(){
- const next=randomAlien(state.library.manifest,current(),cryptoRandom);
+ const manifest=state.library.manifest;
+ const allowed={...manifest,parts:Object.fromEntries(Object.entries(manifest.parts).map(([kind,ids])=>[kind,ids.filter(id=>owns(kind,id))])),palettes:Object.fromEntries(Object.entries(manifest.palettes).filter(([id])=>owns('palettes',id)))};
+ const next=randomAlien(allowed,current(),cryptoRandom);
  renderChange(next,{message:'A new little alien has arrived from deep space!'});
 }
 function reset(){
@@ -339,6 +380,8 @@ function performRedo(){
  notify('Redid that change.');
 }
 function save(){
+ for(const [field,collection] of Object.entries(PART_COLLECTIONS))if(!owns(collection,current()[field])){notify('Locked parts cannot be saved. Choose an earned or free part.',true);return;}
+ for(const id of Object.values(current().colours))if(!owns('palettes',id)){notify('Locked colours cannot be saved.',true);return;}
  const successful=saveAlienToStorage(maybeStorage(),current(),state.library.manifest);
  if(!successful){notify('Unable to save on this device. You can still export an SVG file.',true);return;}
  state.saved=configJSON(current());
@@ -401,6 +444,7 @@ function startStatusMessage(loaded){
 async function boot(){
  try{
    state.library=await loadAlienLibrary('./');
+   refreshEntitlements();
    const loaded=loadSavedAlien(maybeStorage(),state.library.manifest);
    state.storageState=loaded.status;
    state.history=makeEditHistory(loaded.alien,state.library.manifest);

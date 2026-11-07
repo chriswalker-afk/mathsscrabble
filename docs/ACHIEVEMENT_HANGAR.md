@@ -86,3 +86,19 @@ A **Pilot ID is only a local reference**, not an account or proof of identity; n
 4. Do **not** issue unlocks from UI clicks yet. Verified gameplay adapters are Pass C (Sector and Drift) and Pass D (local and online). This separation prevents the new visuals from accidentally awarding things without evidence.
 
 **Pass A release safety:** No new art or game mode code is modified. There is no Cloudflare Worker deployment for this pass.
+
+## Pass B: Hangar and Alien Lab integration
+
+The production manifest now lists 36 original fixed-viewBox SVG layers and four earned palettes in addition to the original free catalogue. Every reward ID is defined by the stable catalog; rewards never affect points or game rules.
+
+- Mission Control links to `achievement-hangar.html`; Alien Lab has a Hangar shortcut. Mode tabs, completion, locked/earned filters, full condition text, cosmetic previews, and a device-local profile selector are available in Hangar.
+- Create up to 12 local profiles; guest mode remains usable without permanent awards. Exports and explicitly confirmed imports use the versioned JSON backup API from Pass A.
+- Alien Lab uses `ownsAlienOption` to identify free, earned and locked cards. Locked choices may be previewed without updating the canonical editor state, undo history, or saved avatar; the save button checks entitlements again. The randomiser selects from free and earned choices only.
+- The Worker import of the approved manifest continues to validate fixed part and palette IDs, not arbitrary SVG, CSS or URLs.
+- The old `equa-nova.alien.v1` save remains unchanged. Pilot identity and achievement progress are stored separately and may be switched at the Hangar.
+
+**Important:** New achievements are not automatically awarded yet. Pass C adds Sector/Drift event adapters and Pass D handles per-seat local and server-confirmed online awards. Celebration can deep-link to `achievement-hangar.html?unlocked=S01` (or another earned ID) after gameplay is safely complete.
+
+### Pass B verification
+
+Run `npm run check` and all existing browser / artwork tests. New `tests/achievement-hangar-pass-b.test.js` checks manifest registration, original free options, and reward payloads. Keep legacy exhaustive geometric matching focused on the original free sample set; all 66 SVG layers are loaded and audited for basic canvas compatibility. Pass E remains the complete 320/390/768/1366px composition and accessibility review.

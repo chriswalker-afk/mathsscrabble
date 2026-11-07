@@ -67,7 +67,7 @@ export function assertAlienManifest(manifest){
  const counts={heads:4,eyes:4,mouths:4,bodies:4,arms:4,legs:4,accessories:7};
  for(const [kind,count] of Object.entries(counts)){
    const values=manifest.parts[kind];
-   if(!Array.isArray(values)||values.length!==count||new Set(values).size!==count||
+   if(!Array.isArray(values)||values.length<count||values.length>64||new Set(values).size!==values.length||
       !values.every(isId))throw new Error('Invalid alien '+kind+' catalogue.');
  }
  if(manifest.parts.accessories[0]!=='none')throw new Error('Alien accessory none must be first.');
@@ -87,7 +87,7 @@ export function assertAlienManifest(manifest){
     JSON.stringify(['primary','light','dark','belly','accent','spot','blush']))
    throw new Error('Invalid colour token contract.');
  const colours=Object.entries(manifest.palettes);
- if(colours.length!==6||!colours.every(([id,slots])=>
+ if(colours.length<6||colours.length>32||!colours.every(([id,slots])=>
    isId(id)&&exactKeys(slots,manifest.colorTokens)&&
    manifest.colorTokens.every(key=>typeof slots[key]==='string'&&HEX.test(slots[key]))))
    throw new Error('Invalid alien colour palettes.');

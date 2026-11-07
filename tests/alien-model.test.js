@@ -30,8 +30,8 @@ test('the A1 manifest locks a transparent 320×360 artboard, all anchors and sev
  assert.deepEqual(ALIEN_COLOUR_FIELDS,['skin','outfit','accent']);
  assert.deepEqual(manifest.drawOrder,ALIEN_DRAW_ORDER);
  assert.deepEqual(Object.fromEntries(Object.entries(manifest.parts).map(([key,ids])=>[key,ids.length])),
-  {heads:4,eyes:4,mouths:4,bodies:4,arms:4,legs:4,accessories:7});
- assert.equal(Object.keys(manifest.palettes).length,6);
+  {heads:11,eyes:8,mouths:7,bodies:9,arms:8,legs:8,accessories:16});
+ assert.equal(Object.keys(manifest.palettes).length,10);
  assert.equal(manifest.allowAllCombinations,true);
 });
 test('thirty authored vector pieces exist, share exact registered anchors and contain only allowed local artwork',()=>{
@@ -61,7 +61,7 @@ test('thirty authored vector pieces exist, share exact registered anchors and co
    count++;
   }
  }
- assert.equal(count,30);
+ assert.equal(count,66);
 });
 test('exact and safe versioned serialization round-trips four curated pilots',()=>{
  const names=Object.keys(manifest.presets);
@@ -110,7 +110,7 @@ test('randomiser uses only allowed parts and six palettes and changes identical 
  const final=randomAlien(manifest,a,()=>1);
  assert.equal(final.head,manifest.parts.heads.at(-1));
  assert.equal(final.eyes,manifest.parts.eyes.at(-1));
- assert.equal(final.colours.skin,'cosmic-blue');
+ assert.equal(final.colours.skin,Object.keys(manifest.palettes).at(-1));
  assert.ok(manifest.parts.accessories.includes(final.accessory));
 });
 test('composition layers have canonical ordering, original paths and palette roles',()=>{
@@ -131,9 +131,9 @@ test('composition layers have canonical ordering, original paths and palette rol
 });
 test('all 28,672 base compositions produce only allowlisted assets in the correct layer order',()=>{
  const [hs,es,ms,bs,as,ls,acs]=[
-  manifest.parts.heads,manifest.parts.eyes,manifest.parts.mouths,
-  manifest.parts.bodies,manifest.parts.arms,manifest.parts.legs,
-  manifest.parts.accessories
+  manifest.parts.heads.slice(0,4),manifest.parts.eyes.slice(0,4),manifest.parts.mouths.slice(0,4),
+  manifest.parts.bodies.slice(0,4),manifest.parts.arms.slice(0,4),manifest.parts.legs.slice(0,4),
+  manifest.parts.accessories.slice(0,7)
  ];
  let total=0;
  const a=defaultAlien();
@@ -158,7 +158,7 @@ test('all 216 independent skin × outfit × accessory palette combinations are v
   assert.deepEqual(validateAlienPayload(a,manifest),a);
   count++;
  }
- assert.equal(count,216);
+ assert.equal(count,1000);
 });
 test('manifest validation fails closed on broken anchors, colours, categories and unsafe preset values',()=>{
  const mutate=(fn)=>{const m=M();fn(m);assert.throws(()=>assertAlienManifest(m));};

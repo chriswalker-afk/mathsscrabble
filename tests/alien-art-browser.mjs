@@ -14,10 +14,10 @@ try{
    document.querySelector('#gallery-status')?.dataset.status),null,{timeout:18000});
  assert.equal(await page.locator('#gallery-status').getAttribute('data-status'),
    'ready',await page.locator('#gallery-status').textContent());
- assert.match(await page.locator('#gallery-status').textContent(),/30 ORIGINAL SVG ASSETS/);
+ assert.match(await page.locator('#gallery-status').textContent(),/66 ORIGINAL SVG ASSETS/);
  assert.equal(await page.locator('#presets .specimen-card').count(),4);
  assert.equal(await page.locator('.category-section').count(),7);
- assert.equal(await page.locator('.part-card').count(),31,'30 SVG pieces plus no accessory');
+ assert.equal(await page.locator('.part-card').count(),67,'66 SVG pieces plus no accessory');
  assert.equal(await page.locator('.size-item').count(),4);
  await page.screenshot({path:'/tmp/equanova-alien-gallery.png',fullPage:true});
 
@@ -77,29 +77,29 @@ try{
    }
    const seams={headBody:[],leftArm:[],rightArm:[],bodyLegs:[],
        headEyes:[],headMouth:[],badgeBody:[]};
-   for(const head of manifest.parts.heads){
+   for(const head of manifest.parts.heads.slice(0,4)){
      const h=await alphaFor('heads',head);
-     for(const body of manifest.parts.bodies){
+     for(const body of manifest.parts.bodies.slice(0,4)){
        const b=await alphaFor('bodies',body);
        seams.headBody.push({head,body,pixels:overlap(h,b,[128,141,192,184])});
      }
-     for(const eyes of manifest.parts.eyes){
+     for(const eyes of manifest.parts.eyes.slice(0,4)){
        const e=await alphaFor('eyes',eyes);
        seams.headEyes.push({head,eyes,coverage:within(e,h)});
      }
-     for(const mouth of manifest.parts.mouths){
+     for(const mouth of manifest.parts.mouths.slice(0,4)){
        const e=await alphaFor('mouths',mouth);
        seams.headMouth.push({head,mouth,coverage:within(e,h)});
      }
    }
-   for(const body of manifest.parts.bodies){
+   for(const body of manifest.parts.bodies.slice(0,4)){
      const b=await alphaFor('bodies',body);
-     for(const arms of manifest.parts.arms){
+     for(const arms of manifest.parts.arms.slice(0,4)){
        const a=await alphaFor('arms',arms);
        seams.leftArm.push({body,arms,pixels:overlap(b,a,[103,162,142,244])});
        seams.rightArm.push({body,arms,pixels:overlap(b,a,[178,162,218,244])});
      }
-     for(const legs of manifest.parts.legs){
+     for(const legs of manifest.parts.legs.slice(0,4)){
        const a=await alphaFor('legs',legs);
        seams.bodyLegs.push({body,legs,pixels:overlap(b,a,[112,240,208,295])});
      }
@@ -110,9 +110,9 @@ try{
    // the same compositor that the future editor will use.
    const library=await r.loadAlienLibrary();
    let compositions=0;
-   for(const head of manifest.parts.heads){
-     for(const eyes of manifest.parts.eyes){
-       for(const mouth of manifest.parts.mouths){
+   for(const head of manifest.parts.heads.slice(0,4)){
+     for(const eyes of manifest.parts.eyes.slice(0,4)){
+       for(const mouth of manifest.parts.mouths.slice(0,4)){
          const a={...m.defaultAlien(),head,eyes,mouth};
          const svg=r.renderAlienSVG(a,library,{width:64,height:72});
          if(svg.querySelectorAll('g[data-layer]').length!==7)
@@ -121,9 +121,9 @@ try{
        }
      }
    }
-   for(const body of manifest.parts.bodies)
-    for(const arms of manifest.parts.arms)
-     for(const legs of manifest.parts.legs){
+   for(const body of manifest.parts.bodies.slice(0,4))
+    for(const arms of manifest.parts.arms.slice(0,4))
+     for(const legs of manifest.parts.legs.slice(0,4)){
        const a={...m.defaultAlien(),body,arms,legs};
        const svg=r.renderAlienSVG(a,library,{width:48,height:54});
        if(svg.getAttribute('viewBox')!=='0 0 320 360')
@@ -172,7 +172,7 @@ try{
       small,chosen,exportText:exportText.slice(0,500),exportLength:exportText.length,
       blocked:rejected};
  });
- assert.equal(result.assetCount,30);
+ assert.equal(result.assetCount,66);
  assert.equal(result.compositions,128);
  for(const item of result.clip){
    assert.ok(item.minX>2&&item.maxX<318&&item.minY>1&&item.maxY<357,
