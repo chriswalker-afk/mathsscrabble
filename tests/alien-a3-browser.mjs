@@ -29,7 +29,7 @@ try{
  assert.match(await page.locator('#alien-journey-label').textContent(),/HEADS.*1 OF 7/);
  await page.locator('#alien-next-section').click();
  assert.equal(await page.locator('#tab-face').getAttribute('aria-selected'),'true');
- assert.equal(await page.locator('#editor-options .part-choice').count(),8);
+ assert.equal(await page.locator('#editor-options .part-choice').count(),15);
  assert.equal(await page.locator('#editor-options .part-choice svg').first().getAttribute('viewBox'),
   '90 57 140 116');
  assert.equal(await page.locator('#alien-prev-section').isEnabled(),true);
