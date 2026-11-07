@@ -102,3 +102,33 @@ The production manifest now lists 36 original fixed-viewBox SVG layers and four 
 ### Pass B verification
 
 Run `npm run check` and all existing browser / artwork tests. New `tests/achievement-hangar-pass-b.test.js` checks manifest registration, original free options, and reward payloads. Keep legacy exhaustive geometric matching focused on the original free sample set; all 66 SVG layers are loaded and audited for basic canvas compatibility. Pass E remains the complete 320/390/768/1366px composition and accessibility review.
+
+## Pass C: verified Sector Run and The Drift achievements
+
+The browser game now imports `src/achievements/solo-adapter.js`. Sector Run and Drift share the 40-entry catalog without using the same local ownership: each **new run** captures the active named pilot from the Hangar. Guest runs have no permanent awards. A stored owner reference is scoped by mode and `progress.startedAt`; switching the active pilot after a run starts does not transfer its achievements. Loading a legacy pre-Pass-C run binds it once when it is resumed. A deleted pilot cannot keep receiving awards.
+
+Events are emitted **after successful rules-engine state transitions**, never from animation frames, modal views, or a failed score submission:
+
+| Mode | Event evidence | Conditions |
+| --- | --- | --- |
+| Sector | Validated scored move | S01, S03, S05, S06, S07 |
+| Sector | Successful free single-tile swap | S04 |
+| Sector | Successful sector clear and true invalid-attempt count | S02, S08, S09, S10 |
+| Drift | Open real Zone Map and enter earned Salvage Bay | D01, D02 |
+| Drift | Successful purchase, installed-system count | D03, D04, D08 |
+| Drift | Successfully applied tile-changing gadget or consumed scoring boost after a valid score | D05, D09 |
+| Drift | Successful sector clear with installed systems and actual boss-sector victory | D06, D07, D10 |
+
+Each move/sector/purchase uses a deterministic receipt under the pilot's run scope. `awardForVerifiedEvent` prevents replayed receipts and `saveAchievementStore` writes only to the separate achievement key. An invalid or unwritable achievement store fails closed **without affecting the saved run or scoring**. No competitive online event can be manufactured by this adapter.
+
+### Celebrations
+
+`src/achievements/celebration.js` supplies original reward previews and named award badges. Scoring medals are queued until the tile-by-tile scoring ceremony has finished and are displayed on the ordinary score-result panel. The Zone Map and Salvage Bay show new awards in those existing screens. Free exchanges and successfully used tile gadgets use a dismissible, nonmodal notice, with reduced-motion support. The scoring sequence and gameplay remain fully usable for guest pilots. The game HUD states which saved pilot is the current run's achievement owner, with a Hangar link.
+
+### Automated verification
+
+- `tests/achievement-solo-pass-c.test.js`: scoped ownership, guest mode, switching, distinct receipts, the five-clean-sector challenge, all ten Drift rewards, and invalid-storage isolation.
+- `tests/achievement-pass-c-browser.mjs`: real browser scoring, deferred medal reveal, saved-run ownership after a pilot switch, free exchange, Zone Map, and successful Salvage Bay purchase receipts.
+- `npm run check`, the full existing Chromium regression suites, and the Cloudflare Worker dry-run remain required.
+
+**Remaining:** Pass D binds each local seat to its own saved pilot and verifies online awards from authoritative server-confirmed outcomes. Pass E conducts the final responsive/cosmetic combination and quality audit.
