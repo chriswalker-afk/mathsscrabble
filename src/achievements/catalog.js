@@ -698,7 +698,7 @@ export function assertAchievementCatalog(){
     return definitions.length!==(mode==='online'?13:10)||originals.length!==10||
       originals.filter(a=>a.tier==='easy').length!==6||
       originals.filter(a=>a.tier==='moderate').length!==3||
-      originals.filter(a=>a.tier==='hard').length!==1;})()
+      originals.filter(a=>a.tier==='hard').length!==1;})())
     throw Error('Achievement tiers are unbalanced for '+mode+'.');
   for(const a of definitions){
    if(!a.id.match(/^[SDLO][0-9]{2}$/)||!a.title||!a.description||!a.rule.event||
