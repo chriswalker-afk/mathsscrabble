@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Online Signal Clash</title>
 <link rel="stylesheet" href="./src/design-system.css"><link rel="stylesheet" href="./src/achievements/celebration.css">
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/online.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/finish-pass-f.css">
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/online.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/finish-pass-f.css"><link rel="stylesheet" href="./src/play-controls.css">
 <script type="module" src="./src/online-ui.js"></script></head>
 <body class="online-body">
 <div class="stars" aria-hidden="true"></div>
@@ -42,14 +42,22 @@
    <div id="energy-burst" class="energy-burst" aria-hidden="true"></div>
   </div>
   <div class="rack-section">
-   <div class="rack-heading"><span><span id="online-rack-label">YOUR PRIVATE RACK</span><small id="online-rack-hint" class="online-rack-hint"></small></span>
-    <div class="rack-actions"><button id="online-undo" class="rack-undo" type="button">↶ UNDO</button><span id="online-rack-count">0 / 8</span></div>
-   </div>
-   <div class="rack-row"><div id="rack" class="rack" aria-label="Only your private tiles"></div>
-    <div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" aria-label="Select free equals sign"><span>=</span><sub>0</sub></button></div>
-   </div>
+ <div class="rack-heading"><span><span id="online-rack-label">YOUR PRIVATE RACK</span><small id="online-rack-hint" class="online-rack-hint"></small></span>
+  <div class="rack-actions" role="group" aria-label="Rack tools">
+   <button id="online-undo" class="rack-undo" type="button" title="Undo last placed tile (Backspace)" aria-label="Undo last placed tile">↶ UNDO</button>
+   <button id="online-shuffle" class="rack-undo" type="button" title="Shuffle your private rack without using a turn" aria-label="Shuffle rack tiles">⤨ SHUFFLE</button>
+   <button id="online-clear" class="rack-undo" type="button" title="Clear all private placements or cancel swap" aria-label="Clear all unscored placements">× CLEAR</button>
+   <span id="online-rack-count" class="rack-count">0 / 8</span>
   </div>
- </section>
+ </div>
+ <div class="rack-row"><div id="rack" class="rack" aria-label="Only your private tiles"></div><div class="equals-bank"><small>∞ FREE</small><button id="equals-tile" class="tile equals-tile" type="button" aria-label="Select free equals sign"><span>=</span><sub>0</sub></button></div></div>
+ <div class="rack-commit-actions" role="group" aria-label="Turn actions">
+  <button id="online-swap" class="rack-swap-button" type="button">⇄ SWAP</button>
+  <button id="online-pass" class="rack-pass-button" type="button">↪ PASS</button>
+  <button id="online-score" class="primary-command rack-score-button" type="button"><strong>⚡ SCORE EQUATION</strong><small>SERVER CHECKS BIDMAS</small></button>
+ </div>
+</div>
+</section>
  <aside class="side-panel right-panel" aria-label="Online match commands">
   <div class="panel-heading">COMMAND CONSOLE</div>
   <div id="equation-preview" class="equation-preview" data-state="empty">
@@ -63,21 +71,16 @@
     <button id="skip-ceremony" type="button" class="ceremony-skip">SKIP »</button>
    </div>
   </div>
-  <div class="command-group online-commands">
-   <button id="online-score" class="primary-command" type="button"><strong>⚡ SCORE</strong><small>SERVER CHECKS BIDMAS</small></button>
-   <button id="online-clear" class="secondary-command" type="button">↶ CLEAR</button>
-   <button id="online-pass" class="secondary-command" type="button">↪ PASS</button>
-   <button id="online-swap" class="secondary-command" type="button">⇄ SWAP</button>
-  </div>
-  <div class="panel-divider"></div><div class="panel-heading">GRID MULTIPLIERS</div>
-  <div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile</span></div>
-  <div><i class="legend-square ttt">3T</i><span>Triple tile</span></div>
-  <div><i class="legend-square ee">2E</i><span>Double equation</span></div>
-  <div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
-  <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div>
-  <p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p>
-  <p class="rules-note">The server validates each equation. Other players’ racks stay private.</p>
- </aside>
+  <details class="play-rule-reference"><summary>◇ GRID MULTIPLIERS &amp; BIDMAS <span aria-hidden="true">⌄</span></summary>
+ <div class="play-rule-body">
+  <p class="play-rule-note">Only newly placed tiles activate a multiplier square.</p>
+  <div class="legend"><div><i class="legend-square tt">2T</i><span>Double tile points</span></div><div><i class="legend-square ttt">3T</i><span>Triple tile points</span></div><div><i class="legend-square ee">2E</i><span>Double equation tile subtotal</span></div><div><i class="legend-square eee">3E</i><span>Triple equation tile subtotal</span></div></div>
+  <div class="play-rule-heading">BIDMAS PRIORITY</div>
+  <p class="rules-note">Brackets → Indices → Division &amp; Multiplication → Addition &amp; Subtraction.</p>
+  <p class="play-rule-note">The room server validates equations; opponents’ racks remain private.</p>
+ </div>
+</details>
+</aside>
 </main>
 <footer class="bottom-strip"><span id="online-footer">⟡ SIGNAL CLASH // REAL-TIME ROOMS</span>
 <span>ONE SHARED BOARD · PRIVATE RACKS</span><span>MR WALKER MATHS</span></footer>
