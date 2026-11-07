@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="470" viewBox="0 0 1200 470" role="img" aria-labelledby="crew-title crew-desc">
+<title id="crew-title">Salvage Bay repair crew</title>
+<desc id="crew-desc">A cheerful teal alien engineer with a toolbelt, goggles and a spanner works beside a tiny hovering diagnostic drone, repair carts and glowing equipment drawers in the orbital workshop.</desc>
+<defs>
+ <linearGradient id="teal-body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b6f9df"/><stop offset=".55" stop-color="#5bbcb6"/><stop offset="1" stop-color="#2b798c"/></linearGradient>
+ <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6dfb2"/><stop offset=".5" stop-color="#bd9c70"/><stop offset="1" stop-color="#6a6670"/></linearGradient>
+ <linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#dbeadd"/><stop offset=".38" stop-color="#78989d"/><stop offset="1" stop-color="#2b4b5d"/></linearGradient>
+ <radialGradient id="torch"><stop stop-color="#fffbd7" stop-opacity=".95"/><stop offset=".25" stop-color="#f5d797" stop-opacity=".48"/><stop offset="1" stop-color="#f5d797" stop-opacity="0"/></radialGradient>
+</defs>
+<!-- hangar shelves and workshop drawers at the far right -->
+<path d="M1100 116H1200V425H1089Z" fill="#193743" stroke="#6c9aa1" stroke-width="8"/>
+<path d="M1111 151H1198M1109 244H1198M1108 334H1198" stroke="#90b9b1" stroke-width="9"/>
+<g fill="#203e4a" stroke="#a4c5b4" stroke-width="4">
+<rect x="1125" y="163" width="54" height="65" rx="6"/><rect x="1124" y="257" width="55" height="62" rx="6"/>
+</g><g fill="#8be1ce"><rect x="1134" y="173" width="36" height="8" rx="3"/><circle cx="1152" cy="208" r="8"/></g>
+<rect x="1138" y="275" width="24" height="25" rx="4" fill="#eecb8d"/>
+<!-- bright welding action, just to the left of the specialist -->
+<ellipse cx="793" cy="276" rx="83" ry="68" fill="url(#torch)"/>
+<g stroke="#ffdd98" stroke-linecap="round" stroke-width="4">
+<path d="M790 273l-39-33m35 26-6-46m13 61-47 24m54-33 42-36m-47 44 29 45m-36-52 53 8"/>
+</g>
+<g fill="#fff4bc"><circle cx="762" cy="215" r="3"/><circle cx="839" cy="245" r="4"/><circle cx="750" cy="298" r="3"/><circle cx="824" cy="322" r="4"/></g>
+<!-- short repair bench and tool cradle -->
+<path d="M784 362H1187L1168 393H803Z" fill="#4b6370" stroke="#acc3b3" stroke-width="8"/>
+<path d="M816 393V457M1148 393V456" stroke="#617e81" stroke-width="16"/>
+<rect x="841" y="344" width="121" height="21" rx="6" fill="#294656" stroke="#e2c991" stroke-width="5"/>
+<rect x="860" y="325" width="45" height="19" rx="5" fill="#62d0bd"/><rect x="918" y="322" width="30" height="22" rx="5" fill="#d7b27c"/>
+<!-- tiny helpful drone hovering by the ship -->
+<g transform="translate(797 150)">
+ <path d="M-43 9L-72-1  -68-20-40-16M42 9L73-1 68-20 40-16" fill="#bdcfc3" stroke="#315b64" stroke-width="6" stroke-linejoin="round"/>
+ <path d="M-62-21h33m58 0h33" stroke="#f9e3ad" stroke-width="6" stroke-linecap="round"/>
+ <ellipse cx="0" cy="10" rx="45" ry="38" fill="url(#steel)" stroke="#e2dabf" stroke-width="7"/>
+ <rect x="-30" y="-6" width="60" height="32" rx="14" fill="#173d4d" stroke="#75cdbd" stroke-width="4"/>
+ <circle cx="-12" cy="10" r="6" fill="#ffe4a2"/><circle cx="12" cy="10" r="6" fill="#ffe4a2"/>
+ <path d="M-8 24Q0 30 8 24" fill="none" stroke="#a9ead3" stroke-width="3"/>
+ <path d="M-26 46l-11 20M25 46l9 20" stroke="#77a6a5" stroke-width="7" stroke-linecap="round"/>
+ <circle cx="-37" cy="64" r="7" fill="#77eed8"/><circle cx="34" cy="64" r="7" fill="#77eed8"/>
+ <path d="M0-31V-50" stroke="#b4c6af" stroke-width="6" stroke-linecap="round"/>
+ <circle cy="-52" r="7" fill="#f9d697"/>
+</g>
+<!-- little alien mechanic: boots, torso, utility suit -->
+<g stroke-linecap="round" stroke-linejoin="round">
+<ellipse cx="1020" cy="428" rx="120" ry="17" fill="#091b28" opacity=".65"/>
+<path d="M972 390L954 431Q972 444 999 433L1014 403M1056 391L1059 433Q1084 443 1109 430L1094 385" fill="#315e6f" stroke="#1a3e4a" stroke-width="9"/>
+<path d="M949 425Q956 408 987 416L1008 427Q1015 442 996 450H953Q943 445 949 425ZM1057 424Q1069 410 1094 420L1121 435Q1122 448 1100 451H1061Q1049 445 1057 424Z" fill="#dec89d" stroke="#44646c" stroke-width="7"/>
+<path d="M967 290Q1017 265 1085 291L1104 389 964 403 940 320Z" fill="url(#suit)" stroke="#325264" stroke-width="10"/>
+<path d="M979 304L1027 336 1072 308" fill="none" stroke="#3b676f" stroke-width="13"/>
+<path d="M976 355L1092 349" stroke="#324d5e" stroke-width="19"/>
+<path d="M976 352L1090 349" stroke="#e5d7b8" stroke-width="7"/>
+<rect x="1059" y="343" width="22" height="29" rx="4" fill="#e9b979" stroke="#4a6468" stroke-width="5"/>
+<rect x="986" y="349" width="21" height="30" rx="4" fill="#6ed6b6" stroke="#385b63" stroke-width="5"/>
+<path d="M964 311Q936 329 905 316L876 289" fill="none" stroke="#356372" stroke-width="28"/>
+<path d="M961 311Q927 326 897 311L879 297" fill="none" stroke="#b0e4cf" stroke-width="13"/>
+<path d="M1088 310Q1114 323 1127 348L1121 364" fill="none" stroke="#3f6e76" stroke-width="27"/>
+<path d="M1095 318Q1117 332 1121 357" stroke="#ade9d2" stroke-width="12" fill="none"/>
+<!-- left hand holds a spanner; right hand has a glove -->
+<path d="M876 287l-28-31" stroke="#f9d798" stroke-width="10"/>
+<path d="M837 257L820 242 825 226 846 233 852 218 870 239 857 256Z" fill="url(#steel)" stroke="#f5ddab" stroke-width="5"/>
+<path d="M1114 356L1120 379Q1137 389 1142 372L1137 354Z" fill="#a4e3ca" stroke="#315761" stroke-width="7"/>
+<!-- wide happy head with antenna and oversized goggles -->
+<path d="M972 213Q955 177 982 151Q1012 131 1052 154Q1080 173 1084 211Q1084 256 1053 286Q1001 309 968 265Q959 241 972 213Z" fill="url(#teal-body)" stroke="#296273" stroke-width="9"/>
+<path d="M989 162L966 120 944 113M1047 157L1070 112 1087 105" fill="none" stroke="#55bcae" stroke-width="12"/>
+<circle cx="941" cy="111" r="13" fill="#ffe4aa" stroke="#2d616f" stroke-width="6"/>
+<circle cx="1090" cy="104" r="13" fill="#ffe4aa" stroke="#2d616f" stroke-width="6"/>
+<path d="M967 202Q1010 186 1080 200" stroke="#ecdfbb" stroke-width="13" fill="none"/>
+<rect x="980" y="184" width="42" height="50" rx="18" fill="#244c5a" stroke="#f5dfa8" stroke-width="7"/>
+<rect x="1029" y="184" width="42" height="50" rx="18" fill="#244c5a" stroke="#f5dfa8" stroke-width="7"/>
+<rect x="987" y="191" width="28" height="33" rx="12" fill="#e6faf0"/>
+<rect x="1036" y="191" width="28" height="33" rx="12" fill="#e6faf0"/>
+<ellipse cx="1004" cy="207" rx="6" ry="10" fill="#24485b"/>
+<ellipse cx="1045" cy="207" rx="6" ry="10" fill="#24485b"/>
+<circle cx="1006" cy="203" r="3" fill="#fff"/><circle cx="1046" cy="203" r="3" fill="#fff"/>
+<path d="M1006 248Q1024 266 1046 246" fill="none" stroke="#2a5c65" stroke-width="6"/>
+<circle cx="978" cy="243" r="7" fill="#e0ae99"/><circle cx="1062" cy="244" r="7" fill="#e0ae99"/>
+<path d="M977 289Q1016 303 1071 284" fill="none" stroke="#fff4ce" stroke-width="9"/>
+<circle cx="1026" cy="365" r="13" fill="#244a5d" stroke="#f2d9a7" stroke-width="5"/>
+<path d="M1019 365h14m-7-7v14" stroke="#85e7cd" stroke-width="4"/>
+</g>
+</svg>
