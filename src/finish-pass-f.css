@@ -1,0 +1,214 @@
+/* EQUA//NOVA — Pass F: unified feedback and compact-screen finishing.
+ *
+ * Scope: the mission telemetry, action states and controls in Sector Run,
+ * local multiplayer, The Drift and Signal Clash. Never draw on the maths grid
+ * or change the physical rack/board dimensions.
+ */
+#app .left-panel #log,
+.online-app .left-panel #online-log{
+ --comms-accent:var(--nova-teal);
+ position:relative;flex-shrink:0;
+ margin:8px 0 0;padding:7px 9px 8px 12px;
+ min-width:0;border:1px solid #658b92;
+ border-left:3px solid var(--comms-accent);
+ border-radius:7px;
+ color:#deece8;line-height:1.46;font-size:11px;
+ background:linear-gradient(120deg,#244754,#152f41);
+ box-shadow:inset 0 1px #d8f9ee20;
+ overflow-wrap:anywhere;white-space:normal;
+}
+#app .left-panel #log::before,
+.online-app .left-panel #online-log::before{
+ content:"MISSION COMMS";
+ display:block;margin-bottom:3px;
+ color:var(--comms-accent);font-size:8px;
+ font-weight:950;letter-spacing:.14em;line-height:1.2;
+}
+#app .left-panel #log[data-tone="success"],
+.online-app .left-panel #online-log[data-tone="success"]{
+ --comms-accent:#a5f4c5;background:linear-gradient(120deg,#245246,#153d3c);
+ border-color:#6cae98;border-left-color:var(--comms-accent);
+ color:#ecfff4;
+}
+#app .left-panel #log[data-tone="success"]::before,
+.online-app .left-panel #online-log[data-tone="success"]::before{content:"CONFIRMED"}
+#app .left-panel #log[data-tone="warning"],
+.online-app .left-panel #online-log[data-tone="warning"]{
+ --comms-accent:#ffdfa1;background:linear-gradient(120deg,#4b4435,#2d3640);
+ border-color:#b89a6c;border-left-color:var(--comms-accent);
+ color:#fff0d5;
+}
+#app .left-panel #log[data-tone="warning"]::before,
+.online-app .left-panel #online-log[data-tone="warning"]::before{content:"SIGNAL CHECK"}
+#app .left-panel #log[data-tone="error"],
+.online-app .left-panel #online-log[data-tone="error"]{
+ --comms-accent:#ffb5b0;background:linear-gradient(120deg,#51353b,#302b3c);
+ border-color:#cf9696;border-left-color:var(--comms-accent);
+ color:#ffe8e1;
+}
+#app .left-panel #log[data-tone="error"]::before,
+.online-app .left-panel #online-log[data-tone="error"]::before{content:"CHECK YOUR MOVE"}
+/* Keep the log scannable in the very compact side panels, without hiding
+ * any important errors behind one-line ellipses. */
+@media(min-width:731px) and (max-height:800px){
+ #app .left-panel #log,.online-app .left-panel #online-log{
+  margin-top:5px;padding:5px 7px 6px 9px;
+  font-size:10px;line-height:1.32;
+  max-height:92px;overflow-y:auto;
+ }
+}
+@media(min-width:731px) and (max-width:920px) and (orientation:portrait){
+ #app .left-panel{max-height:none;min-height:0}
+ #app .left-panel #log{
+  flex-basis:100%;width:100%;max-height:50px;
+  margin:0;padding:3px 7px 3px 9px;
+  font-size:10px;line-height:1.2;
+ }
+ #app .left-panel #log::before{display:inline;margin:0 7px 0 0;letter-spacing:.08em}
+ .online-app .left-panel{max-height:none;min-height:0}
+ .online-app .left-panel #online-log{
+  padding:5px 7px;max-height:70px;
+  margin:2px 0 0;overflow:auto;
+ }
+}
+/* One little, but legible, save instrument in the phone header. The full
+ * status and failure guidance remain available to assistive technology. */
+@media(max-width:730px){
+ #app .top-actions #save-status{
+  display:inline-flex;flex:0 0 24px;
+  align-items:center;justify-content:center;
+  min-width:24px;max-width:24px;
+  height:28px;padding:0;font-size:0;
+  border-radius:6px;margin:0;
+ }
+ #app .top-actions #save-status::before{
+  content:"✓";font-size:15px;line-height:1;font-weight:950;
+  color:#a5f2c7;
+ }
+ #app .top-actions #save-status.unavailable::before{
+  content:"!";color:#ffc0b2;
+ }
+ #app .left-panel #log,
+ .online-app .left-panel #online-log{
+  display:block;
+  grid-column:1/-1;
+  min-width:0;width:100%;
+  margin:0;
+  max-height:min(130px,28dvh);
+  overflow-y:auto;
+  font-size:10px;line-height:1.42;
+  padding:6px 9px;
+  border-radius:7px;
+  white-space:normal;
+  text-overflow:clip;
+ }
+ #app .left-panel #log::before,
+ .online-app .left-panel #online-log::before{
+  display:inline;
+  font-size:8px;margin:0 6px 0 0;letter-spacing:.08em;
+ }
+ #app .left-panel{row-gap:6px}
+ /* Local multi-player's log was previously suppressed on mobile, even
+    when the server-independent move validation rejected a submission. */
+ #app[data-mode="local"] .left-panel #log{
+  display:block;grid-column:1/-1;grid-row:2;
+  max-height:100px;
+ }
+ /* The online log likewise disappeared on phones. Keeping it inside the
+    compact standings strip makes reconnect, invalid move and room status
+    understandable without leaving the board. */
+ .online-app .left-panel{align-items:stretch}
+ .online-app .left-panel #online-log{
+  display:block;grid-column:1/-1;grid-row:3;
+  max-height:120px;min-height:31px;
+ }
+ .online-app .left-panel #online-moves{display:none}
+ /* In both modes the preview must show the reason a placement is invalid,
+    rather than clipping the explanation to one line. */
+ #app .right-panel .equation-preview #preview-status,
+ .online-app .right-panel #online-preview-status{
+  white-space:normal;overflow-wrap:anywhere;line-height:1.35;
+  display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:3;overflow:hidden;
+  font-size:10px;min-height:0;
+ }
+ #app .right-panel .equation-preview[data-state="error"] #preview-status{
+  color:#ffbab4;
+ }
+ #app .right-panel .command-group button,
+ .online-app .right-panel .command-group button{
+  min-height:42px;
+  touch-action:manipulation;
+ }
+ #app .rack-undo,.online-app .rack-undo{
+  min-height:28px;touch-action:manipulation;
+ }
+ .online-app .online-connection{
+  max-width:87px;min-width:38px;
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+ }
+}
+@media(max-width:400px){
+ /* Avoid replacing meaningful ONLINE status words with an anonymous dot. */
+ .online-app .online-connection{
+  font-size:8px;letter-spacing:0;
+  padding:5px 5px;max-width:50px;
+  min-height:29px;display:inline-flex;align-items:center;
+ }
+ .online-app .online-connection::before{content:none}
+ .online-app .top-actions{gap:3px}
+ .online-app .top-actions .quiet-button{
+  padding:6px 4px;font-size:8px;letter-spacing:0;
+  min-height:30px;
+ }
+ .online-app .top-actions #online-help{font-size:0;min-width:28px}
+ .online-app .top-actions #online-help::after{content:"?";font-size:12px}
+ .online-app .top-actions #online-share{font-size:0;min-width:30px}
+ .online-app .top-actions #online-share::after{content:"⧉";font-size:12px}
+ .online-app .top-actions a.quiet-button{font-size:0;min-width:30px;text-align:center}
+ .online-app .top-actions a.quiet-button::after{content:"⌂";font-size:12px}
+ .online-app .brand{min-width:0}
+ .online-app .brand strong{font-size:13px;letter-spacing:0}
+ .online-app .brand-icon{width:23px;height:23px;flex:0 0 23px}
+ .online-app .brand-icon img{width:23px;height:23px}
+ #app .left-panel #log,.online-app .left-panel #online-log{font-size:10px}
+ #app .right-panel .command-group button,
+ .online-app .right-panel .command-group button{min-height:41px}
+}
+/* Compact but readable status panel and controls on portrait phones and
+ * small laptops; no overlay intersects a board tile. */
+#app .left-panel #log[data-tone="error"],.online-app .left-panel #online-log[data-tone="error"]{
+ scrollbar-color:#ad7778 #291f30;
+}
+.online-app .online-connection[data-tone="warning"]{
+ background:#3b3935;border-color:#ba9c66;color:#ffe5a6;
+}
+.online-app .online-connection[data-tone="success"]{
+ background:#214b42;border-color:#5db496;color:#bef6df;
+}
+#app .save-status.unavailable{
+ background:#51333e;border-color:#ce8c86;color:#ffe0d4;
+}
+/* Fewer unintentional taps: footer buttons keep an explicit focus ring and
+ * the game's current disabled state remains visibly distinguishable. */
+#app .right-panel .primary-command:disabled,
+.online-app .right-panel .primary-command:disabled{
+ opacity:.52;box-shadow:none;cursor:not-allowed;
+}
+#app .right-panel .secondary-command:disabled,
+.online-app .right-panel .secondary-command:disabled{
+ opacity:.55;cursor:not-allowed;
+}
+@media(forced-colors:active){
+ #app .left-panel #log,.online-app .left-panel #online-log{
+  forced-color-adjust:auto;border:2px solid CanvasText;
+ }
+ #app .left-panel #log[data-tone="error"],.online-app .left-panel #online-log[data-tone="error"]{
+  border-style:double;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #app .left-panel #log,.online-app .left-panel #online-log,
+ .online-app .online-connection{animation:none!important;transition:none!important}
+}
