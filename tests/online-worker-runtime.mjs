@@ -39,11 +39,16 @@ const code=host.room.code;
 assert.match(code,/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
 assert.equal(host.room.phase,'lobby');
 assert.equal(host.room.people.length,1);
+assert.equal(host.room.achievementReceipts.filter(x=>x.type==='room-joined').length,1);
+assert.ok(host.room.achievementReceipts.every(x=>x.id.includes('-0-')));
 assert.ok(!JSON.stringify(host.room).includes(host.token));
 const joined=await api('/api/rooms/'+code+'/join',{method:'POST',body:{name:'Bea',avatar:defaultPilotAlien(1)}});
 assert.equal(joined.status,201,JSON.stringify(joined));
 assert.notEqual(joined.token,host.token);
 assert.equal(joined.room.people.length,2);
+assert.ok(joined.room.achievementReceipts.some(x=>x.type==='room-joined'));
+assert.ok(joined.room.achievementReceipts.some(x=>x.type==='lobby-multi'));
+assert.ok(joined.room.achievementReceipts.every(x=>x.id.includes('-1-')));
 assert.deepEqual(joined.room.people.map(p=>p.avatar),
  [defaultPilotAlien(3),defaultPilotAlien(1)]);
 const invalidProfile=await api('/api/rooms/'+code+'/profile',{
@@ -68,6 +73,9 @@ const started=await api(base+'/start',{method:'POST',token:host.token,
   body:mutation(updated.room,'start')});
 assert.equal(started.status,200,JSON.stringify(started));
 assert.equal(started.room.phase,'playing');
+assert.ok(started.room.achievementReceipts.some(x=>x.type==='match-started'));
+assert.ok(started.room.achievementReceipts.some(x=>x.type==='lobby-multi'));
+assert.ok(started.room.achievementReceipts.every(x=>x.id.includes('-0-')));
 assert.deepEqual(started.room.match.players.map(p=>p.avatar),
  [defaultPilotAlien(3),defaultPilotAlien(2)]);
 const forbiddenMidgame=await api(base+'/profile',{
@@ -93,6 +101,9 @@ const forged=await api(base+'/action',{method:'POST',token:host.token,
    {index:83,tileId:'tile-forged2',value:'8'}
   ]})});
 assert.equal(forged.status,403,JSON.stringify(forged));
+const afterReject=await api(base+'/state',{token:host.token});
+assert.ok(!afterReject.room.achievementReceipts.some(x=>x.type==='move-scored'),
+ 'server rejected score cannot create achievement evidence');
 const stale=await api(base+'/action',{method:'POST',token:host.token,
   body:{id:crypto.randomUUID(),revision:1,type:'pass'}});
 assert.equal(stale.status,409,JSON.stringify(stale));
@@ -118,10 +129,14 @@ const fourth=await api(base+'/action',{method:'POST',token:joined.token,
   body:mutation(third.room,'pass')});
 assert.equal(fourth.status,200,JSON.stringify(fourth));
 assert.equal(fourth.room.phase,'finished');
+assert.equal(fourth.room.achievementReceipts.filter(x=>x.type==='match-finished').length,1);
+assert.ok(fourth.room.achievementReceipts.every(x=>x.id.includes('-1-')));
 assert.equal(fourth.room.match.standings.length,2);
 assert.ok(fourth.room.match.standings.every(x=>x.net===x.gross-x.penalty));
 const restored=await api(base+'/state',{token:host.token});
 assert.equal(restored.status,200,JSON.stringify(restored));
 assert.equal(restored.room.phase,'finished');
+assert.equal(restored.room.achievementReceipts.filter(x=>x.type==='match-finished').length,1);
+assert.ok(restored.room.achievementReceipts.every(x=>x.id.includes('-0-')));
 assert.deepEqual(restored.room.match.standings,fourth.room.match.standings);
 console.log('Cloudflare runtime passed: real SQLite Durable Object, host/guest authentication, private hands, turn authority, idempotency, replay, final standings.');
