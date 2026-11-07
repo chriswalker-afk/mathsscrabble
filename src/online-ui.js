@@ -16,6 +16,7 @@ import {getAchievement} from './achievements/catalog.js';
 import {loadAchievementStore} from './achievements/storage.js';
 import {bindOnlineRoom,loadOnlineBinding,ingestOnlineEvidence} from './achievements/online-adapter.js';
 import {loadPilots} from './achievements/pilots.js';
+import {ensureActivePilot} from './achievements/auto-pilot.js';
 import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
 
 const $=id=>document.getElementById(id);
@@ -29,6 +30,7 @@ const state={
  lastCalloutId:null,calloutTimer:null,lastErrorAt:0,pendingOnlineAwards:[]
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
+ensureActivePilot(storage);
 state.alienDraft=alienFromStorage(storage,0);
 function updateOnlineAwardLabel(){
  const label=$('online-achievement-status');
@@ -1083,6 +1085,31 @@ $('online-leave-lobby').onclick=async()=>{
    gateError(err.message);
  }finally{state.busy=false;render();}
 };
+function launchFromSetup(){
+ let data;
+ try{
+  const raw=sessionStorage.getItem('equa-nova.pending-launch.v1');
+  if(!raw)return;
+  sessionStorage.removeItem('equa-nova.pending-launch.v1');
+  data=JSON.parse(raw);
+ }catch{return;}
+ if(!data||data.version!==1||!['host','join'].includes(data.mode)||
+   !Array.isArray(data.names)||typeof data.names[0]!=='string'||data.names[0].length>20)return;
+ state.alienDraft=safePilotAlien(data.avatars?.[0],0);
+ renderPilotPicker();
+ if(data.mode==='host'){
+  $('online-host-name').value=data.names[0];
+  $('online-player-limit').value=String([2,3,4].includes(data.maxPlayers)?data.maxPlayers:2);
+  $('online-timer-settings').value=String([0,60,90,120].includes(data.turnSeconds)?data.turnSeconds:0);
+  $('online-tile-kit').value=normalizeTileSet(data.tileSet);
+  describeSelectedKit();
+  $('online-create-form').requestSubmit();
+ }else{
+  $('online-join-name').value=data.names[0];
+  $('online-join-code').value=typeof data.code==='string'?data.code:'';
+  $('online-join-form').requestSubmit();
+ }
+}
 async function restore(){
  let previous;
  try{previous=JSON.parse(storage?.getItem(ONLINE_SESSION_KEY)||'null');}catch{}
@@ -1099,7 +1126,7 @@ async function restore(){
      if([401,404,410].includes(err.status))clearSession();
      gateError(err.message);
    }
- }else showEntry();
+ }else {showEntry();launchFromSetup();}
 }
 window.setInterval(()=>{
  if(!state.view)return;
