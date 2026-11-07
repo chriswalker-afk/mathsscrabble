@@ -504,6 +504,9 @@ function showLocalHandover(){
  $('app').dataset.private=String(hidden);
  $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
  if(!hidden)return;
+ // Never let a prior pilot's achievement notification appear over a private
+ // handover, or block the next pilot's scoring controls when Ready is pressed.
+ document.getElementById('achievement-toast')?.remove();
  const player=match.players[match.current];
  paintPilotAvatar($('local-handover-avatar'),player.avatar,match.current,
    {size:108,framing:'bust'});
