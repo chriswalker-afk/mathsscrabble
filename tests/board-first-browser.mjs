@@ -43,7 +43,7 @@ try{
 
  for(const size of [{width:1366,height:768,minBoard:485},
                     {width:1280,height:720,minBoard:450},
-                    {width:1024,height:768,minBoard:485},
+                    {width:1024,height:768,minBoard:475},
                     {width:768,height:1024,minBoard:620},
                     {width:390,height:844,minBoard:335},
                     {width:320,height:700,minBoard:275}]){
