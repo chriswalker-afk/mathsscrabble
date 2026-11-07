@@ -24,7 +24,8 @@ async function dimensions(){
       position:c.position,flexDirection:c.flexDirection,overflowX:c.overflowX};
    }).filter(x=>x.width>0&&x.right>innerWidth+4).sort((a,b)=>b.right-a.right).slice(0,13),
    telemetry:rect('.left-panel'),board:rect('#board-frame'),
-   preview:rect('#equation-preview'),rack:rect('.rack-section'),score:rect('#score-btn')
+   preview:rect('#equation-preview'),rack:rect('.rack-section'),score:rect('#score-btn'),
+   systems:rect('#ship-systems-drawer'),gadgets:rect('#gadget-drawer'),zone:rect('#drift-zone-map')
   };
  });
 }
@@ -33,14 +34,16 @@ try{
  await page.locator('#board .cell').first().waitFor();
  await dismissIntro();
  assert.equal(await page.locator('.right-panel').count(),0,'old third panel must not exist');
- assert.equal(await page.locator('.arena > #equation-preview').count(),1);
+ assert.equal(await page.locator('.left-panel > #equation-preview').count(),1);
+ assert.equal(await page.locator('#tile-set-btn').count(),0,'kit changes belong at launch');
+ assert.equal(await page.locator('#zone-map-btn').count(),0,'no duplicate zone-map control');
  assert.equal(await page.locator('.board-zoom-toolbar .board-info-popover').count(),1);
  assert.equal(await page.locator('#gadget-drawer').isHidden(),true,'gadgets are Drift-only');
  assert.equal(await page.locator('#board .cell').count(),361);
 
- for(const size of [{width:1366,height:768,minBoard:600},
-                    {width:1280,height:720,minBoard:550},
-                    {width:1024,height:768,minBoard:585},
+ for(const size of [{width:1366,height:768,minBoard:485},
+                    {width:1280,height:720,minBoard:450},
+                    {width:1024,height:768,minBoard:475},
                     {width:768,height:1024,minBoard:620},
                     {width:390,height:844,minBoard:335},
                     {width:320,height:700,minBoard:275}]){
@@ -50,15 +53,11 @@ try{
   assert.equal(d.gridColumns,size.width>920?2:1,
    'wide desktops have only two play columns; narrow screens stack');
   assert.ok(d.board.width>=size.minBoard,'board should gain usable width: '+JSON.stringify(d));
-  if(size.width>=1180){
-   assert.ok(d.board.height>=d.board.width*.88,'wide laptops need an almost-square, board-first viewport: '+JSON.stringify(d));
-   assert.ok(d.preview.x>=d.board.right-2,'scoring preview is docked beside the board');
-   assert.ok(d.rack.x>=d.board.right-2,'rack is docked beside the board, not below it');
-   assert.ok(d.rack.y>=d.preview.y,'the rack follows the preview within the dock');
-  }else{
-   assert.ok(d.preview.y>=d.board.bottom-1,'compact screens keep preview under board');
-   assert.ok(d.rack.y>=d.preview.bottom-1,'compact screens keep rack under preview');
-  }
+  assert.ok(d.board.height>=d.board.width*.88,'keep a nearly-square board: '+JSON.stringify(d));
+  assert.ok(d.preview.right<=d.board.x+2||size.width<=920,
+   'equation preview should be in telemetry, not beside the rack: '+JSON.stringify(d));
+  assert.ok(d.rack.y>=d.board.bottom-2,'rack must ALWAYS sit below the game board: '+JSON.stringify(d));
+  assert.ok(d.score.y>=d.rack.y,'score follows the rack below the board');
   assert.ok(d.scroll.width<=size.width+3,'no horizontal scrolling: '+JSON.stringify(d));
   assert.ok(d.board.x>=0&&d.board.right<=size.width+3,'board stays inside viewport');
   if(size.width>=1024) {
@@ -67,8 +66,8 @@ try{
    assert.ok(d.telemetry.right<d.board.x,'score rail remains to board left');
   }
   if(size.width===390){
-   assert.ok(d.score.bottom<=size.height-9,'phone Score remains above fold');
-   assert.ok(d.preview.bottom<=size.height-25,'phone preview remains visible');
+   assert.ok(d.score.bottom<=d.scroll.height+1,'phone Score must remain reachable by vertical scrolling');
+   assert.ok(d.preview.y<d.board.y,'phone equation preview precedes board');
   }
   if([1366,1280,768,390].includes(size.width))
    await page.screenshot({path:'/tmp/equanova-board-first-'+size.width+'.png',fullPage:true});
@@ -85,12 +84,17 @@ try{
  await page.goto(base+'play.html?mode=rogue',{waitUntil:'networkidle'});
  await page.locator('#board .cell').first().waitFor();await dismissIntro();
  assert.equal(await page.locator('#drift-loadout').evaluate(e=>Boolean(e.closest('.left-panel'))),true);
- assert.equal(await page.locator('#drift-temporary').evaluate(e=>Boolean(e.closest('.rack-section'))),true);
+ assert.equal(await page.locator('#drift-temporary').evaluate(e=>Boolean(e.closest('.left-panel'))),true);
+ assert.equal(await page.locator('#drift-zone-map').evaluate(e=>Boolean(e.closest('.topbar'))),true);
+ assert.equal(await page.locator('#drift-zone-map').isVisible(),true);
  assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
  assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
  assert.equal(await page.locator('#ship-systems-drawer').evaluate(e=>e.open),true);
  assert.equal(await page.locator('#gadget-drawer').evaluate(e=>e.open),true);
  assert.equal(await page.locator('#gadget-drawer').isVisible(),true);
+ const driftDock=await dimensions();
+ assert.ok(driftDock.gadgets.y>=driftDock.systems.bottom-1,'gadgets must be UNDER ship systems');
+ assert.ok(driftDock.rack.y>=driftDock.board.bottom-2,'Drift rack under board');
  await page.screenshot({path:'/tmp/equanova-board-first-drift-desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.locator('#ship-systems-drawer').evaluate(e=>e.open),false);
@@ -107,11 +111,11 @@ try{
  online.on('pageerror',error=>errors.push(error.message));
  await online.goto(base+'online.html',{waitUntil:'domcontentloaded'});
  assert.equal(await online.locator('.right-panel').count(),0);
- assert.equal(await online.locator('.arena > #equation-preview').count(),1);
+ assert.equal(await online.locator('.left-panel > #equation-preview').count(),1);
  assert.equal(await online.locator('#online-callout-stage').count(),1);
  assert.equal(await online.locator('.board-info-popover').count(),1);
  assert.equal(await online.locator('.board-frame').count(),1);
  await online.close();
  assert.deepEqual(errors,[],'no JavaScript errors during mode changes and responsive checks');
- console.log('Board-first acceptance checks passed: no right rail, preview, scoring rules, Drift drawers and phone access.');
+ console.log('Board-first acceptance checks passed: rack under board, equation left, gadgets under systems, zone in header, responsive access.');
 }finally{await browser.close();}

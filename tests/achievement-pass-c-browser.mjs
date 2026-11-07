@@ -64,7 +64,7 @@ try{
  if(await page.locator('#modal[open]').count())
   await page.locator('#modal-actions button').last().click();
  assert.match(await page.locator('#achievement-pilot').textContent(),/BEA/);
- await page.locator('#zone-map-btn').click();
+ await page.locator('#drift-zone-map').click();
  assert.ok((await awardState()).owners.Bea.includes('D01'),'real map visit grants Chart Reader');
  await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'rogue');

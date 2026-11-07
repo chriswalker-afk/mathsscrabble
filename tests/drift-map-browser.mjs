@@ -43,7 +43,7 @@ try{
  await page.locator('.cell.boss-blocked').first().click();
  assert.match(await page.locator('#log').textContent(),/blocked/i);
  assert.equal(await page.locator('.cell.pending').count(),0);
- await page.locator('#zone-map-btn').click();
+ await page.locator('#drift-zone-map').click();
  assert.match(await page.locator('.zone-map-card.map-current').textContent(),/GRID WARDEN/i);
  await page.screenshot({path:'/tmp/equanova-drift-grid-warden.png',fullPage:true});
  await page.locator('#modal-actions button').last().click();

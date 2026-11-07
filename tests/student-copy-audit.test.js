@@ -32,9 +32,9 @@ test('Launch copy has no obsolete build labels or misleading rack/sector claims'
 test('Four kits are described using the actual base rack geometry',()=>{
  assert.deepEqual(TILE_SETS.map(k=>[k.id,kitNumberSlots(k.id),kitRackSize(k.id)]),
   [['natural',5,8],['integer',5,8],['rational',6,11],['advanced',6,11]]);
- const copy=files['src/app.js'];
- assert.match(copy,/Starting racks[^<]+5 numbers \+ 3 operators/);
- assert.match(copy,/6 numbers \+ 3 operators \+ a matched \( \) pair/);
+ assert.match(files['choose.html'],/id="kit-description"/);
+ assert.match(files['play.html'],/id="rack-count"/);
+ assert.doesNotMatch(files['play.html'],/id="tile-set-btn"/,'no in-game tile-kit selector after launch');
  for(const id of ['natural','integer','rational','advanced'])
   assert.ok(TILE_SETS.some(k=>k.id===id&&k.desc.length>25));
  assert.match(files['src/online-ui.js'],/Brackets must|Place or exchange both \( and \)/);

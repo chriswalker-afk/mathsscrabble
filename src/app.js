@@ -689,8 +689,6 @@ function render(){
  $('app').dataset.mode=state.mode;
  $('app').dataset.tileSet=state.tileSet;
  $('app').dataset.bracketKit=String(hasBracketPair(state.tileSet));
- $('tile-set-btn').textContent='◇ '+TILE_SET_BY_ID[state.tileSet].short.toUpperCase();
- $('tile-set-btn').setAttribute('aria-label','Select maths tile set, currently '+TILE_SET_BY_ID[state.tileSet].title);
  $('app').dataset.expandedRack=String(isDrift()&&rackCapacity()>HAND_SIZE);
  $('app').dataset.anomaly=isDrift()?(anomalyForSector(state.sector,state.rogue)?.id||'none'):'none';
  $('mode-btn').textContent='⌂ HOME';
@@ -1772,24 +1770,6 @@ function confirmTileSetChange(id){
      text:'START WITH '+set.short.toUpperCase()+' →',primary:true,fn:()=>startChosenTileSet(id)
    }]);
 }
-function showTileSetMenu(){
- if(isLocal()||state.busy)return;
- const body='<p class="kit-dialog-explain">Starting racks — Launchpad/Orbit: 5 numbers + 3 operators. Nebula/Quantum: 6 numbers + 3 operators + a matched ( ) pair.</p>'+
-   '<div class="kit-dialog-grid" role="group" aria-label="Choose a maths tile kit">'+
-   TILE_SETS.map(kit=>'<button class="kit-dialog-card'+(kit.id===state.tileSet?' is-current':'')+
-     '" type="button" data-kit-choice="'+kit.id+'" aria-pressed="'+(kit.id===state.tileSet)+'">'+
-     '<span>'+kit.tier+' · '+kit.short.toUpperCase()+'</span>'+
-     '<strong>'+kit.title+'</strong>'+
-     '<em>'+kit.sample+'</em><small>'+kit.operations+'</small>'+
-     '</button>').join('')+'</div>'+
-   '<p class="kit-dialog-explain">Quantum adds powers (−8 to 8), exact square roots and factorials (0! to 8!). Choosing another kit starts a new run.</p>';
- showModal('CHOOSE YOUR MATHS KIT','Four levels of equations',body,
-   [{text:'BACK TO BOARD',primary:true}]);
- document.querySelectorAll('[data-kit-choice]').forEach(button=>{
-   button.onclick=()=>confirmTileSetChange(button.dataset.kitChoice);
- });
-}
-$('tile-set-btn').onclick=showTileSetMenu;
 function showModeMenu(){
  window.location.assign('./index.html');
 }

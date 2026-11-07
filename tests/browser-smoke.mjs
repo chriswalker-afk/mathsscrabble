@@ -55,7 +55,7 @@ try{
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
   assert.equal(await page.locator('.arena-topline').count(),0);
   assert.equal(await page.locator('.right-panel').count(),0,'the redundant right console is removed');
-   assert.equal(await page.locator('.arena > #equation-preview').count(),1,'equation feedback stays with the board and rack');
+   assert.equal(await page.locator('.left-panel > #equation-preview').count(),1,'equation feedback stays at the top of telemetry');
   assert.equal(await page.locator('#rack .wildcard').count(),2);
 
   // 1=1 is mathematically true but is not a calculation and must be rejected.
@@ -180,8 +180,8 @@ try{
       return {boardWidth:board.width,boardFont:font,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Layout',size,geometry);
-    const minimum=size.height>=768?575:520;
-    assert.ok(geometry.boardWidth>=minimum,'board must be legible and enlarged on classroom laptops');
+    const minimum=size.height>=768?(size.width<=1100?475:485):450;
+    assert.ok(geometry.boardWidth>=minimum,'board must remain legible with rack and scoring dock directly below it');
     assert.ok(geometry.boardFont>=18,'unzoomed 19×19 tiles must remain recognizable');
     const currentBoardWidth=geometry.boardWidth;
     await page.locator('#board-zoom-in').click();
@@ -207,15 +207,15 @@ try{
       const scoreBtn=document.querySelector('#score-btn').getBoundingClientRect();
       const scoreLabel=document.querySelector('#score').getBoundingClientRect();
       const preview=document.querySelector('#equation-preview').getBoundingClientRect();
-      return {boardWidth:board.width,rackBottom:rack.bottom,scoreButtonBottom:scoreBtn.bottom,scoreLabelTop:scoreLabel.top,previewBottom:preview.bottom,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      return {boardWidth:board.width,boardBottom:board.bottom,rackTop:rack.top,rackBottom:rack.bottom,scoreButtonBottom:scoreBtn.bottom,scoreLabelTop:scoreLabel.top,previewBottom:preview.bottom,scrollHeight:document.documentElement.scrollHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Narrow layout',size,geometry);
     assert.ok(geometry.boardWidth>=250,'board should retain readable dimensions');
     assert.ok(geometry.scrollWidth<=geometry.width+3,'no horizontal scrolling');
     if(size.width===390){
       assert.ok(await page.locator('#run-report-header').isVisible(),'compact screens need an accessible run-report button');
-      assert.ok(geometry.rackBottom<=size.height,'board and rack should fit above the fold');
-      assert.ok(geometry.scoreButtonBottom<=size.height-20,'score command must be visible without scrolling on phones');
+      assert.ok(geometry.rackTop>=geometry.boardBottom-2,'rack must remain directly below the board on phones');
+      assert.ok(geometry.scoreButtonBottom<=geometry.scrollHeight+2,'score command must be reachable with vertical scrolling on phones');
       assert.ok(geometry.previewBottom<=size.height-4,'equation preview should fit on one mobile screen');
       assert.ok(geometry.scoreLabelTop>=0&&geometry.scoreLabelTop<size.height,'energy readout must be visible');
     }
