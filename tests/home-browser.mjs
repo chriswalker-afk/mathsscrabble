@@ -69,7 +69,9 @@ try{
  await page.locator('[data-mode="host"]').click();
  assert.equal(await page.locator('#kit-section').isVisible(),true);
  assert.equal(await page.locator('#turn-field').isVisible(),true);
- assert.equal(await page.locator('#game-field select').isDisabled(),true);
+ assert.equal(await page.locator('#game-field select').isEnabled(),true);
+ await page.locator('#setup-game').selectOption('600');
+ assert.equal(await page.locator('#setup-game').inputValue(),'600');
  assert.equal(await page.locator('#pilot-rows .pilot-row').count(),1);
  await page.locator('[data-mode="local"]').click();
  await page.locator('#setup-count').selectOption('3');

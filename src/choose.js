@@ -23,7 +23,7 @@ const state={
  type:params.get('type')==='multi'?'multi':'single',
  mode:params.get('type')==='multi'?'local':'sector',
  kit:normalizeTileSet(storage?.getItem(TILE_SET_STORAGE_KEY)),
- count:2,turn:0,
+ count:2,turn:0,game:0,
  names:[current?.name||'Pilot 1','Pilot 2','Pilot 3','Pilot 4'],
  avatars:['bloop','orbit','niblet','glimmer']
 };
@@ -115,6 +115,7 @@ function render(){
  $('room-code-field').hidden=!join;
  $('setup-count').value=String(state.count);
  $('setup-turn').value=String(state.turn);
+ $('setup-game').value=String(state.game);
  $('pilot-settings').hidden=single;
  $('match-note').textContent=local?'Pass the device between players. Each player gets a private rack and saved achievements.':
   host?'Share the room code with your friends. Everyone chooses their own alien when joining.':
@@ -133,6 +134,7 @@ for(const button of document.querySelectorAll('[data-type]'))
  });
 $('setup-count').addEventListener('change',()=>{state.count=Number($('setup-count').value);renderPilotRows();});
 $('setup-turn').addEventListener('change',()=>{state.turn=Number($('setup-turn').value);});
+$('setup-game').addEventListener('change',()=>{state.game=Number($('setup-game').value);});
 $('setup-error').hidden=true;
 if(!saved.pilotId)$('save-message').textContent='Local achievement storage is unavailable; matches can still be played.';
 $('launch-form').addEventListener('submit',event=>{
@@ -151,7 +153,7 @@ $('launch-form').addEventListener('submit',event=>{
   const code=$('setup-code').value.trim().toUpperCase();
   if(state.mode==='join'&&!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(code))
    return fail('Enter the six characters in the room code.');
-  const launch={version:1,mode:state.mode,tileSet,turnSeconds:state.turn,maxPlayers:state.count,
+  const launch={version:1,mode:state.mode,tileSet,turnSeconds:state.turn,gameSeconds:state.game,maxPlayers:state.count,
    names,avatars:state.avatars.slice(0,count).map((id,i)=>avatarFor(id,i)),
    ...(state.mode==='join'?{code}:{})};
   sessionStorage.setItem(LAUNCH_KEY,JSON.stringify(launch));

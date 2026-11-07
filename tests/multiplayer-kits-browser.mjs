@@ -41,12 +41,14 @@ try{
  assert.equal(new Set([...changed.bag,...changed.players.flatMap(p=>p.rack)].map(t=>t.id)).size,151);
  assert.equal(await local.locator('#rack .tile').count(),0,'hot-seat handover must hide all tiles');
  await local.locator('#local-switch-btn').click();
+ await local.locator('#home-multi').click();
+ await local.waitForURL(/choose\.html\?type=multi$/);
  await local.locator('[data-tile-kit="advanced"]').click();
- await local.locator('#home-local').click();
- await local.locator('#modal-eyebrow').getByText(/DIFFERENT MATCH KIT/).waitFor();
- await local.locator('#modal-actions button').last().click();
- assert.equal(await local.locator('#local-tile-set').inputValue(),'advanced');
- await local.locator('#modal-actions button').last().click();
+ await local.locator('#setup-game').selectOption('300');
+ await local.locator('#launch-button').click();
+ await local.waitForURL(/play\.html\?mode=local&tiles=advanced&setup=ready$/);
+ assert.equal(await local.locator('#local-privacy').isVisible(),true);
+ assert.equal(await local.locator('#local-game-remaining').textContent(),'5 min game');
  await local.locator('#local-ready-btn').click();
  assert.equal(await local.locator('#rack .tile').count(),11);
  assert.ok(await local.locator('#rack .advanced-tile').count()>=1);
@@ -120,7 +122,7 @@ try{
    assert.equal(await host.locator('#rack .tile').count(),11);
    assert.equal(await host.locator('#online-rack-count').textContent(),'11 / 11');
    assert.equal(await host.locator('#rack .bracket-tile').count(),2);
-   assert.ok(await host.locator('#rack .fraction-tile .frac-denominator').count()>=2);
+   assert.equal(await host.locator('#rack .fraction-tile').count(),0,'Quantum must not draw fractions');
    assert.ok(await host.locator('#rack .advanced-tile').count()>=1);
    await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
    await guest.locator('#online-gate').waitFor({state:'hidden'});

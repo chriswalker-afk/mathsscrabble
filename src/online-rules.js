@@ -6,7 +6,7 @@ import {summarizeBag} from './bag-inventory.js';
 import {acceptPilotAlien,isValidPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {TILE_SET_BY_ID,normalizeTileSet,kitRackSize} from './tile-sets.js';
 import {makeLocalMatch,readyLocalTurn,scoreLocalTurn,passLocalTurn,
-  exchangeLocalTiles,localStandings,isLocalTimerExpired} from './multiplayer.js';
+  exchangeLocalTiles,localStandings,isLocalTimerExpired,isGameTimerExpired,finishTimedMatch,GAME_TIMER_OPTIONS} from './multiplayer.js';
 import {onlineRoomScope,onlineSeatEvidence,registerOnlineLobby,registerOnlineJoin,
  registerOnlineStart,registerOnlineScored,registerOnlineFinish,registerOnlineCallout} from './achievements/online-milestones.js';
 
@@ -77,16 +77,16 @@ function validateMutation(room,index,request,{allowCosmeticLag=false}={}){
 function addReceipt(room,index,request,result){
  return {...room,receipts:last([...room.receipts,{who:index,id:request.id,result}],ROOM_MAX_ACTIONS)};
 }
-export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlayers=4,turnSeconds=90,tileSet='natural',now=Date.now()}){
+export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlayers=4,turnSeconds=90,gameSeconds=0,tileSet='natural',now=Date.now()}){
  const cleanCode=cleanRoomCode(code),name=cleanPilotName(hostName);
  requireHash(hostHash);
  if(!cleanCode)throw new OnlineError('Invalid room code.');
  if(!Object.hasOwn(TILE_SET_BY_ID,tileSet))throw new OnlineError('Choose a supported mathematical tile set.');
- if(!number(maxPlayers,2,4)||!ROOM_TIMERS.includes(turnSeconds))
+ if(!number(maxPlayers,2,4)||!ROOM_TIMERS.includes(turnSeconds)||!GAME_TIMER_OPTIONS.includes(gameSeconds))
   throw new OnlineError('Choose 2–4 players and a supported turn timer.');
  return registerOnlineLobby({
   version:ONLINE_VERSION,code:cleanCode,revision:1,phase:'lobby',
-  maxPlayers,turnSeconds,tileSet,createdAt:now,updatedAt:now,
+  maxPlayers,turnSeconds,gameSeconds,tileSet,createdAt:now,updatedAt:now,
   expiresAt:now+LOBBY_LIFETIME,
   people:[{id:'p1',name,tokenHash:hostHash,avatar:cleanPilotAvatar(hostAvatar,0)}],
   match:null,receipts:[]
@@ -149,7 +149,7 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  if(room.people.length<2)throw new OnlineError('At least two pilots must join before starting.');
  let match=makeLocalMatch({names:room.people.map(p=>p.name),
    avatars:room.people.map((p,i)=>safePilotAlien(p.avatar,i)),
-   turnSeconds:room.turnSeconds,tileSet:normalizeTileSet(room.tileSet)},rng);
+   turnSeconds:room.turnSeconds,gameSeconds:room.gameSeconds??0,tileSet:normalizeTileSet(room.tileSet)},rng);
  match=readyLocalTurn(match,now);
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
@@ -191,6 +191,7 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  const index=identity(room,hash),replay=validateMutation(room,index,request,{allowCosmeticLag:true});
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')throw new OnlineError('The match is not accepting turns.',409);
+ if(isGameTimerExpired(room.match,now))throw new OnlineError('The game timer has expired; refresh the room.',409);
  if(index!==room.match.current)throw new OnlineError('It is not your turn.',403);
  if(room.turnSeconds&&isLocalTimerExpired(room.match,now))
   throw new OnlineError('Your timer has expired; refresh the room.',409);
@@ -237,6 +238,7 @@ export function sendOnlineCallout(room,hash,request,now=Date.now()){
  if(replay)return {room,replayed:true,result:replay.result};
  if(room.phase!=='playing'||room.match?.phase!=='playing')
   throw new OnlineError('Alien Radio is only available during a match.',409);
+ if(isGameTimerExpired(room.match,now))throw new OnlineError('The game timer has expired; refresh the room.',409);
  if(typeof request.calloutId!=='string'||!Object.hasOwn(CALLOUT_BY_ID,request.calloutId))
   throw new OnlineError('Choose a listed alien transmission.');
  const turn=room.match.turnNumber;
@@ -257,8 +259,13 @@ export function sendOnlineCallout(room,hash,request,now=Date.now()){
  return {room:registerOnlineCallout(next,index,sent),result};
 }
 export function timeOutOnlineTurn(room,now=Date.now()){
- if(!room||room.phase!=='playing'||!room.match||
-    !isLocalTimerExpired(room.match,now))return {room,changed:false};
+ if(!room||room.phase!=='playing'||!room.match)return {room,changed:false};
+ if(isGameTimerExpired(room.match,now)){
+  const match=finishTimedMatch(room.match,now);
+  return {room:registerOnlineFinish({...room,match,phase:'finished',revision:room.revision+1,
+   gameplayRevision:room.revision+1,updatedAt:now,expiresAt:now+FINISHED_LIFETIME}),changed:true};
+ }
+ if(!isLocalTimerExpired(room.match,now))return {room,changed:false};
  // Server clock, never browser timers, is the source of authority.
  let match=passLocalTurn(room.match,'timeout');
  if(match.phase==='handover')match=readyLocalTurn(match,now);
@@ -274,7 +281,7 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
  const base={
   code:room.code,roomId:onlineRoomScope(room),achievementReceipts:onlineSeatEvidence(room,index),
   revision:room.revision,phase:room.phase,
-  maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,tileSet:normalizeTileSet(room.tileSet),
+  maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,gameSeconds:room.gameSeconds??0,tileSet:normalizeTileSet(room.tileSet),
   people:room.people.map((p,i)=>({index:i,id:p.id,name:p.name,host:i===0,
      avatar:safePilotAlien(p.avatar,i)})),
   you:{index,id:player.id,name:player.name,host:index===0,
@@ -296,7 +303,7 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
    })),
    sentCalloutThisTurn:(room.calloutStats?.[index]?.lastTurn===match.turnNumber),
    freeExchangeUsed:index===match.current&&match.freeExchangeUsed,
-   deadline:match.deadline,
+   deadline:match.deadline,gameDeadline:match.gameDeadline??0,
    lastMoves:last(match.history,MAX_ROOM_HISTORY).map(m=>({
      type:m.type,player:m.player,turn:m.turn,points:m.points||0,
      ...(m.equation?{equation:m.equation}:{})
@@ -307,14 +314,17 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
 }
 export function roomWakeAt(room){
  if(!room)return null;
- const deadline=room.phase==='playing'&&room.match?.deadline>0?
+ const turnDeadline=room.phase==='playing'&&room.match?.deadline>0?
    room.match.deadline:Infinity;
- return Math.min(room.expiresAt,deadline);
+ const gameDeadline=room.phase==='playing'&&room.match?.gameDeadline>0?
+   room.match.gameDeadline:Infinity;
+ return Math.min(room.expiresAt,turnDeadline,gameDeadline);
 }
 export function verifyOnlineRoom(room){
  if(!room||room.version!==ONLINE_VERSION||!cleanRoomCode(room.code)||
     !number(room.revision,1,1000000)||!['lobby','playing','finished','closed'].includes(room.phase)||
     !number(room.maxPlayers,2,4)||!ROOM_TIMERS.includes(room.turnSeconds)||
+     !GAME_TIMER_OPTIONS.includes(room.gameSeconds??0)||
      (room.tileSet!==undefined&&!Object.hasOwn(TILE_SET_BY_ID,room.tileSet))||
     !Array.isArray(room.people)||room.people.length>room.maxPlayers||
     !room.people.every((p,i)=>p.id==='p'+(i+1)&&

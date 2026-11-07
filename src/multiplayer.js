@@ -9,15 +9,17 @@ import {migrateBoardState} from './board-migration.js';
 export const LOCAL_SAVE_KEY='equa-nova.local-match.v1';
 export const LOCAL_VERSION=1;
 export const LOCAL_TIMER_OPTIONS=Object.freeze([0,60,90,120]);
+export const GAME_TIMER_OPTIONS=Object.freeze([0,300,600,900,1200,1800]);
 export const LOCAL_MAX_HISTORY=500;
 const allowedSymbols=new Set(Object.keys(POINTS));
 const validInteger=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const nameClean=name=>String(name??'').replace(/[\r\n\t]+/g,' ').replace(/\s+/g,' ').trim().slice(0,20);
 const randomSwap=(bag,rng)=>{for(let i=bag.length-1;i>0;i--){const j=Math.min(i,Math.floor(rng()*(i+1)));[bag[i],bag[j]]=[bag[j],bag[i]];}};
-export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSeconds=0,tileSet='natural'}={},rng=Math.random){
+export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSeconds=0,gameSeconds=0,tileSet='natural'}={},rng=Math.random){
  if(!Object.hasOwn(TILE_SET_BY_ID,tileSet))throw Error('Choose a supported mathematical tile set.');
  if(!Array.isArray(names)||names.length<2||names.length>4)throw Error('Choose 2–4 players.');
- if(!LOCAL_TIMER_OPTIONS.includes(turnSeconds))throw Error('Choose a supported timer.');
+ if(!LOCAL_TIMER_OPTIONS.includes(turnSeconds))throw Error('Choose a supported turn timer.');
+  if(!GAME_TIMER_OPTIONS.includes(gameSeconds))throw Error('Choose a supported game timer.');
  if(avatars!==null&&(!Array.isArray(avatars)||avatars.length!==names.length))
    throw Error('Provide one valid alien avatar for each pilot.');
  const cleaned=names.map(nameClean);
@@ -34,7 +36,7 @@ export function makeLocalMatch({names=['Pilot 1','Pilot 2'],avatars=null,turnSec
  }
  return {
   version:LOCAL_VERSION,tileSet,board:Array(SIZE*SIZE).fill(null),bag,players,
-  current:0,round:1,turnNumber:1,turnSeconds,deadline:0,phase:'handover',
+  current:0,round:1,turnNumber:1,turnSeconds,deadline:0,gameSeconds,gameDeadline:0,phase:'handover',
   pending:{},placementOrder:[],freeExchangeUsed:false,consecutiveStalls:0,
   history:[],lastAction:null,finishedReason:null,finalScores:null
  };
@@ -43,9 +45,21 @@ const currentPlayer=match=>match.players[match.current];
 export function isLocalTimerExpired(match,now=Date.now()){
  return match.phase==='playing'&&match.turnSeconds>0&&validInteger(match.deadline,1,4102444800000)&&now>=match.deadline;
 }
+export function isGameTimerExpired(match,now=Date.now()){
+ return match.phase!=='finished'&&(match.gameSeconds??0)>0&&
+   validInteger(match.gameDeadline,1,4102444800000)&&now>=match.gameDeadline;
+}
+export function finishTimedMatch(match,now=Date.now()){
+ if(!isGameTimerExpired(match,now))return match;
+ const complete={...match,phase:'finished',deadline:0,pending:{},placementOrder:[],
+   finishedReason:'time-limit',freeExchangeUsed:false};
+ return {...complete,finalScores:localStandings(complete)};
+}
 export function readyLocalTurn(match,now=Date.now()){
  if(match.phase!=='handover')throw Error('No handover is waiting.');
- return {...match,phase:'playing',deadline:match.turnSeconds?now+1000*match.turnSeconds:0};
+ if(isGameTimerExpired(match,now))throw Error('The game timer has expired.');
+ return {...match,phase:'playing',deadline:match.turnSeconds?now+1000*match.turnSeconds:0,
+   gameDeadline:(match.gameSeconds??0)>0&&!match.gameDeadline?now+1000*match.gameSeconds:match.gameDeadline??0};
 }
 const transition=(match,action)=>{
  const history=[...match.history,action].slice(-LOCAL_MAX_HISTORY);
@@ -230,6 +244,9 @@ export function validLocalMatch(match){
  if(!validInteger(match.current,0,match.players.length-1)||
     !validInteger(match.round,1,10000)||!validInteger(match.turnNumber,1,100000)||
     !LOCAL_TIMER_OPTIONS.includes(match.turnSeconds)||!validInteger(match.deadline,0,4102444800000)||
+     !GAME_TIMER_OPTIONS.includes(match.gameSeconds??0)||
+     !validInteger(match.gameDeadline??0,0,4102444800000)||
+     ((match.gameSeconds??0)===0&&(match.gameDeadline??0)!==0)||
     !['handover','playing','finished'].includes(match.phase)||
     typeof match.freeExchangeUsed!=='boolean'||
     !validInteger(match.consecutiveStalls,0,2*match.players.length))return false;
@@ -239,7 +256,7 @@ export function validLocalMatch(match){
       validInteger(x.player,0,match.players.length-1)&&validInteger(x.turn,1,100000)&&
       validInteger(x.points,0,1000000)))return false;
  if(match.phase==='finished'){
-   if(!['stalled','rack-cleared'].includes(match.finishedReason)||Object.keys(match.pending).length)return false;
+   if(!['stalled','rack-cleared','time-limit'].includes(match.finishedReason)||Object.keys(match.pending).length)return false;
    if(!Array.isArray(match.finalScores)||match.finalScores.length!==match.players.length)return false;
    const expected=localStandings(match);
    if(match.finalScores.some((x,i)=>x.index!==expected[i].index||x.net!==expected[i].net||

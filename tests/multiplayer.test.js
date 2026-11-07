@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {SIZE,CENTER,pos,makeTile,tilePool} from '../src/engine.js';
 import {LOCAL_SAVE_KEY,makeLocalMatch,readyLocalTurn,scoreLocalTurn,
  passLocalTurn,exchangeLocalTiles,localStandings,saveLocalMatch,loadLocalMatch,
- validLocalMatch,isLocalTimerExpired} from '../src/multiplayer.js';
+ validLocalMatch,isLocalTimerExpired,isGameTimerExpired,finishTimedMatch} from '../src/multiplayer.js';
 
 const rng=()=>0.37;
 const store=()=>{
@@ -198,4 +198,45 @@ test('corrupt and cross-mode state cannot be loaded as a local match',()=>{
  }
  storage.setItem(LOCAL_SAVE_KEY,'{damaged');
  assert.equal(loadLocalMatch(storage),null);
+});
+
+test('whole-match clock starts at first Ready, continues through handovers and finishes with net scores',()=>{
+ let match=makeLocalMatch({names:['Ari','Bea'],turnSeconds:60,gameSeconds:300},rng);
+ assert.equal(match.gameDeadline,0,'setup and first handover must not spend time');
+ match=readyLocalTurn(match,1000);
+ assert.equal(match.gameDeadline,301000);
+ assert.equal(match.deadline,61000);
+ match=passLocalTurn(match);
+ assert.equal(match.phase,'handover');
+ assert.equal(match.gameDeadline,301000,'pass-to-next does not pause game clock');
+ match=readyLocalTurn(match,2000);
+ assert.equal(match.gameDeadline,301000);
+ assert.equal(isGameTimerExpired(match,300999),false);
+ assert.equal(isGameTimerExpired(match,301000),true);
+ const ended=finishTimedMatch(match,301000);
+ assert.equal(ended.phase,'finished');
+ assert.equal(ended.finishedReason,'time-limit');
+ assert.equal(ended.deadline,0);
+ assert.equal(ended.gameDeadline,301000);
+ assert.deepEqual(ended.finalScores,localStandings(ended));
+ assert.equal(validLocalMatch(ended),true);
+ assert.equal(finishTimedMatch(ended,302000),ended,'finalization is idempotent');
+ assert.throws(()=>readyLocalTurn(ended,302000),/handover/i);
+ const storage=store();
+ assert.equal(saveLocalMatch(storage,ended),true);
+ assert.equal(loadLocalMatch(storage).finishedReason,'time-limit');
+});
+test('match deadline survives reload and cannot be restarted by Ready',()=>{
+ const storeObj=store();
+ let match=readyLocalTurn(makeLocalMatch({gameSeconds:300,turnSeconds:0},rng),1000);
+ assert.equal(saveLocalMatch(storeObj,match),true);
+ match=loadLocalMatch(storeObj);
+ assert.equal(match.phase,'handover');
+ assert.equal(match.gameDeadline,301000);
+ match=readyLocalTurn(match,280000);
+ assert.equal(match.gameDeadline,301000);
+ const expired=finishTimedMatch(match,302000);
+ assert.equal(expired.finishedReason,'time-limit');
+ assert.equal(validLocalMatch(expired),true);
+ assert.throws(()=>makeLocalMatch({gameSeconds:120},rng),/game timer/);
 });
