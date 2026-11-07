@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="zone-minus-embargo-title">
+<title id="zone-minus-embargo-title">The Vanishing Difference environment</title>
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18324b"/><stop offset=".58" stop-color="#37647b"/><stop offset="1" stop-color="#101f31"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#9fc7f2" stop-opacity=".47"/><stop offset="1" stop-color="#9fc7f2" stop-opacity="0"/></radialGradient>
+ <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#37647b"/><stop offset="1" stop-color="#101d2a"/></linearGradient>
+</defs>
+<rect width="960" height="360" fill="url(#sky)"/>
+<ellipse cx="694" cy="149" rx="328" ry="231" fill="url(#glow)"/>
+<g fill="#d6f5e9"><circle cx="300.0" cy="12.1" r="2.3" opacity="0.39"/><circle cx="31.0" cy="144.3" r="0.8" opacity="0.33"/><circle cx="101.5" cy="57.4" r="0.8" opacity="0.28"/><circle cx="107.5" cy="43.8" r="1.5" opacity="0.43"/><circle cx="327.7" cy="129.9" r="0.8" opacity="0.69"/><circle cx="730.2" cy="15.5" r="0.8" opacity="0.44"/><circle cx="692.3" cy="139.2" r="1.5" opacity="0.38"/><circle cx="876.8" cy="21.7" r="0.8" opacity="0.24"/><circle cx="626.2" cy="209.7" r="2.3" opacity="0.24"/><circle cx="734.2" cy="215.5" r="1.5" opacity="0.51"/><circle cx="543.5" cy="155.1" r="0.8" opacity="0.50"/><circle cx="277.4" cy="9.6" r="0.8" opacity="0.42"/><circle cx="65.4" cy="79.6" r="1.5" opacity="0.41"/><circle cx="121.8" cy="19.4" r="0.8" opacity="0.26"/><circle cx="375.5" cy="90.2" r="0.8" opacity="0.28"/><circle cx="218.3" cy="152.0" r="1.5" opacity="0.73"/><circle cx="899.8" cy="39.2" r="2.3" opacity="0.26"/><circle cx="683.3" cy="119.3" r="0.8" opacity="0.34"/><circle cx="446.8" cy="54.4" r="1.5" opacity="0.51"/><circle cx="423.6" cy="85.9" r="0.8" opacity="0.48"/><circle cx="499.4" cy="105.7" r="0.8" opacity="0.41"/><circle cx="462.1" cy="260.5" r="1.5" opacity="0.28"/><circle cx="433.8" cy="191.7" r="0.8" opacity="0.43"/><circle cx="311.2" cy="87.8" r="0.8" opacity="0.71"/><circle cx="506.4" cy="121.9" r="2.3" opacity="0.47"/><circle cx="510.2" cy="103.3" r="0.8" opacity="0.35"/><circle cx="603.6" cy="102.2" r="0.8" opacity="0.32"/><circle cx="333.6" cy="210.5" r="1.5" opacity="0.74"/><circle cx="327.5" cy="238.7" r="0.8" opacity="0.40"/><circle cx="642.4" cy="124.9" r="0.8" opacity="0.33"/><circle cx="437.4" cy="38.5" r="1.5" opacity="0.50"/><circle cx="168.5" cy="62.8" r="0.8" opacity="0.26"/><circle cx="463.2" cy="33.0" r="2.3" opacity="0.50"/><circle cx="316.5" cy="188.0" r="1.5" opacity="0.42"/><circle cx="922.5" cy="237.9" r="0.8" opacity="0.31"/><circle cx="830.9" cy="54.7" r="0.8" opacity="0.63"/><circle cx="603.2" cy="180.0" r="1.5" opacity="0.33"/></g>
+<path d="M0 295Q85 258 184 286T385 279Q500 248 602 285T817 270T970 294V360H0Z" fill="url(#deck)" stroke="#9fc7f2" stroke-width="3" stroke-opacity=".37"/>
+<path d="M0 326Q84 303 188 326T385 312T583 324T782 312T975 330" fill="none" stroke="#9fc7f2" stroke-opacity=".2" stroke-width="10"/>
+<g transform="translate(0 0)"><g fill="#c8ebfa" fill-opacity=".33"><ellipse cx="550" cy="127" rx="160" ry="58"/><ellipse cx="750" cy="176" rx="185" ry="66"/><ellipse cx="897" cy="112" rx="118" ry="49"/></g>
+<g stroke="#e0f2f6" stroke-width="6" stroke-linecap="round"><path d="M550 151H638M730 106H824M813 213H888"/></g>
+<path d="M395 312L495 246 568 267 648 202 741 271 834 219 968 274V365H395Z" fill="#31566e" stroke="#a1c4d9" stroke-width="6"/>
+<path d="M438 321Q560 286 665 319T872 303T980 324" fill="none" stroke="#bce7ea" stroke-width="16" stroke-opacity=".35"/></g>
+<g transform="translate(186 233) rotate(-16)">
+ <path d="M-74 17L-20-16 21-19 92 6 15 24Z" fill="#d2d6c0" stroke="#254455" stroke-width="6"/>
+ <path d="M-29-8L0-37 26-6" fill="#6da8a9" stroke="#ecddc0" stroke-width="4"/>
+ <ellipse cx="0" cy="-3" rx="24" ry="11" fill="#2b566e" stroke="#a8ead6" stroke-width="4"/>
+ <path d="M-74 17L-114 7 -108 33Z" fill="#9fc7f2" opacity=".85"/>
+</g>
+<g stroke="#bde7d5" stroke-opacity=".19" stroke-width="4" fill="none"><path d="M3 3H957V357H3Z"/></g>
+</svg>

@@ -48,6 +48,22 @@ include `tests/reactor-presentation.test.js` and
 `tests/reactor-pass-c-browser.mjs` alongside the existing full regression
 suite.
 
+**Pass D: illustrated Drift worlds and guardians.** Each of the twelve
+randomly selected zone guardians now has a characterful original SVG portrait,
+and each zone has a separate illustrated environment in
+[`assets/drift/zones/`](assets/drift/zones/). The artwork consistently
+appears in the route strip, star chart, boss briefing, in-game hazard warning,
+and end-of-round journey panel. The new star chart opens on the current world,
+keeps the next guardian uncharted until the player enters it, and preserves
+completed zones in an expandable flight log. Boss briefings distinguish the
+**rule for this sector** from the description of the wider zone.
+
+The implementation is isolated in `src/boss-art.js`, `src/drift-map.js`,
+`src/drift-world.css` and the new SVG assets. All boss identities, effects,
+sectors, maths, tile bags and saved-game formats remain unchanged.
+`tests/drift-world.test.js` and `tests/drift-world-browser.mjs` cover all
+twelve worlds, the archive, mobile layout, accessibility and image rendering.
+
 ## Play
 
 Serve the project root using a static web server:

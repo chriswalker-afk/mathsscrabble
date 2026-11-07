@@ -213,8 +213,23 @@ try{
  }
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
+ const beforeReturn=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ assert.equal(beforeReturn.sector,3,'boss sector must still be saved before switching back');
+ assert.equal(beforeReturn.rogue.zoneBosses[0],'power-leak');
  await page.locator('#mode-btn').click();
+ await page.waitForURL(/index\.html$/);
  await page.locator('#home-rogue').click();
+ await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
+ const afterReturn=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ console.log('Drift restore audit:',{
+   before:{sector:beforeReturn.sector,phase:beforeReturn.phase,shopSector:beforeReturn.rogue.shopSector,
+     boss:beforeReturn.rogue.zoneBosses[0],score:beforeReturn.score},
+   after:{sector:afterReturn.sector,phase:afterReturn.phase,shopSector:afterReturn.rogue.shopSector,
+     boss:afterReturn.rogue.zoneBosses[0],score:afterReturn.score},
+   label:await page.locator('#sector-label').textContent(),
+   saved:await page.locator('#save-status').textContent()
+ });
+ assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 03/);
  assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
  assert.match(await page.locator('#upgrade-summary').textContent(),new RegExp(cheapestSystem.name));
 

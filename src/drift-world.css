@@ -1,0 +1,226 @@
+/* Pass D — The Drift's 12 illustrated worlds and distinctive guardians.
+ * Artwork is limited to HUD panels, modal cards, and the intermission map.
+ * Do NOT change board, tile, rack or scoring geometry.
+ */
+#app[data-mode="rogue"] .drift-zone-strip{
+ position:relative;isolation:isolate;overflow:hidden;
+ border-color:color-mix(in srgb,var(--zone-accent),#487886 35%);
+ background:#102a3a;box-shadow:inset 0 1px #e7f5e322,
+ 0 0 13px color-mix(in srgb,var(--zone-accent),transparent 85%);
+}
+.zone-strip-landscape{position:absolute;z-index:0;inset:0;
+ width:100%;height:100%;object-fit:cover;object-position:center 49%;
+ pointer-events:none;opacity:.66}
+#app[data-mode="rogue"] .drift-zone-strip::after{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(90deg,#0d2638e3 0%,#123044cf 62%,#143244ae)}
+#app[data-mode="rogue"] .zone-mini-boss,
+#app[data-mode="rogue"] .zone-mini-copy,
+#app[data-mode="rogue"] .zone-mini-arrow{position:relative;z-index:2}
+#app[data-mode="rogue"] .zone-mini-boss{
+ background:#142b3ed1;border:1px solid var(--zone-accent);
+ border-radius:9px;box-shadow:0 0 10px #081822aa}
+#app[data-mode="rogue"] .zone-mini-copy>strong{
+ color:#fff1d8;text-shadow:0 1px 6px #091720;
+ font-size:11px;letter-spacing:.015em}
+#app[data-mode="rogue"] .zone-mini-eyebrow{color:#e5dcbf}
+#app[data-mode="rogue"] .zone-mini-arrow{color:#ffe3b5}
+#app[data-mode="rogue"] .drift-zone-strip.boss-approach{
+ border-color:var(--zone-accent);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--zone-accent),transparent 65%),
+ 0 0 15px color-mix(in srgb,var(--zone-accent),transparent 65%)}
+.zone-node.boss-node{transform:none;border-radius:5px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-weight:950}
+.zone-node.completed{box-shadow:0 0 5px #6eecc060}
+.zone-route-stage-labels{width:100%;max-width:330px;
+ display:flex;justify-content:space-between;gap:2px;padding:0 2px;margin:-1px 0 5px;
+ font-size:8px;color:#afcfce;letter-spacing:.07em;font-weight:850}
+.zone-route-stage-labels>span:last-child{color:#f4d4a1}
+.zone-route-large .zone-connector{background:linear-gradient(90deg,#83d6c3,#c9a8d1)}
+
+/* The star chart opens to the player's current zone, not a long scroll
+ * starting with completed sectors. Older zones are an expandable flight log. */
+.zone-map-intro{margin:3px 0 10px;border-left:3px solid var(--nova-violet);
+ padding:3px 12px}
+.zone-map-intro>span{color:#b9e6d5}
+.zone-map-intro>strong{color:#f9e8c6;font-size:19px;letter-spacing:-.02em}
+.zone-map-intro p{max-width:610px}
+.zone-chart-hero{position:relative;isolation:isolate;min-height:116px;
+ overflow:hidden;border:1px solid var(--zone-accent);
+ border-radius:12px;background:#193849;margin:0 0 12px;
+ box-shadow:0 3px 16px #06182396}
+.zone-chart-landscape{position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;object-position:center 46%;opacity:.88;pointer-events:none}
+.zone-chart-hero::after{content:"";position:absolute;inset:0;z-index:0;
+ background:linear-gradient(90deg,#102637f5 0%,#123041db 43%,#152c4088 70%,transparent)}
+.zone-chart-content{position:relative;z-index:1;padding:17px 20px;
+ display:flex;flex-direction:column;gap:5px;width:min(75%,470px)}
+.zone-chart-content>span{font-size:9px;letter-spacing:.14em;color:#c8eadd;font-weight:950}
+.zone-chart-content strong{font-size:clamp(20px,3vw,28px);
+ color:#ffedcc;line-height:1.08;text-shadow:0 2px 9px #061a28}
+.zone-chart-content small{font-size:10px;letter-spacing:.08em;color:#ddceb2;font-weight:850}
+.zone-chart-coordinate{position:absolute;z-index:1;bottom:10px;right:13px;
+ font-size:10px;color:#d9f4e6;background:#112f43ba;border:1px solid #99cabb78;
+ border-radius:6px;padding:5px 7px;letter-spacing:.08em}
+.zone-map-scroll{max-height:min(50dvh,470px);gap:12px;padding:3px 5px 7px 2px}
+.zone-map-card{position:relative;isolation:isolate;display:block;
+ padding:0;min-height:150px;overflow:visible;border-radius:12px;
+ border:1px solid #6c8c95;background:#193a49;
+ box-shadow:0 6px 20px #061b2690,inset 0 1px #e0f8e022}
+.zone-map-card.map-current{
+ background:#18384b;border:2px solid var(--zone-accent);
+ box-shadow:0 4px 17px color-mix(in srgb,var(--zone-accent),transparent 79%)}
+.zone-map-card.map-cleared{opacity:.83}
+.zone-map-card.map-current.map-cleared{opacity:1}
+.zone-map-card::after{left:49px;background:linear-gradient(var(--zone-accent),#618790)}
+.zone-card-scenery{position:absolute;inset:0;z-index:0;overflow:hidden;
+ border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 78% 20%,#65748767,#163447)}
+.zone-card-landscape{width:100%;height:100%;object-fit:cover;
+ object-position:center 50%;opacity:.82}
+.zone-card-scenery::after{content:"";position:absolute;inset:0;
+ background:linear-gradient(90deg,#132b40ed 0%,#173246d8 42%,#1533499c 76%,#182e4288)}
+.zone-map-card-inner{position:relative;z-index:1;display:grid;
+ grid-template-columns:108px minmax(0,1fr);align-items:center;gap:11px;
+ min-height:153px;padding:11px 14px}
+.zone-map-portrait{width:100%;max-width:106px;aspect-ratio:1;
+ border-radius:12px;border:1px solid var(--zone-accent);
+ background:#112c3fce;box-shadow:0 3px 10px #071627a8}
+.zone-map-portrait .boss-art{width:100%;max-height:105px}
+.zone-map-details h3{margin:4px 0 2px;font-size:clamp(16px,2vw,19px);
+ text-shadow:0 1px 7px #071b2a;color:#fff2d7}
+.zone-map-details p{color:#d0e7dc;font-size:10px;margin:2px 0 5px}
+.zone-map-rule{display:block;font-size:10px;
+ padding:5px 7px;border-radius:5px;border:1px solid #8eb2ab6b;
+ background:#102c3bd9;color:#d5ede5;line-height:1.35;max-width:410px}
+.map-current .zone-map-rule{border-color:color-mix(in srgb,var(--zone-accent),transparent 40%);
+ color:#ffe4bd}
+.map-uncharted .zone-mystery{font-size:64px;color:#c9d5df;
+ text-shadow:0 2px 15px #9abfd867}
+.map-uncharted .zone-card-scenery{
+ background:radial-gradient(ellipse at 70% 38%,#4c647d7a,transparent),
+ repeating-linear-gradient(35deg,#102a3b,#102a3b 16px,#163448 16px,#163448 17px)}
+.zone-history{margin-top:12px;border:1px solid #6f929c;border-radius:10px;
+ background:linear-gradient(130deg,#203d4d,#102a39)}
+.zone-history>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;
+ gap:10px;min-height:39px;padding:9px 13px;cursor:pointer;color:#f6daa3;
+ font-size:11px;font-weight:950;letter-spacing:.08em}
+.zone-history>summary::-webkit-details-marker{display:none}
+.zone-history>summary>span{font-size:19px;transition:transform .15s}
+.zone-history[open]>summary>span{transform:rotate(180deg)}
+.zone-history>summary:focus-visible{outline:3px solid var(--nova-focus);outline-offset:2px;border-radius:8px}
+.zone-history-grid{padding:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;max-height:300px;overflow-y:auto;overscroll-behavior:contain}
+.zone-history-grid .zone-map-card{min-height:117px}
+.zone-history-grid .zone-map-card-inner{grid-template-columns:65px minmax(0,1fr);gap:7px;min-height:117px;padding:8px}
+.zone-history-grid .zone-map-portrait{max-width:65px}
+.zone-history-grid .zone-map-details h3{font-size:13px}
+.zone-history-grid .zone-map-details p{font-size:9px}
+.zone-history-grid .zone-route-large .zone-node{width:19px;height:19px;flex-basis:19px;font-size:8px}
+.zone-history-grid .zone-route-stage-labels{font-size:7px}
+.zone-history-grid .zone-map-rule{font-size:9px;padding:3px 6px}
+
+/* Boss reveal: real portrait + environmental illustration + explicit rule
+ * plate. The rule is read before players enter a scored game. */
+.boss-reveal{position:relative;isolation:isolate;overflow:hidden;
+ display:grid;grid-template-columns:155px minmax(0,1fr);
+ min-height:214px;gap:16px;align-items:center;
+ border:1px solid var(--zone-accent);border-radius:14px;
+ background:#173445;padding:14px;box-shadow:inset 0 1px #e7ffda22}
+.boss-reveal-landscape{position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;object-position:center 45%;opacity:.78;pointer-events:none}
+.boss-reveal::after{content:"";position:absolute;inset:0;z-index:0;
+ pointer-events:none;background:linear-gradient(90deg,#132d3fb5 0%,#132e40df 34%,#122b3cf5 69%,#112b3ef5)}
+.boss-reveal-portrait,.boss-reveal-copy{position:relative;z-index:1}
+.boss-reveal-portrait{width:min(100%,155px);aspect-ratio:1;border-radius:18px;
+ background:#122d3bc4;border:1px solid var(--zone-accent);
+ display:grid;place-items:center;box-shadow:0 0 18px color-mix(in srgb,var(--zone-accent),transparent 74%)}
+.boss-reveal-portrait .boss-art{width:100%;height:100%;max-width:150px}
+.boss-reveal-copy h3{font-size:clamp(19px,3vw,29px);line-height:1.1;
+ color:#fff0d0;text-shadow:0 2px 9px #102432}
+.boss-reveal-copy>strong{color:var(--zone-accent);font-size:11px}
+.boss-effect-plate{display:flex;flex-direction:column;align-items:start;
+ gap:4px;border-left:3px solid var(--zone-accent);
+ padding:6px 9px;background:#102b3bdc;border-radius:0 7px 7px 0;
+ margin:10px 0 4px}
+.boss-effect-plate span{font-weight:950;font-size:9px;letter-spacing:.12em;color:#cce9db}
+.boss-effect-plate b{font-size:12px;color:#ffead0;line-height:1.3}
+.boss-reveal-copy p{font-size:11px;line-height:1.45;color:#d8ebe5}
+.boss-reveal-note{font-size:11px;line-height:1.48;color:#c3dcd7}
+#app[data-mode="rogue"] .anomaly-banner{isolation:isolate;border-color:#c6a287;background:#183645;
+ padding-right:59px}
+#app[data-mode="rogue"] .anomaly-scene{position:absolute;inset:0;
+ width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;
+ opacity:.57;pointer-events:none}
+#app[data-mode="rogue"] .anomaly-banner::after{content:"";position:absolute;inset:0;
+ z-index:0;background:linear-gradient(90deg,#152c3eee,#142f3fdc 71%,#182e3d97);
+ pointer-events:none}
+#app[data-mode="rogue"] .anomaly-banner>*:not(.anomaly-scene){position:relative;z-index:1}
+#app[data-mode="rogue"] .anomaly-banner>.boss-banner-art{position:absolute;z-index:2}
+#app[data-mode="rogue"] .anomaly-banner strong{color:#fff1d5}
+#app[data-mode="rogue"] .anomaly-banner>span{color:#d8e7db}
+
+/* The end-of-round chart shows the same world and guardian as its map card,
+ * without claiming the upcoming (unsampled) boss has been selected. */
+.drift-map-feature{position:relative;isolation:isolate;overflow:hidden;
+ background:#193a49;border-color:var(--zone-accent);
+ box-shadow:inset 0 1px #d6e8e430}
+.drift-feature-landscape{position:absolute;inset:0;z-index:0;
+ width:100%;height:100%;object-fit:cover;object-position:center;opacity:.69}
+.drift-map-feature::after{content:"";position:absolute;inset:0;z-index:0;
+ background:linear-gradient(90deg,#162f40da,#102e3df0 68%,#122b3fd9);pointer-events:none}
+.drift-map-feature-art,.drift-map-feature-info{position:relative;z-index:1}
+.drift-map-feature-art{border-color:var(--zone-accent);
+ background:#173546db}
+.drift-map-feature-info>strong{color:#fff1cc;text-shadow:0 2px 7px #092332}
+.drift-map-feature .zone-route-stage-labels{font-size:7px;max-width:290px}
+.zone-victory{position:relative;isolation:isolate;overflow:hidden;
+ border-color:var(--zone-accent);background:#1d4d4a}
+.zone-victory-landscape{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.zone-victory::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(90deg,#173e43d9,#153040d1)}
+.zone-victory>*:not(.zone-victory-landscape){position:relative;z-index:1}
+.zone-victory-boss{width:53px;height:53px;flex:0 0 53px}
+.zone-victory-boss .boss-art{width:53px;height:53px}
+
+@media(max-width:730px){
+ .zone-chart-hero{min-height:105px}
+ .zone-chart-content{padding:14px 13px;gap:4px;width:85%}
+ .zone-chart-content strong{font-size:21px}
+ .zone-chart-coordinate{font-size:8px;right:6px;bottom:6px;padding:4px}
+ .zone-map-scroll{max-height:53dvh}
+ .zone-map-card{min-height:125px}
+ .zone-map-card-inner{grid-template-columns:79px minmax(0,1fr);
+  min-height:126px;gap:8px;padding:8px}
+ .zone-map-card::after{left:35px}
+ .zone-map-portrait{max-width:78px}
+ .zone-map-portrait .boss-art{max-height:77px}
+ .zone-map-details h3{font-size:15px}
+ .zone-map-rule{font-size:9px;padding:4px 6px}
+ .zone-route-stage-labels{font-size:7px}
+ .zone-history-grid{grid-template-columns:1fr;max-height:270px}
+ .boss-reveal{grid-template-columns:95px minmax(0,1fr);gap:9px;padding:9px}
+ .boss-reveal-portrait{width:95px}
+ .boss-reveal-copy h3{font-size:19px}
+ .boss-effect-plate{margin:7px 0 3px;padding:5px 6px}
+ .boss-effect-plate b{font-size:10px}
+ .boss-reveal-copy p{font-size:10px;line-height:1.4}
+ #app[data-mode="rogue"] .anomaly-banner{padding-right:48px}
+ .drift-map-feature .zone-route-stage-labels{font-size:7px}
+}
+@media(max-width:400px){
+ .zone-chart-content strong{font-size:19px}
+ .zone-chart-content small{font-size:8px}
+ .zone-map-card-inner{grid-template-columns:62px minmax(0,1fr);gap:5px;padding:7px}
+ .zone-map-portrait{max-width:61px}
+ .zone-map-details h3{font-size:13px}
+ .zone-map-details p{font-size:9px}
+ .zone-map-details .zone-mini-eyebrow{font-size:7px}
+ .zone-map-rule{font-size:9px}
+ .zone-map-card::after{left:28px}
+ .boss-reveal{grid-template-columns:75px minmax(0,1fr)}
+ .boss-reveal-portrait{width:75px}
+ .boss-reveal-copy h3{font-size:16px}
+ .boss-reveal-copy>strong{font-size:9px}
+ .zone-route-stage-labels{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+ .drift-zone-strip,.zone-map-card,.boss-reveal-portrait,.zone-history>summary span{animation:none!important;transition:none!important}
+}

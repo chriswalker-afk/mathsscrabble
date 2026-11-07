@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="zone-signal-jam-title">
+<title id="zone-signal-jam-title">The Static Expanse environment</title>
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#162b4d"/><stop offset=".58" stop-color="#393d73"/><stop offset="1" stop-color="#101f31"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#9cb4f8" stop-opacity=".47"/><stop offset="1" stop-color="#9cb4f8" stop-opacity="0"/></radialGradient>
+ <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#393d73"/><stop offset="1" stop-color="#101d2a"/></linearGradient>
+</defs>
+<rect width="960" height="360" fill="url(#sky)"/>
+<ellipse cx="694" cy="149" rx="328" ry="231" fill="url(#glow)"/>
+<g fill="#d6f5e9"><circle cx="864.0" cy="142.3" r="2.3" opacity="0.71"/><circle cx="498.3" cy="256.0" r="0.8" opacity="0.47"/><circle cx="510.7" cy="66.0" r="0.8" opacity="0.35"/><circle cx="179.7" cy="208.0" r="1.5" opacity="0.32"/><circle cx="453.8" cy="241.5" r="0.8" opacity="0.74"/><circle cx="739.6" cy="73.7" r="0.8" opacity="0.40"/><circle cx="875.4" cy="224.0" r="1.5" opacity="0.33"/><circle cx="599.0" cy="146.3" r="0.8" opacity="0.50"/><circle cx="601.4" cy="56.2" r="2.3" opacity="0.26"/><circle cx="515.3" cy="102.7" r="1.5" opacity="0.50"/><circle cx="720.3" cy="142.6" r="0.8" opacity="0.42"/><circle cx="464.7" cy="153.6" r="0.8" opacity="0.31"/><circle cx="512.6" cy="175.6" r="1.5" opacity="0.63"/><circle cx="692.5" cy="246.9" r="0.8" opacity="0.33"/><circle cx="188.3" cy="58.3" r="0.8" opacity="0.51"/><circle cx="22.2" cy="33.9" r="1.5" opacity="0.70"/><circle cx="394.7" cy="215.9" r="2.3" opacity="0.71"/><circle cx="421.3" cy="50.4" r="0.8" opacity="0.30"/><circle cx="172.2" cy="98.5" r="1.5" opacity="0.73"/><circle cx="543.3" cy="158.1" r="0.8" opacity="0.61"/><circle cx="822.6" cy="197.4" r="0.8" opacity="0.30"/><circle cx="676.5" cy="115.5" r="1.5" opacity="0.32"/><circle cx="783.0" cy="190.6" r="0.8" opacity="0.45"/><circle cx="197.0" cy="207.8" r="0.8" opacity="0.65"/><circle cx="881.1" cy="179.3" r="2.3" opacity="0.28"/><circle cx="224.6" cy="131.3" r="0.8" opacity="0.67"/><circle cx="182.9" cy="53.8" r="0.8" opacity="0.72"/><circle cx="663.4" cy="52.2" r="1.5" opacity="0.39"/><circle cx="183.9" cy="195.3" r="0.8" opacity="0.48"/><circle cx="725.7" cy="91.1" r="0.8" opacity="0.35"/><circle cx="657.7" cy="38.8" r="1.5" opacity="0.38"/><circle cx="623.9" cy="33.5" r="0.8" opacity="0.36"/><circle cx="341.2" cy="227.5" r="2.3" opacity="0.61"/><circle cx="358.3" cy="256.0" r="1.5" opacity="0.57"/><circle cx="402.1" cy="30.8" r="0.8" opacity="0.36"/><circle cx="691.3" cy="27.5" r="0.8" opacity="0.64"/><circle cx="292.1" cy="182.7" r="1.5" opacity="0.49"/></g>
+<path d="M0 295Q85 258 184 286T385 279Q500 248 602 285T817 270T970 294V360H0Z" fill="url(#deck)" stroke="#9cb4f8" stroke-width="3" stroke-opacity=".37"/>
+<path d="M0 326Q84 303 188 326T385 312T583 324T782 312T975 330" fill="none" stroke="#9cb4f8" stroke-opacity=".2" stroke-width="10"/>
+<g transform="translate(0 0)"><g stroke="#b7d9fe" stroke-width="8" fill="#1d385a"><path d="M527 280V110L581 53 635 110V280Z"/><path d="M740 282V90L797 28 852 90V282Z"/></g>
+<g stroke="#81c5f4" stroke-width="4" fill="none" opacity=".84"><path d="M580 53V10M797 28V6M482 92q83-85 172 0M699 72q98-104 198 0M523 134q54-49 113 0M750 118q50-40 101 0"/></g>
+<path d="M401 154L469 129 508 167 566 126 627 187 689 152 730 206 794 166 839 196 930 148" stroke="#dae7ff" stroke-width="6" fill="none" stroke-linecap="round"/>
+<g fill="#ffe1ae"><circle cx="581" cy="60" r="9"/><circle cx="797" cy="33" r="9"/></g></g>
+<g transform="translate(186 233) rotate(-16)">
+ <path d="M-74 17L-20-16 21-19 92 6 15 24Z" fill="#d2d6c0" stroke="#254455" stroke-width="6"/>
+ <path d="M-29-8L0-37 26-6" fill="#6da8a9" stroke="#ecddc0" stroke-width="4"/>
+ <ellipse cx="0" cy="-3" rx="24" ry="11" fill="#2b566e" stroke="#a8ead6" stroke-width="4"/>
+ <path d="M-74 17L-114 7 -108 33Z" fill="#9cb4f8" opacity=".85"/>
+</g>
+<g stroke="#bde7d5" stroke-opacity=".19" stroke-width="4" fill="none"><path d="M3 3H957V357H3Z"/></g>
+</svg>

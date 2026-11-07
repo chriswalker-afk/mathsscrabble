@@ -11,7 +11,7 @@ import {equipmentArt} from './equipment-art.js';
 import {renderDriftHud} from './drift-hud.js';
 import {paintReactorIndicators,paintReactorTransfer} from './reactor-presentation.js';
 import {zoneInfo,ensureZoneBoss,bossForSector,bossField,isBossSector,selectForcedTile,resolveBossScore,restrictedDraws} from './drift-bosses.js';
-import {bossArtwork} from './boss-art.js';
+import {bossArtwork,zoneSceneUrl} from './boss-art.js';
 import {renderZoneStrip,zoneMapMarkup,bossIntroMarkup,zoneVictoryMarkup,zoneIntermissionMarkup} from './drift-map.js';
 import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet,hasBracketPair,kitNumberSlots,kitRackSize,kitRackOptions} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
@@ -633,6 +633,8 @@ function render(){
      'No upgrades equipped yet')+(state.rogue.pulse?' · ⚡ '+state.rogue.pulse+' charge(s)':'');
    if(anomaly){
      $('boss-banner-art').innerHTML=bossArtwork(anomaly.id);
+     const scene=zoneSceneUrl(anomaly.id);
+     if(scene&&$('anomaly-scene').getAttribute('src')!==scene)$('anomaly-scene').src=scene;
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
      $('anomaly-text').textContent=anomaly.short+
        (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
