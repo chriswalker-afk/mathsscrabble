@@ -88,7 +88,7 @@ try{
  assert.equal(initial.players.every(p=>p.rack.length===8),true);
  await installKnownLocalRack();
  await ready('Ari');
- assert.match(await page.locator('#local-time-remaining').textContent(),/^\\d\\d:\\d\\d$/);
+ assert.match(await page.locator('#local-time-remaining').textContent(),/^\d\d:\d\d$/);
   assert.equal(await page.locator('#score-btn').evaluate(x=>x.closest('.rack-commit-actions')!==null),true);
   assert.equal(await page.locator('#undo-btn').evaluate(x=>x.closest('.rack-actions')!==null),true);
   assert.equal(await page.locator('#shuffle-rack-btn').isEnabled(),true);
