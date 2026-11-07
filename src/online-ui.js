@@ -549,6 +549,7 @@ function renderPreview(){
  $('online-score').disabled=!can||state.swapping||!Object.keys(state.pending).length;
  $('online-clear').disabled=!planning||(!state.swapping&&!state.selected&&!Object.keys(state.pending).length);
  $('online-clear').textContent=state.swapping?'× CANCEL':'× CLEAR';
+ $('online-clear').setAttribute('aria-label',state.swapping?'Cancel tile swap':'Clear all unscored placements');
  $('online-pass').disabled=!can;
  $('online-swap').disabled=!can||(current()?.bagCount||0)<1;
  $('online-swap').textContent=state.swapping?
