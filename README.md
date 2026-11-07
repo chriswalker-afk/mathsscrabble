@@ -85,6 +85,29 @@ Artwork and presentation live in `assets/salvage-workshop-crew.svg`,
 `tests/salvage-workshop-browser.mjs` for stock preservation, responsive
 layout, purchase updates and accessibility.
 
+**Pass F — final playability and communication polish.** A consistent Mission
+Comms presentation now follows the same semantic language in Sector Run, local
+multiplayer, Drift and online Signal Clash. Validation errors are unmistakable
+but remain **outside** the mathematical grid. Successful moves and exchanges
+use a separate confirmed state. Crucially, the previously hidden **local
+multiplayer and online action logs stay visible on mobile**, where students
+need to know why a move was rejected or whether their room signal has gone
+away. Online status now distinguishes live, reconnecting and periodic sync
+with concise labels and explanatory accessible descriptions; only actual
+connection transitions prompt new announcements.
+
+Mobile play also gets a compact autosave indicator and an explicit warning
+when browser storage fails. Important action buttons have usable small-screen
+hit targets, while the underlying 19×19 grid and all existing scoring,
+inventory, bag, maths and multiplayer rules are preserved.
+
+The shared feedback helper lives in `src/mission-feedback.js`; scoped final
+layout/contrast updates live in `src/finish-pass-f.css`. Unit and browser
+checks (`tests/mission-feedback.test.js`,
+`tests/pass-f-browser.mjs`) protect phone/tablet/desktop readability,
+connection states, local/online errors, keyboard/touch affordances and
+reduced-motion behaviour. No Cloudflare Worker changes are needed.
+
 ## Play
 
 Serve the project root using a static web server:
