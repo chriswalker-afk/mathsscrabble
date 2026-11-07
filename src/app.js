@@ -1647,6 +1647,8 @@ function showLocalHelp(){
   [{text:'BACK TO MATCH',primary:true}]);
 }
 function showDriftIntro(firstVisit=false){
+ const bracketNote=hasBracketPair(state.tileSet)?
+  '<p class="training-footnote">Place both ( and ) in the same equation; exchange them as a pair.</p>':'';
  showModal('THE DRIFT · PILOT BRIEFING','Clear sectors, upgrade and face bosses',
   `<div class="training-steps">
     <div class="training-step"><span>01</span><div><strong>Reach the target</strong>
@@ -1655,7 +1657,7 @@ function showDriftIntro(firstVisit=false){
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
       <p>Each zone has three sectors. Every third sector has a random boss with a temporary rule. Failure ends your Drift run.</p></div></div>
-   </div><p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
+   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
   [{text:firstVisit?'BEGIN THE DRIFT →':'BACK TO GAME',primary:true}]);
 }
 function restoreMode(mode,{initial=false}={}){
