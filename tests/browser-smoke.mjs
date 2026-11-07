@@ -55,7 +55,7 @@ try{
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
   assert.equal(await page.locator('.arena-topline').count(),0);
   assert.equal(await page.locator('.right-panel').count(),0,'the redundant right console is removed');
-   assert.equal(await page.locator('.arena > #equation-preview').count(),1,'equation feedback stays with the board and rack');
+   assert.equal(await page.locator('.left-panel > #equation-preview').count(),1,'equation feedback stays at the top of telemetry');
   assert.equal(await page.locator('#rack .wildcard').count(),2);
 
   // 1=1 is mathematically true but is not a calculation and must be rejected.
