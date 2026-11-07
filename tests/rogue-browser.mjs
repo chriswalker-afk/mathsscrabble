@@ -25,7 +25,10 @@ try{
  assert.ok(classicBefore,'the original Sector Run must be saved');
  await page.locator('#mode-btn').click();
  await page.waitForURL(/index\.html$/);
- await page.locator('#home-rogue').click();
+ await page.locator('#home-single').click();
+ await page.waitForURL(/choose\.html\?type=single$/);
+ await page.locator('[data-mode="rogue"]').click();
+ await page.locator('#launch-button').click();
  await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
  assert.match(await page.locator('#modal-title').textContent(),/clear sectors, upgrade and face bosses/i);
  await page.locator('#modal-actions button').last().click();
@@ -202,7 +205,7 @@ try{
 
  // Switching modes must restore the untouched original classroom save.
  await page.locator('#mode-btn').click();
- await page.locator('#home-sector').click();
+ await page.goto('http://127.0.0.1:4173/play.html?mode=sector',{waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  assert.equal(await page.locator('#score').textContent(),'0');
  const classicRestored=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
@@ -218,7 +221,7 @@ try{
  assert.equal(beforeReturn.rogue.zoneBosses[0],'power-leak');
  await page.locator('#mode-btn').click();
  await page.waitForURL(/index\.html$/);
- await page.locator('#home-rogue').click();
+ await page.goto('http://127.0.0.1:4173/play.html?mode=rogue',{waitUntil:'networkidle'});
  await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
  const afterReturn=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
  console.log('Drift restore audit:',{

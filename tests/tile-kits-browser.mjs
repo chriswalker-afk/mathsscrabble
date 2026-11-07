@@ -25,6 +25,7 @@ try{
   assert.equal(await page.locator('#board .cell').count(),361);
   const pairExpected=['rational','advanced'].includes(kit);
   if(kit==='rational')assert.ok([...saved.bag,...saved.rack].every(t=>!(t.value?.startsWith('−')&&t.value?.includes('/'))),'Nebula supplies positive fractions only');
+  if(kit==='advanced')assert.ok([...saved.bag,...saved.rack].every(t=>!t.value?.includes('/')&&!/^−[0-9]/.test(t.value||'')),'Quantum uses only non-negative digit tiles');
   assert.equal(saved.rack.length,pairExpected?11:8);
   assert.equal(await page.locator('#rack-count').textContent(),(pairExpected?'11 / 11':'8 / 8'));
   assert.equal(await page.locator('#rack .bracket-tile').count(),pairExpected?2:0);
@@ -36,19 +37,23 @@ try{
   await page.locator('#bag-details-btn').click();
   const bag=await page.locator('#bag-inventory-groups').textContent();
   if(pairExpected){
-   assert.match(bag,/RATIONAL NUMBER TILES/);
+   if(kit==='rational')assert.match(bag,/RATIONAL NUMBER TILES/);
+   else {assert.match(bag,/NUMBER TILES · 0–9/);assert.doesNotMatch(bag,/RATIONAL NUMBER TILES/);}
    assert.match(bag,/MATCHED BRACKET PAIRS/);
   }
   if(kit==='advanced')assert.match(bag,/ADVANCED OPERATION TILES/);
   if(kit==='integer')assert.match(bag,/NEGATIVE INTEGER TILES/);
   await page.locator('#modal-actions button').last().click();
   if(pairExpected){
-   // The fraction kits now guarantee at least two fraction tiles in the opening rack.
-   assert.ok((await get(page)).rack.filter(t=>t.value?.includes('/')).length>=2);
+   // Nebula guarantees fractions, but Quantum deliberately contains none.
+   const fractions=(await get(page)).rack.filter(t=>t.value?.includes('/')).length;
+   assert.ok(kit==='rational'?fractions>=2:fractions===0);
    await page.reload({waitUntil:'networkidle'});
    assert.equal(await page.locator('#rack .bracket-tile').count(),2);
-   assert.ok(await page.locator('#rack .fraction-tile .frac-numerator').count()>=1);
-   assert.ok(await page.locator('#rack .fraction-tile .frac-denominator').count()>=1);
+   if(kit==='rational'){
+    assert.ok(await page.locator('#rack .fraction-tile .frac-numerator').count()>=1);
+    assert.ok(await page.locator('#rack .fraction-tile .frac-denominator').count()>=1);
+   }else assert.equal(await page.locator('#rack .fraction-tile').count(),0);
    assert.equal((await get(page)).rack.length+(await get(page)).bag.length,151);
   }
   if(kit==='advanced')await page.screenshot({path:'/tmp/equanova-quantum-kit-phone.png',fullPage:true});

@@ -28,6 +28,7 @@ import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {bindSoloRun,emitSoloAchievement,soloScoredEvidence,soloClearEvidence} from './achievements/solo-adapter.js';
 import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
 import {loadPilots,assignLocalSeats} from './achievements/pilots.js';
+import {ensureActivePilot,ensureLocalSeatPilots} from './achievements/auto-pilot.js';
 import {createLocalBinding,loadLocalBinding,awardLocalTransition,
  awardLocalStart,awardLocalFinish} from './achievements/local-adapter.js';
 const $=id=>document.getElementById(id);
@@ -40,6 +41,7 @@ const state={
  localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural',saveWarningShown:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+ensureActivePilot(storage);
 let achievementRun=null;
 let pendingSoloAwards=[];
 function startAchievementRun(fresh=false){
@@ -842,7 +844,10 @@ function startNewLocalMatch(config){
    rememberOpening(storage,'local',match.players[0].rack);
    try{storage?.setItem(TILE_SET_STORAGE_KEY,match.tileSet);}catch{/* storage optional */}
    const profiles=loadPilots(storage);
-   const owners=assignLocalSeats(profiles.registry,localSetupOwnerIds.slice(0,match.players.length));
+   const autoOwners=ensureLocalSeatPilots(storage,match.players.map(p=>p.name),
+    match.players.map(p=>p.avatar),localSetupOwnerIds.slice(0,match.players.length));
+   const latest=loadPilots(storage);
+   const owners=assignLocalSeats(latest.registry,autoOwners);
    createLocalBinding(storage,match,owners);
    pendingLocalAwards=[];localFinalAwards=[];
    localSetupBadges=()=>{};
@@ -964,7 +969,7 @@ function showLocalSetup({fromHome=false}={}){
     ownerLabel.htmlFor='local-pilot-owner-'+i;
     const ownerSelect=document.createElement('select');ownerSelect.id='local-pilot-owner-'+i;
     ownerSelect.className='local-owner-select';
-    ownerSelect.add(new Option('Guest · no saved rewards',''));
+    ownerSelect.add(new Option('Save automatically for this pilot',''));
     for(const p of profiles)ownerSelect.add(new Option(p.name+' · saved pilot',p.id));
     ownerSelect.value=localSetupOwnerIds[i]??'';
     ownerSelect.addEventListener('change',()=>{
@@ -979,7 +984,7 @@ function showLocalSetup({fromHome=false}={}){
  link.href='./alien-lab.html';link.target='_blank';link.rel='noopener noreferrer';
  link.textContent='✳ CREATE A CUSTOM ALIEN IN ALIEN LAB ↗';
  const tip=document.createElement('p');tip.className='alien-setup-note';
- tip.textContent='Choose a different saved pilot for each seat to earn achievements, or select Guest.';
+ tip.textContent='Achievements save automatically by player name. Choose a saved pilot to use their existing rewards.';
  wrapper.append(link,tip);paint();
  const updateCount=()=>{const amount=Number($('local-player-count').value);
    groups.forEach((group,i)=>{group.hidden=i>=amount;});};
@@ -1626,7 +1631,7 @@ function showTraining(firstVisit=false){
    <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
      <p>Press <strong>Score Equation</strong> to check your maths. Later equations must join a locked tile. Reach the target within six turns; one single-tile swap is free each turn.</p></div></div>
   </div>${bracketNote}
-  <p class="training-footnote">Your run saves on this device. To earn cosmetics, choose a pilot in the Hangar before starting a new run.</p>`;
+  <p class="training-footnote">Your run and achievements save to your pilot automatically on this device. The Hangar lets you switch pilots or export progress.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
   message,[{text:firstVisit?'START MISSION →':'BACK TO GAME',primary:true,fn:firstVisit?rememberIntro:undefined}]);
@@ -1657,7 +1662,7 @@ function showDriftIntro(firstVisit=false){
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
       <p>Each zone has three sectors. Every third sector has a random boss with a temporary rule. Failure ends your Drift run.</p></div></div>
-   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
+   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Achievement progress is saved automatically to your pilot on this device.</p>`,
   [{text:firstVisit?'BEGIN THE DRIFT →':'BACK TO GAME',primary:true}]);
 }
 function restoreMode(mode,{initial=false}={}){
@@ -1754,6 +1759,24 @@ function startSolo(){
    }catch{/* optional browser storage */}
  }
  if(mode==='local'){
+   // The second-step setup deliberately starts a new match, never silently
+   // replaces an old match on an ordinary visit to the board.
+   if(new URLSearchParams(location.search).get('setup')==='ready'){
+    try{
+     const raw=sessionStorage.getItem('equa-nova.pending-launch.v1');
+     sessionStorage.removeItem('equa-nova.pending-launch.v1');
+     const config=JSON.parse(raw||'null');
+     if(config?.version===1&&config.mode==='local'&&
+       Array.isArray(config.names)&&config.names.length>=2&&config.names.length<=4&&
+       Array.isArray(config.avatars)&&config.avatars.length===config.names.length&&
+       [0,60,90,120].includes(config.turnSeconds)&&TILE_SET_BY_ID[config.tileSet]){
+      localSetupOwnerIds=[null,null,null,null];
+      startNewLocalMatch({names:config.names,avatars:config.avatars,
+       turnSeconds:config.turnSeconds,tileSet:config.tileSet});
+      return;
+     }
+    }catch{/* Fall back to the existing safe match or setup dialog. */}
+   }
    const saved=loadLocalMatch(storage);
    if(saved){
       localStateFromMatch(saved);

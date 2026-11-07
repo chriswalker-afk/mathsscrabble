@@ -118,7 +118,7 @@ Serve the project root using a static web server:
 python3 -m http.server 4173
 ```
 
-Open http://localhost:4173 to see the new **Mission Control homepage**. The four large cards take you directly to Sector Run, The Drift, Local Match and Online Rooms. Alien Lab has its own wide card below them. Game boards now live at [play.html](play.html) with the selected mode in the URL (`?mode=sector`, `?mode=rogue` or `?mode=local`). The project has no install/build step for the static site.
+Open http://localhost:4173 for the simple **Single Player / Multiplayer** entry screen. Choose a path to visit [game setup](choose.html), where you select a mission and its relevant tile kit and player settings. Alien Lab and Achievement Hangar remain accessible from home. The boards live at [play.html](play.html) and [online.html](online.html). The project has no static-site build step.
 
 Play on a **19 × 19 board** inside a compact, independently scrollable viewport. Use **+ / −** to zoom, **FIT** to see the entire grid, or **⌖** to return to the centre. Drag tiles to the grid with a mouse, finger or pen; or click/tap a tile and then its destination. Drag an unscored tile to move it, **or drag it back to the rack to remove it**. Drag rack tiles left or right to reorder them without using a turn, or tap them to select a destination. A separate **Undo Tile** button reverts the most recent placement, and **Clear Placement** returns all unscored tiles to the rack. Select the green **=** tile as often as required. The first complete horizontal/vertical equation must cross the centre. Later equations must share an already-scored tile. Click **Score Equation** to validate and score a move.
 
@@ -171,6 +171,12 @@ The first phase of the sci-fi **Alien Lab** avatar maker is ready for review: **
 The underlying safe `src/alien/model.js` supports normalising, validating, randomising and serialising versioned choices without arbitrary SVG or remote art. Pass B connects these safe designs to Local Match and Online Rooms seats, including reconnects, scoreboards and results.
 
 See the [Alien Lab artwork and integration contract](docs/ALIEN_AVATAR.md). The existing standalone animal **Critter Lab** and the EQUA//NOVA game modes are unchanged.
+
+## Entry flow (November 2026)
+
+The homepage is now intentionally minimal: an animated EQUA//NOVA identity and miniature equation board, then **Single Player** or **Multiplayer**, with Alien Lab and Achievement Hangar below. Clicking a play mode opens **choose.html**, the dedicated setup screen. Single Player offers Sector Run (quick match) or The Drift (campaign); Multiplayer offers Pass & Play, Host a Room or Join a Room. This second screen reveals only relevant settings (tile kit, pilot names/alien presets, number of players, room code and the supported per-turn timer). The overall **game timer** is shown as unavailable rather than claiming support that the rules engine does not provide.
+
+An anonymous-but-saved pilot profile is automatically created on the first visit; achievements are enabled by default on the current device. Each pass-and-play seat is also linked to a saved pilot by name (up to the 12-pilot storage limit). This is **not a login** and does not synchronize rewards between devices. Existing game and achievement saves are not deleted. Advanced Operations / Quantum uses only non-negative number tiles (digits 0–9); it retains paired brackets and powers, roots and factorials. Nebula remains the fraction kit.
 
 ## Pass E2 — Online Signal Clash
 

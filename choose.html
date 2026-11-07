@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Set up your game</title>
+<link rel="stylesheet" href="./src/design-system.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/entry.css"><link rel="stylesheet" href="./src/choose.css">
+<script type="module" src="./src/choose.js"></script></head>
+<body><a class="skip-link" href="#setup">Skip to game setup</a><div class="stars" aria-hidden="true"></div>
+<main id="setup" class="setup-shell">
+ <header class="setup-top"><a href="./index.html" class="back-link">← HOME</a><span class="setup-wordmark">EQUA<span>//</span>NOVA</span><span class="setup-step">GAME SETUP</span></header>
+ <div class="setup-heading"><p class="entry-eyebrow" id="setup-eyebrow">SELECT YOUR MISSION</p><h1 id="setup-title">Choose how to play</h1><p id="setup-intro">Choose a game mode, then set your tiles.</p></div>
+ <div id="setup-tabs" class="setup-tabs" role="group" aria-label="Single player or multiplayer">
+  <button type="button" data-type="single" aria-pressed="false">✧ SINGLE PLAYER</button>
+  <button type="button" data-type="multi" aria-pressed="false">✦ MULTIPLAYER</button>
+ </div>
+ <section class="setup-section" aria-labelledby="mode-title"><div class="section-label"><span>01</span><h2 id="mode-title">Choose your game mode</h2></div>
+  <div id="mode-options" class="setup-mode-options" role="group" aria-label="Game mode"></div>
+ </section>
+ <form id="launch-form">
+  <section id="kit-section" class="setup-section" aria-labelledby="kit-title">
+   <div class="section-label"><span>02</span><h2 id="kit-title">Choose your tile set</h2></div>
+   <div id="kit-options" class="setup-kit-options" role="group" aria-label="Tile set"></div>
+   <p id="kit-description" class="setup-note" aria-live="polite"></p>
+  </section>
+  <section id="details-section" class="setup-section" aria-labelledby="details-title" hidden>
+   <div class="section-label"><span>03</span><h2 id="details-title">Match settings</h2></div>
+   <div class="settings-grid" id="settings-grid">
+    <label id="count-field" class="setup-field">NUMBER OF PLAYERS<select id="setup-count"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option></select></label>
+    <label id="turn-field" class="setup-field">TURN TIMER<select id="setup-turn"><option value="0">Off</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></label>
+    <label id="game-field" class="setup-field">GAME TIMER<select disabled title="Match-wide timers are not yet supported"><option>No overall limit</option></select><small>Overall match timers are not yet available.</small></label>
+    <label id="room-code-field" class="setup-field" hidden>ROOM CODE<input id="setup-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF"></label>
+   </div>
+   <div id="pilot-settings" class="pilot-settings">
+    <div class="pilot-settings-heading"><strong>YOUR PILOTS</strong><a href="./alien-lab.html" target="_blank" rel="noopener noreferrer">DESIGN AN ALIEN ↗</a></div>
+    <div id="pilot-rows" class="pilot-rows"></div>
+   </div>
+   <p id="match-note" class="setup-note"></p>
+  </section>
+  <div class="setup-actions"><p id="save-message">✦ Achievements are saved automatically for your pilot on this device.</p><button id="launch-button" type="submit">START GAME ↗</button></div>
+  <p id="setup-error" role="alert" hidden></p>
+ </form>
+</main><footer class="entry-footer"><span>MR WALKER MATHS</span><span>BUILD TRUE EQUATIONS</span></footer>
+</body></html>

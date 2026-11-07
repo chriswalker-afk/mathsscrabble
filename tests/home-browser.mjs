@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-
-// Mission home is the public / index. No modal or redundant second row of
-// mode buttons should be required to enter a game.
 const ORIGIN='http://127.0.0.1:4173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const errors=[];
@@ -11,93 +8,93 @@ try{
   const page=await browser.newPage({viewport:{width,height}});
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(ORIGIN+'/',{waitUntil:'networkidle'});
-  assert.match(await page.title(),/Choose your mission/);
-  assert.equal(await page.locator('.mode-card').count(),4);
-  assert.equal(await page.locator('.mode-card[href]').count(),4);
-  assert.equal(await page.locator('.alien-lab-card').count(),2,'Alien Lab and Achievement Hangar navigation');
-  assert.equal(await page.locator('.tile-kit-return').count(),0,
-    'the redundant Back to Missions control must be removed');
-  assert.equal(await page.locator('#modal').count(),0,'home must not be a mode selection modal');
-  assert.equal(await page.locator('#board').count(),0,'the home page should not load a game board');
-  assert.equal(await page.locator('.mode-card-footer button').count(),0,'no duplicate mode buttons');
+  assert.match(await page.title(),/Choose how to play/);
+  assert.equal(await page.locator('.choice-card').count(),2);
+  assert.equal(await page.locator('#home-single').getAttribute('href'),'./choose.html?type=single');
+  assert.equal(await page.locator('#home-multi').getAttribute('href'),'./choose.html?type=multi');
+  assert.equal(await page.locator('.mini-cell').count(),49);
+  assert.equal(await page.locator('.mini-cell.piece').count(),6);
+  assert.equal(await page.locator('.extra-card').count(),2);
+  assert.equal(await page.locator('.mode-card').count(),0);
+  assert.equal(await page.locator('.tile-kit-card').count(),0);
+  assert.match(await page.locator('#home-save-status').textContent(),/save automatically/i);
   const layout=await page.evaluate(()=>({
    width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
-   cards:[...document.querySelectorAll('.mode-card')].map(card=>{
-    const r=card.getBoundingClientRect();
-    return {width:r.width,height:r.height,tag:card.tagName,href:card.getAttribute('href')};
+   choices:[...document.querySelectorAll('.choice-card')].map(c=>{
+    const r=c.getBoundingClientRect();return {width:r.width,height:r.height};
    })
   }));
-  assert.ok(layout.scrollWidth<=width+2,'no horizontal overflow: '+width);
-  assert.ok(layout.cards.every(c=>c.tag==='A'&&c.width>=240&&c.height>=120),
-    'the full cards must be large accessible links: '+JSON.stringify(layout));
-  if(width===1366||width===390)
-    await page.screenshot({path:'/tmp/equanova-home-'+width+'.png',fullPage:true});
+  assert.ok(layout.scrollWidth<=width+2,'homepage horizontal overflow: '+JSON.stringify(layout));
+  assert.ok(layout.choices.every(c=>c.width>135&&c.height>=85),'choices must be accessible');
+  if([1366,390].includes(width))await page.screenshot({path:'/tmp/equanova-home-'+width+'.png',fullPage:true});
   await page.close();
  }
  const page=await browser.newPage({viewport:{width:1366,height:768}});
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(ORIGIN+'/',{waitUntil:'networkidle'});
- // Selecting the whole card using a keyboard must load the requested game.
- await page.locator('#home-sector').focus();
- await page.keyboard.press('Enter');
- await page.waitForURL(/play\.html\?mode=sector(?:&tiles=natural)?$/);
+ const initial=await page.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.pilot-profiles.v1')));
+ assert.ok(initial.activeId,'first visit should automatically create a saved pilot');
+ assert.equal(initial.pilots.length,1);
+ await page.locator('#home-single').focus();await page.keyboard.press('Enter');
+ await page.waitForURL(/choose\.html\?type=single$/);
+ assert.equal(await page.locator('.mode-option').count(),2);
+ assert.equal(await page.locator('.kit-option').count(),4);
+ assert.equal(await page.locator('#details-section').isHidden(),true);
+ await page.locator('[data-tile-kit="advanced"]').click();
+ assert.match(await page.locator('#kit-description').textContent(),/no fractions/);
+ await page.locator('#launch-button').click();
+ await page.waitForURL(/play\.html\?mode=sector&tiles=advanced$/);
  await page.locator('.cell').first().waitFor();
- if(await page.locator('#modal[open]').count())
-   await page.locator('#modal-actions button').last().click();
+ if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  assert.equal(await page.locator('#board .cell').count(),361);
- await page.locator('#mode-btn').click();
- await page.waitForURL(/index\.html$/);
- assert.match(await page.locator('[data-save="sector"]').textContent(),/CONTINUE/);
- await page.locator('#home-rogue').click();
- await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
+ assert.equal(await page.locator('#rack .tile').count(),11);
+ assert.ok(!(await page.locator('#achievement-pilot').textContent()).includes('GUEST'),
+  'achievements must save without manual profile setup');
+ await page.locator('#mode-btn').click();await page.waitForURL(/index\.html$/);
+ await page.locator('#home-single').click();
+ await page.locator('[data-mode="rogue"]').click();
+ await page.locator('#launch-button').click();
+ await page.waitForURL(/play\.html\?mode=rogue&tiles=advanced$/);
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT/);
- if(await page.locator('#modal[open]').count())
-   await page.locator('#modal-actions button').last().click();
+ if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
  await page.locator('#mode-btn').click();
- await page.locator('#home-local').click();
- await page.waitForURL(/play\.html\?mode=local(?:&tiles=natural)?$/);
- assert.match(await page.locator('#modal-title').textContent(),/local match/i);
- assert.equal(await page.locator('#local-player-count').count(),1);
- await page.locator('#modal-actions button').first().click();
- await page.waitForURL(/index\.html$/);
- await page.locator('#home-online').click();
- await page.waitForURL(/online\.html(?:\?tiles=natural)?$/);
- assert.equal(await page.locator('#online-gate').count(),1);
- await page.locator('#online-gate .online-back').click();
- await page.waitForURL(/index\.html$/);
- await page.locator('.alien-lab-card').first().click();
+ await page.locator('#home-multi').click();
+ await page.waitForURL(/choose\.html\?type=multi$/);
+ assert.equal(await page.locator('.mode-option').count(),3);
+ assert.equal(await page.locator('#details-section').isVisible(),true);
+ await page.locator('[data-mode="join"]').click();
+ assert.equal(await page.locator('#kit-section').isHidden(),true);
+ assert.equal(await page.locator('#room-code-field').isVisible(),true);
+ assert.equal(await page.locator('#count-field').isHidden(),true);
+ await page.locator('[data-mode="host"]').click();
+ assert.equal(await page.locator('#kit-section').isVisible(),true);
+ assert.equal(await page.locator('#turn-field').isVisible(),true);
+ assert.equal(await page.locator('#game-field select').isDisabled(),true);
+ assert.equal(await page.locator('#pilot-rows .pilot-row').count(),1);
+ await page.locator('[data-mode="local"]').click();
+ await page.locator('#setup-count').selectOption('3');
+ await page.locator('#setup-turn').selectOption('90');
+ assert.equal(await page.locator('#pilot-rows .pilot-row').count(),3);
+ await page.locator('#pilot-rows .pilot-name').first().fill('Ari');
+ await page.locator('#pilot-rows .pilot-name').nth(1).fill('Bea');
+ await page.locator('#pilot-rows .pilot-name').nth(2).fill('Cy');
+ await page.locator('[data-tile-kit="rational"]').click();
+ await page.locator('#launch-button').click();
+ await page.waitForURL(/play\.html\?mode=local&tiles=rational&setup=ready$/);
+ await page.locator('#local-privacy').waitFor({state:'visible'});
+ assert.equal(await page.locator('#local-scores .local-score-row').count(),3);
+ assert.equal(await page.locator('#local-handover-title').textContent(),'Ari · YOUR TURN');
+ const localSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.achievements.local-owner.v1')));
+ assert.equal(localSaved.seatIds.length,3);
+ assert.ok(localSaved.seatIds.every(Boolean),'every seat should have automatic achievement ownership');
+ await page.locator('#local-switch-btn').click();
+ await page.locator('.extra-card[href="./alien-lab.html"]').click();
  await page.waitForURL(/alien-lab\.html$/);
- assert.equal(await page.locator('.exit-link').count(),1);
  await page.locator('.exit-link').click();
- await page.waitForURL(/index\.html$/);
- await page.goto(ORIGIN+'/',{waitUntil:'networkidle'});
- await page.locator('.alien-lab-card[href="./achievement-hangar.html"]').click();
+ await page.locator('.extra-card[href="./achievement-hangar.html"]').click();
  await page.waitForURL(/achievement-hangar\.html$/);
  assert.equal(await page.locator('.hangar-nav-home').getAttribute('href'),'./index.html');
- assert.equal(await page.locator('.hangar-nav-lab').getAttribute('href'),'./alien-lab.html');
- await page.locator('.hangar-nav-home').click();
- await page.waitForURL(/index\.html$/);
- await page.locator('.alien-lab-card[href="./achievement-hangar.html"]').click();
- await page.locator('.hangar-nav-lab').click();
- await page.waitForURL(/alien-lab\.html$/);
- await page.locator('.exit-link').click();
- await page.waitForURL(/index\.html$/);
- assert.equal(await page.locator('#home-tile-kits .tile-kit-card').count(),4);
- await page.locator('[data-tile-kit="rational"]').click();
- assert.equal(await page.locator('[data-tile-kit="rational"]').getAttribute('aria-pressed'),'true');
- assert.match(await page.locator('#home-sector').getAttribute('href'),/&tiles=rational$/);
- await page.locator('#home-sector').click();
- await page.waitForURL(/play\.html\?mode=sector&tiles=rational$/);
- // An existing Launchpad save requires explicit consent before switching kits.
- if(await page.locator('#modal[open]').count()&&
-    /CHANGE PHYSICAL TILE KIT/.test(await page.locator('#modal-eyebrow').textContent()))
-   await page.locator('#modal-actions button').last().click();
- assert.equal(await page.locator('#rack .bracket-tile').count(),2);
- assert.equal(await page.locator('#rack-count').textContent(),'11 / 11');
- assert.equal(await page.locator('#board .cell').count(),361);
- assert.deepEqual(errors,[],'all home-page navigation must be free of script errors');
- console.log('Mission home browser passed: four full-card keyboard/click routes, save/resume, Local setup back, online and Alien Lab, 4 viewport widths.');
+ assert.deepEqual(errors,[],'homepage and setup must not produce JavaScript errors');
+ console.log('New entry browser passed: animated mini-board, 2 main choices, progressive setup, Quantum numbers, automatic pilot saves, 4 viewports.');
  await page.close();
-}finally{
- await browser.close();
-}
+}finally{await browser.close();}

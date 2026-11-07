@@ -62,7 +62,7 @@ try{
  const solo=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.sector-run.v1')));
  assert.ok(solo);
  await page.locator('#mode-btn').click();
- await page.locator('#home-local').click();
+ await page.goto('http://127.0.0.1:4173/play.html?mode=local',{waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-title').textContent(),/local match/i);
  await page.locator('#local-player-count').selectOption('3');
  assert.equal(await page.locator('#local-setup-names input:visible').count(),3);
@@ -172,11 +172,11 @@ try{
  // When the device is handed over, the hidden rack is not keyboard accessible
  // and players may switch to a previously saved single-player mode.
  await page.locator('#local-switch-btn').click();
- await page.locator('#home-sector').click();
+ await page.goto('http://127.0.0.1:4173/play.html?mode=sector',{waitUntil:'networkidle'});
  assert.match(await page.locator('#sector-label').textContent(),/SECTOR 01/);
  assert.equal(await page.locator('#local-privacy').isVisible(),false);
  await page.locator('#mode-btn').click();
- await page.locator('#home-local').click();
+ await page.goto('http://127.0.0.1:4173/play.html?mode=local',{waitUntil:'networkidle'});
  await handover('Ari');
 
  // Check that the local game panel still fits without horizontal overflow.

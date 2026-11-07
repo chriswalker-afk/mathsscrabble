@@ -57,7 +57,7 @@ try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
   page.on('pageerror',e=>errors.push('Local: '+e.message));
   await page.goto(ORIGIN+'/index.html',{waitUntil:'networkidle'});
-  await page.locator('#home-local').click();
+  await page.goto(ORIGIN+'/play.html?mode=local',{waitUntil:'networkidle'});
   await page.waitForURL(/play\.html\?mode=local/);
   await page.locator('#modal-title').waitFor();
   assert.match(await page.locator('#modal-title').textContent(),/local match/i);
