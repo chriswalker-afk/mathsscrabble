@@ -10,6 +10,9 @@ import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
+import {CALLOUTS,CALLOUT_BY_ID,isCalloutUnlocked} from './online-callouts.js';
+import {pilotAchievements} from './achievements/engine.js';
+import {loadAchievementStore} from './achievements/storage.js';
 import {bindOnlineRoom,loadOnlineBinding,ingestOnlineEvidence} from './achievements/online-adapter.js';
 import {loadPilots} from './achievements/pilots.js';
 import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
@@ -22,7 +25,7 @@ const state={
  ws:null,connection:'offline',lastRevision:0,reconnectDelay:2500,
  reconnectTimer:null,refreshing:false,wantedRevision:0,ceremony:null,focusIndex:pos(CENTER,CENTER),
  lastResultRevision:0,shownResults:false,pendingRequest:null,notice:'',
- pendingOnlineAwards:[]
+ lastCalloutId:null,calloutTimer:null,pendingOnlineAwards:[]
 };
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 state.alienDraft=alienFromStorage(storage,0);
@@ -113,8 +116,21 @@ const formatTime=ms=>{
 };
 const current=()=>state.view?.match;
 const me=()=>state.view?.you;
-const myTurn=()=>state.view?.phase==='playing'&&
-  current()?.current===me()?.index&&!state.busy&&!state.ceremony;
+const canPlan=()=>state.view?.phase==='playing'&&Boolean(current())&&!state.busy&&!state.ceremony;
+const myTurn=()=>canPlan()&&current()?.current===me()?.index;
+const recentCallouts=()=>current()?.callouts?.filter(x=>
+ Date.now()-x.at>=-1500&&Date.now()-x.at<14000&&Object.hasOwn(CALLOUT_BY_ID,x.calloutId))||[];
+function unlockedCalloutAchievements(){
+ try{
+  if(!state.view||!storage)return [];
+  const linked=loadOnlineBinding(storage,state.view);
+  if(!linked?.pilotId)return [];
+  const pilots=loadPilots(storage);
+  const saved=loadAchievementStore(storage,pilots.registry);
+  if(!['empty','restored'].includes(saved.status))return [];
+  return pilotAchievements(saved.store,linked.pilotId).unlocked;
+ }catch{return [];}
+}
 const visibleRack=()=>{
  const rack=current()?.rack||[];
  const byId=new Map(rack.map(t=>[t.id,t]));
@@ -165,36 +181,63 @@ async function requestApi(path,{method='GET',body,auth=false}={}){
  return result;
 }
 const roomPath=()=>'/api/rooms/'+state.code;
+function reconcileOnlineDraft(oldMatch,newMatch){
+ if(!oldMatch||!newMatch)return 0;
+ const owned=new Set((newMatch.rack||[]).map(t=>t.id));
+ let dropped=0;
+ for(const [index,tile] of Object.entries(state.pending)){
+  if(newMatch.board[Number(index)]!=null||(tile.value!=='='&&!owned.has(tile.id))){
+   delete state.pending[index];dropped++;
+  }
+ }
+ state.order=state.order.filter(index=>state.pending[index]);
+ if(state.selected!=='equals'&&state.selected&&!owned.has(state.selected))state.selected=null;
+ for(const id of state.swapIds)if(!owned.has(id))state.swapIds.delete(id);
+ if(oldMatch.turn!==newMatch.turn||oldMatch.current!==newMatch.current){
+  state.swapping=false;state.swapIds.clear();
+ }
+ return dropped;
+}
 const saveRoomFromServer=(payload,{reset=false}={})=>{
  const old=state.view,view=payload.room||payload;
  if(!view||!codes.test(view.code))throw new Error('Invalid room response.');
- if(reset||!old||old.code!==view.code){
-   state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
-   state.selected=null;state.swapping=false;state.shownResults=false;
+ const fresh=reset||!old||old.code!==view.code;
+ let lostDraft=0;
+ if(fresh){
+  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
+  state.selected=null;state.swapping=false;state.shownResults=false;
+  state.lastCalloutId=view.match?.callouts?.at(-1)?.id||null;
  }else if(old.revision!==view.revision){
-   const oldMatch=old.match,newMatch=view.match;
-   const boardChanged=Boolean(oldMatch&&newMatch&&
-     oldMatch.board.some((cell,i)=>cell?.id!==newMatch.board[i]?.id));
-   const turnChanged=oldMatch?.turn!==newMatch?.turn||oldMatch?.current!==newMatch?.current;
-   const oldRack=(oldMatch?.rack||[]).map(t=>t.id).join('|');
-   const newRack=(newMatch?.rack||[]).map(t=>t.id).join('|');
-   if(boardChanged||turnChanged||oldRack!==newRack){
-     state.pending={};state.order=[];state.selected=null;
-     state.swapIds.clear();state.swapping=false;
-   }
+  lostDraft=reconcileOnlineDraft(old.match,view.match);
+  if(view.phase!=='playing'){
+   state.pending={};state.order=[];state.selected=null;
+   state.swapping=false;state.swapIds.clear();
+  }
  }
  state.view=view;state.code=view.code;state.lastRevision=view.revision;
-  const gained=ingestOnlineEvidence(storage,view).awarded;
-  if(gained.length){
-   if(payload?.event?.type==='scored'||state.ceremony||view.phase==='finished')
-    state.pendingOnlineAwards.push(...gained);
-   else showAchievementToast(gained);
-  }
-  updateOnlineAwardLabel();
+ const newest=view.match?.callouts?.at(-1);
+ if(!fresh&&newest?.id!==undefined&&newest.id!==state.lastCalloutId){
+  state.lastCalloutId=newest.id;
+  const sender=view.people?.[newest.by]?.name||'Pilot';
+  const radio=CALLOUT_BY_ID[newest.calloutId];
+  if(radio)$('online-callout-live').textContent=sender+' transmitted '+radio.label+'.';
+  if(state.calloutTimer)clearTimeout(state.calloutTimer);
+  state.calloutTimer=setTimeout(()=>{
+   if(state.view){renderStandings();renderCalloutStage();}
+  },14100);
+ }
+ const gained=ingestOnlineEvidence(storage,view).awarded;
+ if(gained.length){
+  if(payload?.event?.type==='scored'||state.ceremony||view.phase==='finished')
+   state.pendingOnlineAwards.push(...gained);
+  else showAchievementToast(gained);
+ }
+ updateOnlineAwardLabel();
  if(view.you?.avatar)state.alienDraft=safePilotAlien(view.you.avatar,view.you.index);
  if(!state.ceremony)render();
+ if(lostDraft>0)showNotice('Shared tiles changed. Conflicting private draft tiles were returned to your rack.',false,'warning');
  if(view.phase==='finished'&&!state.shownResults&&!state.ceremony&&!state.busy){
-   state.shownResults=true;queueMicrotask(showResults);
+  state.shownResults=true;queueMicrotask(showResults);
  }
 };
 const setConnection=mode=>{
@@ -270,6 +313,9 @@ function connectSocket(){
 }
 function clearSession(){
  disconnectSockets();state.view=null;state.code=null;state.token=null;
+ if(state.calloutTimer)clearTimeout(state.calloutTimer);
+ state.calloutTimer=null;state.lastCalloutId=null;
+ $('online-callout-live').textContent='';
  state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
  state.busy=false;state.wantedRevision=0;state.ceremony=null;state.shownResults=false;
  state.pendingOnlineAwards=[];
