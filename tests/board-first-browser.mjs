@@ -50,8 +50,15 @@ try{
   assert.equal(d.gridColumns,size.width>920?2:1,
    'wide desktops have only two play columns; narrow screens stack');
   assert.ok(d.board.width>=size.minBoard,'board should gain usable width: '+JSON.stringify(d));
-  assert.ok(d.preview.y>=d.board.bottom-1,'equation preview sits after board');
-  assert.ok(d.rack.y>=d.preview.bottom-1,'rack sits after equation preview');
+  if(size.width>=1180){
+   assert.ok(d.board.height>=d.board.width*.88,'wide laptops need an almost-square, board-first viewport: '+JSON.stringify(d));
+   assert.ok(d.preview.x>=d.board.right-2,'scoring preview is docked beside the board');
+   assert.ok(d.rack.x>=d.board.right-2,'rack is docked beside the board, not below it');
+   assert.ok(d.rack.y>=d.preview.y,'the rack follows the preview within the dock');
+  }else{
+   assert.ok(d.preview.y>=d.board.bottom-1,'compact screens keep preview under board');
+   assert.ok(d.rack.y>=d.preview.bottom-1,'compact screens keep rack under preview');
+  }
   assert.ok(d.scroll.width<=size.width+3,'no horizontal scrolling: '+JSON.stringify(d));
   assert.ok(d.board.x>=0&&d.board.right<=size.width+3,'board stays inside viewport');
   if(size.width>=1024) {
