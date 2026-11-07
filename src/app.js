@@ -1631,7 +1631,7 @@ function showTraining(firstVisit=false){
    <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
      <p>Press <strong>Score Equation</strong> to check your maths. Later equations must join a locked tile. Reach the target within six turns; one single-tile swap is free each turn.</p></div></div>
   </div>${bracketNote}
-  <p class="training-footnote">Your run saves on this device. To earn cosmetics, choose a pilot in the Hangar before starting a new run.</p>`;
+  <p class="training-footnote">Your run and achievements save to your pilot automatically on this device. The Hangar lets you switch pilots or export progress.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
   message,[{text:firstVisit?'START MISSION →':'BACK TO GAME',primary:true,fn:firstVisit?rememberIntro:undefined}]);
@@ -1662,7 +1662,7 @@ function showDriftIntro(firstVisit=false){
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
       <p>Each zone has three sectors. Every third sector has a random boss with a temporary rule. Failure ends your Drift run.</p></div></div>
-   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
+   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Achievement progress is saved automatically to your pilot on this device.</p>`,
   [{text:firstVisit?'BEGIN THE DRIFT →':'BACK TO GAME',primary:true}]);
 }
 function restoreMode(mode,{initial=false}={}){
