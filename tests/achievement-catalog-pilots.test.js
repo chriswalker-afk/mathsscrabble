@@ -44,8 +44,8 @@ test('registry preserves EVERY current base-free alien choice, every palette and
  for(const part of ACHIEVEMENTS){
   assert.equal(isFreeAlienOption(part.reward.collection,part.reward.id),false);
   assert.equal(achievementForReward(part.reward.collection,part.reward.id)?.id,part.id);
-  assert.ok(!manifest.parts[part.reward.collection]?.includes(part.reward.id),
-   'Pass A must NOT introduce missing SVGs into the strict production manifest');
+  assert.ok(part.reward.collection==='palettes'?Object.hasOwn(manifest.palettes,part.reward.id):manifest.parts[part.reward.collection]?.includes(part.reward.id),
+    'Pass B requires all 40 registered reward IDs');
  }
 });
 test('each of the four game modes has exactly 6 easy, 3 moderate and 1 hard rewards',()=>{
