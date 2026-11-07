@@ -121,7 +121,11 @@
  #app .board-first>.arena{grid-column:1;grid-row:2}
  #app .board-first .arena .board-frame{width:min(100%,calc(100dvh - 220px),740px);max-height:calc(100dvh - 330px)}
  #app .board-first>.left-panel #drift-loadout{max-width:175px;margin:0}
- #app .board-first>.left-panel .anomaly-banner{display:none}
+ #app .board-first>.left-panel .anomaly-banner{display:flex;flex-direction:row;align-items:center;flex:0 1 190px;min-width:110px;min-height:0;max-height:38px;overflow:hidden;margin:0;padding:5px 7px;gap:5px}
+ #app .board-first>.left-panel .anomaly-banner .anomaly-scene,#app .board-first>.left-panel .anomaly-banner .boss-banner-art{display:none}
+ #app .board-first>.left-panel .anomaly-banner .anomaly-label{display:none}
+ #app .board-first>.left-panel .anomaly-banner #anomaly-name{font-size:9px;white-space:nowrap}
+ #app .board-first>.left-panel .anomaly-banner #anomaly-text{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #app .board-first>.left-panel .ship-systems-drawer .rogue-summary{max-height:130px;overflow:auto}
  /* Online pilot standings need a horizontal compact strip in portrait,
     not the full-height, column-wrapping desktop scoreboard. */
@@ -161,7 +165,10 @@
  #app .board-first>.left-panel .ship-systems-drawer summary{padding:4px 8px;min-height:28px}
  #app .board-first>.left-panel .ship-systems-drawer .rogue-summary{padding:5px 7px}
  #app .board-first>.left-panel .ship-systems-drawer .permanent-slots{grid-template-columns:repeat(4,minmax(0,1fr))}
- #app .board-first>.left-panel .anomaly-banner{display:none}
+ #app .board-first>.left-panel .anomaly-banner{display:flex;flex-direction:row;align-items:center;grid-column:1/-1;min-height:19px;max-height:22px;overflow:hidden;padding:2px 6px;margin:0;gap:5px}
+ #app .board-first>.left-panel .anomaly-banner .anomaly-scene,#app .board-first>.left-panel .anomaly-banner .boss-banner-art,#app .board-first>.left-panel .anomaly-banner .anomaly-label{display:none}
+ #app .board-first>.left-panel .anomaly-banner #anomaly-name{flex:0 0 auto;font-size:9px;white-space:nowrap}
+ #app .board-first>.left-panel .anomaly-banner #anomaly-text{flex:1;min-width:0;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #app .board-first .rack-and-gadgets{display:flex;flex-direction:column;gap:3px}
  #app .board-first .gadget-drawer{flex:0 0 auto;width:100%;padding:3px 7px}
  #app .board-first .gadget-drawer summary{min-height:25px;padding:3px 5px}
