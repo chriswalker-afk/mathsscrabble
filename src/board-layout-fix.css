@@ -242,3 +242,12 @@
 @media(prefers-reduced-motion:reduce){
  #app .topbar .zone-header-strip{animation:none}
 }
+
+/* Full-board FIT uses smaller cells on short laptops; keep maths symbols
+   legible without overlaying a tile's score or spilling into neighbours. */
+#app .board .board-tile{
+ font-size:clamp(10px,calc(var(--board-cell-size,34px) * .82),30px);
+}
+#app .board .bonus-label{
+ font-size:clamp(8px,calc(var(--board-cell-size,34px) * .36),17px);
+}

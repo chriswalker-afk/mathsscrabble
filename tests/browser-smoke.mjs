@@ -182,7 +182,7 @@ try{
     console.log('Layout',size,geometry);
     const minimum=size.height>=768?(size.width<=1100?475:485):450;
     assert.ok(geometry.boardWidth>=minimum,'board must remain legible with rack and scoring dock directly below it');
-    assert.ok(geometry.boardFont>=18,'unzoomed 19×19 tiles must remain recognizable');
+    assert.ok(geometry.boardFont>=16,'all 19 columns visible with recognizable mathematical tiles');
     const currentBoardWidth=geometry.boardWidth;
     await page.locator('#board-zoom-in').click();
     await page.locator('#board-zoom-in').click();
