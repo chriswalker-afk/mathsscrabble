@@ -217,6 +217,8 @@ try{
  // A scratch equation on an empty square belongs only to that pilot.
  const plannedCell=cell(guest,8,8),plannedIndex=Number(await plannedCell.getAttribute('data-index'));
  await guest.locator('#rack .tile:not(.wildcard)').first().click();
+ assert.equal(await guest.locator('#rack .tile.selected').count(),1,'waiting pilot can select a tile to plan');
+ assert.equal(await cell(guest,8,8).getAttribute('data-locked'),'false');
  await plannedCell.click();
  assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),true);
  assert.equal(await cell(host,8,8).evaluate(x=>x.classList.contains('pending')),false);
