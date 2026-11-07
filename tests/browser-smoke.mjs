@@ -43,6 +43,14 @@ try{
   assert.match(await page.locator('#save-status').textContent(),/autosaved/i);
   assert.equal(await page.locator('.cell').count(),361);
   assert.equal(await page.locator('#rack .tile').count(),8);
+   assert.equal(await page.locator('#score-btn').evaluate(x=>Boolean(x.closest('.rack-commit-actions'))),true);
+   assert.equal(await page.locator('#swap-btn').evaluate(x=>Boolean(x.closest('.rack-commit-actions'))),true);
+   assert.equal(await page.locator('#undo-btn').evaluate(x=>Boolean(x.closest('.rack-actions'))),true);
+   const initialOrder=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
+   await page.locator('#shuffle-rack-btn').click();
+   const shuffledOrder=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
+   assert.notDeepEqual(shuffledOrder,initialOrder,'new shuffle button must actually reorder tiles');
+   assert.deepEqual([...shuffledOrder].sort(),[...initialOrder].sort());
   assert.equal(await page.locator('#bag-count').textContent(),String(143));
   assert.equal(await page.locator('#preview-equation').textContent(),'—');
   assert.equal(await page.locator('.arena-topline').count(),0);
