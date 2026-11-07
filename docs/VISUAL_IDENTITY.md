@@ -298,3 +298,56 @@ image decoding, phone overflow and the existing boss/rack math rules.
 
 **Next art pass:** F — finishing polish on smaller screens and
 communication states, followed by a holistic consistency audit.
+
+## 11. Pass F — Consistent status, small screens, and cross-mode finish
+
+Pass F is a final interaction and visual consistency pass, rather than a
+new game mechanic. It uses the same visual language for **Mission Comms**
+in Sector Run, The Drift, local hot-seat matches, and Signal Clash.
+
+### Communication states
+
+| Tone | Example | Why it appears |
+| --- | --- | --- |
+| COMMS | Setup instructions and non-destructive tile actions | Neutral next-step guidance |
+| CONFIRMED | Successful equation or tile exchange | Verified game action completed |
+| SIGNAL CHECK | WebSocket reconnect or periodic sync | Players can distinguish an interrupted signal from an invalid equation |
+| CHECK YOUR MOVE | Invalid equations or blocked actions | Clearly explains the rule without covering mathematical tiles |
+
+The existing text-only ARIA-live status regions are used; no new toast layers
+can overlap tile notation or the 19×19 playing grid. The
+`src/mission-feedback.js` helper updates text only when it actually changes
+to avoid repeating announcements on frequent renders. Style is carried by
+`data-tone` and the shared `src/finish-pass-f.css`, retaining all original
+validation messages and math logic.
+
+**High-priority mobile correction:** The local and online action logs were
+previously hidden at phone widths. Both remain visible in their compact
+scoreboard strips, and error messages are allowed to wrap rather than being
+reduced to a one-line ellipsis. The same status is still accessible via its
+existing `role=status`, with the main command controls immediately beneath
+the rack. The online connection instrument provides a readable label for
+OFF, LIVE, RETRY and SYNC even below 400px, while its longer accessible
+description explains the practical meaning and what the student should do.
+
+**Autosave:** a compact visual confirmation is now available on phones, with
+a full accessible description. If local storage fails, students receive a
+persistent warning in the action log rather than the status being hidden in
+the desktop-only header. Returning storage is acknowledged. These cues do
+not alter the save format or the persistence mechanism.
+
+**Control polish:** score/pass/swap/clear buttons retain comfortable minimum
+tap heights on small screens. Status panels share the same material, border,
+focus and colour vocabulary, with distinct tones in forced-colour mode.
+Decorative animations remain disabled when reduced motion is requested.
+
+All changes are **layout or user feedback only**. They do not touch the
+engine, board geometry, wildcard semantics, random tile draws, equipment
+economy, turn timing or Cloudflare Worker protocol. Tests cover 320, 390,
+768 and 1366px, local phone handover + log visibility, online connection
+legibility, and an invalid on-board equation with a visible error message.
+
+**Suggested release review:** After the PR passes CI, inspect the saved
+mobile screenshots and play one round of each mode on an actual phone;
+manual play on real hardware is the final check for thumb feel and soft
+keyboards.

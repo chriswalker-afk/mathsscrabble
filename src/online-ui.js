@@ -4,6 +4,7 @@ import {SIZE,CENTER,coords,pos,bonusAt,inspectPlacement,scoreMove,
 import {buildScoringCeremony,ceremonyDurationMs} from './score-ceremony.js';
 import {enableTileDrag,wasDragClick} from './pointer-drag.js';
 import {initBoardZoom} from './board-zoom.js';
+import {paintFeedback,connectionFeedback} from './mission-feedback.js';
 import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien,
   nextRandomPilotAlien,pilotProfileEqual,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
@@ -107,10 +108,9 @@ const visibleRack=()=>{
  for(const tile of rack)if(!seen.has(tile.id))ordered.push(tile);
  return ordered;
 };
-const showNotice=(message,bad=false)=>{
+const showNotice=(message,bad=false,tone='info')=>{
  state.notice=message;
- $('online-log').textContent=message;
- $('online-log').classList.toggle('error',bad);
+ paintFeedback($('online-log'),message,bad?'error':tone);
 };
 const gateError=(text)=>{
  $('online-gate-error').textContent=text;
@@ -176,11 +176,27 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
  }
 };
 const setConnection=mode=>{
+ const previous=state.connection;
  state.connection=mode;
- const badge=$('online-connection');badge.textContent=
-   mode==='live'?'● LIVE':mode==='reconnecting'?'◌ RECONNECTING':mode==='polling'?'● SYNC':'OFFLINE';
- badge.className='online-connection'+(mode==='live'?' is-live':mode==='reconnecting'?' is-reconnecting':'');
- $('online-dot').style.background=mode==='live'?'#84ebc8':mode==='reconnecting'?'#ead28e':'#7c94a0';
+ const detail=connectionFeedback(mode);
+ const badge=$('online-connection');
+ badge.textContent=mode==='live'?'● LIVE':mode==='reconnecting'?'◌ RETRY':mode==='polling'?'● SYNC':'○ OFF';
+ badge.className='online-connection'+(mode==='live'?' is-live':
+   mode==='reconnecting'||mode==='polling'?' is-reconnecting':'');
+ badge.dataset.tone=detail.tone;
+ badge.title=detail.description;
+ badge.setAttribute('aria-label',detail.label+'. '+detail.description);
+ $('online-dot').style.background=mode==='live'?'#84ebc8':
+   mode==='reconnecting'||mode==='polling'?'#ead28e':'#7c94a0';
+ // Announce transitions, not every polling refresh. The existing log is the
+ // accessible status region and is now visible on phones as well as desktop.
+ if(previous!==mode&&state.code){
+   if(mode==='reconnecting'||mode==='polling'){
+     showNotice(detail.description,false,'warning');
+   }else if(mode==='live'&&(previous==='reconnecting'||previous==='polling')){
+     showNotice('Live signal restored. Check the current turn and board before submitting.',false,'success');
+   }
+ }
 };
 function disconnectSockets(){
  if(state.reconnectTimer){clearTimeout(state.reconnectTimer);state.reconnectTimer=null;}
@@ -729,7 +745,7 @@ function endScoring(ctl){
  clearCeremony();$('ceremony-readout').hidden=true;
  $('equation-preview').classList.remove('ceremony-active');
  render();
- showNotice('Equation verified. +'+ctl.total+' points awarded.');
+ showNotice('Equation verified. +'+ctl.total+' points awarded.',false,'success');
  const content=document.createElement('div');
  const equation=document.createElement('p');equation.className='equation-result';
  equation.textContent=ctl.move.text;
@@ -853,7 +869,7 @@ $('online-create-form').onsubmit=async e=>{
    }
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
-   connectSocket();showNotice('Room created. Share the code and invite your pilots.');
+   connectSocket();showNotice('Room created. Share the code and invite your pilots.',false,'success');
  }catch(err){gateError(err.message);}
  finally{$('online-create-button').disabled=false;}
 };
@@ -868,7 +884,7 @@ $('online-join-form').onsubmit=async e=>{
    });
    state.token=data.token;saveRoomFromServer(data,{reset:true});
    sessionStore();history.replaceState(null,'','#'+state.code);
-   connectSocket();showNotice('Joined room '+code+'. Waiting for the host.');
+   connectSocket();showNotice('Joined room '+code+'. Waiting for the host.',false,'success');
  }catch(err){gateError(err.message);}
  finally{$('online-join-button').disabled=false;}
 };
@@ -894,7 +910,7 @@ async function restore(){
    try{
      const response=await requestApi(roomPath()+'/state',{auth:true});
      saveRoomFromServer(response,{reset:true});
-     connectSocket();showNotice('Reconnected to room '+state.code+'.');
+     connectSocket();showNotice('Reconnected to room '+state.code+'.',false,'success');
    }catch(err){
      if([401,404,410].includes(err.status))clearSession();
      gateError(err.message);
