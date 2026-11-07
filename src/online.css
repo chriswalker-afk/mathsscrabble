@@ -175,6 +175,8 @@
 .online-callout-stage{display:none}
 @media(max-width:730px){
  .online-app .left-panel{overflow:visible}
+ .online-app .rack-section{padding-top:3px}
+ .online-app .online-rack-hint{display:none}
  /* Share the narrow score-header row with the timer. No extra vertical row:
     the board and Score controls must stay above the fold on 390px phones. */
  .online-app .left-panel .local-score-header{grid-column:1;grid-row:1;justify-content:flex-end;min-width:0}
