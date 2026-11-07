@@ -39,6 +39,11 @@ try{
  assert.equal(await page.locator('#anomaly-banner').isVisible(),false);
  const baseBoardWidth=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
  assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
+  assert.equal(await page.locator('#rogue-summary').evaluate(x=>Boolean(x.closest('.right-panel'))),true,
+   'Ship Systems belong on the right rail');
+  assert.equal(await page.locator('#drift-temporary').evaluate(x=>Boolean(x.closest('.right-panel'))),true,
+   'Mission Gadgets belong beside the installed systems');
+  assert.equal(await page.locator('#drift-loadout').isVisible(),true);
  assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
  const firstDrift=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
  assert.ok(firstDrift,'a different key saves the Drift');
