@@ -108,7 +108,7 @@ test('server-derived room milestones show ONLY the authenticated seat and no cre
  const before=host.achievementReceipts.length;
  assert.throws(()=>takeOnlineAction(r,H,{id:'fake',revision:r.revision,type:'score',placements:[]},1002));
  assert.equal(viewOnlineRoom(r,H,1002).achievementReceipts.length,before);
- r=startOnlineMatch(r,H,{id:'start-first',revision:r.revision},2000).room;
+ r=startOnlineMatch(r,H,{id:'start-first-12345',revision:r.revision},2000).room;
  assert.ok(viewOnlineRoom(r,H,2001).achievementReceipts.some(e=>e.type==='match-started'));
  assert.ok(viewOnlineRoom(r,J,2001).achievementReceipts.some(e=>e.type==='match-started'));
 });
