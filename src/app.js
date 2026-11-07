@@ -25,6 +25,8 @@ import {distinctOpening,openingPattern,loadOpeningPattern,rememberOpening} from 
 import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
  nextRandomPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
+import {bindSoloRun,emitSoloAchievement,soloScoredEvidence,soloClearEvidence} from './achievements/solo-adapter.js';
+import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -35,6 +37,25 @@ const state={
  localMatch:null,localScoringPlayer:null,localDeferPrivacy:false,itemTarget:null,bossGrid:null,tileSet:'natural',saveWarningShown:false
 };
 const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
+let achievementRun=null;
+let pendingSoloAwards=[];
+function startAchievementRun(fresh=false){
+ if(state.mode==='local')return;
+ achievementRun=bindSoloRun(storage,{mode:state.mode==='rogue'?'drift':'sector',
+  startedAt:state.progress.startedAt,fresh});
+ pendingSoloAwards=[];
+}
+function awardSolo(type,suffix,data,{defer=false,quiet=false}={}){
+ if(state.mode==='local')return [];
+ const result=emitSoloAchievement(storage,achievementRun,{type,suffix,data});
+ if(result.awarded.length){
+  if(defer)pendingSoloAwards.push(...result.awarded);
+  else if(!quiet)showAchievementToast(result.awarded);
+ }
+ return result.awarded;
+}
+function takeSoloAwards(){const awards=pendingSoloAwards;pendingSoloAwards=[];return awards;}
+
 let localSetupAliens=[];
 let localSetupBadges=()=>{};
 function prepareLocalArtwork(){
@@ -124,6 +145,7 @@ function freshSector(sector=1,{newRun=false}={}){
    game=>game.rack,(game,rack)=>({...game,rack}));
  state.rack=deal.rack;state.bag=deal.bag;
  state.bossGrid=isDrift()?bossField(state.rogue,sector):null;
+ if(newRun||sector===1)startAchievementRun(true);
  if(isDrift())state.rogue=selectForcedTile(state.rogue,sector,state.rack,randomFloat);
  rememberOpening(storage,state.mode,state.rack);
  const anomaly=isDrift()?anomalyForSector(sector,state.rogue):null;
@@ -578,8 +600,11 @@ function applyTileTemporary(tileId){
  if(replacement&&restrictedDraws(state.rogue,state.sector).includes(replacement.value)){
    announce('That operator is sealed from the bag by the boss.',true);return;
  }
+ const consumedGadget=state.itemTarget;
  state.rogue=result.rogue;state.rack=result.rack;state.bag=result.bag;
  state.itemTarget=null;state.selected=null;
+ persistRun();
+ awardSolo('gadget-used','s'+state.sector+'-t'+state.turn+'-use-'+consumedGadget,{gadgetId:consumedGadget});
  announce(result.reason+'. Power-up consumed without spending a turn.');
  render();
 }
@@ -701,10 +726,11 @@ function showModal(eyebrow,title,body,buttons){
 }
 function showZoneMap(){
  if(!isDrift())return;
+ const earned=awardSolo('zone-map-opened','zone-map-first',{}, {quiet:true});
  const returnAction=state.phase==='won'?showSectorOutcome:
    state.phase==='lost'?showSectorOutcome:undefined;
  showModal('GALACTIC ROUTE','The Drift · Zone Map',
-   zoneMapMarkup(state.rogue,state.sector,state.phase),
+   zoneMapMarkup(state.rogue,state.sector,state.phase)+achievementRevealMarkup(earned),
    [{text:'BACK TO '+(state.phase==='won'?'ROUND RESULTS':state.phase==='lost'?'REPORT':'BOARD'),primary:true,fn:returnAction}]);
 }
 function showBossEncounter(){
@@ -1112,8 +1138,9 @@ function showDriftRoundSummary(report){
 }
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
+ const earned=awardSolo('salvage-entered','salvage-first',{}, {quiet:true});
  showDriftHub('THE DRIFT · OPTIONAL UPGRADE STOP',
-  'Salvage Bay · Deck 07',salvageWorkshopMarkup(),[
+  'Salvage Bay · Deck 07',achievementRevealMarkup(earned)+salvageWorkshopMarkup(),[
     {text:'← ROUND RESULTS',kind:'back',fn:showSectorOutcome},
     {text:'CONTINUE TO SECTOR '+String(state.sector+1).padStart(2,'0')+' →',kind:'go',fn:()=>freshSector(state.sector+1)}
   ],'salvage');
@@ -1125,6 +1152,14 @@ function showShop(){
      if(result.ok){
        state.rogue=result.rogue;
        persistRun();render();
+       const data=temporary?{gadgetId:id}:{installedSystems:state.rogue.upgrades.length};
+       const suffix=temporary?'buy-'+id+'-s'+state.sector+'-f'+state.rogue.flux:'install-'+id;
+       const awards=awardSolo(temporary?'gadget-bought':'system-installed',suffix,data,{quiet:true});
+       if(awards.length){
+         const notice=document.createElement('div');
+         notice.innerHTML=achievementRevealMarkup(awards);
+         $('drift-hub-body').prepend(notice);
+       }
      }
      return result;
    }
@@ -1255,7 +1290,8 @@ function showScoreResult(points,move){
    ${isDrift()?`<div><span>Roguelike upgrades</span><b>+${points.extra}</b></div>
    <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
    <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
-   ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}`,
+   ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}
+   ${isLocal()?'':achievementRevealMarkup(takeSoloAwards())}`,
    [isLocal()?
       {text:state.localMatch.phase==='finished'?'FINAL STANDINGS →':'HAND OVER DEVICE →',
        primary:true,fn:finishLocalPresentation}:
@@ -1363,6 +1399,10 @@ function score(){
    // breakdown problem cannot turn a verified equation into a lost move.
    const stages=buildScoringCeremony(points);
    const startScore=state.score;
+   const scoredTurn=state.turn,scoredSector=state.sector;
+   let evidence=null;
+   try{evidence=soloScoredEvidence({board:state.board,pending:state.pending,move,points,tileSet:state.tileSet});}
+   catch{/* Achievement evidence must never reject a valid mathematical move. */}
    // Consume single-use charges and commit the whole score atomically before
    // a timer, animation, tab switch or reload can interrupt the presentation.
    if(isDrift()){
@@ -1387,6 +1427,18 @@ function score(){
      completedTiles:0,epoch,finished:false};
    state.ceremony=ctl;
    completeTurn();
+   // The accepted move and sector transition have been persisted, before animation.
+   if(evidence)awardSolo('move-scored','s'+scoredSector+'-t'+scoredTurn+'-score',evidence,{defer:true});
+   if(isDrift()&&points.tempApplied)
+     awardSolo('gadget-used','s'+scoredSector+'-t'+scoredTurn+'-use-'+points.tempApplied,
+       {gadgetId:points.tempApplied},{defer:true});
+   if(state.phase==='won'){
+     awardSolo('sector-cleared','s'+scoredSector+'-cleared',
+       soloClearEvidence({sector:scoredSector,stats:state.stats,
+         installedSystems:isDrift()?state.rogue.upgrades.length:0}),{defer:true});
+     if(isDrift()&&isBossSector(scoredSector))
+       awardSolo('guardian-defeated','s'+scoredSector+'-guardian',{sector:scoredSector},{defer:true});
+   }
    announce('Equation verified. Transferring '+points.total+' energy tile by tile.',false,'success');
    render();
    setCeremonyReadout(ctl,'READY TO TRANSFER');
@@ -1446,6 +1498,8 @@ function swap(){
    if(isDrift())state.rogue=markFreeSwap(state.rogue,state.turn,state.freeSwapTurn);
    state.freeSwapTurn=state.turn;
    state.swapping=false;state.swapSet.clear();state.selected=null;
+   persistRun();
+   if(!isDrift())awardSolo('free-exchange','s'+state.sector+'-t'+state.turn+'-free-'+state.stats.freeExchanges,{});
    announce(`Exchanged ${exchanged.length} tile(s) for free. Your turn is unchanged.`,false,'success');
    render();
  }else{
@@ -1552,6 +1606,7 @@ function restoreMode(mode,{initial=false}={}){
    state.swapping=false;state.swapSet.clear();state.selected=null;
    state.recentlyPlaced=null;state.lockedFlash.clear();
    state.focusedIndex=pos(CENTER,CENTER);state.itemTarget=null;
+   startAchievementRun(false);
    announce(mode==='rogue'?
      'Saved Drift run restored: your upgrades, Flux and rack are intact.':
      'Saved Sector Run restored. Your board, rack, and unfinished placements are ready.');
