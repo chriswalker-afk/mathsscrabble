@@ -79,6 +79,10 @@ function rollShopStock(sector,rogue){
  const candidates=preferFresh(ROGUE_ITEMS.filter(item=>!owns(rogue,item.id)),
    previous?.systems,random);
  const systems=[],kinds=new Set();
+ // Each early bay should include at least one modest-cost system so the
+ // reward economy never presents four premium-only choices.
+ const accessible=candidates.find(item=>item.cost<=5);
+ if(accessible){systems.push(accessible.id);kinds.add(accessible.kind);}
  for(const item of candidates)if(!kinds.has(item.kind)&&systems.length<4){
    systems.push(item.id);kinds.add(item.kind);
  }
@@ -88,7 +92,7 @@ function rollShopStock(sector,rogue){
  const boosters=preferFresh(TEMP_ITEMS.filter(item=>item.action==='score'),past,random);
  const manipulations=preferFresh(TEMP_ITEMS.filter(item=>item.action==='tile'),past,random);
  if(boosters.length)gadgets.push(boosters[0].id);
- if(manipulations.length)gadgets.push(manipulations[0].id);
+ if(manipulations.length)gadgets.push((manipulations.find(item=>item.cost<=3)||manipulations[0]).id);
  const remaining=preferFresh(TEMP_ITEMS.filter(item=>!gadgets.includes(item.id)),past,random);
  if(remaining.length)gadgets.push(remaining[0].id);
  return {sector,systems,gadgets};
