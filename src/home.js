@@ -1,6 +1,7 @@
 import {ensureActivePilot} from './achievements/auto-pilot.js';
 const status=document.getElementById('home-save-status');
-const saved=ensureActivePilot(window.localStorage);
+let saved={pilotId:null};
+try{saved=ensureActivePilot(window.localStorage);}catch{/* Storage may be blocked. */}
 if(status)status.textContent=saved.pilotId?
  '✦ Achievements save automatically for your pilot on this device.':
  '⚠ Local achievement saving unavailable. Check browser storage settings.';
