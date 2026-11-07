@@ -22,7 +22,9 @@ const modes={sector:'sector-qa',drift:'drift-qa',local:'local-qa',online:'room-a
 function run(){
  let store=emptyAchievementStore(),nextId=0;
  function send(mode,type,data,scopeId=modes[mode],roomId=scopeId){
-  const event={id:'qa-'+mode+'-'+(++nextId).toString(36),
+  const serial=(++nextId).toString(36);
+  const receiptId=type==='callout-sent'?'qa-'+mode+'-'+serial+'-callout-sent-count-'+data.sentCount:'qa-'+mode+'-'+serial;
+  const event={id:receiptId,
    pilotId,mode,type,scopeId,authority:mode==='online'?'server-confirmed':'local-transition',data};
   if(mode==='online')event.roomId=roomId;
   const r=awardForVerifiedEvent(store,pilot,event);store=r.store;return {event,result:r};
