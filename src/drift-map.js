@@ -28,9 +28,8 @@ const route=(sector,phase,info,large=false)=>{
 
 export function renderZoneStrip(rogue,sector,phase,onOpen){
  const element=document.getElementById('drift-zone-map');
- const button=document.getElementById('zone-map-btn');
  const visible=Boolean(rogue);
- element.hidden=!visible;button.hidden=!visible;
+ element.hidden=!visible;
  if(!visible)return;
  const info=zoneInfo(rogue,sector),boss=info.boss;
  element.style.setProperty('--zone-accent',bossAccent(boss.id));
@@ -54,8 +53,7 @@ export function renderZoneStrip(rogue,sector,phase,onOpen){
  element.append(portrait,label,arrow);
  element.setAttribute('aria-label','Open the Drift zone map. Zone '+info.number+
    ', '+boss.zone+', sector '+info.stage+' of 3. Final guardian: '+boss.name+'.');
- element.onclick=onOpen;button.onclick=onOpen;
- button.textContent='✧ ZONE MAP';
+ element.onclick=onOpen;
 }
 
 function zoneCard(rogue,sector,phase,zone,current){
