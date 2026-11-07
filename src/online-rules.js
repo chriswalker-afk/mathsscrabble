@@ -1,13 +1,14 @@
 // Authoritative online game rules. Shared BIDMAS and finite-tile logic with
 // local play; the Worker never trusts a client-supplied score or tile value.
 import {SIZE,POINTS,BLANK_KINDS,makeTile,randomFloat} from './engine.js';
+import {CALLOUT_BY_ID} from './online-callouts.js';
 import {summarizeBag} from './bag-inventory.js';
 import {acceptPilotAlien,isValidPilotAlien,safePilotAlien} from './alien/profiles.js';
 import {TILE_SET_BY_ID,normalizeTileSet,kitRackSize} from './tile-sets.js';
 import {makeLocalMatch,readyLocalTurn,scoreLocalTurn,passLocalTurn,
   exchangeLocalTiles,localStandings,isLocalTimerExpired} from './multiplayer.js';
 import {onlineRoomScope,onlineSeatEvidence,registerOnlineLobby,registerOnlineJoin,
- registerOnlineStart,registerOnlineScored,registerOnlineFinish} from './achievements/online-milestones.js';
+ registerOnlineStart,registerOnlineScored,registerOnlineFinish,registerOnlineCallout} from './achievements/online-milestones.js';
 
 export const ONLINE_VERSION=1;
 export const CODE_ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,6 +19,7 @@ export const LOBBY_LIFETIME=6*60*60*1000;
 export const GAME_LIFETIME=24*60*60*1000;
 export const FINISHED_LIFETIME=6*60*60*1000;
 export const MAX_ROOM_HISTORY=12;
+export const MAX_ROOM_CALLOUTS=16;
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const number=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const last=(array,n)=>array.slice(Math.max(0,array.length-n));
@@ -148,6 +150,7 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  match=readyLocalTurn(match,now);
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
+   callouts:[],calloutStats:room.people.map(()=>({sent:0,lastTurn:0})),
    updatedAt:now,expiresAt:now+GAME_LIFETIME},index,request,result);
  return {room:registerOnlineStart(updated),result};
 }
@@ -220,6 +223,34 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  const recorded=scored?registerOnlineScored(updated,index,scored):updated;
  return {room:registerOnlineFinish(recorded),result};
 }
+/** Cosmetic transmissions do not spend a game turn. Every member of the room
+ * may transmit once per turn interval, even while waiting for another player.
+ * No free text or arbitrary artwork is accepted by the room service.
+ */
+export function sendOnlineCallout(room,hash,request,now=Date.now()){
+ requireRoom(room,now);
+ const index=identity(room,hash),replay=validateMutation(room,index,request);
+ if(replay)return {room,replayed:true,result:replay.result};
+ if(room.phase!=='playing'||room.match?.phase!=='playing')
+  throw new OnlineError('Alien Radio is only available during a match.',409);
+ if(typeof request.calloutId!=='string'||!Object.hasOwn(CALLOUT_BY_ID,request.calloutId))
+  throw new OnlineError('Choose a listed alien transmission.');
+ const turn=room.match.turnNumber;
+ const stats=Array.isArray(room.calloutStats)&&room.calloutStats.length===room.people.length?
+  room.calloutStats:room.people.map(()=>({sent:0,lastTurn:0}));
+ if(stats[index].lastTurn===turn)
+  throw new OnlineError('You have already sent a transmission this turn.',429);
+ const sent=stats[index].sent+1;
+ const nextStats=stats.map((entry,i)=>i===index?{sent,lastTurn:turn}:entry);
+ const callout={id:request.id,by:index,calloutId:request.calloutId,turn,at:now};
+ const result={type:'callout',by:index,calloutId:request.calloutId,sentCount:sent,turn};
+ const next=addReceipt({...room,
+  calloutStats:nextStats,
+  callouts:last([...(room.callouts||[]),callout],MAX_ROOM_CALLOUTS),
+  revision:room.revision+1,updatedAt:now,expiresAt:now+GAME_LIFETIME
+ },index,request,result);
+ return {room:registerOnlineCallout(next,index,sent),result};
+}
 export function timeOutOnlineTurn(room,now=Date.now()){
  if(!room||room.phase!=='playing'||!room.match||
     !isLocalTimerExpired(room.match,now))return {room,changed:false};
@@ -255,6 +286,10 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
    round:match.round,bagCount:match.bag.length,
    bagInventory:summarizeBag(match.bag),
    rack:match.players[index].rack, // NEVER include the other players' tiles.
+   callouts:last(room.callouts||[],MAX_ROOM_CALLOUTS).map(c=>({
+    id:c.id,by:c.by,calloutId:c.calloutId,turn:c.turn,at:c.at
+   })),
+   sentCalloutThisTurn:(room.calloutStats?.[index]?.lastTurn===match.turnNumber),
    freeExchangeUsed:index===match.current&&match.freeExchangeUsed,
    deadline:match.deadline,
    lastMoves:last(match.history,MAX_ROOM_HISTORY).map(m=>({
@@ -288,6 +323,15 @@ export function verifyOnlineRoom(room){
    (!room.match||normalizeTileSet(room.match.tileSet)!==normalizeTileSet(room.tileSet)||
       room.match.players.length!==room.people.length||
      room.match.players.some((p,i)=>p.name!==room.people[i].name)))return false;
+ if(room.calloutStats!==undefined&&(!Array.isArray(room.calloutStats)||
+   room.calloutStats.length!==room.people.length||
+   room.calloutStats.some(s=>!s||!number(s.sent,0,ROOM_MAX_ACTIONS)||
+     !number(s.lastTurn,0,ROOM_MAX_ACTIONS))))return false;
+ if(room.callouts!==undefined&&(!Array.isArray(room.callouts)||
+   room.callouts.length>MAX_ROOM_CALLOUTS||
+   room.callouts.some(c=>!c||typeof c.id!=='string'||!number(c.by,0,room.people.length-1)||
+     !Object.hasOwn(CALLOUT_BY_ID,c.calloutId)||!number(c.turn,1,ROOM_MAX_ACTIONS)||
+     !number(c.at,1,4102444800000))))return false;
  if(!Array.isArray(room.receipts)||room.receipts.length>ROOM_MAX_ACTIONS)return false;
  return true;
 }
