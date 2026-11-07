@@ -89,13 +89,17 @@ export function randomFloat(){
 /** All kits contain 151 physical tiles; 16 digits become 8 bracket pairs. */
 export function makeBag(random=randomFloat,tileSet='natural') {
  const kit=normalizeTileSet(tileSet),values=[];
- const fractions=kit==='rational'?Array.from({length:28},(_,i)=>POSITIVE_FRACTION_VALUES[i%POSITIVE_FRACTION_VALUES.length]):FRACTION_VALUES;
+ const fractions=Array.from({length:28},(_,i)=>POSITIVE_FRACTION_VALUES[i%POSITIVE_FRACTION_VALUES.length]);
  let fractionIndex=0,bracketIndex=0;
  for(let digit=0;digit<=9;digit++){
    const copies=digit<=4?9:7;
    for(let i=0;i<copies;i++){
      if(kit==='integer'&&digit>0&&i<3)values.push('−'+digit);
-     else if(hasBracketPair(kit)&&i<(digit<=3?5:4)){
+     else if(kit==='advanced'&&digit<=1&&i<8){
+       const pair=Math.floor(bracketIndex/2);
+       values.push({value:bracketIndex%2===0?'(':')',pairId:'paren-'+pair});
+       bracketIndex++;
+     }else if(kit==='rational'&&i<(digit<=3?5:4)){
        if(fractionIndex<fractions.length){
          values.push(fractions[fractionIndex++]);
        }else{
