@@ -457,6 +457,7 @@ function renderRack(){
  $('swap-btn').disabled=state.ended||state.busy||state.bag.length===0;
  $('score-btn').disabled=state.ended||state.swapping||state.busy||!Object.keys(state.pending).length;
  $('undo-btn').textContent=state.swapping?'× CANCEL':'× CLEAR';
+ $('undo-btn').setAttribute('aria-label',state.swapping?'Cancel tile swap':state.itemTarget?'Cancel gadget targeting':'Clear all unscored placements');
  $('undo-btn').disabled=state.busy||state.ended||(!state.swapping&&!state.itemTarget&&
    !state.selected&&!Object.keys(state.pending).length);
  $('shuffle-rack-btn').disabled=state.busy||state.ended||state.swapping||Boolean(state.itemTarget)||available.length<2;
