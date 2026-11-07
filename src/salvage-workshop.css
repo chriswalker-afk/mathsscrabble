@@ -1,0 +1,361 @@
+/* EQUA//NOVA · Pass E: Salvage Bay workshop and equipment gallery.
+   No board/tile selectors and no rules live here. All decorations are bounded
+   by the intermission dialog and respect reduced motion. */
+.drift-hub[data-view="salvage"]{
+ border:1px solid var(--nova-line-bright);
+ background:#0d2232;
+ box-shadow:0 35px 100px #010c18ee,0 0 0 3px #31545a;
+}
+.drift-hub[data-view="salvage"] .drift-hub-header{
+ background:linear-gradient(120deg,#284c52,#163340 70%,#102b3c);
+ border-bottom:1px solid #7aa49c;min-height:67px;
+}
+.drift-hub[data-view="salvage"] .drift-hub-header h2{
+ text-shadow:0 2px 7px #081b27;
+}
+.drift-hub[data-view="salvage"] .drift-hub-body{
+ padding-top:12px;padding-bottom:16px;
+ background:radial-gradient(ellipse at 80% 10%,#34576333,transparent 65%),#0d2432;
+}
+/* The old detailed suspended ship remains in the back; the new drawing adds
+   a repair engineer, friendly diagnostic drone and foreground workbench. */
+.drift-hub[data-view="salvage"] .drift-salvage-hero{
+ position:relative;isolation:isolate;min-height:205px;
+ background:#112d3b;border:1px solid #9ebbae;
+ border-radius:14px;box-shadow:0 10px 23px #0008,inset 0 1px #e9fff14d;
+}
+.drift-hub[data-view="salvage"] .drift-salvage-hero>img{
+ position:absolute;inset:0;z-index:0;
+ width:100%;height:100%;object-fit:cover;object-position:center 61%;
+ filter:contrast(1.04) saturate(1.08);
+}
+.drift-hub[data-view="salvage"] .drift-salvage-hero::before{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background-image:url("../assets/salvage-workshop-crew.svg");
+ background-repeat:no-repeat;background-size:cover;background-position:right center;
+ filter:drop-shadow(0 6px 10px #041c2380);
+}
+.drift-hub[data-view="salvage"] .drift-salvage-hero::after{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+ background:linear-gradient(90deg,#061c2cf6 0%,#0e2d3edc 32%,#0b293a65 57%,transparent 85%),
+ linear-gradient(0deg,#0a1e2a9e,transparent 55%);
+}
+.drift-hub[data-view="salvage"] .drift-salvage-caption{
+ position:relative;z-index:3;min-height:205px;max-width:490px;
+ display:flex;flex-direction:column;justify-content:center;gap:7px;
+ padding:17px 23px;
+}
+.drift-hub[data-view="salvage"] .drift-salvage-caption>span:first-child{
+ color:#b6f4db;font-size:10px;letter-spacing:.16em;font-weight:900;
+}
+.drift-hub[data-view="salvage"] .drift-salvage-caption>strong{
+ font-size:clamp(25px,3.4vw,39px);line-height:1.02;
+ font-weight:950;color:#fff2d1;letter-spacing:.005em;
+ text-shadow:0 2px 12px #051723;
+}
+.drift-hub[data-view="salvage"] .drift-salvage-caption>p{
+ font-size:11px;line-height:1.47;color:#e0ede6;max-width:345px;
+}
+.workshop-crew-label{
+ display:inline-flex;align-self:start;align-items:center;gap:5px;
+ padding:5px 8px;border-radius:6px;border:1px solid #96e0bda4;
+ background:#174c4cc4;color:#ccffdd!important;
+ font-size:9px!important;letter-spacing:.08em!important;font-weight:900;
+}
+/* Readable live resources with a distinct Flux gauge and fitted-bay counts. */
+.drift-hub[data-view="salvage"] .workshop-console{
+ display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;
+ margin:10px 0 9px;
+}
+.drift-hub[data-view="salvage"] .workshop-console>div{
+ position:relative;min-width:0;min-height:62px;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:9px;padding:9px 13px;
+ border:1px solid #789d9b;border-radius:9px;
+ background:linear-gradient(143deg,#294754,#163444);
+ box-shadow:inset 0 1px #edfdf42a;
+}
+.drift-hub[data-view="salvage"] .workshop-console>div:first-child{
+ border-color:#dfc58f;background:linear-gradient(133deg,#5e503e,#263c43);
+ box-shadow:inset 0 1px #fbe2a36c,0 0 15px #f7d39424;
+}
+.drift-hub[data-view="salvage"] .workshop-console span{
+ font-size:9px;font-weight:950;letter-spacing:.065em;
+ color:#c2dbd7;line-height:1.25;
+}
+.drift-hub[data-view="salvage"] .workshop-console strong{
+ white-space:nowrap;font-size:20px;color:#ffedca;
+ font-variant-numeric:tabular-nums;letter-spacing:.01em;
+}
+.drift-hub[data-view="salvage"] .workshop-console .workshop-flux-value{
+ font-size:32px;line-height:1;color:#ffe3a0;
+ text-shadow:0 2px 9px #f0b7715c;
+}
+.workshop-flux-value::before{
+ content:"✦";font-size:18px;vertical-align:3px;margin-right:4px;
+ color:#f6d598;
+}
+/* Installed loadout really looks fitted into six machinery docks.
+   Inspectable filled slots explain their precise in-game effects. */
+.workshop-installed{
+ border:1px solid #698d94;border-radius:12px;
+ background:linear-gradient(145deg,#244550,#112e40);
+ padding:11px 12px;margin-bottom:15px;
+ box-shadow:inset 0 1px #d7fff120;
+}
+.workshop-installed-heading{
+ display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:5px;border-bottom:1px solid #749b9b78;
+ padding:0 0 8px;margin-bottom:8px;
+}
+.workshop-installed-heading>span{
+ font-size:11px;font-weight:950;letter-spacing:.13em;color:#ffe0a7;
+}
+.workshop-installed-heading>small{
+ font-size:10px;line-height:1.3;color:#bcd9d3;
+}
+.workshop-loadout{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.1fr);gap:12px}
+.workshop-loadout-group{min-width:0}
+.workshop-loadout-title{display:block;font-size:9px;font-weight:900;
+ letter-spacing:.1em;color:#bce9dc;margin-bottom:6px}
+.workshop-equipped-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.workshop-equipped-grid.workshop-gadgets{grid-template-columns:repeat(2,minmax(0,1fr))}
+.workshop-slot{position:relative;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:4px;min-width:0;min-height:74px;
+ border:1px solid #64878f;border-radius:8px;
+ background:linear-gradient(155deg,#234454,#102d3e);
+ color:#cddfdb;box-shadow:inset 0 1px #d4ffdf16;
+ padding:4px 5px;text-align:center}
+.workshop-slot.is-empty{
+ border-style:dashed;border-color:#5f80898c;
+ background:repeating-linear-gradient(145deg,#102c3d,#102c3d 8px,#173446 8px,#173446 16px);
+ opacity:.82;
+}
+.workshop-slot-plus{font-size:22px;line-height:1;color:#93b9b9}
+.workshop-slot-label{font-size:9px;font-weight:850;line-height:1.16;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;overflow-wrap:anywhere;max-width:100%;color:#dce5d8}
+.workshop-slot-art{display:grid;place-items:center;width:38px;height:38px;color:var(--workshop-accent,#b1e8d5);
+ background:radial-gradient(circle,#476676,#1b3846);
+ border:1px solid var(--workshop-accent,#8db6b5);border-radius:8px}
+.workshop-slot-art .equip-svg{display:block;width:35px;height:35px}
+.workshop-slot.is-filled{
+ cursor:pointer;border-color:var(--workshop-accent,#8dc6bf);
+ background:radial-gradient(ellipse at 30% 12%,#415d64,transparent 75%),
+ linear-gradient(145deg,#284856,#17303e);
+}
+.workshop-slot.is-filled:hover{filter:brightness(1.15)}
+.workshop-slot.is-filled:focus-visible{
+ outline:3px solid var(--nova-focus);outline-offset:2px}
+.workshop-slot.is-new{
+ animation:workshopDock 700ms ease-out both;
+ box-shadow:0 0 12px color-mix(in srgb,var(--workshop-accent),transparent 45%)}
+@keyframes workshopDock{0%{transform:translateY(7px) scale(.93);filter:brightness(1.45)}
+ 55%{transform:translateY(0) scale(1.03)}100%{transform:none;filter:none}}
+
+/* Stock is organised like a gallery of physical hardware. Separate the
+   four permanent module bays from the three disposable cartridges. */
+.workshop-catalog{border:1px solid #65848d;border-radius:12px;
+ background:linear-gradient(150deg,#1b3c49,#102a39);
+ padding:13px 14px 14px;margin-top:12px;min-width:0}
+.workshop-catalog.workshop-gadget-catalog{
+ background:linear-gradient(150deg,#2b3c51,#172f40);
+ border-color:#7c84a7;
+}
+.workshop-section-header{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:15px;margin-bottom:12px;
+ padding:0 0 10px;border-bottom:1px solid #7ca29c78;
+}
+.workshop-section-header>div{min-width:0}
+.workshop-section-header>div>span{font-size:9px;font-weight:950;
+ letter-spacing:.16em;color:#9ae9d6}
+.workshop-gadget-catalog .workshop-section-header>div>span{color:#d2c2ff}
+.workshop-section-header h3{font-size:clamp(17px,2vw,21px);
+ line-height:1.1;margin:4px 0;color:#ffedcb;font-weight:950}
+.workshop-section-header p{font-size:10px;line-height:1.38;
+ max-width:600px;margin:0;color:#c5dcda}
+.workshop-stock-count{flex:0 0 auto;align-self:center;
+ padding:6px 8px;border:1px solid #8db6ae;border-radius:6px;
+ color:#e0fff0;background:#1c4a4dc2;
+ font-weight:900;white-space:nowrap;font-size:9px;letter-spacing:.045em}
+.workshop-gadget-catalog .workshop-stock-count{
+ border-color:#c1acda;color:#efe7ff;background:#423e5b}
+.drift-hub[data-view="salvage"] .salvage-grid{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+ align-items:stretch;
+}
+.drift-hub[data-view="salvage"] .salvage-card{
+ position:relative;isolation:isolate;display:flex;flex-direction:column;
+ gap:5px;min-width:0;min-height:266px;
+ padding:8px 9px 10px;overflow:hidden;
+ border:1px solid #718d95;border-top:3px solid var(--workshop-accent,#9bc3bd);
+ border-radius:10px;background:linear-gradient(153deg,#31505d 0%,#213c4c 34%,#122e3d 100%);
+ box-shadow:inset 0 1px #e9ffe82a,0 3px 12px #091a278c;
+ transition:transform 150ms ease,border-color 150ms ease,box-shadow 150ms ease;
+}
+.drift-hub[data-view="salvage"] .salvage-card:hover{
+ transform:translateY(-2px);border-color:var(--workshop-accent);
+ box-shadow:inset 0 1px #f0fff03e,0 8px 19px #0718279c;
+}
+.drift-hub[data-view="salvage"] .salvage-card::before{
+ content:"";position:absolute;inset:0 0 auto;height:110px;
+ background:radial-gradient(ellipse at 48% 45%,color-mix(in srgb,var(--workshop-accent),transparent 84%),transparent 80%);
+ pointer-events:none}
+.drift-hub[data-view="salvage"] .salvage-card.salvage-consumable{
+ border-left:1px solid #81829d;border-top-color:var(--workshop-accent);
+ background:linear-gradient(153deg,#41455d,#263b51 36%,#1a3043);
+}
+.drift-hub[data-view="salvage"] .workshop-item-stage{
+ position:relative;z-index:1;display:grid;place-items:center;
+ min-width:0;width:100%;height:104px;min-height:104px;
+ border:1px solid #567b82;border-radius:8px;
+ background:radial-gradient(ellipse at 50% 40%,#517c7c77,transparent 70%),
+ linear-gradient(180deg,#143447,#1a3643 70%,#233f4a);
+ overflow:hidden;
+}
+.drift-hub[data-view="salvage"] .salvage-consumable .workshop-item-stage{
+ border-color:#706c95;
+ background:radial-gradient(ellipse at 50% 40%,#71689d6b,transparent 70%),
+ linear-gradient(180deg,#1b3450,#242e49 70%,#263e4b);
+}
+.workshop-item-stage::after{
+ content:"";position:absolute;bottom:4px;left:16%;width:68%;height:2px;
+ background:linear-gradient(90deg,transparent,var(--workshop-accent),transparent);
+ box-shadow:0 0 8px var(--workshop-accent);opacity:.72}
+.workshop-device{display:block;width:100%;height:100%;max-width:225px;max-height:104px;
+ object-fit:contain;filter:drop-shadow(0 3px 5px #06131c93)}
+.drift-hub[data-view="salvage"] .salvage-type{
+ position:relative;color:var(--workshop-accent);font-size:8px;
+ font-weight:950;letter-spacing:.12em;line-height:1.4;
+ grid-column:auto;grid-row:auto;
+}
+.drift-hub[data-view="salvage"] .salvage-card>strong{
+ position:relative;grid-column:auto;grid-row:auto;
+ display:block;min-height:0;font-size:13px;line-height:1.22;
+ letter-spacing:-.01em;color:#fff0d2}
+.drift-hub[data-view="salvage"] .salvage-card>p{
+ position:relative;grid-column:auto;grid-row:auto;
+ font-size:10px;line-height:1.38;margin:1px 0 0;color:#d1e4df;
+ flex:1;min-height:0;overflow-wrap:anywhere}
+.workshop-card-detail{
+ position:relative;display:flex;justify-content:space-between;
+ align-items:center;gap:5px;border-top:1px solid #749c9773;
+ padding-top:6px;margin-top:auto;
+}
+.workshop-card-detail>span:first-child{
+ color:#b5d8d2;font-size:8px;letter-spacing:.04em;font-weight:850}
+.workshop-price-tag{white-space:nowrap;color:#ffe4b0;
+ font-size:11px;font-weight:950;font-variant-numeric:tabular-nums}
+.drift-hub[data-view="salvage"] .salvage-card .salvage-buy{
+ position:relative;display:block;flex:0 0 auto;
+ grid-column:auto;grid-row:auto;margin:3px 0 0;
+ padding:8px 5px;min-height:34px;width:100%;
+ font-size:10px;letter-spacing:0;font-weight:950;
+ background:linear-gradient(145deg,#f7dfae,#d8b37b);
+ border:1px solid #fff0c8;border-radius:7px;
+ color:#283744;box-shadow:inset 0 1px #fff8d7,0 2px #8f7459;
+}
+.drift-hub[data-view="salvage"] .salvage-card .salvage-buy:hover:not(:disabled){
+ background:linear-gradient(145deg,#fff2c3,#e6c48d);filter:brightness(1.03)}
+.drift-hub[data-view="salvage"] .salvage-card .salvage-buy:disabled{
+ opacity:1;background:linear-gradient(145deg,#354b57,#273d4a);
+ border-color:#607d83;color:#b7cece;box-shadow:inset 0 1px #eaffed13;
+ cursor:not-allowed;filter:none;
+}
+.drift-hub[data-view="salvage"] .salvage-card .salvage-buy:focus-visible{
+ outline:3px solid var(--nova-focus);outline-offset:3px}
+.drift-hub[data-view="salvage"] .salvage-empty{
+ grid-column:1/-1;padding:20px 12px;color:#dce8db;
+ text-align:center;border:1px dashed #83ada5;border-radius:9px;
+ background:#1e414e;font-size:12px}
+.drift-hub[data-view="salvage"] .workshop-feedback{
+ margin:12px 0 2px!important;
+ padding:10px 12px;border:1px solid #769e95;
+ border-left:4px solid #edc78a;border-radius:8px;
+ background:linear-gradient(130deg,#2b4c50,#1a3742);
+ color:#e1eee0!important;font-size:11px!important;
+ line-height:1.4}
+.workshop-feedback:focus-visible{outline:3px solid var(--nova-focus);outline-offset:2px}
+.drift-hub[data-view="salvage"] .drift-hub-actions{
+ background:#122d3ff4;border-top:1px solid #6d9797}
+.drift-hub[data-view="salvage"] .drift-hub-actions .drift-go{
+ font-weight:950;box-shadow:inset 0 1px #fff4d3,0 3px #8b6945;
+}
+@media(max-width:980px){
+ .drift-hub[data-view="salvage"] .salvage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .drift-hub[data-view="salvage"] .salvage-card{min-height:250px}
+ .drift-hub[data-view="salvage"] .workshop-item-stage{height:104px}
+ .workshop-loadout{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+}
+@media(max-width:580px){
+ .drift-hub[data-view="salvage"] .drift-hub-header{min-height:0}
+ .drift-hub[data-view="salvage"] .drift-hub-header h2{font-size:21px}
+ .drift-hub[data-view="salvage"] .drift-hub-body{padding:9px 9px 15px}
+ .drift-hub[data-view="salvage"] .drift-salvage-hero,
+ .drift-hub[data-view="salvage"] .drift-salvage-caption{min-height:159px}
+ .drift-hub[data-view="salvage"] .drift-salvage-hero::before{
+  background-size:auto 100%;background-position:right center}
+ .drift-hub[data-view="salvage"] .drift-salvage-hero::after{
+  background:linear-gradient(90deg,#071b2def 0%,#0a283bdc 55%,#132d3c42 100%)}
+ .drift-hub[data-view="salvage"] .drift-salvage-caption{
+  max-width:83%;padding:12px 11px;gap:5px}
+ .drift-hub[data-view="salvage"] .drift-salvage-caption>strong{
+  font-size:clamp(19px,5.8vw,27px)}
+ .drift-hub[data-view="salvage"] .drift-salvage-caption>p{font-size:10px;line-height:1.36}
+ .drift-hub[data-view="salvage"] .drift-salvage-caption>span:first-child{font-size:8px}
+ .workshop-crew-label{font-size:8px!important;padding:3px 6px}
+ .drift-hub[data-view="salvage"] .workshop-console{gap:5px;margin:8px 0}
+ .drift-hub[data-view="salvage"] .workshop-console>div{
+  min-height:56px;padding:7px 7px;display:flex;flex-direction:column;
+  align-items:flex-start;gap:2px}
+ .drift-hub[data-view="salvage"] .workshop-console span{font-size:8px}
+ .drift-hub[data-view="salvage"] .workshop-console strong{font-size:15px}
+ .drift-hub[data-view="salvage"] .workshop-console .workshop-flux-value{font-size:24px}
+ .workshop-installed{padding:8px;margin-bottom:10px}
+ .workshop-installed-heading{padding-bottom:5px;margin-bottom:6px}
+ .workshop-installed-heading>span{font-size:10px}
+ .workshop-installed-heading>small{font-size:9px}
+ .workshop-loadout{grid-template-columns:1fr;gap:8px}
+ .workshop-loadout-title{font-size:8px;margin-bottom:4px}
+ .workshop-slot{min-height:51px;display:flex;flex-direction:row;gap:4px;padding:3px}
+ .workshop-slot-art{width:30px;height:30px;flex:0 0 30px}
+ .workshop-slot-art .equip-svg{width:27px;height:27px}
+ .workshop-slot-label{font-size:8px;-webkit-line-clamp:2}
+ .workshop-slot-plus{font-size:15px}
+ .workshop-catalog{margin-top:9px;padding:10px 9px}
+ .workshop-section-header{gap:7px;margin-bottom:9px;padding-bottom:8px}
+ .workshop-section-header>div>span{font-size:8px}
+ .workshop-section-header h3{font-size:17px}
+ .workshop-section-header p{font-size:9px;line-height:1.35}
+ .workshop-stock-count{padding:4px 5px;font-size:8px}
+ .drift-hub[data-view="salvage"] .salvage-grid{gap:7px}
+ .drift-hub[data-view="salvage"] .salvage-card{min-height:245px;padding:6px}
+ .drift-hub[data-view="salvage"] .workshop-item-stage{height:80px;min-height:80px}
+ .workshop-device{max-height:82px}
+ .drift-hub[data-view="salvage"] .salvage-type{font-size:8px}
+ .drift-hub[data-view="salvage"] .salvage-card>strong{font-size:12px}
+ .drift-hub[data-view="salvage"] .salvage-card>p{font-size:9px;line-height:1.3}
+ .workshop-card-detail>span:first-child{font-size:8px}
+ .workshop-price-tag{font-size:10px}
+ .drift-hub[data-view="salvage"] .salvage-card .salvage-buy{
+  min-height:34px;font-size:9px;padding:7px 3px}
+}
+@media(max-width:365px){
+ .drift-hub[data-view="salvage"] .salvage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .drift-hub[data-view="salvage"] .salvage-card{min-height:270px;padding:5px}
+ .drift-hub[data-view="salvage"] .salvage-card>strong{font-size:11px}
+ .drift-hub[data-view="salvage"] .salvage-card>p{font-size:9px;line-height:1.26}
+ .drift-hub[data-view="salvage"] .drift-salvage-caption{max-width:88%}
+ .workshop-installed-heading>small{font-size:8px}
+ .workshop-stock-count{max-width:75px;text-align:center;white-space:normal}
+ .workshop-slot{min-height:51px}
+ .workshop-slot-art{width:23px;height:27px;flex-basis:23px}
+ .workshop-slot-art .equip-svg{width:23px;height:24px}
+ .workshop-slot-label{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+ .drift-hub[data-view="salvage"] .salvage-card,
+ .workshop-slot.is-new{transition:none!important;animation:none!important}
+ .drift-hub[data-view="salvage"] .salvage-card:hover{transform:none}
+}
