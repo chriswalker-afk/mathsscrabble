@@ -39,11 +39,12 @@ try{
  assert.equal(await page.locator('#anomaly-banner').isVisible(),false);
  const baseBoardWidth=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
  assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
-  assert.equal(await page.locator('#rogue-summary').evaluate(x=>Boolean(x.closest('.right-panel'))),true,
-   'Ship Systems belong on the right rail');
-  assert.equal(await page.locator('#drift-temporary').evaluate(x=>Boolean(x.closest('.right-panel'))),true,
-   'Mission Gadgets belong beside the installed systems');
-  assert.equal(await page.locator('#drift-loadout').isVisible(),true);
+  assert.equal(await page.locator('#rogue-summary').evaluate(x=>Boolean(x.closest('.left-panel'))),true,
+    'Ship Systems belong in the slim telemetry rail');
+   assert.equal(await page.locator('#drift-temporary').evaluate(x=>Boolean(x.closest('.rack-section'))),true,
+    'Mission Gadgets belong beside the rack');
+   assert.equal(await page.locator('.right-panel').count(),0,'no permanent command console');
+   assert.equal(await page.locator('#drift-loadout').isVisible(),true);
  assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
  const firstDrift=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
  assert.ok(firstDrift,'a different key saves the Drift');
@@ -283,7 +284,12 @@ try{
  assert.ok(mobile.scrollWidth<=mobile.width+3,'Drift header must not cause horizontal scrolling');
  assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
  assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
- assert.equal(await page.locator('#rogue-summary').isVisible(),true);
+ assert.equal(await page.locator('#ship-systems-drawer > summary').isVisible(),true);
+ assert.equal(await page.locator('#ship-systems-drawer').evaluate(el=>el.open),false,'mobile ship drawer starts collapsed');
+ assert.equal(await page.locator('#gadget-drawer').evaluate(el=>el.open),false,'mobile gadget drawer starts collapsed');
+ await page.locator('#ship-systems-drawer > summary').click();
+ assert.equal(await page.locator('#rogue-summary').isVisible(),true,'systems can be inspected on a phone');
+ await page.locator('#ship-systems-drawer > summary').click();
  await page.screenshot({path:'/tmp/equanova-drift-equipment-mobile.png',fullPage:true});
  assert.ok(mobile.topActions.every(x=>x.right<=mobile.width+3&&x.width>=25),'all mode and utility buttons remain accessible');
  assert.ok(mobile.scoreBottom<mobile.width*3,'score is visible without scrolling');

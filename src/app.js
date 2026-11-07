@@ -504,6 +504,9 @@ function showLocalHandover(){
  $('app').dataset.private=String(hidden);
  $('app').inert=hidden; // prevent keyboard/screen-reader access to private rack underneath
  if(!hidden)return;
+ // Never let a prior pilot's achievement notification appear over a private
+ // handover, or block the next pilot's scoring controls when Ready is pressed.
+ document.getElementById('achievement-toast')?.remove();
  const player=match.players[match.current];
  paintPilotAvatar($('local-handover-avatar'),player.avatar,match.current,
    {size:108,framing:'bust'});
@@ -657,6 +660,7 @@ function render(){
    ceremony:Boolean(state.ceremony),mode:state.mode,
    score:state.score,target:isLocal()?null:currentTarget()
  });
+ $('gadget-drawer').hidden=!isDrift();
  renderDriftHud(isDrift()?state.rogue:null,state.itemTarget,activateTemporary,showEquipmentInfo);
  renderZoneStrip(isDrift()?state.rogue:null,state.sector,state.phase,showZoneMap);
  // Both solo and local competition share the same scoring ceremony display.
@@ -706,6 +710,8 @@ function render(){
      const scene=zoneSceneUrl(anomaly.id);
      if(scene&&$('anomaly-scene').getAttribute('src')!==scene)$('anomaly-scene').src=scene;
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
+   $('anomaly-banner').setAttribute('aria-label','Sector anomaly: '+anomaly.name+'. '+anomaly.short);
+   $('anomaly-banner').title=anomaly.name+' · '+anomaly.short;
      $('anomaly-text').textContent=anomaly.short+
        (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
    }
@@ -1892,6 +1898,14 @@ $('modal-close').onclick=()=>{
 $('modal').addEventListener('cancel',e=>{
  if($('modal-eyebrow').textContent==='EQUATION VERIFIED')e.preventDefault();
 });
+// Secondary drawers start collapsed at mobile widths to protect board space.
+const boardFirstNarrow=window.matchMedia('(max-width:730px)');
+const updateEquipmentDrawers=()=>{
+ $('ship-systems-drawer').open=!boardFirstNarrow.matches;
+ $('gadget-drawer').open=!boardFirstNarrow.matches;
+};
+updateEquipmentDrawers();
+boardFirstNarrow.addEventListener('change',updateEquipmentDrawers);
 startSolo();
 
 initBoardZoom();

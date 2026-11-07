@@ -22,7 +22,7 @@ try{
    src:document.querySelector('.zone-strip-landscape').getAttribute('src')
   }));
   assert.ok(dimensions.scroll<=dimensions.viewport+3,'phone and tablet widths must not overflow: '+JSON.stringify(dimensions));
-  assert.ok(dimensions.board<=720,'zone art must never increase board footprint');
+  assert.ok(dimensions.board<=Math.min(790,dimensions.viewport+3),'zone art must not overflow the board-first viewport');
   assert.match(dimensions.src,/^\.\/assets\/drift\/zones\/[a-z-]+\.svg$/);
   const before=await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1'));
   await page.locator('#drift-zone-map').click();

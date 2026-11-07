@@ -36,8 +36,8 @@ try{
        .every(button=>{const rect=button.getBoundingClientRect();return rect.right<=innerWidth+2&&rect.left>=-2}),
     statusVisible:(()=>{const r=document.querySelector('#reactor-phase-label').getBoundingClientRect();return r.width>25&&r.right<=innerWidth})()
   }));
-  assert.ok(geometry.frame<=720,'Pass C must respect the existing 720px tablet frame cap');
-  assert.ok(geometry.console<=665,'console must fit same compact playing region');
+  assert.ok(geometry.frame<=Math.min(790,geometry.viewport+3),'Pass C must respect the board-first viewport cap');
+  assert.ok(geometry.console<=Math.min(790,geometry.viewport+3),'board instrument toolbar must fit the board-first stage');
   assert.ok(geometry.scroll<=geometry.viewport+3,'no page overflow at '+width+': '+JSON.stringify(geometry));
   assert.ok(geometry.zoomVisible,'all zoom controls remain reachable at '+width);
   assert.ok(geometry.statusVisible,'the reactor phase remains visible at '+width);
@@ -96,13 +96,14 @@ try{
  assert.equal(await drift.locator('#temporary-slots [data-equipment-id="double-score"]').count(),1);
  assert.equal(await drift.locator('#permanent-slots .equip-svg').count(),1);
  assert.match(await drift.locator('#upgrade-summary').textContent(),/Ionised Sevens/i);
- await drift.locator('#temporary-slots [data-equipment-id="double-score"]').click();
+ await drift.locator('#gadget-drawer > summary').click();
+  await drift.locator('#temporary-slots [data-equipment-id="double-score"]').click();
  assert.equal(await drift.locator('#temporary-slots .equip-state').textContent(),'ARMED');
  assert.equal(await drift.locator('#temporary-slots [data-equipment-id="double-score"]').getAttribute('aria-pressed'),'true');
  const mobile=await drift.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
    frame:document.getElementById('board-frame').getBoundingClientRect().width}));
  assert.ok(mobile.scroll<=mobile.width+3,'gadget hardware must not widen mobile layout');
- assert.ok(mobile.frame<=665);
+ assert.ok(mobile.frame<=Math.min(790,mobile.width+3));
  await drift.screenshot({path:'/tmp/equanova-reactor-pass-c-drift-mobile.png',fullPage:true});
  await drift.close();
  assert.deepEqual(errors,[]);

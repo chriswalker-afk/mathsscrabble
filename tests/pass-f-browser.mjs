@@ -28,7 +28,7 @@ try{
   assert.ok(view.scroll<=width+3,'full page cannot overflow horizontally at '+width+': '+JSON.stringify(view));
   assert.ok(view.topbarScroll<=view.topbarClient+3,'header must fit at '+width+': '+JSON.stringify(view));
   assert.ok(view.logWidth>120&&view.logHeight>=20);
-  assert.ok(view.frame<=720,'status UI may not increase physical board width');
+  assert.ok(view.frame<=Math.min(790,width+3),'board-first viewport stays within its available column');
   if(width<=730)assert.notEqual(view.saveDisplay,'none','save icon must be visible on phones');
   // An invalid equation should produce a readable explanation and clear
   // visual state without an alert floating over the mathematical tiles.
