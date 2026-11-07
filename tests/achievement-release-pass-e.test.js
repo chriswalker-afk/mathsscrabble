@@ -34,15 +34,15 @@ function run(){
   store:()=>store
  };
 }
-test('release invariant: 40 uniquely rewarded permanent achievements across 4 × 10 badges',()=>{
- assert.equal(ACHIEVEMENTS.length,40);
+test('release invariant: 40 original cosmetic achievements plus 3 Alien Radio badges',()=>{
+ assert.equal(ACHIEVEMENTS.length,43);
  assert.deepEqual(Object.fromEntries(Object.entries(ACHIEVEMENTS_BY_MODE).map(([k,v])=>[k,v.length])),
-  {sector:10,drift:10,local:10,online:10});
+  {sector:10,drift:10,local:10,online:13});
  assert.deepEqual(Object.fromEntries(Object.entries(ACHIEVEMENTS_BY_MODE).map(([k,v])=>
   [k,v.map(a=>a.tier).reduce((n,t)=>(n[t]=(n[t]||0)+1,n),{})])),
   {sector:{easy:6,moderate:3,hard:1},drift:{easy:6,moderate:3,hard:1},
-   local:{easy:6,moderate:3,hard:1},online:{easy:6,moderate:3,hard:1}});
- assert.equal(new Set(ACHIEVEMENTS.map(a=>a.reward.collection+'/'+a.reward.id)).size,40);
+   local:{easy:6,moderate:3,hard:1},online:{easy:7,moderate:4,hard:2}});
+ assert.equal(new Set(ACHIEVEMENTS.map(a=>a.reward.collection+'/'+a.reward.id)).size,43);
  const game=run();
  for(const [kind,ids] of Object.entries(FREE_ALIEN_OPTIONS))
   for(const id of ids)assert.equal(game.owns(kind,id),true,'existing cosmetic became gated: '+id);
@@ -114,7 +114,7 @@ test('all ten Local Multiplayer badges belong to a single pilot and three DISTIN
  assert.deepEqual(ACHIEVEMENTS_BY_MODE.local.map(a=>a.id).filter(id=>!g.earned().includes(id)),[]);
  assert.equal(g.progress('L10').current,3);
 });
-test('all ten Online Signal Clash badges require distinct server-confirmed room scopes and two kits',()=>{
+test('ten original online badges and three radio badges require verified server evidence',()=>{
  const g=run();
  const first='room-abcd23-qa',second='room-abcd24-qa',third='room-abcd25-qa';
  g.send('online','room-joined',{playerCount:1},first);
@@ -130,6 +130,12 @@ test('all ten Online Signal Clash badges require distinct server-confirmed room 
  assert.ok(g.earned().includes('O08'));
  g.send('online','match-finished',finished(),second);
  g.send('online','match-finished',finished(),third);
+ g.send('online','callout-sent',{sentCount:1},first);
+ assert.equal(g.earned().includes('O12'),false);
+ assert.equal(g.progress('O12').current,1);
+ g.send('online','callout-sent',{sentCount:3},first);
+ assert.equal(g.earned().includes('O13'),false);
+ g.send('online','callout-sent',{sentCount:8},first);
  assert.deepEqual(ACHIEVEMENTS_BY_MODE.online.map(a=>a.id).filter(id=>!g.earned().includes(id)),[]);
  assert.equal(g.progress('O10').current,3);
 });
