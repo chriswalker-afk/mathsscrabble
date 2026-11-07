@@ -88,7 +88,17 @@ try{
  assert.equal(initial.players.every(p=>p.rack.length===8),true);
  await installKnownLocalRack();
  await ready('Ari');
- assert.match(await page.locator('#local-time-remaining').textContent(),/^\d\d:\d\d$/);
+ assert.match(await page.locator('#local-time-remaining').textContent(),/^\\d\\d:\\d\\d$/);
+  assert.equal(await page.locator('#score-btn').evaluate(x=>x.closest('.rack-commit-actions')!==null),true);
+  assert.equal(await page.locator('#undo-btn').evaluate(x=>x.closest('.rack-actions')!==null),true);
+  assert.equal(await page.locator('#shuffle-rack-btn').isEnabled(),true);
+  const rackBeforeShuffle=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
+  const turnBeforeShuffle=(await getMatch()).turnNumber;
+  await page.locator('#shuffle-rack-btn').click();
+  const rackAfterShuffle=await page.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
+  assert.notDeepEqual(rackBeforeShuffle,rackAfterShuffle,'shuffle should change the visible rack');
+  assert.deepEqual([...rackBeforeShuffle].sort(),[...rackAfterShuffle].sort(),'shuffle keeps every tile');
+  assert.equal((await getMatch()).turnNumber,turnBeforeShuffle,'shuffle must not spend a turn');
  assert.equal(await page.locator('#bag-count').textContent(),'127');
  await page.locator('#bag-details-btn').click();
  assert.equal(await page.locator('.bag-overview-total>strong').textContent(),'127');
