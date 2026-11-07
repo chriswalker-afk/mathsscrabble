@@ -371,7 +371,8 @@ function showLobby(){
  renderPilotPicker();
  const v=state.view;
  const kit=TILE_SET_BY_ID[normalizeTileSet(v.tileSet)];
- $('online-lobby-kit').textContent='MATHEMATICAL KIT · '+kit.short.toUpperCase()+' — '+kit.title+' · '+kitRackSize(kit.id)+' tiles per rack';
+ $('online-lobby-kit').textContent='MATHEMATICAL KIT · '+kit.short.toUpperCase()+' — '+kit.title+' · '+kitRackSize(kit.id)+' tiles per rack'+
+   ' · Game '+(v.gameSeconds?Math.round(v.gameSeconds/60)+' min':'unlimited');
  $('online-gate').hidden=false;
  $('online-entry').hidden=true;
  $('online-lobby').hidden=false;
@@ -566,6 +567,8 @@ function render(){
    v.phase==='lobby'?'WAITING · ROOM '+v.code:
    v.phase==='finished'?'SIGNAL CLASH · FINAL SCORES':
    'SIGNAL CLASH · ROOM '+v.code:'SIGNAL CLASH · ONLINE';
+ $('online-game-clock').textContent=match?.gameDeadline?formatTime(match.gameDeadline-Date.now()):
+   v?.gameSeconds?Math.round(v.gameSeconds/60)+' min game':'NO GAME LIMIT';
  $('online-clock').textContent=match?.deadline?formatTime(match.deadline-Date.now()):
    v?.turnSeconds?v.turnSeconds+'s':'NO TIMER';
  $('online-current').replaceChildren();
@@ -722,7 +725,8 @@ function showResults(){
  state.shownResults=true;
  const content=document.createElement('div');
  const intro=document.createElement('p');
- intro.textContent=match.reason==='stalled'?
+ intro.textContent=match.reason==='time-limit'?'The match timer ended the game. All remaining rack points are deducted.':
+   match.reason==='stalled'?
    'Two full circuits without scoring ended the match.':'A pilot went out after the bag emptied.';
  content.append(intro);
  const table=document.createElement('div');table.className='online-results';
@@ -1038,6 +1042,7 @@ $('online-create-form').onsubmit=async e=>{
      name:$('online-host-name').value,
      maxPlayers:Number($('online-player-limit').value),
      turnSeconds:Number($('online-timer-settings').value),
+     gameSeconds:Number($('online-game-settings').value),
      tileSet:$('online-tile-kit').value,
      avatar:state.alienDraft
    }});
@@ -1101,6 +1106,7 @@ function launchFromSetup(){
   $('online-host-name').value=data.names[0];
   $('online-player-limit').value=String([2,3,4].includes(data.maxPlayers)?data.maxPlayers:2);
   $('online-timer-settings').value=String([0,60,90,120].includes(data.turnSeconds)?data.turnSeconds:0);
+  $('online-game-settings').value=String([0,300,600,900,1200,1800].includes(data.gameSeconds)?data.gameSeconds:0);
   $('online-tile-kit').value=normalizeTileSet(data.tileSet);
   describeSelectedKit();
   $('online-create-form').requestSubmit();
@@ -1132,6 +1138,15 @@ window.setInterval(()=>{
  if(!state.view)return;
  const match=current();
  if(match?.deadline)$('online-clock').textContent=formatTime(match.deadline-Date.now());
+ if(match?.gameDeadline){
+  $('online-game-clock').textContent=formatTime(match.gameDeadline-Date.now());
+  $('online-game-clock').classList.toggle('local-time-urgent',match.gameDeadline-Date.now()<60000);
+  if(Date.now()>=match.gameDeadline&&state.view.phase==='playing'&&!state.busy&&
+    state.requestedExpiredDeadline!==match.gameDeadline){
+   state.requestedExpiredDeadline=match.gameDeadline;
+   void refreshRoom();
+  }
+ }
 },250);
 // Event-first syncing: hibernating room WebSockets deliver every authoritative
 // revision. Avoid repeated HTTP+Durable Object reads while the socket is live.
