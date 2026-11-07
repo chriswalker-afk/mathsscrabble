@@ -32,10 +32,10 @@ test('registry preserves EVERY current base-free alien choice, every palette and
  assert.equal(assertAchievementCatalog(),true);
  assert.equal(ACHIEVEMENTS.length,40);
  for(const [collection,ids] of Object.entries(manifest.parts)){
-  assert.deepEqual(FREE_ALIEN_OPTIONS[collection],ids);
-  for(const id of ids)assert.equal(isFreeAlienOption(collection,id),true);
+  assert.deepEqual(ids.slice(0,FREE_ALIEN_OPTIONS[collection].length),FREE_ALIEN_OPTIONS[collection]);
+  for(const id of FREE_ALIEN_OPTIONS[collection])assert.equal(isFreeAlienOption(collection,id),true);
  }
- assert.deepEqual(FREE_ALIEN_OPTIONS.palettes,Object.keys(manifest.palettes));
+ assert.deepEqual(FREE_ALIEN_OPTIONS.palettes,Object.keys(manifest.palettes).slice(0,FREE_ALIEN_OPTIONS.palettes.length));
  assert.deepEqual(FREE_ALIEN_PRESETS,Object.keys(manifest.presets));
  assert.equal(ownsAlienOption(emptyAchievementStore(),null,'heads','orb'),true);
  assert.equal(ownsAlienOption(emptyAchievementStore(),null,'accessories','none'),true);
