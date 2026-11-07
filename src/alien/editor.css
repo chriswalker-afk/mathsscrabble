@@ -459,3 +459,9 @@ button:disabled{cursor:not-allowed;opacity:.48}
  .stage-serial{display:none}
  .stage-coordinates{left:10px;right:10px;bottom:9px;max-width:none;text-align:center}
 }
+
+/* Visual identity A: preserve the creature artwork and unify shell treatments. */
+:root{--ink:var(--nova-text);--muted:var(--nova-text-muted);--teal:var(--nova-teal);
+ --gold:var(--nova-gold);--border-strong:var(--nova-line)}
+.specimen-panel,.workshop-panel{border-color:var(--nova-line);
+ box-shadow:var(--nova-shadow-panel)}

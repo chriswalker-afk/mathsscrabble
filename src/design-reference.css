@@ -1,0 +1,59 @@
+/* Standalone Pass A preview: no game-playing CSS is imported. */
+*{box-sizing:border-box}
+html{min-width:300px;background:var(--nova-void)}
+body{margin:0;min-height:100dvh;color:var(--nova-text);font-family:var(--nova-font);
+ background:radial-gradient(ellipse at 50% -15%,#284a5b,#0b1e30 50%,var(--nova-void))}
+a{color:var(--nova-teal)}
+.reference-skip{position:absolute;left:12px;top:-90px;z-index:20;background:var(--nova-gold);color:var(--nova-void);padding:12px;border-radius:6px}
+.reference-skip:focus{top:8px}
+.reference-header{max-width:1130px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;
+ border-bottom:1px solid var(--nova-line);gap:16px}
+.reference-header a{display:flex;align-items:center;gap:11px;color:var(--nova-text);text-decoration:none}
+.reference-header a>strong{letter-spacing:.075em;font-size:19px}
+.reference-header a>strong span{color:var(--nova-teal)}
+.reference-header>span{color:var(--nova-text-faint);letter-spacing:.16em;font-size:10px;font-weight:850}
+.nova-reference{max-width:1130px;margin:auto;padding:28px 24px 60px}
+.reference-hero{min-height:310px;padding:32px clamp(25px,4vw,56px);display:grid;grid-template-columns:minmax(0,1.6fr) minmax(185px,.6fr);
+ align-items:center;gap:15px}
+.reference-hero-copy{position:relative;z-index:1}
+.reference-hero h1{margin:11px 0;max-width:710px}
+.reference-hero h1 em{font-style:normal;color:var(--nova-gold)}
+.reference-hero .nova-copy{max-width:560px;margin:0 0 23px}
+.reference-hero .nova-action{text-decoration:none}
+.reference-orbit{width:min(250px,80%);aspect-ratio:1;margin:auto;display:grid;place-items:center;position:relative}
+.reference-orbit-core{font-size:74px;font-weight:850;color:var(--nova-void);
+ width:55%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 32%,#f9ffe0,var(--nova-teal) 63%,#2d8298);
+ display:grid;place-items:center;box-shadow:0 0 44px #61bfa34d,inset 0 0 0 7px #c4f5df80}
+.reference-orbit i{position:absolute;inset:3%;border:1px solid #9fe6d2a3;border-radius:50%;transform:rotate(-19deg) scaleX(.65)}
+.reference-orbit i:nth-of-type(2){transform:rotate(43deg) scaleX(.65)}
+.reference-orbit i:nth-of-type(3){transform:rotate(-54deg) scaleX(.75)}
+.reference-section{padding:38px 0 18px;border-bottom:1px solid #648b8b69}
+.reference-section h2{font-size:clamp(24px,2.8vw,33px);line-height:1.15;margin:7px 0;color:var(--nova-gold)}
+.reference-section>.nova-copy{max-width:740px;margin:5px 0 20px}
+.reference-scenes{margin:17px 0 0}
+.reference-scenes img{display:block;width:100%;height:auto;border-radius:16px;border:1px solid var(--nova-line)}
+.reference-scenes figcaption{color:var(--nova-text-faint);font-size:12px;margin-top:9px}
+.reference-swatches{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:11px;margin:21px 0}
+.reference-swatch{display:flex;flex-direction:column;gap:6px;min-width:0}
+.reference-swatch>span{height:74px;border-radius:10px;background:var(--sample);border:1px solid #bed9dc70}
+.reference-swatch strong{font-size:12px}
+.reference-swatch small{color:var(--nova-text-faint);font-size:11px}
+.reference-component-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.reference-sample{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:22px}
+.reference-sample h3{margin:0;font-size:22px;color:var(--nova-text)}
+.reference-sample p{margin:0 0 10px}
+.reference-sample .nova-action{margin-top:auto;text-decoration:none}
+.reference-sample .nova-hull-badge{margin-top:auto}
+.reference-equation{display:flex;align-items:center;gap:5px;margin:1px 0}
+.reference-equation span{min-width:33px;height:40px;display:grid;place-items:center;color:#163747;background:#f5e5c8;
+ border:1px solid #bca57c;border-radius:6px;box-shadow:inset 0 2px #fff8e8,0 3px #8c795b;font-size:23px;font-weight:900}
+.reference-bottom{border:0}.reference-bottom p{max-width:730px}
+.reference-footer{padding:22px 18px;text-align:center;border-top:1px solid #63898b70;color:var(--nova-text-faint);letter-spacing:.12em;font-size:10px}
+@media(max-width:900px){.reference-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}.reference-component-grid{grid-template-columns:1fr 1fr}.reference-sample:last-child{grid-column:1/-1}}
+@media(max-width:620px){.reference-header{padding:12px}.reference-header>span{font-size:8px;letter-spacing:.08em}
+ .nova-reference{padding:14px 12px 30px}.reference-hero{display:block;padding:25px 20px}.reference-orbit{display:none}
+ .reference-hero h1{font-size:clamp(26px,7vw,37px)}
+ .reference-section{padding-top:30px}.reference-swatches{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .reference-swatch>span{height:56px}.reference-component-grid{grid-template-columns:1fr}.reference-sample:last-child{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}

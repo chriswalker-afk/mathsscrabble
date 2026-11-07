@@ -1087,7 +1087,7 @@ function showDriftRoundSummary(report){
 }
 function showShop(){
  if(!isDrift()||state.phase!=='won')return;
- const offers=shopOffers(state.sector,state.rogue),consumables=shopTemperatures(state.sector);
+ const offers=shopOffers(state.sector,state.rogue),consumables=shopTemperatures(state.sector,state.rogue);
  const occupied=heldConsumables(state.rogue).length;
  const intro=`<div class="drift-salvage-hero">
     <img src="./assets/salvage-bay.svg" width="1200" height="470" alt="A detailed orbital repair bay: the reactor ship suspended on a maintenance cradle, welding arms and illuminated salvage modules.">
@@ -1102,11 +1102,11 @@ function showShop(){
    <div><span>MISSION GADGETS</span><strong>${occupied}/${MAX_TEMPORARY_SLOTS}</strong></div>
  </div>
  <h3 class="drift-shop-tab-title">SHIP SYSTEMS · STAY INSTALLED FOR THIS DRIFT</h3>
- <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Four rotating Ship System offers"></div>
+ <div id="salvage-grid" class="salvage-grid" role="group" aria-label="Four randomly selected Ship System offers"></div>
  <h3 class="drift-shop-tab-title">MISSION GADGETS · USE ONCE, CARRY TWO</h3>
- <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Available Mission Gadgets"></div>
+ <div id="salvage-temporary-grid" class="salvage-grid" role="group" aria-label="Randomly selected Mission Gadgets"></div>
  <p id="salvage-feedback" class="salvage-feedback" role="status" aria-live="polite">
-  Choose what helps your next sector. Your installed equipment is also shown on the main reactor HUD.
+  Fresh salvage stock is rolled after each sector. This bay’s selection stays fixed until you launch. Installed equipment also appears on the reactor HUD.
  </p>`;
  showDriftHub('THE DRIFT · OPTIONAL UPGRADE STOP',
   'Salvage Bay · Deck 07',intro,[

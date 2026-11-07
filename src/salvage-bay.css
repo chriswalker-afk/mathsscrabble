@@ -85,3 +85,11 @@
 }
 @media(max-width:370px){.drift-hub .salvage-grid{grid-template-columns:1fr}.drift-hub-actions button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.drift-hub *{transition:none!important;animation:none!important}}
+
+/* Visual identity A: one finish for shop, results and future story scenes. */
+.drift-hub{border-color:var(--nova-line-bright);box-shadow:var(--nova-shadow-lift)}
+.drift-hub-shell{background:var(--nova-scene-gradient)}
+.drift-summary-card{border-color:var(--nova-line);background:var(--nova-panel-gradient)}
+.drift-hub .salvage-card{border-color:var(--nova-line);box-shadow:inset 0 1px #f7ffee16}
+.drift-hub .salvage-card:hover{border-color:var(--nova-line-bright)}
+.drift-hub .salvage-buy:focus-visible{outline:3px solid var(--nova-focus);outline-offset:2px}

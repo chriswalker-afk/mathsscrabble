@@ -2,6 +2,21 @@
 
 A **playable four-mode prototype** of a sci-fi equation-building board game. Students build mathematically correct equations, guided by **BIDMAS**, and score by using numbered/operator tiles, premium squares, and equation length.
 
+## Visual identity and art direction
+
+Pass A introduces a shared retro-futuristic design language across Mission Control,
+Sector Run, The Drift, online multiplayer and Alien Lab. The reusable colour, typography,
+motion and panel tokens live in [src/design-system.css](src/design-system.css).
+Original art studies and reusable component examples are available in the
+[visual field guide](visual-direction.html), with production conventions in
+[docs/VISUAL_IDENTITY.md](docs/VISUAL_IDENTITY.md). Later passes will use this guide
+when developing illustrated mode cards, bosses and equipment.
+
+The Drift Salvage Bay now randomises **four Ship Systems and three Mission Gadgets**
+per cleared sector, saving the selected inventory with each run. It favours different
+upgrade categories and avoids consecutive duplicates when possible, while ensuring
+reopening a shop or purchasing one item cannot reroll the remaining stock.
+
 ## Play
 
 Serve the project root using a static web server:

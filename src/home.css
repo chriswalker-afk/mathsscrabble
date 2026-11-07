@@ -79,3 +79,32 @@ main{flex:1;width:100%;padding:24px 0 16px}
 @media(max-width:720px){.tile-kit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tile-kit-card{min-height:115px;padding:10px}.tile-kit-card.is-selected{padding:9px}.tile-kit-picker{padding:11px;margin-bottom:15px}.tile-kit-heading h2{font-size:17px}}
 @media(max-width:380px){.tile-kit-active{font-size:8px;padding:5px}.tile-kit-sample{font-size:15px}.tile-kit-card strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.tile-kit-card{transition:none}.tile-kit-card:hover{transform:none}}
+
+/* Visual identity A: shared hull panels and restrained orbital details. */
+.home-intro{position:relative;isolation:isolate}
+.home-intro::before{content:"";position:absolute;inset:-25px 0 -10px 0;z-index:-1;
+ background:radial-gradient(ellipse at 36% 20%,#32596928,transparent 67%);
+ pointer-events:none}
+.home-eyebrow{color:var(--nova-teal);letter-spacing:.18em}
+.home-intro h1{color:var(--nova-text)}
+.home-description{color:var(--nova-text-muted)}
+.mode-card{background:var(--nova-card-gradient);border-color:var(--nova-line);
+ border-radius:var(--nova-r-card);box-shadow:var(--nova-shadow-panel)}
+.mode-card::after{content:"";position:absolute;right:-43px;top:-46px;width:155px;height:155px;
+ border-radius:50%;border:1px solid color-mix(in srgb,var(--tone),transparent 77%);
+ background:radial-gradient(circle at 45% 50%,color-mix(in srgb,var(--tone),transparent 91%),transparent 68%);
+ pointer-events:none;opacity:.85}
+.mode-card>*{position:relative;z-index:1}
+.mode-card:hover{box-shadow:var(--nova-shadow-lift)}
+.mode-card-copy>span{color:var(--nova-text-muted)}
+.mode-sector{--tone:var(--nova-teal)}
+.mode-rogue{--tone:var(--nova-violet)}
+.mode-local{--tone:var(--nova-blue)}
+.mode-online{--tone:var(--nova-gold);background:linear-gradient(145deg,#4c433fe3,#263c46f2)}
+.tile-kit-picker{border-color:var(--nova-line);box-shadow:var(--nova-shadow-panel)}
+.tile-kit-card{border-color:var(--nova-line);border-radius:var(--nova-r-sm)}
+.tile-kit-card.is-selected{border-color:var(--nova-gold)}
+.alien-lab-card{border-color:var(--nova-line-bright);
+ background:linear-gradient(115deg,#29605ae8,#203e50ed);box-shadow:var(--nova-shadow-panel)}
+.home-brand-text strong span{color:var(--nova-teal)}
+@media(prefers-reduced-motion:reduce){.mode-card:hover,.alien-lab-card:hover{transform:none}}
