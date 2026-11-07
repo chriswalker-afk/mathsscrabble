@@ -11,7 +11,7 @@ import {PILOT_PRESET_NAMES,defaultPilotAlien,alienFromStorage,getSavedPilotAlien
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {TILE_SET_STORAGE_KEY,TILE_SET_BY_ID,normalizeTileSet,hasBracketPair,kitRackSize} from './tile-sets.js';
 import {renderTileFace,tileFaceClass} from './tile-face.js';
-import {CALLOUTS,CALLOUT_BY_ID,isCalloutUnlocked} from './online-callouts.js';
+import {CALLOUTS,CALLOUT_BY_ID,CALLOUT_DISPLAY_MS,visibleCallouts,isCalloutUnlocked} from './online-callouts.js';
 import {pilotAchievements} from './achievements/engine.js';
 import {getAchievement} from './achievements/catalog.js';
 import {loadAchievementStore} from './achievements/storage.js';
@@ -122,8 +122,25 @@ const current=()=>state.view?.match;
 const me=()=>state.view?.you;
 const canPlan=()=>state.view?.phase==='playing'&&Boolean(current())&&!state.busy&&!state.ceremony;
 const myTurn=()=>canPlan()&&current()?.current===me()?.index;
-const recentCallouts=()=>current()?.callouts?.filter(x=>
- Date.now()-x.at>=-1500&&Date.now()-x.at<14000&&Object.hasOwn(CALLOUT_BY_ID,x.calloutId))||[];
+const recentCallouts=()=>visibleCallouts(current()?.callouts);
+// Each pilot's message expires individually, even on a restored room.
+function scheduleCalloutExpiry(){
+ if(state.calloutTimer)clearTimeout(state.calloutTimer);
+ state.calloutTimer=null;
+ const visible=recentCallouts();
+ if(!visible.length){
+  $('online-callout-live').textContent='';
+  return;
+ }
+ const firstExpiry=Math.min(...visible.map(x=>x.at+CALLOUT_DISPLAY_MS));
+ state.calloutTimer=setTimeout(()=>{
+  state.calloutTimer=null;
+  if(!state.view)return;
+  renderStandings();
+  renderCalloutStage();
+  scheduleCalloutExpiry();
+ },Math.max(0,firstExpiry-Date.now())+20);
+}
 function unlockedCalloutAchievements(){
  try{
   if(!state.view||!storage)return [];
@@ -212,6 +229,8 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
   state.pending={};state.order=[];state.rackOrder=[];state.swapIds.clear();
   state.selected=null;state.swapping=false;state.shownResults=false;
   state.lastCalloutId=view.match?.callouts?.at(-1)?.id||null;
+  $('online-callout-stage').replaceChildren();
+  $('online-callout-stage').dataset.messageId='';
  }else if(old.revision!==view.revision){
   lostDraft=reconcileOnlineDraft(old.match,view.match);
   if(view.phase!=='playing'){
@@ -225,12 +244,10 @@ const saveRoomFromServer=(payload,{reset=false}={})=>{
   state.lastCalloutId=newest.id;
   const sender=view.people?.[newest.by]?.name||'Pilot';
   const radio=CALLOUT_BY_ID[newest.calloutId];
-  if(radio)$('online-callout-live').textContent=sender+' transmitted '+radio.label+'.';
-  if(state.calloutTimer)clearTimeout(state.calloutTimer);
-  state.calloutTimer=setTimeout(()=>{
-   if(state.view){renderStandings();renderCalloutStage();}
-  },14100);
+  if(radio&&recentCallouts().some(x=>x.id===newest.id))
+   $('online-callout-live').textContent=sender+' transmitted '+radio.label+'.';
  }
+ scheduleCalloutExpiry();
  const gained=ingestOnlineEvidence(storage,view).awarded;
  if(gained.length){
   if(payload?.event?.type==='scored'||state.ceremony||view.phase==='finished')
