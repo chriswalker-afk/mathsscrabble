@@ -25,7 +25,10 @@ try{
  assert.ok(classicBefore,'the original Sector Run must be saved');
  await page.locator('#mode-btn').click();
  await page.waitForURL(/index\.html$/);
- await page.locator('#home-rogue').click();
+ await page.locator('#home-single').click();
+ await page.waitForURL(/choose\.html\?type=single$/);
+ await page.locator('[data-mode="rogue"]').click();
+ await page.locator('#launch-button').click();
  await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
  assert.match(await page.locator('#modal-title').textContent(),/clear sectors, upgrade and face bosses/i);
  await page.locator('#modal-actions button').last().click();
