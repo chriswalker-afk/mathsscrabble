@@ -1004,11 +1004,9 @@ function readyLocalPlayer(){
       seat:match.current,type:'turn-ready',suffix:'t'+match.turnNumber+'-ready',data:{}
     });
     // The handover button was just confirmed by this player, not the previous seat.
-    if(result.awarded.length)showAchievementToast(result.awarded);
-    if(pendingLocalAwards.length){
-      showAchievementToast(pendingLocalAwards);
-      pendingLocalAwards=[];
-    }
+    const visibleAwards=[...pendingLocalAwards,...result.awarded];
+    pendingLocalAwards=[];
+    if(visibleAwards.length)showAchievementToast(visibleAwards);
    $('board').querySelector('[tabindex="0"]')?.focus({preventScroll:true});
  }catch(err){announce(err.message,true);}
 }
@@ -1423,8 +1421,10 @@ function scoreLocal(){
    const active={...match,pending:state.pending,placementOrder:state.placementOrder,
      players:match.players.map((p,i)=>i===oldIndex?{...p,rack:state.rack}:p)};
    const {match:updated,points,move}=scoreLocalTurn(active,state.pending);
-    const evidence=soloScoredEvidence({board:match.board,pending:state.pending,move,
-      points,tileSet:match.tileSet});
+    let evidence=null;
+    try{evidence=soloScoredEvidence({board:match.board,pending:state.pending,move,
+      points,tileSet:match.tileSet});}
+    catch{/* Achievement telemetry cannot reject an otherwise correct equation. */}
     const stages=buildScoringCeremony(points);
    const startScore=match.players[oldIndex].score;
    // The complete shared board, the bag and this player's score are committed
@@ -1443,9 +1443,9 @@ function scoreLocal(){
    state.ceremony=ctl;
    announce(match.players[oldIndex].name+' scored a correct equation! Transferring '+points.total+' points.',false,'success');
     persistRun();
-    const earned=awardLocalTransition(storage,updated,{
+    const earned=evidence?awardLocalTransition(storage,updated,{
      seat:oldIndex,type:'move-scored',suffix:'t'+match.turnNumber+'-score',data:evidence
-    });
+    }):{awarded:[]};
     pendingLocalAwards=earned.awarded;
     recordLocalFinish(updated);
     render();
