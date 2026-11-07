@@ -15,7 +15,7 @@ try{
  assert.equal(await page.locator('.mini-cell').count(),49,'small decorative equation board');
  assert.match(await page.locator('#home-save-status').textContent(),/save automatically/i);
  await page.locator('#home-single').click();
- await page.waitForURL(/choose\\.html\\?type=single$/);
+ await page.waitForURL(/choose\.html\?type=single$/);
  assert.equal(await page.locator('.mode-option').count(),2);
  assert.equal(await page.locator('.kit-option').count(),4);
  await page.locator('[data-tile-kit="rational"]').click();
