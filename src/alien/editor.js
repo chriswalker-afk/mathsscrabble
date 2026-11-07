@@ -359,7 +359,9 @@ function usePreset(id){
  });
 }
 function randomise(){
- const next=randomAlien(state.library.manifest,current(),cryptoRandom);
+ const manifest=state.library.manifest;
+ const allowed={...manifest,parts:Object.fromEntries(Object.entries(manifest.parts).map(([kind,ids])=>[kind,ids.filter(id=>owns(kind,id))])),palettes:Object.fromEntries(Object.entries(manifest.palettes).filter(([id])=>owns('palettes',id)))};
+ const next=randomAlien(allowed,current(),cryptoRandom);
  renderChange(next,{message:'A new little alien has arrived from deep space!'});
 }
 function reset(){
