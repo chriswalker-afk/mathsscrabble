@@ -90,6 +90,7 @@ jobs:
           node tests/drift-map-browser.mjs
           node tests/drift-power-browser.mjs
           node tests/ceremony-browser.mjs
+          node tests/reactor-pass-c-browser.mjs
           node tests/local-browser.mjs
           node tests/online-browser.mjs
           node tests/multiplayer-kits-browser.mjs

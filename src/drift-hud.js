@@ -8,11 +8,19 @@ function slot(item,{temporary=false,armed=false,target=false,onClick}={}){
  node.classList.toggle('is-armed',temporary&&armed);
  node.classList.toggle('is-target',temporary&&target);
  node.setAttribute('aria-pressed',String(temporary&&(armed||target)));
- node.setAttribute('aria-label',item.name+'. '+item.description);
+ node.setAttribute('aria-label',(temporary?'Mission Gadget: ':'Installed Ship System: ')+
+   item.name+'. '+item.description+(temporary&&armed?' Armed for next scored equation.':
+   temporary&&target?' Select a rack tile to apply it.':''));
  node.title=item.name+' · '+item.kind+'\n'+item.description;
- const icon=document.createElement('span');icon.innerHTML=equipmentArt(item.id);
+ const icon=document.createElement('span');icon.className='equip-artwork';icon.innerHTML=equipmentArt(item.id);
  const name=document.createElement('span');name.className='equip-name';name.textContent=item.name;
- node.append(icon,name);node.onclick=onClick;return node;
+ node.append(icon,name);
+ if(temporary&&(armed||target)){
+   const status=document.createElement('span');status.className='equip-state';
+   status.textContent=armed?'ARMED':'CHOOSE TILE';status.setAttribute('aria-hidden','true');
+   node.append(status);
+ }
+ node.onclick=onClick;return node;
 }
 function emptySlot(kind,index){
  const node=document.createElement('button');node.type='button';node.disabled=true;

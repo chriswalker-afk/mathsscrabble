@@ -130,3 +130,71 @@ not exported into the gameplay board.
 **Next pass:** Pass C should improve gameplay HUD detail, equipment display
 and score feedback without allowing decorative elements to obscure
 equations, tile values, board coordinates or 19×19 viewport interactions.
+
+## 8. Pass C — Reactor and gameplay polish (implemented)
+
+This pass retains the existing game logic, rack sizes, premium-square
+notation and zoomable 19×19 board. Its new custom artwork and instruments
+are confined to the machinery *around* the mathematical grid.
+
+### Reactor hardware
+
+- The old separate viewport label/zoom strip is a compact instrument head
+  with an engraved reactor-core graphic, four existing zoom commands,
+  percentage readout and a state label.
+- State labels are deliberately modest: **READY TO CHECK** means tiles are
+  geometrically ready for BIDMAS validation, *not* that the equation is true.
+  Other states include **SELECT TILES**, **BUILDING EQUATION**,
+  **ADJUST PLACEMENT**, **EXCHANGING TILES**, **TRANSFERRING ENERGY** and
+  **SECTOR STABILISED**. This display never awards points.
+- The existing border and corner hardware have stronger material depth,
+  readable state colours and small edge effects. The board and its tiles
+  retain the same dimensions and their original text contrast.
+- `assets/reactor/reactor-core.svg` is original, lightweight decoration.
+  `src/reactor-pass-c.css` is loaded after gameplay styles to isolate
+  this visual upgrade from the rules.
+
+### Energy and scoring
+
+- The energy track is now a real `role="progressbar"`, with a
+  current value and target that update during tile-by-tile scoring.
+  Local multiplayer intentionally does not expose a meaningless sector
+  target; the track becomes presentational there.
+- The verified score is still committed to the save before the ceremony,
+  so skipping, refreshing, or enabling reduced motion cannot duplicate
+  rewards or alter the rack.
+- The concluding **+ energy** animation now appears in the narrow console
+  readout, outside the board. The new instrument bar also indicates
+  animation progress without covering mathematical symbols.
+- The score breakdown remains explicit about tile points, multiplier,
+  length, connection, upgrades and anomalies; its new presentation uses
+  the same painted-hull visual language as Mission Control.
+
+### Pilots and installed equipment
+
+- The existing Alien Lab profile is rendered as a small custom pilot
+  portrait on the desktop telemetry rail, with an original core medallion
+  as fallback. Loading an avatar is asynchronous and never delays or
+  mutates the current match.
+- Permanently installed equipment receives distinctive chassis styling
+  by category, and mission gadgets show larger **ARMED** /
+  **CHOOSE TILE** indicators in addition to existing icon and
+  `aria-pressed` attributes.
+- Mobile retains the four-slot Ship System row and two-slot Mission
+  Gadget row. The installed-system names remain available in a compact
+  text summary and through the existing tap-to-inspect action.
+  Desktop medallions remain hidden on mobile so that the score, board
+  and rack are not pushed down.
+
+### Regression gates
+
+`tests/reactor-presentation.test.js` validates status vocabulary and
+precedence. `tests/reactor-pass-c-browser.mjs` verifies full zoom controls,
+four screen widths, no overflow, a real pilot portrait, progressbar
+semantics, correct incremental scoring and skip behaviour, and equipped
+Drift gadgets with clear status feedback. All previous solo, Local Match,
+Online Rooms, sector progression, and Cloudflare tests still run.
+
+**Next pass: D — Drift world-building.** Give each boss a recognisable
+character and zone scene, then improve the route map and encounter effects
+using the shared identity, while retaining the underlying boss rules.
