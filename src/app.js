@@ -27,7 +27,9 @@ import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien,
 import {loadPilotArtwork,paintPilotAvatar} from './alien/badges.js';
 import {bindSoloRun,emitSoloAchievement,soloScoredEvidence,soloClearEvidence} from './achievements/solo-adapter.js';
 import {achievementRevealMarkup,showAchievementToast} from './achievements/celebration.js';
-import {loadPilots} from './achievements/pilots.js';
+import {loadPilots,assignLocalSeats} from './achievements/pilots.js';
+import {createLocalBinding,loadLocalBinding,awardLocalTransition,
+ awardLocalStart,awardLocalFinish} from './achievements/local-adapter.js';
 const $=id=>document.getElementById(id);
 const state={
  board:Array(SIZE*SIZE).fill(null),pending:{},rack:[],bag:[],sector:1,score:0,turn:1,
@@ -61,6 +63,19 @@ function awardSolo(type,suffix,data,{defer=false,quiet=false}={}){
 function takeSoloAwards(){const awards=pendingSoloAwards;pendingSoloAwards=[];return awards;}
 
 let localSetupAliens=[];
+let localSetupOwnerIds=[null,null,null,null];
+let pendingLocalAwards=[],localFinalAwards=[];
+function takeLocalAwards(){const awards=pendingLocalAwards;pendingLocalAwards=[];return awards;}
+function recordLocalFinish(match){
+ if(match.phase!=='finished')return;
+ const earned=awardLocalFinish(storage,match);
+ localFinalAwards=earned.flatMap((result,seat)=>result.awarded?.length?[{seat,awards:result.awarded}]:[]);
+}
+function localFinishMarkup(){
+ return localFinalAwards.map(({seat,awards})=>
+  '<div class="local-achievement-owner"><strong>'+escapeText(state.localMatch.players[seat].name)+
+  ' · PILOT '+(seat+1)+'</strong>'+achievementRevealMarkup(awards)+'</div>').join('');
+}
 let localSetupBadges=()=>{};
 function prepareLocalArtwork(){
  void loadPilotArtwork().then(()=>{
@@ -808,6 +823,7 @@ function localStateFromMatch(match,{privateTurn=true}={}){
  state.lockedFlash.clear();state.ended=match.phase==='finished';
  state.busy=match.phase!=='finished';
  if(match.phase==='finished')state.busy=false;
+ if(match.phase==='finished')recordLocalFinish(match);
  announce(match.phase==='finished'?'Local match complete. Review the final standings.':
    privateTurn?'Hot-seat privacy enabled. Hand the device to the next player.':
    'Local multiplayer match ready.');
@@ -825,8 +841,16 @@ function startNewLocalMatch(config){
    );
    rememberOpening(storage,'local',match.players[0].rack);
    try{storage?.setItem(TILE_SET_STORAGE_KEY,match.tileSet);}catch{/* storage optional */}
+   const profiles=loadPilots(storage);
+   const owners=assignLocalSeats(profiles.registry,localSetupOwnerIds.slice(0,match.players.length));
+   createLocalBinding(storage,match,owners);
+   pendingLocalAwards=[];localFinalAwards=[];
    localSetupBadges=()=>{};
    localStateFromMatch(match);
+   const started=awardLocalStart(storage,match);
+   // Keep each seat's first award for its own private handover.
+   for(const [seat,result] of started.entries())if(seat===match.current)
+    pendingLocalAwards.push(...result.awarded);
  }catch(err){
    showModal('MATCH SETUP ERROR','Please check the player settings',
      '<p>'+escapeText(err.message)+'</p>',[{text:'EDIT SETTINGS',primary:true,fn:showLocalSetup}]);
@@ -840,6 +864,9 @@ function showLocalSetup({fromHome=false}={}){
  const queryKit=new URLSearchParams(location.search).get('tiles');
  const selectedKit=TILE_SET_BY_ID[queryKit]?queryKit:normalizeTileSet(saved?.tileSet||storage?.getItem(TILE_SET_STORAGE_KEY));
  localSetupAliens=Array.from({length:4},(_,i)=>safePilotAlien(saved?.players?.[i]?.avatar,i));
+ const savedOwners=saved?loadLocalBinding(storage,saved):null;
+ localSetupOwnerIds=Array.from({length:4},(_,i)=>savedOwners?.seatIds[i]??null);
+ const profiles=loadPilots(storage).registry.pilots;
  prepareLocalArtwork();
  showModal('ALIEN CREW · LOCAL MULTIPLAYER','Set up a local match',
    `<div class="local-setup-grid">
@@ -863,7 +890,7 @@ function showLocalSetup({fromHome=false}={}){
      const amount=Number($('local-player-count').value);
      const names=[...$('local-setup-names').querySelectorAll('input')].slice(0,amount).map(input=>input.value);
      const turnSeconds=Number($('local-turn-seconds').value);
-     startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds,tileSet:$('local-tile-set').value});
+      startNewLocalMatch({names,avatars:localSetupAliens.slice(0,amount),turnSeconds,tileSet:$('local-tile-set').value});
    }}]);
  $('local-player-count').value=String(count);
  $('local-turn-seconds').value=String(seconds);
@@ -933,13 +960,27 @@ function showLocalSetup({fromHome=false}={}){
    };
    controls.append(portrait,select,random,savedButton);
    alienRow.append(caption,controls);group.append(alienRow);
-   wrapper.append(group);groups.push(group);
+    const ownerRow=document.createElement('div');ownerRow.className='local-setup-row local-owner-row';
+    const ownerLabel=document.createElement('label');ownerLabel.textContent='ACHIEVEMENTS FOR';
+    ownerLabel.htmlFor='local-pilot-owner-'+i;
+    const ownerSelect=document.createElement('select');ownerSelect.id='local-pilot-owner-'+i;
+    ownerSelect.className='local-owner-select';
+    ownerSelect.add(new Option('Guest · no saved rewards',''));
+    for(const p of profiles)ownerSelect.add(new Option(p.name+' · saved pilot',p.id));
+    ownerSelect.value=localSetupOwnerIds[i]??'';
+    ownerSelect.addEventListener('change',()=>{
+      localSetupOwnerIds[i]=ownerSelect.value||null;
+      const p=profiles.find(p=>p.id===localSetupOwnerIds[i]);
+      if(p&&(input.value==='Pilot '+(i+1)||input.value===players[i]))input.value=p.name;
+    });
+    ownerRow.append(ownerLabel,ownerSelect);group.append(ownerRow);
+    wrapper.append(group);groups.push(group);
  }
  const link=document.createElement('a');link.className='alien-editor-link';
  link.href='./alien-lab.html';link.target='_blank';link.rel='noopener noreferrer';
  link.textContent='✳ CREATE A CUSTOM ALIEN IN ALIEN LAB ↗';
  const tip=document.createElement('p');tip.className='alien-setup-note';
- tip.textContent='Choose a preset, randomise each pilot, or save a unique alien in Alien Lab then press USE SAVED.';
+ tip.textContent='Choose a separate saved pilot for each seat to keep earned cosmetics. Guest seats can always play; rewards are not shared between players.';
  wrapper.append(link,tip);paint();
  const updateCount=()=>{const amount=Number($('local-player-count').value);
    groups.forEach((group,i)=>{group.hidden=i>=amount;});};
@@ -957,8 +998,15 @@ function readyLocalPlayer(){
    state.recentlyPlaced=null;state.localScoringPlayer=null;
    state.ended=false;state.busy=false;state.localDeferPrivacy=false;
    announce(match.players[match.current].name+
-     ' is on the board. Build one valid BIDMAS equation or exchange/pass.');
-   render();
+      ' is on the board. Build one valid BIDMAS equation or exchange/pass.');
+    render();
+    const result=awardLocalTransition(storage,match,{
+      seat:match.current,type:'turn-ready',suffix:'t'+match.turnNumber+'-ready',data:{}
+    });
+    // The handover button was just confirmed by this player, not the previous seat.
+    const visibleAwards=[...pendingLocalAwards,...result.awarded];
+    pendingLocalAwards=[];
+    if(visibleAwards.length)showAchievementToast(visibleAwards);
    $('board').querySelector('[tabindex="0"]')?.focus({preventScroll:true});
  }catch(err){announce(err.message,true);}
 }
@@ -970,8 +1018,8 @@ function finishLocalTurn(match,message){
  state.recentlyPlaced=null;state.lockedFlash.clear();
  state.localDeferPrivacy=false;state.localScoringPlayer=null;
  state.busy=match.phase!=='finished';state.ended=match.phase==='finished';
- announce(message);persistRun();render();
- if(match.phase==='finished')showLocalResults();
+ announce(message);persistRun();recordLocalFinish(match);render();
+  if(match.phase==='finished')showLocalResults();
 }
 function localPass(reason='pass'){
  if(!isLocal()||state.busy||state.ended)return;
@@ -1004,6 +1052,10 @@ function localSwap(){
      state.localMatch=match;state.rack=match.players[match.current].rack;
      state.bag=match.bag;state.swapping=false;state.swapSet.clear();state.selected=null;
      announce('Free tile swap complete. Your turn continues.');render();
+      const earned=awardLocalTransition(storage,match,{
+       seat:match.current,type:'free-exchange',suffix:'t'+match.turnNumber+'-free',data:{}
+      });
+      if(earned.awarded.length)showAchievementToast(earned.awarded);
    }else{
      finishLocalTurn(match,'Tiles exchanged. Turn passed to the next player.');
    }
@@ -1029,7 +1081,8 @@ function showLocalResults(){
    `<p class="local-match-note">${summary}</p>
     <div class="local-result-legend alien-result-legend"><span>#</span><span>ALIEN</span><span>PILOT</span><span>SCORED</span><span>RACK</span><span>FINAL</span></div>
     <div class="local-result-table">${rows}</div>
-    <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>`,
+    <p class="local-match-note">The highest final score wins. Rack tile values are deducted from each player's earned points. Tied highest scores share the win.</p>
+    ${localFinishMarkup()}`,
    [{text:'CHOOSE MODE',fn:showModeMenu},
     {text:'NEW LOCAL MATCH →',primary:true,fn:showLocalSetup}]);
  $('modal-body').querySelectorAll('.alien-result-portrait').forEach(node=>{
@@ -1296,7 +1349,7 @@ function showScoreResult(points,move){
    <div><span>Anomaly penalty</span><b>−${points.anomalyPenalty}</b></div>`:''}
    <div class="total"><span>TOTAL</span><b>${points.total}</b></div></div>
    ${isDrift()&&points.upgrades.length?`<p class="rogue-score-effects">${escapeText(points.upgrades.join(' · '))}</p>`:''}
-   ${isLocal()?'':achievementRevealMarkup(takeSoloAwards())}`,
+   ${isLocal()?achievementRevealMarkup(takeLocalAwards()):achievementRevealMarkup(takeSoloAwards())}`,
    [isLocal()?
       {text:state.localMatch.phase==='finished'?'FINAL STANDINGS →':'HAND OVER DEVICE →',
        primary:true,fn:finishLocalPresentation}:
@@ -1368,7 +1421,11 @@ function scoreLocal(){
    const active={...match,pending:state.pending,placementOrder:state.placementOrder,
      players:match.players.map((p,i)=>i===oldIndex?{...p,rack:state.rack}:p)};
    const {match:updated,points,move}=scoreLocalTurn(active,state.pending);
-   const stages=buildScoringCeremony(points);
+    let evidence=null;
+    try{evidence=soloScoredEvidence({board:match.board,pending:state.pending,move,
+      points,tileSet:match.tileSet});}
+    catch{/* Achievement telemetry cannot reject an otherwise correct equation. */}
+    const stages=buildScoringCeremony(points);
    const startScore=match.players[oldIndex].score;
    // The complete shared board, the bag and this player's score are committed
    // before any animation; reloading reveals only the next privacy handover.
@@ -1384,8 +1441,14 @@ function scoreLocal(){
      tileCount:stages.filter(x=>x.kind==='tile').length,
      completedTiles:0,epoch,finished:false};
    state.ceremony=ctl;
-   announce(match.players[oldIndex].name+' scored a correct equation! Transferring +'+points.total+' points.',false,'success');
-   persistRun();render();
+   announce(match.players[oldIndex].name+' scored a correct equation! Transferring '+points.total+' points.',false,'success');
+    persistRun();
+    const earned=evidence?awardLocalTransition(storage,updated,{
+     seat:oldIndex,type:'move-scored',suffix:'t'+match.turnNumber+'-score',data:evidence
+    }):{awarded:[]};
+    pendingLocalAwards=earned.awarded;
+    recordLocalFinish(updated);
+    render();
    setCeremonyReadout(ctl,'READY TO TRANSFER');
    void playScoringCeremony(ctl);
  }catch(err){

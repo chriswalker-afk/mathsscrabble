@@ -6,6 +6,8 @@ import {acceptPilotAlien,isValidPilotAlien,safePilotAlien} from './alien/profile
 import {TILE_SET_BY_ID,normalizeTileSet,kitRackSize} from './tile-sets.js';
 import {makeLocalMatch,readyLocalTurn,scoreLocalTurn,passLocalTurn,
   exchangeLocalTiles,localStandings,isLocalTimerExpired} from './multiplayer.js';
+import {onlineRoomScope,onlineSeatEvidence,registerOnlineLobby,registerOnlineJoin,
+ registerOnlineStart,registerOnlineScored,registerOnlineFinish} from './achievements/online-milestones.js';
 
 export const ONLINE_VERSION=1;
 export const CODE_ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -77,13 +79,13 @@ export function makeOnlineLobby({code,hostName,hostHash,hostAvatar=null,maxPlaye
  if(!Object.hasOwn(TILE_SET_BY_ID,tileSet))throw new OnlineError('Choose a supported mathematical tile set.');
  if(!number(maxPlayers,2,4)||!ROOM_TIMERS.includes(turnSeconds))
   throw new OnlineError('Choose 2–4 players and a supported turn timer.');
- return {
+ return registerOnlineLobby({
   version:ONLINE_VERSION,code:cleanCode,revision:1,phase:'lobby',
   maxPlayers,turnSeconds,tileSet,createdAt:now,updatedAt:now,
   expiresAt:now+LOBBY_LIFETIME,
   people:[{id:'p1',name,tokenHash:hostHash,avatar:cleanPilotAvatar(hostAvatar,0)}],
   match:null,receipts:[]
- };
+ });
 }
 export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now(),avatar=null){
  requireRoom(room,now);requireHash(tokenHash);
@@ -94,7 +96,8 @@ export function joinOnlineLobby(room,displayName,tokenHash,now=Date.now(),avatar
   throw new OnlineError('That pilot name is already taken.',409);
  const people=[...room.people,{id:'p'+(room.people.length+1),name,tokenHash,
    avatar:cleanPilotAvatar(avatar,room.people.length)}];
- return {...room,people,revision:room.revision+1,updatedAt:now,expiresAt:now+LOBBY_LIFETIME};
+ return registerOnlineJoin({...room,people,revision:room.revision+1,
+  updatedAt:now,expiresAt:now+LOBBY_LIFETIME},people.length-1);
 }
 export function leaveOnlineLobby(room,hash,request,now=Date.now()){
  requireRoom(room,now);requireHash(hash);
@@ -111,7 +114,10 @@ export function leaveOnlineLobby(room,hash,request,now=Date.now()){
  const updated=addReceipt({...room,people,revision:room.revision+1,updatedAt:now,
    phase:people.length?'lobby':'closed',expiresAt:people.length?now+LOBBY_LIFETIME:now+60_000},index,request,result);
  updated.receipts[updated.receipts.length-1].departedHash=hash;
- return {room:updated,result};
+ // Remap lobby seats after departures; no new seat may inherit old evidence.
+ let rebound={...updated,achievementMilestones:[]};
+ for(let seat=0;seat<rebound.people.length;seat++)rebound=registerOnlineJoin(rebound,seat);
+ return {room:rebound,result};
 }
 /** Only the authenticated room seat can change its public avatar in the
  * waiting lobby. Validated, revision-checked and idempotent. No midgame edits.
@@ -143,7 +149,7 @@ export function startOnlineMatch(room,hash,request,now=Date.now(),rng=randomFloa
  const result={type:'started'};
  const updated=addReceipt({...room,phase:'playing',match,revision:room.revision+1,
    updatedAt:now,expiresAt:now+GAME_LIFETIME},index,request,result);
- return {room:updated,result};
+ return {room:registerOnlineStart(updated),result};
 }
 function receivedPlacement(match,placements){
  if(!Array.isArray(placements)||placements.length<3||placements.length>Math.min(SIZE,kitRackSize(match.tileSet)+3))
@@ -181,13 +187,14 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  if(index!==room.match.current)throw new OnlineError('It is not your turn.',403);
  if(room.turnSeconds&&isLocalTimerExpired(room.match,now))
   throw new OnlineError('Your timer has expired; refresh the room.',409);
- let match, result;
+ let match, result, scored=null;
  if(request.type==='score'){
    const pending=receivedPlacement(room.match,request.placements);
    try{
      const done=scoreLocalTurn({...room.match,pending,placementOrder:Object.keys(pending).map(Number)});
      match=done.match;
-     result={type:'scored',points:done.points,move:{
+   scored={board:room.match.board,pending,move:done.move,points:done.points};
+   result={type:'scored',points:done.points,move:{
        text:done.move.text,indices:done.move.indices},by:index};
    }catch(err){
      // Mathematical failures are retryable and never consume the turn.
@@ -210,7 +217,8 @@ export function takeOnlineAction(room,hash,request,now=Date.now(),rng=randomFloa
  const updated=addReceipt({...room,match,phase,revision:room.revision+1,
    updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)},
    index,request,result);
- return {room:updated,result};
+ const recorded=scored?registerOnlineScored(updated,index,scored):updated;
+ return {room:registerOnlineFinish(recorded),result};
 }
 export function timeOutOnlineTurn(room,now=Date.now()){
  if(!room||room.phase!=='playing'||!room.match||
@@ -219,8 +227,8 @@ export function timeOutOnlineTurn(room,now=Date.now()){
  let match=passLocalTurn(room.match,'timeout');
  if(match.phase==='handover')match=readyLocalTurn(match,now);
  const phase=match.phase==='finished'?'finished':'playing';
- return {room:{...room,match,phase,revision:room.revision+1,
-   updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)},changed:true};
+ return {room:registerOnlineFinish({...room,match,phase,revision:room.revision+1,
+  updatedAt:now,expiresAt:now+(phase==='finished'?FINISHED_LIFETIME:GAME_LIFETIME)}),changed:true};
 }
 export function viewOnlineRoom(room,hash,now=Date.now()){
  requireRoom(room,now);
@@ -228,7 +236,8 @@ export function viewOnlineRoom(room,hash,now=Date.now()){
  const match=room.match;
  const player=room.people[index];
  const base={
-  code:room.code,revision:room.revision,phase:room.phase,
+  code:room.code,roomId:onlineRoomScope(room),achievementReceipts:onlineSeatEvidence(room,index),
+  revision:room.revision,phase:room.phase,
   maxPlayers:room.maxPlayers,turnSeconds:room.turnSeconds,tileSet:normalizeTileSet(room.tileSet),
   people:room.people.map((p,i)=>({index:i,id:p.id,name:p.name,host:i===0,
      avatar:safePilotAlien(p.avatar,i)})),

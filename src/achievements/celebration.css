@@ -24,3 +24,14 @@
 
 /* Preserve the one-screen mathematical board on phones; Hangar stays linked from Mission Control. */
 @media(max-width:740px){.achievement-hangar-link{display:none}}
+
+/* Pass D: small contextual ownership controls, with no impact on gameplay height. */
+.online-achievement-banner{display:flex;flex-wrap:wrap;gap:7px 14px;justify-content:center;
+ font-size:11px;line-height:1.4;color:#d5f0e7;margin:6px 0 11px;padding:8px 10px;
+ background:#173b4a;border:1px solid #628b8e;border-radius:10px}
+.online-achievement-banner a{color:#ffe0a2;text-decoration:underline}
+.local-owner-row{margin-top:5px}
+.local-owner-row select{width:100%;min-width:0;max-width:100%;font-size:12px}
+.local-achievement-owner>strong{display:block;font-size:12px;letter-spacing:.04em;color:#dbeced;
+ margin:13px 0 5px}
+.local-achievement-owner .achievement-reveal{margin:0 0 9px}

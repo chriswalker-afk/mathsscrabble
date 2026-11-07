@@ -103,12 +103,23 @@ async function place(page,symbol,r,c){
  await cell(page,r,c).click();
 }
 const active=page=>page.locator('#online-score').isEnabled();
+const awards=page=>page.evaluate(()=>{
+ const p=JSON.parse(localStorage.getItem('equa-nova.pilot-profiles.v1'));
+ const a=JSON.parse(localStorage.getItem('equa-nova.achievements.v1'));
+ return a?.pilots?.[p?.activeId]?.unlocked||[];
+});
+const profile=async(page,id,name)=>page.evaluate(async({id,name})=>{
+ const {addPilot,emptyPilotRegistry,savePilots}=await import('./src/achievements/pilots.js');
+ const registry=addPilot(emptyPilotRegistry(),{id,name,now:1000});
+ if(!savePilots(localStorage,registry))throw Error('Could not save named pilot');
+},{id,name});
 
 try{
  await host.goto('http://127.0.0.1:4173/online.html',{waitUntil:'domcontentloaded'});
  assert.equal(await host.locator('#online-gate').isVisible(),true);
  assert.equal(await host.locator('#online-alien-presets button').count(),4);
   assert.equal(await host.locator('#online-tile-kit option').count(),4);
+ await profile(host,'pilot-'+ 'aa'.repeat(12),'Ari');
  await host.locator('#online-alien-presets [data-preset="glimmer"]').click();
  assert.equal(await host.locator('#online-alien-presets [data-preset="glimmer"]').getAttribute('aria-pressed'),'true');
  await host.locator('#online-host-name').fill('Ari');
@@ -127,15 +138,19 @@ try{
  const hostKey=await host.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.online-room.v1')));
  assert.equal(hostKey.code,'GHJKLM');assert.equal(hostKey.token,'A'.repeat(43));
  assert.ok(!host.url().includes(hostKey.token),'room access secret must not be in the invitation URL');
+ assert.ok((await awards(host)).includes('O01'),'creating authenticated room awards Signal Acquired');
 
  await guest.goto('http://127.0.0.1:4173/online.html#GHJKLM',{waitUntil:'domcontentloaded'});
  assert.equal(await guest.locator('#online-join-code').inputValue(),'GHJKLM');
+ await profile(guest,'pilot-'+ 'bb'.repeat(12),'Bea');
  await guest.locator('#online-alien-presets [data-preset="orbit"]').click();
  await guest.locator('#online-join-name').fill('Bea');
  await guest.locator('#online-join-button').click();
  await guest.locator('#lobby-code').waitFor();
  assert.equal(await guest.locator('#lobby-code').textContent(),'GHJKLM');
  assert.equal(backend.joined,1);
+ assert.ok((await awards(guest)).includes('O01'),'joining server room credits the joined seat');
+ assert.ok((await awards(guest)).includes('O02'),'two pilots connected in the real lobby');
  assert.deepEqual(backend.room.people[1].avatar,defaultPilotAlien(1));
  // Guest may replace their own public alien before start, without touching
  // the host's identity, timer or private rack.
@@ -152,6 +167,7 @@ try{
  await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
  await host.locator('#online-lobby-players .online-lobby-player').nth(1).waitFor({state:'attached',timeout:5000});
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').count(),2);
+ assert.ok((await awards(host)).includes('O02'),'host receives lobby milestone on refresh');
  await host.locator('#online-lobby-players .alien-player-avatar svg').first().waitFor({timeout:12000});
  assert.equal(await host.locator('#online-lobby-players .alien-player-avatar svg').count(),2);
  assert.equal(await host.locator('#online-lobby-players .online-lobby-player').nth(1)
@@ -160,6 +176,7 @@ try{
  await host.locator('#online-start-match').click();
  await host.locator('#online-gate').waitFor({state:'hidden'});
  assert.equal(backend.room.phase,'playing');
+ assert.ok((await awards(host)).includes('O03'),'server-started match unlocks Systems Live');
   assert.equal(backend.room.tileSet,'natural');
  assert.deepEqual(backend.room.match.players.map(p=>p.avatar),
   [defaultPilotAlien(3),defaultPilotAlien(2)]);
@@ -187,6 +204,7 @@ try{
  assert.match(await host.locator('#online-log').textContent(),/not balanced/i);
  assert.equal(backend.room.match.current,0);
  assert.equal(backend.room.match.players[0].score,0);
+ assert.ok(!(await awards(host)).includes('O04'),'rejected equations cannot grant online credit');
  // Edit the unsent tiles locally without consuming points or a turn.
  await host.locator('#online-clear').click();
  for(const [s,r,c] of [['8',6,3],['+',6,4],['4',6,5],['=',6,6],['1',6,7],['2',6,8]])
@@ -196,8 +214,11 @@ try{
  await host.locator('#ceremony-readout').waitFor({state:'visible',timeout:2500});
  assert.equal(backend.room.match.current,1);
  assert.ok(backend.room.match.players[0].score>0);
+ assert.ok((await awards(host)).includes('O04'),'server-accepted equation earns Verified');
+ assert.ok(!(await awards(guest)).includes('O04'),'Bea cannot receive Ari\'s score reward');
  await host.locator('#skip-ceremony').click();
  assert.match(await host.locator('#online-dialog-title').textContent(),/points/i);
+ assert.match(await host.locator('#online-dialog .achievement-reveal').textContent(),/Verified/i);
  await host.locator('#online-dialog-actions button').first().click();
  assert.equal(await active(host),false,'host cannot score twice in a row');
 
@@ -231,6 +252,10 @@ try{
  await host.locator('#online-pass').click();
  assert.equal(backend.room.phase,'finished');
  assert.equal(backend.room.match.finalScores.length,2);
+ const earnedEnd=await awards(host);
+ assert.ok(earnedEnd.includes('O06'),'scoring pilot receives Remote Explorer');
+ assert.ok(earnedEnd.includes('O07'),'host receives Room Captain');
+ assert.ok(earnedEnd.includes('O09'),'winner receives Victory Signal');
  assert.equal(backend.room.match.finalScores[0].net,
    backend.room.match.finalScores[0].gross-backend.room.match.finalScores[0].penalty);
  await host.locator('#online-dialog-title').getByText(/final standings/i).waitFor({timeout:4000}).catch(()=>{});
