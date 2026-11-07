@@ -48,7 +48,7 @@ This audit checked the *current source of truth* in `src/engine.js`, `src/tile-s
 | The Drift | Normally six turns per sector; Time Dilator adds a seventh. Salvage Bay offers up to four installed Ship Systems and two carried Mission Gadgets. Every third sector ends a named zone with a randomly assigned boss effect. |
 | Multiplayer | Two to four players share the board. Local racks are hidden between handovers. Online racks stay private and server-side validation decides scores and match results. |
 | Match ending | The match ends when someone clears their rack with an empty bag, or after two complete non-scoring circuits. Leftover rack tile points are deducted; top net score wins (ties allowed). |
-| Achievements | Each mode has ten permanent achievements. Students must bind a named pilot **before** starting a run/match/room for those rewards to be kept. Guest play remains possible. |
+| Achievements | Each mode has ten original permanent achievements, with three extra Alien Radio badges in Online Signal Clash. Students must bind a named pilot **before** starting a run/match/room for those rewards to be kept. Guest play remains possible. |
 | Saving | Solo runs, Drift runs, avatars and achievements are stored on the device. Pilot progress does not sync across devices; the Hangar supports export/import backup. |
 
 ## Student-facing information architecture
