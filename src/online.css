@@ -139,3 +139,60 @@
 .online-gate-kicker{color:var(--nova-teal)}
 .online-gate h1{color:var(--nova-text)}
 .online-app .online-connection.is-live{color:var(--nova-success)}
+
+
+/* Alien Radio — fixed, non-verbal messages, tied to their sender's avatar. */
+.online-radio-control{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.online-callout-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;
+ min-height:37px;flex:1;border:1px solid #a2d8c5;border-radius:8px;padding:7px 11px;
+ background:linear-gradient(145deg,#234f60,#183847);color:#e9fbdb;letter-spacing:.08em;font-size:10px;font-weight:900}
+.online-callout-trigger>span{font-size:21px;line-height:1;color:#ffe4a8}
+.online-callout-trigger:disabled{opacity:.5;cursor:default}
+#online-callout-status{color:#a6cfc9;font-size:10px;line-height:1.3;min-width:0}
+.online-callout-live{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.online-app .local-score-row{position:relative;overflow:visible}
+.online-app .local-score-row.has-callout{z-index:6}
+.online-speech-bubble{position:absolute;top:-29px;left:39px;z-index:7;pointer-events:none;
+ padding:6px 10px;min-width:53px;max-width:112px;text-align:center;border-radius:13px 13px 13px 3px;
+ border:1px solid #baf9de;background:linear-gradient(155deg,#fcffe8,#d5f3ea);
+ color:#13394a;font-size:24px;line-height:1.1;letter-spacing:.02em;
+ box-shadow:0 3px 16px #0009;animation:radioPop .36s cubic-bezier(.2,1.5,.4,1)}
+.online-speech-bubble:after{content:"";position:absolute;bottom:-7px;left:7px;width:12px;height:12px;
+ background:#d5f3ea;border-right:1px solid #baf9de;border-bottom:1px solid #baf9de;transform:rotate(45deg)}
+@keyframes radioPop{from{opacity:0;transform:scale(.7) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.online-radio-intro{margin:8px 0 12px!important;color:#c5e6dc!important}
+.online-radio-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:9px 0 11px}
+.online-radio-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:93px;
+ background:#235363;color:#f4f8e9;border:1px solid #78adac;border-radius:9px;padding:9px 4px;
+ font-size:11px;font-weight:800}
+.online-radio-choice:not(:disabled):hover,.online-radio-choice:focus-visible{background:#35747a;border-color:#fff1ba}
+.online-radio-choice:disabled{opacity:.48;cursor:not-allowed}
+.online-radio-glyph{font-size:clamp(24px,3vw,34px);line-height:1.2;min-height:40px;display:grid;place-items:center;white-space:nowrap}
+.online-radio-choice .online-radio-name{font-size:10px;text-align:center;line-height:1.2}
+.online-radio-choice small{font-size:9px;color:#f8d59e;line-height:1.2}
+.online-radio-subtitle{margin:12px 0 4px;font-size:10px;color:#a8e4d5;font-weight:900;letter-spacing:.12em}
+.online-rack-hint{display:block;font-size:9px;color:#9ee6d2;letter-spacing:.04em;font-weight:750;margin-top:3px}
+.online-callout-stage{display:none}
+@media(max-width:730px){
+ .online-app .left-panel{overflow:visible}
+ .online-radio-control{grid-column:1/-1;grid-row:3;gap:7px;margin-top:3px}
+ .online-callout-trigger{flex:0 0 auto;min-height:33px;padding:5px 10px}
+ #online-callout-status{font-size:9px}
+ .online-app .local-score-row .online-speech-bubble{display:none}
+ .online-app .arena{position:relative}
+ .online-callout-stage:not(:empty){position:absolute;top:45px;right:4px;z-index:40;
+  display:flex;align-items:center;gap:8px;pointer-events:none;max-width:70%;
+  padding:5px 8px;background:linear-gradient(140deg,#153e4f,#275364);
+  border:1px solid #8de4d0;border-radius:13px;box-shadow:0 6px 24px #0009;animation:radioPop .3s ease-out}
+ .online-callout-stage .local-score-avatar{flex:none}
+ .online-callout-stage .online-radio-person{display:flex;flex-direction:column;min-width:0;gap:2px}
+ .online-callout-stage .online-radio-person strong{font-size:9px;color:#f1ecce;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .online-callout-stage .online-radio-person span{font-size:25px;color:#faffdf;line-height:1.2}
+ .online-radio-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:390px){
+ .online-callout-stage:not(:empty){max-width:80%}
+ .online-radio-grid{gap:5px}
+ .online-radio-choice{min-height:82px}
+}
+@media(prefers-reduced-motion:reduce){.online-speech-bubble,.online-callout-stage:not(:empty){animation:none}}
