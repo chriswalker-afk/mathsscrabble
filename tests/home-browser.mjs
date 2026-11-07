@@ -15,6 +15,8 @@ try{
   assert.equal(await page.locator('.mode-card').count(),4);
   assert.equal(await page.locator('.mode-card[href]').count(),4);
   assert.equal(await page.locator('.alien-lab-card').count(),2,'Alien Lab and Achievement Hangar navigation');
+  assert.equal(await page.locator('.tile-kit-return').count(),0,
+    'the redundant Back to Missions control must be removed');
   assert.equal(await page.locator('#modal').count(),0,'home must not be a mode selection modal');
   assert.equal(await page.locator('#board').count(),0,'the home page should not load a game board');
   assert.equal(await page.locator('.mode-card-footer button').count(),0,'no duplicate mode buttons');
@@ -69,6 +71,17 @@ try{
  await page.locator('.exit-link').click();
  await page.waitForURL(/index\.html$/);
  await page.goto(ORIGIN+'/',{waitUntil:'networkidle'});
+ await page.locator('.alien-lab-card[href="./achievement-hangar.html"]').click();
+ await page.waitForURL(/achievement-hangar\.html$/);
+ assert.equal(await page.locator('.hangar-nav-home').getAttribute('href'),'./index.html');
+ assert.equal(await page.locator('.hangar-nav-lab').getAttribute('href'),'./alien-lab.html');
+ await page.locator('.hangar-nav-home').click();
+ await page.waitForURL(/index\.html$/);
+ await page.locator('.alien-lab-card[href="./achievement-hangar.html"]').click();
+ await page.locator('.hangar-nav-lab').click();
+ await page.waitForURL(/alien-lab\.html$/);
+ await page.locator('.exit-link').click();
+ await page.waitForURL(/index\.html$/);
  assert.equal(await page.locator('#home-tile-kits .tile-kit-card').count(),4);
  await page.locator('[data-tile-kit="rational"]').click();
  assert.equal(await page.locator('[data-tile-kit="rational"]').getAttribute('aria-pressed'),'true');
