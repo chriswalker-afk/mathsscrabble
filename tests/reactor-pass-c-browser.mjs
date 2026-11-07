@@ -96,7 +96,8 @@ try{
  assert.equal(await drift.locator('#temporary-slots [data-equipment-id="double-score"]').count(),1);
  assert.equal(await drift.locator('#permanent-slots .equip-svg').count(),1);
  assert.match(await drift.locator('#upgrade-summary').textContent(),/Ionised Sevens/i);
- await drift.locator('#temporary-slots [data-equipment-id="double-score"]').click();
+ await drift.locator('#gadget-drawer > summary').click();
+  await drift.locator('#temporary-slots [data-equipment-id="double-score"]').click();
  assert.equal(await drift.locator('#temporary-slots .equip-state').textContent(),'ARMED');
  assert.equal(await drift.locator('#temporary-slots [data-equipment-id="double-score"]').getAttribute('aria-pressed'),'true');
  const mobile=await drift.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
