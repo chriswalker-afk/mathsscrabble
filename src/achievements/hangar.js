@@ -3,6 +3,7 @@ import {achievementProgress,pilotAchievements} from './engine.js';
 import {loadAchievementStore,exportPilotAchievements,restorePilotAchievements} from './storage.js';
 import {loadPilots,savePilots,addPilot,choosePilot,securePilotId} from './pilots.js';
 import {getSavedPilotAlien} from '../alien/profiles.js';
+import {CALLOUT_BY_ID} from '../online-callouts.js';
 const $=id=>document.getElementById(id);
 const MODE_NAMES={sector:'Sector Run',drift:'The Drift',local:'Local Match',online:'Online Signal Clash'};
 let mode='sector',filter='all',registry,store,library=null;
@@ -10,9 +11,44 @@ function message(value,error=false){$('pilot-status').textContent=value;$('pilot
 function refresh(){const p=loadPilots(localStorage);registry=p.registry;const a=loadAchievementStore(localStorage,registry);store=a.store;if(p.status==='invalid'||a.status==='invalid')message('Stored data could not be verified. Import a trusted backup or use a new device profile.',true);renderPilots();render();}
 function renderPilots(){const select=$('pilot-select');select.replaceChildren(new Option('Guest · no achievements',''));for(const p of registry.pilots)select.add(new Option(p.name,p.id));select.value=registry.activeId||'';}
 function element(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;}
-function rewardGraphic(a){const wrap=element('div','reward-preview');if(a.reward.collection==='palettes'){const dot=element('div');dot.style.cssText='width:82px;height:82px;border:6px solid #e2eaff;border-radius:50%;background:'+({ 'aurora-gold':'linear-gradient(135deg,#d6a546,#fff2a2,#85611e)','warp-mint':'linear-gradient(135deg,#59e7d1,#b7fff0,#238e93)','copper-dawn':'linear-gradient(135deg,#d78c5f,#ffd3a5,#965339)','cosmic-violet':'linear-gradient(135deg,#9a7aff,#e4cfff,#563eaa)' }[a.reward.id]);wrap.append(dot);}else{const image=new Image();image.src='./assets/aliens/'+a.reward.collection+'/'+a.reward.id+'.svg';image.alt=a.reward.name;image.loading='lazy';image.width=100;image.height=112;wrap.append(image);}return wrap;}
-function showDetails(a){const unlocked=achievementProgress(store,registry.activeId,a.id);const content=$('detail-content');content.replaceChildren();content.append(element('p','eyebrow',MODE_NAMES[a.mode]+' / '+a.tier.toUpperCase()),element('h2',null,a.title),rewardGraphic(a),element('p',null,a.description),element('p',null,'Reward: '+a.reward.name),element('p',null,unlocked.unlocked?'EARNED · Ready to use in Alien Lab':'LOCKED · Progress '+unlocked.current+' / '+unlocked.target));$('award-detail').showModal();}
-function render(){if(!store)return;document.querySelectorAll('[data-mode]').forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.mode===mode));b.tabIndex=b.dataset.mode===mode?0:-1;});document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));$('mode-heading').textContent=MODE_NAMES[mode];$('award-grid').setAttribute('role','tabpanel');$('award-grid').setAttribute('aria-labelledby','hangar-tab-'+mode);const earned=pilotAchievements(store,registry.activeId).unlocked;$('total-count').textContent=earned.length+' / 40 EARNED';const list=ACHIEVEMENTS_BY_MODE[mode];$('mode-count').textContent=list.filter(a=>earned.includes(a.id)).length+' / 10 EARNED';const grid=$('award-grid');grid.replaceChildren();for(const a of list){const progress=achievementProgress(store,registry.activeId,a.id);if(filter==='earned'&&!progress.unlocked||filter==='locked'&&progress.unlocked)continue;const card=element('button','award-card '+(progress.unlocked?'earned':'locked'));card.type='button';card.setAttribute('aria-label',a.title+', '+(progress.unlocked?'earned':'locked')+', reward '+a.reward.name);const top=element('div','award-top');top.append(element('span','tier '+a.tier,a.tier),element('span','badge-state',progress.unlocked?'✦ EARNED':'◇ LOCKED'));card.append(top,rewardGraphic(a),element('strong',null,a.title),element('p',null,a.reward.name));const bar=element('div','progress-meter');bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(progress.target));bar.setAttribute('aria-valuenow',String(progress.current));bar.setAttribute('aria-label',a.title+' progress');const fill=element('span');fill.style.width=(100*progress.current/progress.target)+'%';bar.append(fill);card.append(bar,element('small',null,progress.unlocked?'Unlocked':progress.current+' / '+progress.target+' · '+a.description));card.onclick=()=>showDetails(a);grid.append(card);}if(!grid.children.length)grid.append(element('p',null,'No achievements match this filter yet.'));}
+function rewardGraphic(a){
+ const wrap=element('div','reward-preview');
+ if(a.reward.collection==='callouts'){
+  const glyph=element('span','callout-reward-glyph',CALLOUT_BY_ID[a.reward.id]?.glyph||'⌁');
+  glyph.setAttribute('role','img');glyph.setAttribute('aria-label',a.reward.name);
+  wrap.append(glyph);
+ }else if(a.reward.collection==='palettes'){
+  const dot=element('div');
+  dot.style.cssText='width:82px;height:82px;border:6px solid #e2eaff;border-radius:50%;background:'+
+   ({'aurora-gold':'linear-gradient(135deg,#d6a546,#fff2a2,#85611e)',
+      'warp-mint':'linear-gradient(135deg,#59e7d1,#b7fff0,#238e93)',
+      'copper-dawn':'linear-gradient(135deg,#d78c5f,#ffd3a5,#965339)',
+      'cosmic-violet':'linear-gradient(135deg,#9a7aff,#e4cfff,#563eaa)'}[a.reward.id]);
+  wrap.append(dot);
+ }else{
+  const image=new Image();
+  image.src='./assets/aliens/'+a.reward.collection+'/'+a.reward.id+'.svg';
+  image.alt=a.reward.name;image.loading='lazy';image.width=100;image.height=112;
+  wrap.append(image);
+ }
+ return wrap;
+}
+function showDetails(a){
+ const unlocked=achievementProgress(store,registry.activeId,a.id);
+ const content=$('detail-content');content.replaceChildren();
+ const use=a.reward.collection==='callouts'?'Alien Radio in Signal Clash':'Alien Lab';
+ content.append(
+  element('p','eyebrow',MODE_NAMES[a.mode]+' / '+a.tier.toUpperCase()),
+  element('h2',null,a.title),rewardGraphic(a),element('p',null,a.description),
+  element('p',null,'Reward: '+a.reward.name),
+  element('p',null,unlocked.unlocked?'EARNED · Ready to use in '+use:
+   'LOCKED · Progress '+unlocked.current+' / '+unlocked.target));
+ const link=$('reward-detail-link');
+ link.href=a.reward.collection==='callouts'?'./online.html':'./alien-lab.html';
+ link.textContent=a.reward.collection==='callouts'?'USE IN SIGNAL CLASH ↗':'TRY IN ALIEN LAB ↗';
+ $('award-detail').showModal();
+}
+function render(){if(!store)return;document.querySelectorAll('[data-mode]').forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.mode===mode));b.tabIndex=b.dataset.mode===mode?0:-1;});document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));$('mode-heading').textContent=MODE_NAMES[mode];$('award-grid').setAttribute('role','tabpanel');$('award-grid').setAttribute('aria-labelledby','hangar-tab-'+mode);const earned=pilotAchievements(store,registry.activeId).unlocked;$('total-count').textContent=earned.length+' / '+ACHIEVEMENTS.length+' EARNED';const list=ACHIEVEMENTS_BY_MODE[mode];$('mode-count').textContent=list.filter(a=>earned.includes(a.id)).length+' / '+list.length+' EARNED';const grid=$('award-grid');grid.replaceChildren();for(const a of list){const progress=achievementProgress(store,registry.activeId,a.id);if(filter==='earned'&&!progress.unlocked||filter==='locked'&&progress.unlocked)continue;const card=element('button','award-card '+(progress.unlocked?'earned':'locked'));card.type='button';card.setAttribute('aria-label',a.title+', '+(progress.unlocked?'earned':'locked')+', reward '+a.reward.name);const top=element('div','award-top');top.append(element('span','tier '+a.tier,a.tier),element('span','badge-state',progress.unlocked?'✦ EARNED':'◇ LOCKED'));card.append(top,rewardGraphic(a),element('strong',null,a.title),element('p',null,a.reward.name));const bar=element('div','progress-meter');bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(progress.target));bar.setAttribute('aria-valuenow',String(progress.current));bar.setAttribute('aria-label',a.title+' progress');const fill=element('span');fill.style.width=(100*progress.current/progress.target)+'%';bar.append(fill);card.append(bar,element('small',null,progress.unlocked?'Unlocked':progress.current+' / '+progress.target+' · '+a.description));card.onclick=()=>showDetails(a);grid.append(card);}if(!grid.children.length)grid.append(element('p',null,'No achievements match this filter yet.'));}
 const tabs=[...document.querySelectorAll('[data-mode]')];
 for(const [i,b] of tabs.entries()){
  b.id='hangar-tab-'+b.dataset.mode;
