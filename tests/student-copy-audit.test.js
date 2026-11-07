@@ -20,7 +20,7 @@ const words=value=>textOnly(value).split(/\s+/).filter(Boolean).length;
 test('Launch copy has no obsolete build labels or misleading rack/sector claims',()=>{
  const all=Object.values(files).join('\n');
  assert.doesNotMatch(all,/ALPHA LAB|BACK TO MISSIONS|original 5 number \/ 3 operator balance|nine total|Sector three is the randomly selected zone boss/i);
- assert.match(files['index.html'],/before playing to earn and keep 40 cosmetic rewards/);
+ assert.match(files['index.html'],/before playing to earn and keep 43 cosmetic rewards/);
  assert.match(files['achievement-hangar.html'],/Guests can play but cannot earn permanent rewards/);
  assert.match(files['src/app.js'],/every third sector has a random boss/i);
  assert.match(files['src/drift-map.js'],/Your installed Ship Systems/);
@@ -52,7 +52,7 @@ test('Mode manuals are action-first, brief and cover the required mechanics',()=
  }
  const online=between(files['src/online-ui.js'],"$('online-help').onclick=", 'async function copyInvite()');
  const rows=online.split('\n').filter(s=>s.trim().startsWith("['"));
- assert.equal(rows.length,4,'online rules should be four short steps');
+ assert.equal(rows.length,5,'online rules should be five short steps');
  for(const row of rows)assert.ok(words(row)<=45,'online rule is too long: '+row);
  for(const re of [/centre/,/BIDMAS/,/Score/,/rack/,/two rounds/,/matched pair/])
   assert.match(online,re);
