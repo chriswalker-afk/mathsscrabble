@@ -117,7 +117,7 @@ export function bossIntroMarkup(rogue,sector){
    '<b>'+boss.short+'</b></div>'+
    '<p>'+boss.description+'</p></div></div>'+
    route(sector,'playing',info,true)+
-   '<p class="boss-reveal-note">The rule applies only in this boss sector. Your four installed Ship Systems and carried Mission Gadgets stay available. Defeat the guardian to reach the next zone.</p>';
+   '<p class="boss-reveal-note">The rule applies only in this boss sector. Your installed Ship Systems and carried Mission Gadgets stay available. Win to enter the next zone.</p>';
 }
 export function zoneVictoryMarkup(rogue,sector){
  const info=zoneInfo(rogue,sector);
