@@ -64,7 +64,7 @@ try{
  const help=page.locator('#online-gate-help');
  assert.equal(await help.isVisible(),true,'pre-match rules must be accessible without entering a room');
  await help.click();
- assert.equal(await page.locator('#online-dialog-body .training-step').count(),4);
+ assert.equal(await page.locator('#online-dialog-body .training-step').count(),5);
  assert.match(await page.locator('#online-dialog-body').textContent(),/Tap or drag tiles/);
  assert.match(await page.locator('#online-dialog-actions button').textContent(),/BACK TO SETUP/);
  await page.locator('#online-dialog-actions button').click();
