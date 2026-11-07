@@ -1650,7 +1650,7 @@ function showDriftIntro(firstVisit=false){
  showModal('THE DRIFT · PILOT BRIEFING','Clear sectors, upgrade and face bosses',
   `<div class="training-steps">
     <div class="training-step"><span>01</span><div><strong>Reach the target</strong>
-      <p>Score correct BIDMAS equations within six turns per sector (seven if upgraded). Every kit uses the same board rules as Sector Run.</p></div></div>
+      <p>Tap or drag tiles to build true BIDMAS equations: first through the centre, then joined to locked tiles. The = sign is free. Reach each target in six turns (seven with Time Dilator).</p></div></div>
     <div class="training-step"><span>02</span><div><strong>Spend Flux or continue</strong>
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
