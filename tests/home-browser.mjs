@@ -86,7 +86,7 @@ try{
  const localSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('equa-nova.achievements.local-owner.v1')));
  assert.equal(localSaved.seatIds.length,3);
  assert.ok(localSaved.seatIds.every(Boolean),'every seat should have automatic achievement ownership');
- await page.locator('#mode-btn').click();
+ await page.locator('#local-switch-btn').click();
  await page.locator('.extra-card[href="./alien-lab.html"]').click();
  await page.waitForURL(/alien-lab\.html$/);
  await page.locator('.exit-link').click();
