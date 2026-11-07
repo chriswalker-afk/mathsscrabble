@@ -16,6 +16,9 @@ function applyKit(id){
   if(online)online.href='./online.html?tiles='+selectedKit;
   const kit=TILE_SET_BY_ID[selectedKit];
  document.getElementById('tile-kit-active').textContent=kit.short.toUpperCase()+' ACTIVE';
+ const preview=document.getElementById('home-hero-active-kit');
+ if(preview)preview.textContent=kit.short.toUpperCase();
+ document.documentElement.dataset.selectedKit=selectedKit;
  document.getElementById('home-number-rule').textContent=kitNumberSlots(selectedKit)+' NUMBER TILES';
  for(const mode of ['sector','rogue','local']){
    const card=document.getElementById('home-'+mode);

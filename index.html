@@ -7,7 +7,8 @@
  <meta name="description" content="Choose your EQUA//NOVA maths mission: practice, Drift, local multiplayer or online rooms.">
  <title>EQUA//NOVA | Choose your mission</title>
  <link rel="stylesheet" href="./src/design-system.css">
-<link rel="stylesheet" href="./src/home.css">
+ <link rel="stylesheet" href="./src/home.css">
+ <link rel="stylesheet" href="./src/mission-control.css">
  <script type="module" src="./src/home.js"></script>
 </head>
 <body>
@@ -23,47 +24,101 @@
   </header>
   <main id="missions">
    <section class="home-intro" aria-labelledby="home-title">
-    <div>
-     <p class="home-eyebrow">WELCOME TO MISSION CONTROL <span aria-hidden="true">✦</span></p>
+    <img class="home-bridge-art" src="./assets/mission-control/bridge.svg" alt="" aria-hidden="true" width="900" height="320" decoding="async" fetchpriority="high">
+    <div class="home-intro-content">
+     <p class="home-eyebrow">WELCOME ABOARD <span aria-hidden="true">✦</span> MISSION CONTROL</p>
      <h1 id="home-title">Choose your reactor mission</h1>
-     <p class="home-description">Build equations, light up the board and gather energy. Pick a mode below to start a new adventure or resume where you left off.</p>
+     <p class="home-description">Build true equations, power up the reactor and explore new worlds. Pick a mission and prepare your mathematical kit for launch.</p>
+     <a class="home-kit-shortcut" href="#kits" aria-label="Choose your maths tile kit below">
+      <span class="home-kit-orb" aria-hidden="true">◇</span>
+      <span><small>CURRENT TILE KIT</small><strong id="home-hero-active-kit">LAUNCHPAD</strong></span>
+      <span class="home-kit-shortcut-action">CHANGE KIT ↓</span>
+     </a>
     </div>
    </section>
-   <section class="tile-kit-picker" aria-label="Choose your maths tile set">
-    <div class="tile-kit-heading"><div><span class="tile-kit-eyebrow">CHOOSE YOUR MATHEMATICAL KIT</span><h2>Four levels of equations</h2></div><span class="tile-kit-active" id="tile-kit-active">LAUNCHPAD ACTIVE</span></div>
-    <div class="tile-kit-grid" id="home-tile-kits" role="group" aria-label="Maths tile set for Sector Run and The Drift">
-      <button type="button" class="tile-kit-card is-selected" data-tile-kit="natural" aria-pressed="true"><span class="tile-kit-number">01 · LAUNCHPAD</span><strong>NATURAL NUMBERS</strong><span class="tile-kit-sample">8 + 4 = 12</span><small>0–9 and + − × ÷</small></button>
-      <button type="button" class="tile-kit-card" data-tile-kit="integer" aria-pressed="false"><span class="tile-kit-number">02 · ORBIT</span><strong>INTEGERS</strong><span class="tile-kit-sample">−3 + 7 = 4</span><small>Negative numbers &amp; basic operators</small></button>
-      <button type="button" class="tile-kit-card" data-tile-kit="rational" aria-pressed="false"><span class="tile-kit-number">03 · NEBULA</span><strong>RATIONAL NUMBERS</strong><span class="tile-kit-sample">½ + ½ = 1</span><small>Positive fractions, 6 numbers &amp; bracket pairs</small></button>
-      <button type="button" class="tile-kit-card" data-tile-kit="advanced" aria-pressed="false"><span class="tile-kit-number">04 · QUANTUM</span><strong>ADVANCED OPERATIONS</strong><span class="tile-kit-sample">√9 + 3! = 9</span><small>Fractions, powers, roots &amp; factorials</small></button>
-    </div>
-    <p class="tile-kit-help">Your choice applies to all four modes. Nebula uses positive fractions; Nebula and Quantum have six numbers, three operators and a bracket pair. In online matches the host chooses the kit for everyone. Existing games retain their original kit until you start a new one.</p>
-   </section>
-   <section class="mode-grid" aria-label="Choose a game mode">
+   <div class="home-missions-heading"><div><span class="home-eyebrow">01 · FLIGHT PATH</span><h2 id="mission-choices-heading">Where shall we fly?</h2></div><span class="home-missions-sub">CHOOSE A GAME MODE</span></div>
+   <section id="mission-choices" class="mode-grid" aria-labelledby="mission-choices-heading">
     <a id="home-sector" class="mode-card mode-sector" href="./play.html?mode=sector">
-     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">◈</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
-     <span class="mode-card-copy"><strong>SECTOR RUN</strong><span>Independent classroom practice with rising targets and retries.</span></span>
-     <span class="mode-card-footer"><span class="mode-card-status" data-save="sector">START MISSION</span><span class="mode-card-category">SOLO PRACTICE</span></span>
+     <img class="mode-card-art" src="./assets/mission-control/sector.svg" alt="" aria-hidden="true" width="700" height="400" loading="lazy" decoding="async">
+     <span class="mode-card-scrim" aria-hidden="true"></span>
+     <span class="mode-card-inner">
+      <span class="mode-card-top"><span class="mode-card-index">01 · TRAINING DECK</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+      <span class="mode-card-copy"><strong>SECTOR RUN</strong><span>Build fluency through rising reactor targets. Retry, improve and master each mission.</span></span>
+      <span class="mode-card-footer"><span class="mode-card-status" data-save="sector">START MISSION</span><span class="mode-card-category">SOLO PRACTICE</span></span>
+     </span>
     </a>
     <a id="home-rogue" class="mode-card mode-rogue" href="./play.html?mode=rogue">
-     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">✧</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
-     <span class="mode-card-copy"><strong>THE DRIFT</strong><span>Earn Flux, install ship systems, carry mission gadgets and defeat zone bosses.</span></span>
-     <span class="mode-card-footer"><span class="mode-card-status" data-save="rogue">BEGIN THE DRIFT</span><span class="mode-card-category">SOLO ADVENTURE</span></span>
+     <img class="mode-card-art" src="./assets/mission-control/rogue.svg" alt="" aria-hidden="true" width="700" height="400" loading="lazy" decoding="async">
+     <span class="mode-card-scrim" aria-hidden="true"></span>
+     <span class="mode-card-inner">
+      <span class="mode-card-top"><span class="mode-card-index">02 · UNCHARTED SPACE</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+      <span class="mode-card-copy"><strong>THE DRIFT</strong><span>Journey through hostile zones, collect Flux, upgrade your ship and face unexpected bosses.</span></span>
+      <span class="mode-card-footer"><span class="mode-card-status" data-save="rogue">BEGIN THE DRIFT</span><span class="mode-card-category">SOLO ADVENTURE</span></span>
+     </span>
     </a>
     <a id="home-local" class="mode-card mode-local" href="./play.html?mode=local">
-     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">♙</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
-     <span class="mode-card-copy"><strong>LOCAL MATCH</strong><span>Two to four pilots, one shared board and private racks. Play together on one device.</span></span>
-     <span class="mode-card-footer"><span class="mode-card-status" data-save="local">SET UP A MATCH</span><span class="mode-card-category">PASS & PLAY</span></span>
+     <img class="mode-card-art" src="./assets/mission-control/local.svg" alt="" aria-hidden="true" width="700" height="400" loading="lazy" decoding="async">
+     <span class="mode-card-scrim" aria-hidden="true"></span>
+     <span class="mode-card-inner">
+      <span class="mode-card-top"><span class="mode-card-index">03 · SHARED CONSOLE</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+      <span class="mode-card-copy"><strong>LOCAL MATCH</strong><span>Two to four pilots share a board. Build the best equations and outscore your crew.</span></span>
+      <span class="mode-card-footer"><span class="mode-card-status" data-save="local">SET UP A MATCH</span><span class="mode-card-category">PASS & PLAY</span></span>
+     </span>
     </a>
     <a id="home-online" class="mode-card mode-online" href="./online.html">
-     <span class="mode-card-top"><span class="mode-symbol" aria-hidden="true">✦</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
-     <span class="mode-card-copy"><strong>ONLINE ROOMS</strong><span>Compete on separate devices. Create or join a room with a six-character code.</span></span>
-     <span class="mode-card-footer"><span class="mode-card-status" data-save="online">CREATE OR JOIN</span><span class="mode-card-category">LIVE MULTIPLAYER</span></span>
+     <img class="mode-card-art" src="./assets/mission-control/online.svg" alt="" aria-hidden="true" width="700" height="400" loading="lazy" decoding="async">
+     <span class="mode-card-scrim" aria-hidden="true"></span>
+     <span class="mode-card-inner">
+      <span class="mode-card-top"><span class="mode-card-index">04 · SIGNAL NETWORK</span><span class="mode-arrow" aria-hidden="true">↗</span></span>
+      <span class="mode-card-copy"><strong>ONLINE ROOMS</strong><span>Challenge pilots on different devices. Create a room and invite your friends.</span></span>
+      <span class="mode-card-footer"><span class="mode-card-status" data-save="online">CREATE OR JOIN</span><span class="mode-card-category">LIVE MULTIPLAYER</span></span>
+     </span>
     </a>
    </section>
+   <section id="kits" class="tile-kit-picker" aria-labelledby="kit-picker-heading">
+    <div class="tile-kit-heading">
+     <div><span class="tile-kit-eyebrow">02 · ENGINEERING BAY / CHOOSE YOUR MATHEMATICAL KIT</span><h2 id="kit-picker-heading">Four ways to build equations</h2></div>
+     <span class="tile-kit-active" id="tile-kit-active" role="status" aria-live="polite">LAUNCHPAD ACTIVE</span>
+    </div>
+    <p class="tile-kit-intro">Select a kit to change the available numbers and operations. Your selection is used when you start a new game in any of the four modes.</p>
+    <div class="tile-kit-grid" id="home-tile-kits" role="group" aria-label="Mathematical tile set for your next match">
+     <button type="button" class="tile-kit-card is-selected" data-tile-kit="natural" aria-pressed="true">
+      <span class="tile-kit-top"><span class="tile-kit-number">01 · LAUNCHPAD</span><span class="tile-kit-check" aria-hidden="true">✓</span></span>
+      <span class="tile-kit-visual" aria-hidden="true"><img src="./assets/mission-control/kit-launchpad.svg" alt="" width="400" height="180" loading="lazy" decoding="async"></span>
+      <strong>NATURAL NUMBERS</strong>
+      <span class="tile-kit-sample" aria-label="Example equation"><span class="kit-equation-tile">8</span><span class="kit-equation-tile">+</span><span class="kit-equation-tile">4</span><span class="kit-equation-tile">=</span><span class="kit-equation-tile">1</span><span class="kit-equation-tile">2</span></span>
+      <small>Digits 0–9 and basic operations.</small>
+     </button>
+     <button type="button" class="tile-kit-card" data-tile-kit="integer" aria-pressed="false">
+      <span class="tile-kit-top"><span class="tile-kit-number">02 · ORBIT</span><span class="tile-kit-check" aria-hidden="true">✓</span></span>
+      <span class="tile-kit-visual" aria-hidden="true"><img src="./assets/mission-control/kit-orbit.svg" alt="" width="400" height="180" loading="lazy" decoding="async"></span>
+      <strong>INTEGERS</strong>
+      <span class="tile-kit-sample" aria-label="Example equation"><span class="kit-equation-tile">−3</span><span class="kit-equation-tile">+</span><span class="kit-equation-tile">7</span><span class="kit-equation-tile">=</span><span class="kit-equation-tile">4</span></span>
+      <small>Signed integers with basic operations.</small>
+     </button>
+     <button type="button" class="tile-kit-card" data-tile-kit="rational" aria-pressed="false">
+      <span class="tile-kit-top"><span class="tile-kit-number">03 · NEBULA</span><span class="tile-kit-check" aria-hidden="true">✓</span></span>
+      <span class="tile-kit-visual" aria-hidden="true"><img src="./assets/mission-control/kit-nebula.svg" alt="" width="400" height="180" loading="lazy" decoding="async"></span>
+      <strong>RATIONAL NUMBERS</strong>
+      <span class="tile-kit-sample" aria-label="Example equation"><span class="kit-equation-tile">½</span><span class="kit-equation-tile">+</span><span class="kit-equation-tile">½</span><span class="kit-equation-tile">=</span><span class="kit-equation-tile">1</span></span>
+      <small>Positive fractions, integers and brackets.</small>
+     </button>
+     <button type="button" class="tile-kit-card" data-tile-kit="advanced" aria-pressed="false">
+      <span class="tile-kit-top"><span class="tile-kit-number">04 · QUANTUM</span><span class="tile-kit-check" aria-hidden="true">✓</span></span>
+      <span class="tile-kit-visual" aria-hidden="true"><img src="./assets/mission-control/kit-quantum.svg" alt="" width="400" height="180" loading="lazy" decoding="async"></span>
+      <strong>ADVANCED OPERATIONS</strong>
+      <span class="tile-kit-sample" aria-label="Example equation"><span class="kit-equation-tile">√</span><span class="kit-equation-tile">9</span><span class="kit-equation-tile">+</span><span class="kit-equation-tile">3</span><span class="kit-equation-tile">!</span><span class="kit-equation-tile">=</span><span class="kit-equation-tile">9</span></span>
+      <small>Fractions, powers, roots and factorials.</small>
+     </button>
+    </div>
+    <div class="tile-kit-bottom"><p class="tile-kit-help">Nebula includes positive fractions and integers. Nebula and Quantum give you six number tiles, three operators and a bracket pair. The online host sets the kit for everyone; existing saved games retain their original kit.</p>
+    <a href="#mission-choices" class="tile-kit-return">BACK TO MISSIONS ↑</a></div>
+   </section>
    <a class="alien-lab-card" href="./alien-lab.html">
+    <img class="alien-lab-art" src="./assets/mission-control/alien-lab.svg" alt="" aria-hidden="true" width="600" height="220" loading="lazy" decoding="async">
+    <span class="alien-lab-scrim" aria-hidden="true"></span>
     <span class="alien-lab-mark" aria-hidden="true">✳</span>
-    <span class="alien-lab-copy"><strong>ALIEN LAB</strong><span>Design your own cute space creature and bring it into your matches.</span></span>
+    <span class="alien-lab-copy"><span class="alien-lab-eyebrow">03 · CREW WORKSHOP</span><strong>ALIEN LAB</strong><span>Design a cheerful alien pilot and bring them along to your matches.</span></span>
     <span class="alien-lab-arrow" aria-hidden="true">↗</span>
    </a>
    <p class="home-rule-strip"><span id="home-number-rule">5 NUMBER TILES</span><span aria-hidden="true">·</span><span>3 OPERATOR TILES</span><span aria-hidden="true">·</span><span>BRACKET PAIRS IN RATIONAL KITS</span><span aria-hidden="true">·</span><span>1 FREE SINGLE-TILE SWAP PER TURN</span></p>
