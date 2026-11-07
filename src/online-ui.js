@@ -690,8 +690,9 @@ $('online-help').onclick=()=>{
   note.textContent='Place or exchange both ( and ) together as a matched pair.';
   wrap.append(note);
  }
- showDialog('FLIGHT MANUAL','Online Signal Clash',wrap,[{label:'BACK TO BOARD',primary:true}]);
+ showDialog('FLIGHT MANUAL','Online Signal Clash',wrap,[{label:!$('online-gate').hidden?(state.view?.phase==='lobby'?'BACK TO LOBBY':'BACK TO SETUP'):'BACK TO BOARD',primary:true}]);
 };
+$('online-gate-help').onclick=()=>$('online-help').click();
 async function copyInvite(){
  if(!state.code){showNotice('Create or join a room first.',true);return;}
  const url=new URL('online.html#'+state.code,location.href).href;
