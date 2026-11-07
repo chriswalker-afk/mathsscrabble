@@ -21,3 +21,6 @@
 .achievement-hangar-link{display:block;color:#bce8db;text-align:center;font-size:10px;text-decoration:none;letter-spacing:.045em;padding:7px 3px;border-radius:7px;margin:4px 0 10px;overflow-wrap:anywhere}
 .achievement-hangar-link:hover,.achievement-hangar-link:focus-visible{color:#ffe4a4;background:#244c5f}
 .achievement-hangar-link[hidden]{display:none!important}
+
+/* Preserve the one-screen mathematical board on phones; Hangar stays linked from Mission Control. */
+@media(max-width:740px){.achievement-hangar-link{display:none}}
