@@ -12,6 +12,21 @@ Original art studies and reusable component examples are available in the
 [docs/VISUAL_IDENTITY.md](docs/VISUAL_IDENTITY.md). Later passes will use this guide
 when developing illustrated mode cards, bosses and equipment.
 
+**Pass B: illustrated Mission Control.** The homepage now prioritises four
+illustrated game modes. All artwork is original, local SVG
+([assets/mission-control/](assets/mission-control/)): a spaceship bridge, four
+distinct game environments, four mathematical kit illustrations, and the Alien
+Lab crew banner. Kit previews use actual HTML text in tactile miniature
+equation tiles, so maths remains clear and selectable. The currently chosen
+kit is visible in the hero, with a direct shortcut to the kit selection and
+automatic link updates for every game mode. Layouts adapt from 320px phones to
+desktop, and images are decorative with no additional dependencies.
+
+**Implementation:** `src/mission-control.css` contains Pass B layout and art
+treatment without extending the game board CSS. The new responsive artwork,
+full-card navigation, tile-kit selection and reduced-motion behaviour are
+verified by `tests/mission-art-browser.mjs`.
+
 The Drift Salvage Bay now randomises **four Ship Systems and three Mission Gadgets**
 per cleared sector, saving the selected inventory with each run. It favours different
 upgrade categories and avoids consecutive duplicates when possible, while ensuring

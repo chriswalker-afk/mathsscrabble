@@ -76,3 +76,57 @@ Motion language: signals breathe slowly (~2.7s), buttons react quickly (~140ms),
 | F | Multiplayer / Alien Lab | character-forward rooms and final accessibility/visual QA |
 
 Pass A intentionally avoids modifying any game rules (except the independently requested, tested Salvage stock randomisation), boss abilities, rack counts, board coordinates or online protocol. It supplies the design foundation for the following passes.
+
+## 7. Pass B — Mission Control artwork and mode selection (implemented)
+
+The homepage has been rebuilt as a game entrance rather than a purely
+instrument-panel directory. A scenic spaceship bridge introduces the
+universe, and the four game modes appear first as full-card navigation.
+A clearly labelled CURRENT TILE KIT control in the hero jumps to the
+mathematical kit selector. Selecting a kit changes every mode's launch
+link and the hero readout without erasing existing games.
+
+### Original art files
+
+| Asset | Narrative purpose |
+| --- | --- |
+| `assets/mission-control/bridge.svg` | cockpit with alien crew member and distant planet |
+| `assets/mission-control/sector.svg` | glowing equation reactor and training apparatus |
+| `assets/mission-control/drift.svg` | strange nebula, small spacecraft and boss encounter |
+| `assets/mission-control/local.svg` | two friendly pilots playing on a shared tabletop |
+| `assets/mission-control/online.svg` | communication tower, ships and network links |
+| `assets/mission-control/kit-launchpad.svg` | introductory rocket hardware |
+| `assets/mission-control/kit-orbit.svg` | signed-number orbital ring |
+| `assets/mission-control/kit-nebula.svg` | colourful segmented fractions |
+| `assets/mission-control/kit-quantum.svg` | advanced mathematical energy instrument |
+| `assets/mission-control/alien-lab.svg` | cheerful crew workshop banner |
+
+SVGs are lightweight, self-contained, drawn for EQUA//NOVA and contain no
+script, font, image imports or network resources. Each appears with
+`alt=""`, since card headings and descriptions already explain the
+destination. They are not substitutes for functional text.
+
+### Mathematical clarity and responsive composition
+
+Each kit button contains a legible real-text equation using small,
+tactile tiles; its original illustration is purely decorative. Illustrations
+sit behind a dark gradient scrim on mode cards while the labels remain
+separate DOM text. Full-card links, keyboard focus, save/resume labels,
+existing 19×19 gameplay and multiplayer protocols remain unchanged.
+
+At narrow widths, decorative illustrations crop and labels remain in the
+foreground. The image hover zoom disables under reduced-motion preferences.
+The home layout deliberately presents mission choices before optional kit
+customisation; the current kit is always visible above the modes.
+
+### Quality gates
+
+`tests/mission-art-browser.mjs` verifies ten SVG assets decode, no mobile
+overflow at 320/390/768/1366px, readable kit examples, intact full-card
+links, correct chosen-kit persistence, keyboard interaction through the
+existing home test and reduced-motion animation rules. The artwork is
+not exported into the gameplay board.
+
+**Next pass:** Pass C should improve gameplay HUD detail, equipment display
+and score feedback without allowing decorative elements to obscure
+equations, tile values, board coordinates or 19×19 viewport interactions.
