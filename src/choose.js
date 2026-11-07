@@ -1,5 +1,5 @@
 import {TILE_SETS,TILE_SET_BY_ID,TILE_SET_STORAGE_KEY,normalizeTileSet} from './tile-sets.js';
-import {PILOT_PRESET_NAMES,defaultPilotAlien} from './alien/profiles.js';
+import {PILOT_PRESET_NAMES,defaultPilotAlien,getSavedPilotAlien} from './alien/profiles.js';
 import {paintPilotAvatar,loadPilotArtwork} from './alien/badges.js';
 import {ensureActivePilot} from './achievements/auto-pilot.js';
 import {loadPilots} from './achievements/pilots.js';
@@ -9,6 +9,9 @@ const params=new URLSearchParams(location.search);
 const storage=(()=>{try{return localStorage;}catch{return null;}})();
 const saved=ensureActivePilot(storage);
 const current=loadPilots(storage).registry.pilots.find(p=>p.id===saved.pilotId);
+const savedAvatar=current?.avatar||getSavedPilotAlien(storage);
+const avatarFor=(id,i)=>id==='saved'&&savedAvatar?savedAvatar:
+ defaultPilotAlien(Math.max(0,PILOT_PRESET_NAMES.indexOf(id)));
 const modeLists={
  single:[{id:'sector',title:'SECTOR RUN',subtitle:'Quick match',description:'Reach an energy target in six turns.',symbol:'⚡'},
          {id:'rogue',title:'THE DRIFT',subtitle:'Campaign',description:'Collect upgrades and survive boss sectors.',symbol:'✦'}],
@@ -82,10 +85,12 @@ function renderPilotRows(){
    option.textContent=value.charAt(0).toUpperCase()+value.slice(1);
    alienSelect.append(option);
   }
+  if(savedAvatar){const option=document.createElement('option');option.value='saved';
+   option.textContent='My saved alien';alienSelect.append(option);}
   alienSelect.value=state.avatars[i];
   const preview=element('span','pilot-preview');
   const paint=()=>{
-   paintPilotAvatar(preview,defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(state.avatars[i])),i,{size:40,framing:'portrait'});
+   paintPilotAvatar(preview,avatarFor(state.avatars[i],i),i,{size:40,framing:'portrait'});
   };
   alienSelect.addEventListener('change',()=>{state.avatars[i]=alienSelect.value;paint();});
   avatarLabel.append(alienSelect,preview);
@@ -147,7 +152,7 @@ $('launch-form').addEventListener('submit',event=>{
   if(state.mode==='join'&&!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(code))
    return fail('Enter the six characters in the room code.');
   const launch={version:1,mode:state.mode,tileSet,turnSeconds:state.turn,maxPlayers:state.count,
-   names,avatars:state.avatars.slice(0,count).map(id=>defaultPilotAlien(PILOT_PRESET_NAMES.indexOf(id))),
+   names,avatars:state.avatars.slice(0,count).map((id,i)=>avatarFor(id,i)),
    ...(state.mode==='join'?{code}:{})};
   sessionStorage.setItem(LAUNCH_KEY,JSON.stringify(launch));
   location.assign(state.mode==='local'?'./play.html?mode=local&tiles='+tileSet+'&setup=ready':
