@@ -37,11 +37,37 @@ async function auditWidth(url,width){
  assert.ok(measurements.document<=width+4&&measurements.body<=width+4,
   url+' '+width+'px horizontally scrolls: '+JSON.stringify(measurements));
  assert.ok(measurements.heading<=width+4,url+' heading clips at '+width);
+ if(url.startsWith('achievement-hangar')){
+  const buttons=await page.locator('.hangar-nav a').evaluateAll(nodes=>nodes.map(node=>{
+   const r=node.getBoundingClientRect();
+   return {name:node.getAttribute('aria-label'),left:r.left,right:r.right,height:r.height};
+  }));
+  assert.equal(buttons.length,2,'Hangar must have two distinct navigation links');
+  assert.ok(buttons.every(b=>b.left>=-1&&b.right<=width+2&&b.height>=44),
+   'Hangar navigation targets must fit and be touch friendly: '+JSON.stringify(buttons));
+  if(width===390||width===1366)
+   await page.screenshot({path:'/tmp/equanova-alien-hangar-nav-'+width+'.png'});
+ }
 }
 
 try{
  await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  assert.equal(await page.locator('#award-grid .award-card').count(),10);
+ const homeLink=page.locator('.hangar-nav-home');
+ const labLink=page.locator('.hangar-nav-lab');
+ assert.equal(await homeLink.getAttribute('href'),'./index.html');
+ assert.equal(await labLink.getAttribute('href'),'./alien-lab.html');
+ assert.match(await homeLink.textContent(),/HOME/);
+ assert.match(await homeLink.textContent(),/MISSION CONTROL/);
+ const shortcut=page.locator('.skip-link');
+ const restingSkip=await shortcut.evaluate(el=>el.getBoundingClientRect().bottom);
+ assert.ok(restingSkip<=1,'keyboard skip link must not appear above the Hangar header at rest');
+ await shortcut.focus();
+ assert.ok(await shortcut.evaluate(el=>el.getBoundingClientRect().bottom>20),
+  'skip link must become visible when keyboard-focused');
+ await page.keyboard.press('Enter');
+ assert.match(page.url(),/#hangar$/,'skip link must jump to achievement content');
+ await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  // Roving keyboard focus is mandatory for accessible role=tablist navigation.
  const sector=page.locator('.mode-tabs [data-mode="sector"]');
  await sector.focus();

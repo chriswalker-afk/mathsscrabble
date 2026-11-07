@@ -146,11 +146,9 @@
  color:#203848;box-shadow:inset 0 1px #fff9eb,0 2px 0 #897754;
  font-size:clamp(13px,1.15vw,16px);font-weight:900;letter-spacing:-.02em;line-height:1}
 .tile-kit-card small{font-size:11px;line-height:1.4;color:#c5dcdc;margin-top:auto}
-.tile-kit-bottom{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:12px}
-.tile-kit-help{font-size:11px;line-height:1.45;margin:0;max-width:770px;color:#b2d2d3}
-.tile-kit-return{flex:0 0 auto;border:1px solid #759e9f;border-radius:7px;
- padding:8px 10px;color:var(--nova-gold);font-size:10px;letter-spacing:.09em;font-weight:900}
-.tile-kit-return:hover{border-color:var(--nova-gold);background:#234b55}
+.tile-kit-bottom{margin-top:12px}
+.tile-kit-help{font-size:11px;line-height:1.45;color:#b2d2d3;margin:0;max-width:100%}
+
 .home-rule-strip{font-size:9px;margin-top:12px}
 /* Existing kit state remains saved client-side; this is only an ambient accent. */
 html[data-selected-kit="integer"] .home-kit-orb{color:var(--nova-blue)}
@@ -188,7 +186,6 @@ html[data-selected-kit="advanced"] .home-kit-orb{color:var(--nova-gold)}
  .tile-kit-visual{height:75px}
  .kit-equation-tile{min-width:clamp(17px,3.8vw,25px);font-size:clamp(11px,3vw,15px);height:27px}
  .tile-kit-sample{gap:clamp(1px,.6vw,3px)}
- .tile-kit-bottom{flex-wrap:wrap}
  .alien-lab-card{min-height:112px;padding:12px 14px}
  .alien-lab-copy{max-width:70%}
 }
