@@ -118,7 +118,7 @@ Serve the project root using a static web server:
 python3 -m http.server 4173
 ```
 
-Open http://localhost:4173 to see the new **Mission Control homepage**. The four large cards take you directly to Sector Run, The Drift, Local Match and Online Rooms. Alien Lab has its own wide card below them. Game boards now live at [play.html](play.html) with the selected mode in the URL (`?mode=sector`, `?mode=rogue` or `?mode=local`). The project has no install/build step for the static site.
+Open http://localhost:4173 for the simple **Single Player / Multiplayer** entry screen. Choose a path to visit [game setup](choose.html), where you select a mission and its relevant tile kit and player settings. Alien Lab and Achievement Hangar remain accessible from home. The boards live at [play.html](play.html) and [online.html](online.html). The project has no static-site build step.
 
 Play on a **19 × 19 board** inside a compact, independently scrollable viewport. Use **+ / −** to zoom, **FIT** to see the entire grid, or **⌖** to return to the centre. Drag tiles to the grid with a mouse, finger or pen; or click/tap a tile and then its destination. Drag an unscored tile to move it, **or drag it back to the rack to remove it**. Drag rack tiles left or right to reorder them without using a turn, or tap them to select a destination. A separate **Undo Tile** button reverts the most recent placement, and **Clear Placement** returns all unscored tiles to the rack. Select the green **=** tile as often as required. The first complete horizontal/vertical equation must cross the centre. Later equations must share an already-scored tile. Click **Score Equation** to validate and score a move.
 
