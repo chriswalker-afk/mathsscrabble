@@ -250,7 +250,7 @@
     "aurora-gold": {
       "primary": "#d6a546",
       "light": "#fff2a2",
-      "dark": "#85611e",
+      "dark": "#b18a49",
       "belly": "#fff5c8",
       "accent": "#e48d65",
       "spot": "#bd8439",
@@ -259,7 +259,7 @@
     "warp-mint": {
       "primary": "#59e7d1",
       "light": "#b7fff0",
-      "dark": "#238e93",
+      "dark": "#4db8b6",
       "belly": "#e4fff5",
       "accent": "#9c80f7",
       "spot": "#4cc5a8",
@@ -268,16 +268,16 @@
     "copper-dawn": {
       "primary": "#d78c5f",
       "light": "#ffd3a5",
-      "dark": "#965339",
+      "dark": "#c18467",
       "belly": "#fff2da",
       "accent": "#5fc4bd",
       "spot": "#bf7851",
       "blush": "#e99ba4"
     },
     "cosmic-violet": {
-      "primary": "#9a7aff",
+      "primary": "#b69cff",
       "light": "#e4cfff",
-      "dark": "#563eaa",
+      "dark": "#9a84e2",
       "belly": "#f7eaff",
       "accent": "#66e1df",
       "spot": "#7553d5",
