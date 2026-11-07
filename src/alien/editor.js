@@ -235,7 +235,7 @@ function addPartGroup(parent,field){
    const entitled=owns(PART_COLLECTIONS[field],id);
    const button=makeButton({
      className:'part-choice'+(entitled?'':' is-locked'),
-     ariaLabel:(entitled?'Choose ':'Preview locked ')++humanize(id)+' '+(field==='accessory'?'accessory':field),
+     ariaLabel:(entitled?'Choose ':'Preview locked ')+humanize(id)+' '+(field==='accessory'?'accessory':field),
      pressed:selected
    });
    button.dataset.field=field;button.dataset.option=id;
@@ -268,7 +268,7 @@ function addPaletteGroup(parent,role){
    const entitled=owns('palettes',id);
    const button=makeButton({
      className:'palette-choice'+(entitled?'':' is-locked'),
-     ariaLabel:(entitled?'Apply ':'Preview locked ')++humanize(id)+' to '+role,
+     ariaLabel:(entitled?'Apply ':'Preview locked ')+humanize(id)+' to '+role,
      pressed:chosen
    });
    button.dataset.colourRole=role;button.dataset.palette=id;
