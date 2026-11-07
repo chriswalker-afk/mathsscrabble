@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="zone-curse-weaver-title">
+<title id="zone-curse-weaver-title">The Crimson Fracture environment</title>
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#30253e"/><stop offset=".58" stop-color="#743e59"/><stop offset="1" stop-color="#101f31"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#ef7f8e" stop-opacity=".47"/><stop offset="1" stop-color="#ef7f8e" stop-opacity="0"/></radialGradient>
+ <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#743e59"/><stop offset="1" stop-color="#101d2a"/></linearGradient>
+</defs>
+<rect width="960" height="360" fill="url(#sky)"/>
+<ellipse cx="694" cy="149" rx="328" ry="231" fill="url(#glow)"/>
+<g fill="#d6f5e9"><circle cx="564.0" cy="29.8" r="2.3" opacity="0.54"/><circle cx="94.7" cy="218.0" r="0.8" opacity="0.50"/><circle cx="24.4" cy="125.9" r="0.8" opacity="0.38"/><circle cx="99.8" cy="77.4" r="1.5" opacity="0.72"/><circle cx="138.7" cy="248.7" r="0.8" opacity="0.73"/><circle cx="626.4" cy="46.8" r="0.8" opacity="0.30"/><circle cx="55.2" cy="236.1" r="1.5" opacity="0.59"/><circle cx="81.8" cy="253.9" r="0.8" opacity="0.27"/><circle cx="900.6" cy="54.7" r="2.3" opacity="0.74"/><circle cx="933.3" cy="145.7" r="1.5" opacity="0.51"/><circle cx="196.1" cy="223.9" r="0.8" opacity="0.44"/><circle cx="36.1" cy="138.9" r="0.8" opacity="0.54"/><circle cx="898.9" cy="154.9" r="1.5" opacity="0.46"/><circle cx="371.3" cy="27.7" r="0.8" opacity="0.47"/><circle cx="193.8" cy="218.5" r="0.8" opacity="0.23"/><circle cx="193.5" cy="160.1" r="1.5" opacity="0.61"/><circle cx="136.9" cy="196.4" r="2.3" opacity="0.40"/><circle cx="309.9" cy="65.1" r="0.8" opacity="0.35"/><circle cx="246.3" cy="47.2" r="1.5" opacity="0.66"/><circle cx="593.5" cy="132.2" r="0.8" opacity="0.74"/><circle cx="382.4" cy="239.7" r="0.8" opacity="0.37"/><circle cx="843.0" cy="75.8" r="1.5" opacity="0.28"/><circle cx="252.2" cy="252.0" r="0.8" opacity="0.51"/><circle cx="771.6" cy="249.0" r="0.8" opacity="0.43"/><circle cx="480.2" cy="75.8" r="2.3" opacity="0.59"/><circle cx="761.1" cy="219.1" r="0.8" opacity="0.63"/><circle cx="853.3" cy="132.5" r="0.8" opacity="0.55"/><circle cx="224.2" cy="150.7" r="1.5" opacity="0.55"/><circle cx="398.9" cy="256.2" r="0.8" opacity="0.30"/><circle cx="653.4" cy="114.1" r="0.8" opacity="0.47"/><circle cx="310.0" cy="196.1" r="1.5" opacity="0.53"/><circle cx="738.2" cy="154.9" r="0.8" opacity="0.32"/><circle cx="94.8" cy="233.3" r="2.3" opacity="0.37"/><circle cx="617.8" cy="254.9" r="1.5" opacity="0.72"/><circle cx="259.7" cy="129.8" r="0.8" opacity="0.55"/><circle cx="414.4" cy="63.2" r="0.8" opacity="0.57"/><circle cx="128.5" cy="171.4" r="1.5" opacity="0.67"/></g>
+<path d="M0 295Q85 258 184 286T385 279Q500 248 602 285T817 270T970 294V360H0Z" fill="url(#deck)" stroke="#ef7f8e" stroke-width="3" stroke-opacity=".37"/>
+<path d="M0 326Q84 303 188 326T385 312T583 324T782 312T975 330" fill="none" stroke="#ef7f8e" stroke-opacity=".2" stroke-width="10"/>
+<g transform="translate(0 0)"><path d="M345 330L470 211 529 246 599 149 651 205 710 92 767 155 825 71 965 270 960 360H345Z" fill="#4f3047" stroke="#a7647b" stroke-width="4"/>
+<path d="M468 329L565 241 628 289 708 175 761 217 829 128 931 296" stroke="#ff7d9e" stroke-width="15" fill="none" stroke-linecap="round" opacity=".78"/>
+<path d="M469 329L565 241 628 289 708 175 761 217 829 128 931 296" stroke="#ffe0a6" stroke-width="4" fill="none" opacity=".74"/>
+<g fill="#ffa9bd"><path d="M644 64l9 24-8 23-7-21z"/><path d="M800 30l-4 30 19-8z"/><circle cx="551" cy="123" r="6"/></g></g>
+<g transform="translate(186 233) rotate(-16)">
+ <path d="M-74 17L-20-16 21-19 92 6 15 24Z" fill="#d2d6c0" stroke="#254455" stroke-width="6"/>
+ <path d="M-29-8L0-37 26-6" fill="#6da8a9" stroke="#ecddc0" stroke-width="4"/>
+ <ellipse cx="0" cy="-3" rx="24" ry="11" fill="#2b566e" stroke="#a8ead6" stroke-width="4"/>
+ <path d="M-74 17L-114 7 -108 33Z" fill="#ef7f8e" opacity=".85"/>
+</g>
+<g stroke="#bde7d5" stroke-opacity=".19" stroke-width="4" fill="none"><path d="M3 3H957V357H3Z"/></g>
+</svg>
