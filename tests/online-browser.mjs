@@ -255,7 +255,26 @@ try{
  assert.equal(await host.locator('#online-scores .local-score-row[data-player-index="1"] .online-speech-bubble').textContent(),'⟡⋔⟡');
  assert.equal(await host.locator('#online-scores .local-score-row[data-player-index="1"] .alien-player-avatar svg').count(),1,
   'other players see the actual sending pilot portrait beside their speech bubble');
-
+ // Mobile renders the same transmission above the board, not in standings.
+ await guest.setViewportSize({width:390,height:844});
+ await guest.locator('#online-callout-stage .online-radio-person span').waitFor({state:'visible',timeout:3000});
+ assert.equal(await guest.locator('#online-callout-stage .online-radio-person span').textContent(),'⟡⋔⟡');
+ // The on-screen speech must disappear without another server update.
+ const radioSentAt=backend.room.callouts.at(-1).at;
+ await Promise.all([
+  host.locator('#online-scores .local-score-row[data-player-index="1"] .online-speech-bubble')
+   .waitFor({state:'detached',timeout:8500}),
+  guest.locator('#online-callout-stage .online-radio-person')
+   .waitFor({state:'detached',timeout:8500})
+ ]);
+ assert.ok(Date.now()-radioSentAt>=5000,'radio must not vanish before its five-second duration');
+ assert.equal(await host.locator('#online-scores .online-speech-bubble').count(),0);
+ assert.equal(await guest.locator('#online-callout-stage').textContent(),'');
+ // A fresh server state containing the old history must not resurrect the message.
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.waitForTimeout(150);
+ assert.equal(await host.locator('#online-scores .online-speech-bubble').count(),0);
+ await guest.setViewportSize({width:1366,height:768});
 
  // A syntactically complete, incorrect statement is rejected by the backend.
  for(const [s,r,c] of [['8',6,3],['+',6,4],['1',6,5],['=',6,6],['4',6,7],['2',6,8]])
