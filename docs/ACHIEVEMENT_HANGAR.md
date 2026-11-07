@@ -132,3 +132,36 @@ Each move/sector/purchase uses a deterministic receipt under the pilot's run sco
 - `npm run check`, the full existing Chromium regression suites, and the Cloudflare Worker dry-run remain required.
 
 **Remaining:** Pass D binds each local seat to its own saved pilot and verifies online awards from authoritative server-confirmed outcomes. Pass E conducts the final responsive/cosmetic combination and quality audit.
+
+
+## Pass D: Local and Online Multiplayer achievements
+
+### Local — a named pilot in each hot seat
+
+Local match setup now includes an **Achievements for** dropdown per player: each seat explicitly selects a different saved pilot or **Guest (no permanent progress)**. The existing alien selector and the player's displayed match name are independent of achievement ownership. A Pilot cannot be assigned to two seats in one match. At creation a separate, versioned \`equa-nova.achievements.local-owner.v1\` record stores the match scope, immutable seat assignments and matching roster/kit. The original local game save and rack privacy remain unchanged.
+
+The following milestones emit only after verified game transitions:
+
+- L01: the created local match starts (each selected owner independently).
+- L02: that seat has actually pressed **Ready** at its private handover.
+- L03–L05: a mathematically validated score, computed from the old board and new tiles before the handover. The winning seat alone earns the reward.
+- L06: a successful free single-tile exchange by that seat.
+- L07–L10: actual completed match standings, scored-move totals and winner status per seat. L10 requires three distinct match scopes.
+
+Guests never earn permanent rewards. Old match saves without the owner sidecar continue playing with no automatic achievement attribution. If a pilot is deleted or a sidecar is malformed, the owner fails closed rather than guessing. The scoring celebration remains in the scorer's post-animation result; final-match awards are identified by seat/name only after private racks are hidden.
+
+### Online — Worker-authored evidence, not browser scores
+
+Online **Signal Clash** uses \`src/achievements/online-milestones.js\` within the shared, server-authoritative room rules. The Cloudflare Worker records at most 48 compact receipts per room, **only** when a join, lobby population, start, validated score or match finish succeeds. Rejected equations, fabricated rack tiles and duplicate action IDs never create receipts. Timed-out final matches also receive completion evidence.
+
+A \`/state\` or action response returns a stable room instance ID and **only the authenticated seat's milestone receipts**. Tokens, private opponent racks and other seats' milestones never appear in the response. Receipt types support online achievements O01–O10, including two mathematical tile kits across different rooms (O08) and three completed wins in distinct rooms (O10).
+
+On create/join, the browser binds that authenticated seat to the **currently active device-local pilot** and saves a separate \`equa-nova.achievements.online-owner.v1\` reference. It cannot be transferred by switching active profiles later. The client validates room and seat scope, deduplicates the verified receipts and keeps unlocks in the separate local achievement store. Reconnections replay the same evidence harmlessly. Older rooms without receipts remain playable, but award nothing; users should create a new room after deploying the updated Worker.
+
+**Trust limitation:** Pilot names and unlock saves are device-local, not permanent online accounts. Only the Worker is authoritative for **game results**, not cross-device ownership of cosmetic saves. Local storage/backup files are not cryptographically protected against manual editing. True account-linked, tamper-resistant cross-device achievements would require authentication and a remote progress database.
+
+### Deploy and verify
+
+The site and the Cloudflare room Worker **both** need to be deployed from the same merged Pass D code. Merging only GitHub Pages will not update the Worker. Before inviting students, verify the Worker health endpoint, server-authenticated milestone responses and the browser's named-pilot label.
+
+Run \`npm run check\`, \`tests/achievement-pass-d.test.js\`, \`tests/achievement-pass-d-local-browser.mjs\`, the enhanced \`tests/online-browser.mjs\` and \`tests/online-worker-runtime.mjs\` via the CI workflow. Also retest 390px phone layouts and local-private handovers. Pass E remains the full cross-combination and accessibility release audit.
