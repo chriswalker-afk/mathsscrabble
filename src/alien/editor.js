@@ -256,7 +256,7 @@ function addPaletteGroup(parent,role){
  group.dataset.paletteRole=role;
  const head=document.createElement('div');head.className='option-group-header';
  const label=document.createElement('h4');label.textContent=roleLabels[role];
- const count=document.createElement('span');count.textContent='6 COLOUR WORLDS';
+ const count=document.createElement('span');count.textContent=Object.keys(state.library.manifest.palettes).filter(id=>owns('palettes',id)).length+' AVAILABLE';
  head.append(label,count);
  const grid=document.createElement('div');grid.className='palette-choices';
  for(const [id,palette] of Object.entries(state.library.manifest.palettes)){
