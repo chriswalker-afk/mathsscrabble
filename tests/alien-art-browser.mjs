@@ -14,10 +14,10 @@ try{
    document.querySelector('#gallery-status')?.dataset.status),null,{timeout:18000});
  assert.equal(await page.locator('#gallery-status').getAttribute('data-status'),
    'ready',await page.locator('#gallery-status').textContent());
- assert.match(await page.locator('#gallery-status').textContent(),/30 ORIGINAL SVG ASSETS/);
+ assert.match(await page.locator('#gallery-status').textContent(),/66 ORIGINAL SVG ASSETS/);
  assert.equal(await page.locator('#presets .specimen-card').count(),4);
  assert.equal(await page.locator('.category-section').count(),7);
- assert.equal(await page.locator('.part-card').count(),31,'30 SVG pieces plus no accessory');
+ assert.equal(await page.locator('.part-card').count(),67,'66 SVG pieces plus no accessory');
  assert.equal(await page.locator('.size-item').count(),4);
  await page.screenshot({path:'/tmp/equanova-alien-gallery.png',fullPage:true});
 
@@ -172,8 +172,8 @@ try{
       small,chosen,exportText:exportText.slice(0,500),exportLength:exportText.length,
       blocked:rejected};
  });
- assert.equal(result.assetCount,30);
- assert.equal(result.compositions,128);
+ assert.equal(result.assetCount,66);
+ assert.equal(result.compositions,11*8*7+9*8*8);
  for(const item of result.clip){
    assert.ok(item.minX>2&&item.maxX<318&&item.minY>1&&item.maxY<357,
      'SVG canvas clipping '+JSON.stringify(item));
