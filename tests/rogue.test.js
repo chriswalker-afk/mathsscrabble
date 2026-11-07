@@ -50,16 +50,21 @@ test('first shop provides different build paths and purchases never duplicate',(
  const initial=makeRogueState(),earned=rewardSector(initial,1,65,4);
  assert.ok(earned.reward>=5);
  assert.equal(earned.rogue.shopSector,1);
- assert.deepEqual(shopOffers(1,earned.rogue).map(x=>x.id),
-  ['ion-seven','crosslink','longwave','wild-beacon']);
- const bought=purchaseUpgrade(earned.rogue,'ion-seven',1);
+ const offers=shopOffers(1,earned.rogue);
+ assert.equal(offers.length,4);
+ assert.equal(new Set(offers.map(x=>x.kind)).size,4,'stock should show four different build disciplines');
+ const first=offers[0];
+ const bought=purchaseUpgrade(earned.rogue,first.id,1);
  assert.equal(bought.ok,true);
- assert.equal(bought.rogue.flux,earned.rogue.flux-4);
- assert.deepEqual(bought.rogue.upgrades,['ion-seven']);
- assert.equal(purchaseUpgrade(bought.rogue,'ion-seven',1).ok,false);
+ assert.equal(bought.rogue.flux,earned.rogue.flux-first.cost);
+ assert.deepEqual(bought.rogue.upgrades,[first.id]);
+ assert.deepEqual(shopOffers(1,bought.rogue).map(x=>x.id),offers.slice(1).filter(x=>x.id!==first.id).map(x=>x.id).length===3?
+   offers.filter(x=>x.id!==first.id).map(x=>x.id):[],'remaining stock does not reroll after a purchase');
+ assert.equal(purchaseUpgrade(bought.rogue,first.id,1).ok,false);
  assert.equal(purchaseUpgrade(bought.rogue,'not-real',1).ok,false);
- assert.equal(purchaseUpgrade(bought.rogue,'amplifier',1).ok,false);
- assert.equal(purchaseUpgrade(bought.rogue,'crosslink',2).ok,false);
+ const absent=ROGUE_ITEMS.find(item=>!offers.some(offer=>offer.id===item.id));
+ assert.equal(purchaseUpgrade(bought.rogue,absent.id,1).ok,false);
+ assert.equal(purchaseUpgrade(bought.rogue,offers[1].id,2).ok,false);
  assert.equal(validRogueState(bought.rogue,1,'won'),true);
  assert.equal(validRogueState(bought.rogue,2,'playing'),true);
 });
@@ -161,10 +166,12 @@ test('Rogue and classic saves are independent, including shop progress',()=>{
  assert.equal(saveRun(store,rogue),true);
  assert.ok(loadRun(store,'rogue').rogue.flux>0);
  assert.equal(loadRun(store,'sector').phase,'playing');
- const bought=purchaseUpgrade(rogue.rogue,'ion-seven',1);
+ const offered=shopOffers(1,rogue.rogue).find(item=>item.cost<=rogue.rogue.flux);
+ assert.ok(offered,'one of the four offered systems should be affordable');
+ const bought=purchaseUpgrade(rogue.rogue,offered.id,1);
  assert.ok(bought.ok);rogue.rogue=bought.rogue;
  assert.equal(saveRun(store,rogue),true);
- assert.ok(loadRun(store,'rogue').rogue.upgrades.includes('ion-seven'));
+ assert.ok(loadRun(store,'rogue').rogue.upgrades.includes(offered.id));
  assert.ok(store.getItem(ROGUE_SAVE_KEY));
 });
 test('corrupt rogue wallets and upgrades cannot resume',()=>{
@@ -183,13 +190,15 @@ test('corrupt rogue wallets and upgrades cannot resume',()=>{
 });
 
 test('single-use capacitor is purchased with Flux and consumed exactly once',()=>{
- const reward=rewardSector(makeRogueState(),1,100,1);
+ const reward=rewardSector(makeRogueState('natural',()=>.17),1,100,1);
  assert.ok(reward.rogue.flux>=10);
- let after=purchasePulse(reward.rogue,1);
+ const inStock={...reward.rogue,shopStock:{...reward.rogue.shopStock,
+   gadgets:['pulse-charge',...reward.rogue.shopStock.gadgets.filter(id=>id!=='pulse-charge').slice(0,2)]}};
+ let after=purchasePulse(inStock,1);
  assert.equal(after.ok,true);
  assert.equal(after.rogue.pulse,1);
  assert.equal(after.rogue.pulseBought,1);
- assert.equal(after.rogue.flux,reward.rogue.flux-PULSE_ITEM.cost);
+ assert.equal(after.rogue.flux,inStock.flux-PULSE_ITEM.cost);
  assert.equal(validRogueState(after.rogue,1,'won'),true);
  const {board,pending,move}=moveAt(['8','+','4','=','1','2'],6);
  const plain=scoreRogueMove(board,pending,move,reward.rogue,1);
@@ -204,7 +213,8 @@ test('single-use capacitor is purchased with Flux and consumed exactly once',()=
  assert.equal(consumePulse(after.rogue),after.rogue,'empty capacitor cannot be used twice');
 });
 test('temporary items occupy at most two equipped slots',()=>{
- let rogue=rewardSector(makeRogueState(),1,500,1).rogue;
+ let rogue=rewardSector(makeRogueState('natural',()=>.17),1,500,1).rogue;
+ rogue={...rogue,shopStock:{...rogue.shopStock,gadgets:['pulse-charge',...rogue.shopStock.gadgets.filter(id=>id!=='pulse-charge').slice(0,2)]}};
  for(let i=0;i<2;i++){
    const purchase=purchasePulse(rogue,1);
    assert.equal(purchase.ok,true);

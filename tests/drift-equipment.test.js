@@ -12,7 +12,12 @@ import {
 } from '../src/rogue.js';
 
 const rng=()=>0.31;
-const wealthy=()=>({ ...makeRogueState(),earned:300,flux:300,shopSector:1 });
+const wealthy=()=>{
+ const base=makeRogueState('natural',()=>.31);
+ const rolled=shopOffers(1,base).map(item=>item.id);
+ return {...base,earned:300,flux:300,shopSector:1,
+   shopStock:{sector:1,systems:rolled,gadgets:['pulse-charge','double-score','step-up']}};
+};
 const equipment=(...upgrades)=>({...makeRogueState(),upgrades,
  earned:upgrades.reduce((sum,id)=>sum+ROGUE_ITEMS.find(i=>i.id===id).cost,0),
  spent:upgrades.reduce((sum,id)=>sum+ROGUE_ITEMS.find(i=>i.id===id).cost,0)});
@@ -40,9 +45,10 @@ test('four permanent modules fit; a fifth purchase is denied with no Flux deduct
    assert.equal(result.ok,true);
    rogue=result.rogue;
  }
- const cash=rogue.flux,choices=shopOffers(1,rogue);
+ const cash=rogue.flux;
  assert.equal(rogue.upgrades.length,4);
- assert.equal(purchaseUpgrade(rogue,choices[0].id,1).ok,false);
+ assert.equal(shopOffers(1,rogue).length,0);
+ assert.equal(purchaseUpgrade(rogue,ROGUE_ITEMS.find(item=>!rogue.upgrades.includes(item.id)).id,1).ok,false);
  assert.equal(rogue.flux,cash);
  assert.equal(validRogueState(rogue,1,'won'),true);
 });
