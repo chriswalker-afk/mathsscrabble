@@ -67,7 +67,7 @@ test('New users receive the correct next action, not two competing start buttons
  assert.match(online,/id="online-gate-help"/);
  assert.match(files['src/online-ui.js'],/BACK TO LOBBY/);
  assert.match(files['src/online-ui.js'],/BACK TO SETUP/);
- assert.match(files['src/app.js'],/select a pilot in the Hangar before starting a new run/i);
+ assert.match(files['src/app.js'],/(choose|select) a pilot in the Hangar before starting a new run/i);
 });
 test('No page repeats a superfluous long intro or falsely promises synced pilot data',()=>{
  const home=files['index.html'],hangar=files['achievement-hangar.html'];
