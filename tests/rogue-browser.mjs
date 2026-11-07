@@ -41,8 +41,8 @@ try{
  assert.equal(await page.locator('#permanent-slots .equipment-slot').count(),4);
   assert.equal(await page.locator('#rogue-summary').evaluate(x=>Boolean(x.closest('.left-panel'))),true,
     'Ship Systems belong in the slim telemetry rail');
-   assert.equal(await page.locator('#drift-temporary').evaluate(x=>Boolean(x.closest('.rack-section'))),true,
-    'Mission Gadgets belong beside the rack');
+   assert.equal(await page.locator('#drift-temporary').evaluate(x=>Boolean(x.closest('.left-panel'))),true,
+    'Mission Gadgets belong underneath Ship Systems in telemetry');
    assert.equal(await page.locator('.right-panel').count(),0,'no permanent command console');
    assert.equal(await page.locator('#drift-loadout').isVisible(),true);
  assert.equal(await page.locator('#temporary-slots .equipment-slot').count(),2);
