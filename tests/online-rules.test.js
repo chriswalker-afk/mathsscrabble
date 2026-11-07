@@ -76,7 +76,7 @@ test('server-authoritative overall game clock stops actions and chooses final st
  assert.equal(verifyOnlineRoom(room),true);
  assert.equal(viewOnlineRoom(room,H,302001).match.reason,'time-limit');
  assert.equal(viewOnlineRoom(room,A,302001).gameSeconds,300);
- assert.throws(()=>takeOnlineAction(room,H,request(room.revision,'pass'),302001),/not accepting/i);
+ assert.throws(()=>takeOnlineAction(room,H,request(room.revision,'pass','after-game-clock-123'),302001),/not accepting/i);
  assert.equal(timeOutOnlineTurn(room,302002).changed,false);
 });
 test('game timer works without a turn timer and rejects unsupported durations',()=>{
