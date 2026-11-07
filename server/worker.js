@@ -79,7 +79,7 @@ async function handleApi(request,ctx){
      const stub=ctx.exports.GameRoom.getByName(code);
      const created=await roomRpc(stub,'create',{
        code,hostName:body.name,hostHash:hash,hostAvatar:body.avatar,
-       maxPlayers:body.maxPlayers,turnSeconds:body.turnSeconds,tileSet:body.tileSet??'natural'
+       maxPlayers:body.maxPlayers,turnSeconds:body.turnSeconds,gameSeconds:body.gameSeconds??0,tileSet:body.tileSet??'natural'
      });
      if(created.collision)continue;
      return json({room:created.state,token:playerToken},201,origin);
