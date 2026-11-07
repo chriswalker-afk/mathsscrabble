@@ -63,7 +63,7 @@ try{
  assert.equal(await page.locator('#online-gate').count(),1);
  await page.locator('#online-gate .online-back').click();
  await page.waitForURL(/index\.html$/);
- await page.locator('.alien-lab-card').click();
+ await page.locator('.alien-lab-card').first().click();
  await page.waitForURL(/alien-lab\.html$/);
  assert.equal(await page.locator('.exit-link').count(),1);
  await page.locator('.exit-link').click();
