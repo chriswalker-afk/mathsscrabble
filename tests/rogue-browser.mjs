@@ -94,6 +94,10 @@ try{
  const fluxBefore=Number(await page.locator('#flux-count').textContent());
  assert.ok(fluxBefore>=4,'sector survival should afford at least one upgrade');
  assert.equal(await page.locator('.salvage-card').count(),7);
+ const firstStock=JSON.parse(wonSave).rogue.shopStock;
+ assert.equal(firstStock.sector,1);
+ assert.equal(firstStock.systems.length,4);
+ assert.equal(firstStock.gadgets.length,3);
  await page.setViewportSize({width:390,height:844});
  const shopOnPhone=await page.evaluate(()=>{
    const actions=document.querySelector('#drift-hub-actions').getBoundingClientRect();
@@ -107,32 +111,46 @@ try{
    'shop must fit within the mobile viewport');
  assert.ok(shopOnPhone.scrollWidth<=shopOnPhone.viewportWidth+3,'shop must not overflow horizontally');
  await page.setViewportSize({width:1366,height:768});
- const firstUpgrade=await page.locator('.salvage-card').first().locator('strong').textContent();
- assert.equal(firstUpgrade,'Ionised Sevens');
- await page.locator('.salvage-card').first().locator('button').click();
- assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-4);
- assert.ok(fluxBefore>=7,'the early-win bonus allows buying a permanent and single-use upgrade');
- await page.locator('.salvage-consumable button').first().click();
- assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-7);
- assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
+ const offered=await page.locator('#salvage-grid [data-item-id]').evaluateAll(cards=>
+   cards.map(card=>({id:card.dataset.itemId,name:card.querySelector('strong').textContent,
+     cost:Number(card.querySelector('button').textContent.split(' ')[0])})));
+ const gadgets=await page.locator('#salvage-temporary-grid [data-item-id]').evaluateAll(cards=>
+   cards.map(card=>({id:card.dataset.itemId,cost:Number(card.querySelector('button').textContent.split(' ')[0])})));
+ assert.deepEqual(offered.map(item=>item.id),firstStock.systems);
+ assert.deepEqual(gadgets.map(item=>item.id),firstStock.gadgets);
+ const cheapestSystem=offered.slice().sort((a,b)=>a.cost-b.cost)[0];
+ const cheapestGadget=gadgets.slice().sort((a,b)=>a.cost-b.cost)[0];
+ assert.ok(fluxBefore>=cheapestSystem.cost+cheapestGadget.cost,
+   'sector reward should afford an inexpensive system and gadget');
+ await page.locator('#salvage-grid [data-item-id="'+cheapestSystem.id+'"] button').click();
+ assert.equal(Number(await page.locator('#flux-count').textContent()),fluxBefore-cheapestSystem.cost);
+ const remainingSystems=await page.locator('#salvage-grid [data-item-id]').evaluateAll(cards=>cards.map(card=>card.dataset.itemId));
+ assert.deepEqual(remainingSystems,firstStock.systems.filter(id=>id!==cheapestSystem.id),
+   'buying one system must not roll a replacement');
+ await page.locator('#salvage-temporary-grid [data-item-id="'+cheapestGadget.id+'"] button').click();
+ assert.equal(Number(await page.locator('#flux-count').textContent()),
+   fluxBefore-cheapestSystem.cost-cheapestGadget.cost);
+ assert.match(await page.locator('#upgrade-summary').textContent(),new RegExp(cheapestSystem.name));
  const installed=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
- assert.deepEqual(installed.rogue.upgrades,['ion-seven']);
+ assert.deepEqual(installed.rogue.upgrades,[cheapestSystem.id]);
+ assert.deepEqual(installed.rogue.tempSlots,[cheapestGadget.id]);
+ assert.deepEqual(installed.rogue.shopStock,firstStock);
  assert.equal(await page.locator('#permanent-slots .equip-svg').count(),1);
  assert.equal(await page.locator('#temporary-slots .equip-svg').count(),1);
  assert.equal(await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width),baseBoardWidth,
    'equipment must not reduce the board width');
- assert.equal(installed.rogue.pulse,1);
- assert.equal(installed.rogue.pulseBought,1);
  await page.reload({waitUntil:'networkidle'});
  assert.match(await page.locator('#drift-hub-title').textContent(),/stabilised/i);
  await page.locator('#drift-hub-actions .drift-bay').click();
  assert.match(await page.locator('#drift-hub-title').textContent(),/salvage bay/i);
- assert.equal(await page.locator('#flux-count').textContent(),String(fluxBefore-7));
- assert.match(await page.locator('.salvage-consumable').first().textContent(),/1\/2/);
- assert.equal(await page.locator('.salvage-card').filter({hasText:'Ionised Sevens'}).count(),0);
+ assert.equal(await page.locator('#flux-count').textContent(),
+   String(fluxBefore-cheapestSystem.cost-cheapestGadget.cost));
+ assert.equal(await page.locator('#salvage-grid [data-item-id="'+cheapestSystem.id+'"]').count(),0);
+ const restored=JSON.parse(await page.evaluate(()=>localStorage.getItem('equa-nova.drift.v1')));
+ assert.deepEqual(restored.rogue.shopStock,firstStock,'reopening preserves stock after both purchases');
  await page.locator('#drift-hub-actions .drift-go').click();
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 02/i);
- assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
+ assert.match(await page.locator('#upgrade-summary').textContent(),new RegExp(cheapestSystem.name));
  assert.equal(await page.locator('#permanent-count').textContent(),'1 / 4');
  assert.equal(await page.locator('#temporary-count').textContent(),'1 / 2');
  assert.equal(await page.locator('#permanent-slots .equipment-slot:not(.is-empty)').count(),1);
@@ -190,7 +208,7 @@ try{
  await page.locator('#mode-btn').click();
  await page.locator('#home-rogue').click();
  assert.match(await page.locator('#anomaly-name').textContent(),/ENERGY LEECH/);
- assert.match(await page.locator('#upgrade-summary').textContent(),/Ionised Sevens/);
+ assert.match(await page.locator('#upgrade-summary').textContent(),new RegExp(cheapestSystem.name));
 
  // No retry with preserved upgrades: failing the last turn offers a new run.
  await page.evaluate(()=>{
