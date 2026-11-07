@@ -216,7 +216,7 @@ try{
  assert.notDeepEqual(guestAfterDrag,guestOriginalIds,'waiting pilot can reorder the rack');
  // A scratch equation on an empty square belongs only to that pilot.
  const plannedCell=cell(guest,8,8),plannedIndex=Number(await plannedCell.getAttribute('data-index'));
- await guest.locator('#rack .tile').first().click();
+ await guest.locator('#rack .tile:not(.wildcard)').first().click();
  await plannedCell.click();
  assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),true);
  assert.equal(await cell(host,8,8).evaluate(x=>x.classList.contains('pending')),false);
