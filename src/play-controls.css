@@ -60,6 +60,9 @@
  .rack-count{font-size:9px}
 }
 @media(max-width:730px){
+ /* On phones the preview must remain above optional rules and equipment. */
+ .right-panel .play-rule-reference{order:4}
+ .right-panel .drift-loadout{order:3}
  .rack-section{padding-top:6px}
  .rack-heading{min-height:28px;margin-bottom:4px}
  .rack-heading>span:first-child{font-size:9px}
