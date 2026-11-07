@@ -62,9 +62,8 @@ try{
  // A kit change is a deliberate new-run action with an explicit warning.
  const page=await open('natural',1366,768);
  const width=await page.locator('#board-frame').evaluate(el=>el.getBoundingClientRect().width);
- await page.locator('#tile-set-btn').click();
- assert.equal(await page.locator('.kit-dialog-card').count(),4);
- await page.locator('[data-kit-choice="rational"]').click();
+ assert.equal(await page.locator('#tile-set-btn').count(),0,'mathematical kit is selected at launch');
+ await page.goto(URL+'rational',{waitUntil:'networkidle'});
  assert.match(await page.locator('#modal-body').textContent(),/starts a fresh/i);
  await page.locator('#modal-actions button').last().click();
  assert.equal((await get(page)).tileSet,'rational');
