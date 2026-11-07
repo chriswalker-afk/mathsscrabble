@@ -33,6 +33,17 @@ test('four levels each produce exactly 151 unique, playable physical tile IDs',(
    }
  }
 });
+test('Nebula uses precisely seven positive fractions, with four pieces each',()=>{
+ const bag=makeBag(random,'rational');
+ const fractions=bag.filter(tile=>tile.value?.includes('/'));
+ const wanted=['1/2','1/4','3/4','5/4','3/2','1/3','2/3'];
+ assert.equal(fractions.length,28);
+ assert.deepEqual([...new Set(fractions.map(tile=>tile.value))].sort(),wanted.slice().sort());
+ for(const value of wanted)assert.equal(fractions.filter(t=>t.value===value).length,4,
+  value+' must appear four times in the finite bag');
+ assert.ok(bag.some(tile=>tile.value==='0'));
+ assert.ok(bag.some(tile=>tile.value==='9'));
+});
 test('Nebula supplies only positive fractions while Quantum keeps signed fractions',()=>{
  const nebula=makeBag(random,'rational'),quantum=makeBag(random,'advanced');
  const nebulaFractions=nebula.filter(t=>t.value?.includes('/'));
