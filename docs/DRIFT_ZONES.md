@@ -44,3 +44,45 @@ Boss tile/drain scoring uses the same score preview and scoring-ceremony totals 
 - Existing Sector Run, Drift, local multiplayer, online multiplayer, Worker runtime and Alien Lab regression tests
 
 The boss system operates entirely in the existing static GitHub Pages client. No Cloudflare Worker change or additional Worker requests are needed.
+
+## Pass D — Illustrated worlds and the Captain's Star Chart
+
+Each zone now has two original asset types: a recognisable **guardian
+character** in `src/boss-art.js` and a bespoke **panoramic environment SVG**
+in `assets/drift/zones/<boss-id>.svg`. Every zone is still named after its
+saved boss; no art is selected randomly on a reload. Artwork is a cue that
+helps players remember which temporary rule they face, not a new gameplay
+mechanic.
+
+The upgrade extends the *same* scene and portrait across five contexts:
+the compact live route strip, the zone map's current-zone chart, the
+boss's first encounter briefing, the temporary anomaly warning, and
+the round-end intermission panel. The map shows the current world first;
+the next zone remains **The Uncharted Beyond** until entered. Completed
+zones remain accessible under **FLIGHT LOG** as collapsible history rather
+than being repeated ahead of the currently active zone.
+
+- **Approach sectors (1 and 2):** the guardian's name and upcoming effect
+  are visible in the chart, but its effect is not yet applied.
+- **Final sector (3):** the briefing describes the actual, existing
+  boss-specific rule in a separate, legible panel; only this sector is
+  affected.
+- **Victory:** the zone is marked conquered, the earned score and Flux
+  remain unchanged, and the player can still either visit the Salvage Bay
+  or continue to the next zone.
+- **Later visits / reloads:** the world scene and boss ID are derived only
+  from `rogue.zoneBosses`, preserving the original encounter identity.
+  Previously cleared sectors are preserved as the flight archive.
+
+All twelve panoramas are static vector art with local gradients, shapes
+and clean silhouettes. They deliberately avoid letters baked into images
+and need no remote resources or Cloudflare changes. Boss portraits are
+inline SVG created only from allowlisted IDs. The new layout overlays no
+decoration on mathematical tiles, and the 19×19 board dimensions remain
+unchanged.
+
+The new automated checks validate the image assets, recognisable
+portrait geometry, route order and history, no unvisited guardian spoilers,
+the current warning illustration, reduced-motion preferences, and
+320/390/768/1366-pixel responsive layouts. Existing mathematical, boss-rule
+and multiplayer tests still run.

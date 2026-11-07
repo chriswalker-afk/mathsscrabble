@@ -198,3 +198,39 @@ Online Rooms, sector progression, and Cloudflare tests still run.
 **Next pass: D — Drift world-building.** Give each boss a recognisable
 character and zone scene, then improve the route map and encounter effects
 using the shared identity, while retaining the underlying boss rules.
+
+## 9. Pass D — The Drift worlds, bosses and star chart (implemented)
+
+**Goal:** Make Drift progression feel like travelling through a sequence of
+places inhabited by memorable characters. Pass D adds 12 bespoke space
+environments and 12 visually differentiated guardian portraits. The
+vocabulary retains the homemade spacecraft aesthetic from Pass A and
+the readable equipment hierarchy of Pass C.
+
+The full **Captain's Star Chart** opens with an illustrated current-zone
+banner, followed by the current route and the still-unidentified next zone.
+Past zones live in an accessible, collapsible flight log. This prevents
+deep runs from opening at the beginning of a long list, while preserving
+the journey history. Each route still has three fixed nodes; the third is
+a guardian encounter and has its own shape. The boss identity, type and
+effect always come from the saved run and are never rolled by the UI.
+
+Illustrations are placed exclusively on backgrounds of the map cards,
+boss briefing, anomaly panel and after-action card. All labels,
+target values and equations remain independent DOM text with adequate
+contrast over dark gradient scrims. The 19×19 board stays its existing
+size, with no overlaid art. Every boss's **this sector's rule** is explicit
+in the encounter briefing, and its artwork stays consistent across views.
+
+| File | Responsibility |
+| --- | --- |
+| `src/boss-art.js` | Safe allowlisted boss portraits and scenic URL lookup |
+| `assets/drift/zones/*.svg` | 12 original self-contained environment panoramas |
+| `src/drift-map.js` | Scenic chart, current/next/history, guardian intro and round end |
+| `src/drift-world.css` | Layering, contrast, responsive composition and motion |
+| `tests/drift-world.test.js` | Portrait coverage, fixed IDs, no spoilers, rule accuracy |
+| `tests/drift-world-browser.mjs` | 24 SVGs, 4 widths, archive, warning, reduced motion |
+
+**Next art pass:** Pass E can concentrate on the Salvage Bay workshop and
+micro-interactions, aligning its hardware catalogue with the richer worlds
+without overloading the board interface.
