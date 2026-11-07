@@ -105,8 +105,8 @@
    <div class="online-gate-forms">
     <form id="online-create-form" class="online-form">
      <strong>CREATE A ROOM</strong>
-     <label for="online-host-name">YOUR PILOT NAME</label>
-     <input id="online-host-name" autocomplete="nickname" required maxlength="20" placeholder="Pilot name">
+     <label for="online-host-name">NAME SHOWN IN ROOM</label>
+     <input id="online-host-name" autocomplete="nickname" required maxlength="20" placeholder="Display name">
      <div class="online-form-duo">
       <div><label for="online-player-limit">PILOTS</label><select id="online-player-limit"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option></select></div>
       <div><label for="online-timer-settings">TURN TIMER</label><select id="online-timer-settings">
@@ -124,7 +124,7 @@
     </form>
     <form id="online-join-form" class="online-form">
      <strong>JOIN A ROOM</strong>
-     <label for="online-join-name">YOUR PILOT NAME</label><input id="online-join-name" required maxlength="20" autocomplete="nickname" placeholder="Pilot name">
+     <label for="online-join-name">NAME SHOWN IN ROOM</label><input id="online-join-name" required maxlength="20" autocomplete="nickname" placeholder="Display name">
      <label for="online-join-code">SIX-CHARACTER CODE</label><input id="online-join-code" required maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF">
      <button id="online-join-button" type="submit" class="secondary-command">JOIN ROOM →</button>
     </form>
