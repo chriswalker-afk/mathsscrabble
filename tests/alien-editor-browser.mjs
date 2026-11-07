@@ -204,8 +204,8 @@ try{
  const launchContext=await browser.newContext({viewport:{width:1366,height:768}});
  const gamePage=await launchContext.newPage();
  await gamePage.goto(ORIGIN+'/index.html',{waitUntil:'networkidle'});
- assert.equal(await gamePage.locator('.alien-lab-card').count(),2);
- await gamePage.locator('.alien-lab-card').first().click();
+ assert.equal(await gamePage.locator('.extra-card').count(),2);
+ await gamePage.locator('.extra-card[href="./alien-lab.html"]').click();
  await gamePage.waitForURL(/alien-lab\.html$/);
  await waitReady(gamePage);
  await launchContext.close();
