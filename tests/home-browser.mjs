@@ -14,7 +14,7 @@ try{
   assert.match(await page.title(),/Choose your mission/);
   assert.equal(await page.locator('.mode-card').count(),4);
   assert.equal(await page.locator('.mode-card[href]').count(),4);
-  assert.equal(await page.locator('.alien-lab-card').count(),1);
+  assert.equal(await page.locator('.alien-lab-card').count(),2,'Alien Lab and Achievement Hangar navigation');
   assert.equal(await page.locator('#modal').count(),0,'home must not be a mode selection modal');
   assert.equal(await page.locator('#board').count(),0,'the home page should not load a game board');
   assert.equal(await page.locator('.mode-card-footer button').count(),0,'no duplicate mode buttons');
