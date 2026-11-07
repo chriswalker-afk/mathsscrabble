@@ -117,12 +117,26 @@
    A collapsed equipment drawer keeps status from stealing the board's height. */
 @media (min-width:731px) and (max-width:920px) and (orientation:portrait){
  #app .game-shell.board-first{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:5px;padding:5px 0}
- #app .board-first>.left-panel{grid-column:1;grid-row:1;display:flex;flex-wrap:wrap;gap:5px 10px;overflow:visible;max-height:90px;padding:6px 10px}
+ #app .board-first>.left-panel{grid-column:1;grid-row:1;display:flex;flex-direction:row;flex-wrap:wrap;gap:5px 10px;overflow:hidden;max-height:90px;padding:6px 10px}
  #app .board-first>.arena{grid-column:1;grid-row:2}
  #app .board-first .arena .board-frame{width:min(100%,calc(100dvh - 220px),740px);max-height:calc(100dvh - 330px)}
  #app .board-first>.left-panel #drift-loadout{max-width:175px;margin:0}
  #app .board-first>.left-panel .anomaly-banner{display:none}
  #app .board-first>.left-panel .ship-systems-drawer .rogue-summary{max-height:130px;overflow:auto}
+ /* Online pilot standings need a horizontal compact strip in portrait,
+    not the full-height, column-wrapping desktop scoreboard. */
+ #app.online-app .board-first>.left-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:3px 8px;max-height:none;min-height:76px;overflow:visible}
+ #app.online-app .board-first>.left-panel .online-room-box,
+ #app.online-app .board-first>.left-panel>.panel-heading,
+ #app.online-app .board-first>.left-panel .panel-divider,
+ #app.online-app .board-first>.left-panel #online-log,
+ #app.online-app .board-first>.left-panel #online-moves,
+ #app.online-app .board-first>.left-panel .online-current{display:none}
+ #app.online-app .board-first>.left-panel .local-score-header{grid-column:1;grid-row:1;min-width:0}
+ #app.online-app .board-first>.left-panel #online-scores{grid-column:1;grid-row:2;display:flex;gap:5px;min-width:0}
+ #app.online-app .board-first>.left-panel #online-scores .local-score-row{flex:1 1 0;min-width:0;padding:3px 5px}
+ #app.online-app .board-first>.left-panel #online-bag{grid-column:2;grid-row:1/3;min-width:65px}
+ #app.online-app .board-first>.left-panel .online-radio-control{grid-column:1;grid-row:1;justify-self:start;z-index:2}
 }
 @media(max-width:730px){
  #app .game-shell.board-first{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;gap:6px;padding:7px 0}
