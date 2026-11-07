@@ -81,8 +81,8 @@
 .online-wild-grid button{padding:11px 0;background:#2d5960;color:#f4e3c5;border:1px solid #8dc8bd;border-radius:5px;font-size:17px;font-weight:900}
 .online-wild-grid button:hover,.online-wild-grid button:focus-visible{background:#497f78;outline:2px solid #dbf7ce}
 .online-app .cell.scoring-lift .board-tile{animation:scoreTileSettle var(--ceremony-speed,320ms) cubic-bezier(.21,.72,.26,1) both}
-.online-app[data-online-turn="false"] .rack-row{filter:saturate(.7)}
-.online-app[data-online-turn="false"] #rack .tile{opacity:.75}
+.online-app[data-online-turn="false"] .rack-row{filter:none;border-color:#648a89}
+.online-app[data-online-turn="false"] #rack .tile{opacity:1}
 @media(min-width:731px) and (max-height:760px){
  .online-app .online-room-box{padding:6px}
  .online-app .online-room-box strong{font-size:18px}
