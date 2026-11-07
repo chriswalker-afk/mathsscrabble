@@ -707,6 +707,8 @@ function render(){
      const scene=zoneSceneUrl(anomaly.id);
      if(scene&&$('anomaly-scene').getAttribute('src')!==scene)$('anomaly-scene').src=scene;
      $('anomaly-name').textContent=anomaly.icon+' '+anomaly.name;
+   $('anomaly-banner').setAttribute('aria-label','Sector anomaly: '+anomaly.name+'. '+anomaly.short);
+   $('anomaly-banner').title=anomaly.name+' · '+anomaly.short;
      $('anomaly-text').textContent=anomaly.short+
        (anomaly.id==='power-leak'&&state.rogue.upgrades.includes('leak-shield')?' · SHIELDED':'');
    }
