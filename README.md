@@ -32,6 +32,22 @@ per cleared sector, saving the selected inventory with each run. It favours diff
 upgrade categories and avoids consecutive duplicates when possible, while ensuring
 reopening a shop or purchasing one item cannot reroll the remaining stock.
 
+**Pass C: reactor gameplay polish.** The in-game viewport now has a thin,
+state-aware reactor console without increasing the 19×19 frame's screen
+footprint. The board frame is polished like spacecraft hardware; the energy
+gauge has an accessible numerical range; the score animation transfers
+energy through the console and finishes **outside** the mathematical grid,
+rather than overlaying tiles. Installed Ship Systems and Mission Gadgets
+have clearer category accents and explicit armed / target states, and the
+player's saved Alien Lab character appears as a portrait on the desktop
+reactor rail. The calculation validator and scores are unchanged.
+
+Implementation: `src/reactor-pass-c.css`, `src/reactor-presentation.js`,
+`src/drift-hud.js` and `assets/reactor/reactor-core.svg`. Automated checks
+include `tests/reactor-presentation.test.js` and
+`tests/reactor-pass-c-browser.mjs` alongside the existing full regression
+suite.
+
 ## Play
 
 Serve the project root using a static web server:
