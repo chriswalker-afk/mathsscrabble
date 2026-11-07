@@ -12,6 +12,7 @@ const TRUSTED_ORIGINS=new Set([
  'https://chriswalker-afk.github.io',
  'https://mathsscrabble.mrwalkermaths.com',
  'https://scrabble.mrwalkermaths.com',
+ 'https://equanova.mrwalkermaths.com',
  'http://localhost:4173','http://127.0.0.1:4173',
  'http://localhost:8787','http://127.0.0.1:8787'
 ]);
