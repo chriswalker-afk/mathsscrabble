@@ -17,6 +17,12 @@ async function dimensions(){
   return {
    viewport:{width:innerWidth,height:innerHeight},scroll:{width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight},
    gridColumns:getComputedStyle(document.querySelector('.game-shell')).gridTemplateColumns.split(' ').length,
+   overflowing:[...document.querySelectorAll('body *')].map(el=>{
+    const r=el.getBoundingClientRect(),c=getComputedStyle(el);
+    return {name:el.tagName.toLowerCase()+'#'+el.id+'.'+String(el.className||'').slice(0,60),
+      left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),
+      position:c.position,flexDirection:c.flexDirection,overflowX:c.overflowX};
+   }).filter(x=>x.width>0&&x.right>innerWidth+4).sort((a,b)=>b.right-a.right).slice(0,13),
    telemetry:rect('.left-panel'),board:rect('#board-frame'),
    preview:rect('#equation-preview'),rack:rect('.rack-section'),score:rect('#score-btn')
   };
