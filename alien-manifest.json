@@ -78,37 +78,64 @@
       "orb",
       "pear",
       "jelly",
-      "facet"
+      "facet",
+      "comet",
+      "guardian-mask",
+      "nebula-crown",
+      "swirl",
+      "champion-crest",
+      "hologram",
+      "stellar-antlers"
     ],
     "eyes": [
       "twin",
       "cyclops",
       "trio",
-      "visor"
+      "visor",
+      "sparkle",
+      "mechanic-goggles",
+      "wink",
+      "twin-visor"
     ],
     "mouths": [
       "smile",
       "surprised",
       "toothy",
-      "zigzag"
+      "zigzag",
+      "cheeky",
+      "cheer",
+      "pixel-smile"
     ],
     "bodies": [
       "bean",
       "puff",
       "suit",
-      "jelly"
+      "jelly",
+      "reactor-vest",
+      "engineer-overalls",
+      "mech-suit",
+      "varsity-jacket",
+      "captain-coat"
     ],
     "arms": [
       "mittens",
       "noodles",
       "claws",
-      "tentacles"
+      "tentacles",
+      "cable",
+      "ion-gloves",
+      "handshake",
+      "satellite"
     ],
     "legs": [
       "stubs",
       "spindles",
       "tentacles",
-      "hover"
+      "hover",
+      "rocket-soles",
+      "ion-skates",
+      "sturdy-boots",
+      "signal-soles"
     ],
     "accessories": [
       "none",
@@ -117,7 +144,16 @@
       "helmet",
       "jetpack",
       "badge",
-      "companion"
+      "companion",
+      "star-antennae",
+      "shuffle-goggles",
+      "solar-halo",
+      "star-compass",
+      "gadget-pouch",
+      "crew-pin",
+      "team-pennant",
+      "longwave-antenna",
+      "orbit-flag"
     ]
   },
   "accessoryLayers": {
@@ -127,7 +163,16 @@
     "helmet": "front",
     "jetpack": "rear",
     "badge": "front",
-    "companion": "front"
+    "companion": "front",
+    "star-antennae": "front",
+    "shuffle-goggles": "front",
+    "solar-halo": "front",
+    "star-compass": "front",
+    "gadget-pouch": "front",
+    "crew-pin": "front",
+    "team-pennant": "rear",
+    "longwave-antenna": "rear",
+    "orbit-flag": "front"
   },
   "colourRoles": {
     "head": "skin",
@@ -201,6 +246,42 @@
       "accent": "#b2f5d6",
       "spot": "#667abf",
       "blush": "#efb4d2"
+    },
+    "aurora-gold": {
+      "primary": "#d6a546",
+      "light": "#fff2a2",
+      "dark": "#85611e",
+      "belly": "#fff5c8",
+      "accent": "#e48d65",
+      "spot": "#bd8439",
+      "blush": "#efaaa8"
+    },
+    "warp-mint": {
+      "primary": "#59e7d1",
+      "light": "#b7fff0",
+      "dark": "#238e93",
+      "belly": "#e4fff5",
+      "accent": "#9c80f7",
+      "spot": "#4cc5a8",
+      "blush": "#e9a9c9"
+    },
+    "copper-dawn": {
+      "primary": "#d78c5f",
+      "light": "#ffd3a5",
+      "dark": "#965339",
+      "belly": "#fff2da",
+      "accent": "#5fc4bd",
+      "spot": "#bf7851",
+      "blush": "#e99ba4"
+    },
+    "cosmic-violet": {
+      "primary": "#9a7aff",
+      "light": "#e4cfff",
+      "dark": "#563eaa",
+      "belly": "#f7eaff",
+      "accent": "#66e1df",
+      "spot": "#7553d5",
+      "blush": "#ffb8db"
     }
   },
   "presets": {
