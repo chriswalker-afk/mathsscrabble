@@ -17,7 +17,8 @@ export function workshopOfferState({flux,slots,maxSlots,cost}){
  return 'available';
 }
 export function workshopDeviceArt(id,temporary=false){
- const item=(temporary?TEMP_ITEM_BY_ID:ROGUE_ITEM_BY_ID)[id];
+ const catalog=temporary?TEMP_ITEM_BY_ID:ROGUE_ITEM_BY_ID;
+ const item=Object.hasOwn(catalog,id)?catalog[id]:null;
  if(!item)return '';
  const accent=workshopAccent(item.kind);
  const sigil=equipmentArt(id).replace('<svg class="equip-svg"',

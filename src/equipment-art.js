@@ -31,7 +31,7 @@ const art={
 };
 // Fixed IDs only: no user input is interpreted as markup.
 export function equipmentArt(id){
- const drawing=art[id]||art['starter-spark'];
+ const drawing=Object.hasOwn(art,id)?art[id]:art['starter-spark'];
  return '<svg class="equip-svg" viewBox="0 0 72 72" aria-hidden="true" focusable="false">'+
    '<circle cx="36" cy="36" r="33" fill="#0e2839" stroke="currentColor" stroke-opacity=".65" stroke-width="1.5"/>'+
    '<circle cx="36" cy="36" r="29" fill="#20404c" stroke="currentColor" stroke-opacity=".24" stroke-dasharray="2 5"/>'+
