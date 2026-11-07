@@ -22,12 +22,18 @@
   <div class="local-score-header"><strong>LIVE STANDINGS</strong><span id="online-clock">--:--</span></div>
   <div id="online-scores" class="local-scores" aria-label="Online player scores"></div>
   <div class="online-current" id="online-current">Waiting for the reactor signal.</div>
+   <div class="online-radio-control" id="online-radio-control">
+    <button id="online-callout-open" type="button" class="online-callout-trigger" disabled>✧ ALIEN RADIO <span>⌁</span></button>
+    <small id="online-callout-status">One transmission per turn</small>
+   </div>
+   <div id="online-callout-live" class="online-callout-live" role="status" aria-live="polite" aria-atomic="true"></div>
   <button id="online-bag" type="button" class="mini-stat bag-stat online-bag"><small>IN BAG <span aria-hidden="true">⌕</span></small><strong id="online-bag-count">—</strong></button>
   <div class="panel-divider"></div><div class="panel-heading">SIGNAL LOG</div>
   <div id="online-log" role="status" aria-live="polite">Create a match or enter a room code to begin.</div>
   <div id="online-moves" class="history-mini" aria-label="Latest moves"></div>
  </aside>
  <section class="arena" aria-label="Shared equation board">
+   <div id="online-callout-stage" class="online-callout-stage" aria-hidden="true"></div>
   <div class="board-zoom-toolbar" role="group" aria-label="Board zoom controls"><span class="board-zoom-label">REACTOR VIEW · 19×19</span><button type="button" id="board-zoom-out" aria-label="Zoom out board" title="Zoom out">−</button><output id="board-zoom-level" aria-live="polite">100%</output><button type="button" id="board-zoom-in" aria-label="Zoom in board" title="Zoom in">+</button><button type="button" id="board-zoom-fit" title="Fit the full board">FIT</button><button type="button" id="board-zoom-center" title="Return to centre">⌖</button></div>
   <div class="board-frame" id="board-frame">
    <div class="board-viewport" id="board-viewport" tabindex="0" aria-label="Pan and zoom the shared 19 by 19 board"><div id="board" class="board" role="grid" aria-label="Shared 19 by 19 equation grid"></div></div>
@@ -36,7 +42,7 @@
    <div id="energy-burst" class="energy-burst" aria-hidden="true"></div>
   </div>
   <div class="rack-section">
-   <div class="rack-heading"><span id="online-rack-label">YOUR PRIVATE RACK</span>
+   <div class="rack-heading"><span><span id="online-rack-label">YOUR PRIVATE RACK</span><small id="online-rack-hint" class="online-rack-hint"></small></span>
     <div class="rack-actions"><button id="online-undo" class="rack-undo" type="button">↶ UNDO</button><span id="online-rack-count">0 / 8</span></div>
    </div>
    <div class="rack-row"><div id="rack" class="rack" aria-label="Only your private tiles"></div>

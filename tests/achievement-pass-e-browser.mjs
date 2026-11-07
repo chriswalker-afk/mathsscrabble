@@ -66,6 +66,7 @@ try{
  assert.ok(await shortcut.evaluate(el=>el.getBoundingClientRect().bottom>20),
   'skip link must become visible when keyboard-focused');
  await page.keyboard.press('Enter');
+ await page.waitForURL(/#hangar$/,{timeout:3000});
  assert.match(page.url(),/#hangar$/,'skip link must jump to achievement content');
  await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  // Roving keyboard focus is mandatory for accessible role=tablist navigation.
@@ -92,7 +93,7 @@ try{
  await page.goto(BASE+'achievement-hangar.html',{waitUntil:'networkidle'});
  for(const mode of ['sector','drift','local','online']){
   await page.locator('.mode-tabs [data-mode="'+mode+'"]').click();
-  assert.equal(await page.locator('#award-grid .award-card').count(),10,mode+' must list ten badges');
+  assert.equal(await page.locator('#award-grid .award-card').count(),mode==='online'?13:10,mode+' badge total');
   const assetCount=await page.locator('#award-grid .reward-preview img').count();
   assert.ok(assetCount>=9,'each mode previews at least nine unique new parts');
   assert.equal(await page.locator('#award-grid .award-card.earned').count(),0);
@@ -163,7 +164,7 @@ try{
   const results=[],gallery=document.createElement('section');
   gallery.id='release-art-gallery';
   gallery.style.cssText='position:absolute;left:0;top:0;background:#071a26;color:#fff;z-index:20000;display:grid;grid-template-columns:repeat(8,124px);gap:8px;padding:14px;';
-  for(const [i,a] of ACHIEVEMENTS.entries()){
+  for(const [i,a] of ACHIEVEMENTS.filter(a=>a.reward.collection!=='callouts').entries()){
    const avatar=defaultAlien(),kind=a.reward.collection;
    if(kind==='palettes')avatar.colours={...avatar.colours,skin:a.reward.id};
    else avatar[names[kind]]=a.reward.id;

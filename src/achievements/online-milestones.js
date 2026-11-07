@@ -19,7 +19,7 @@ function evidence(room,seat,type,data,variant='first'){
 }
 export function recordOnlineMilestone(room,seat,type,data,variant='first'){
  if(!validSeat(room,seat)||!['room-joined','lobby-multi','match-started',
-   'move-scored','match-finished'].includes(type))return room;
+   'move-scored','match-finished','callout-sent'].includes(type))return room;
  const log=Array.isArray(room.achievementMilestones)?room.achievementMilestones:[];
  const marker=seat+':'+type+':'+variant;
  if(log.some(x=>x.marker===marker))return room;
@@ -60,6 +60,13 @@ export function registerOnlineScored(room,seat,{board,pending,move,points}){
  // Both receipts are server-derived, not client-visible "awards".
  if(data.crossing>=1)next=recordOnlineMilestone(next,seat,'move-scored',data,'connected');
  return next;
+}
+/** Progress is computed server-side from the number of accepted transmissions.
+ * Only threshold events are stored so the receipt history remains small.
+ */
+export function registerOnlineCallout(room,seat,sentCount){
+ if(![1,3,8].includes(sentCount))return room;
+ return recordOnlineMilestone(room,seat,'callout-sent',{sentCount},'count-'+sentCount);
 }
 export function registerOnlineFinish(room){
  if(room.phase!=='finished'||room.match?.phase!=='finished')return room;

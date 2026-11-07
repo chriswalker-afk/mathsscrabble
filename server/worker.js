@@ -4,7 +4,7 @@ import {DurableObject} from 'cloudflare:workers';
 import {migrateOnlineRoom} from '../src/board-migration.js';
 import {roomCode,cleanRoomCode,OnlineError,makeOnlineLobby,joinOnlineLobby,
   leaveOnlineLobby,startOnlineMatch,takeOnlineAction,timeOutOnlineTurn,
-  viewOnlineRoom,roomWakeAt,updateOnlinePilot} from '../src/online-rules.js';
+  viewOnlineRoom,roomWakeAt,updateOnlinePilot,sendOnlineCallout} from '../src/online-rules.js';
 
 // Set this list to the actual GitHub Pages/custom website origins. Requests
 // from unknown browser origins are refused; room tokens stay in HTTP headers.
@@ -62,7 +62,7 @@ const bearer=async request=>{
  return tokenHash(match[1]);
 };
 const allowMethods={
- join:'POST',start:'POST',action:'POST',leave:'POST',profile:'POST',state:'GET',ws:'GET'
+ join:'POST',start:'POST',action:'POST',callout:'POST',leave:'POST',profile:'POST',state:'GET',ws:'GET'
 };
 async function handleApi(request,ctx){
  const url=new URL(request.url);
@@ -113,6 +113,7 @@ async function handleApi(request,ctx){
  if(endpoint==='start')return json(await roomRpc(stub,'start',hash,action),200,origin);
  if(endpoint==='profile')return json(await roomRpc(stub,'profile',hash,action),200,origin);
  if(endpoint==='action')return json(await roomRpc(stub,'act',hash,action),200,origin);
+ if(endpoint==='callout')return json(await roomRpc(stub,'callout',hash,action),200,origin);
  if(endpoint==='leave')return json(await roomRpc(stub,'leave',hash,action),200,origin);
  throw new OnlineError('Unknown operation.',404);
 }
@@ -232,6 +233,14 @@ export class GameRoom extends DurableObject {
      if(!next.replayed)await this.store(next.room);
      return {room:viewOnlineRoom(next.room,hash),event:next.result};
    });
+ }
+ async callout(hash,request){
+  return this.guarded(async()=>{
+   const room=await this.readAndTick();
+   const next=sendOnlineCallout(room,hash,request);
+   if(!next.replayed)await this.store(next.room);
+   return {room:viewOnlineRoom(next.room,hash),event:next.result};
+  });
  }
  async leave(hash,request){
    return this.guarded(async()=>{

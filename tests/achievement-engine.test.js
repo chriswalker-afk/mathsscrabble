@@ -42,7 +42,7 @@ function send(ref,mode,type,scopeId,data,extra={}){
  ref.store=result.store;ref.awarded.push(...result.awarded.map(a=>a.id));
  return result;
 }
-test('all 40 achievements are REACHABLE through valid evidence and award the defined cosmetics',()=>{
+test('all 43 achievements are reachable via verified game and radio evidence',()=>{
  const ref={store:emptyAchievementStore(),awarded:[]};
  // Sector Run: a connected premium move with a wildcard, a free exchange,
  // and five clean, continuously labelled sector reports from one run.
@@ -82,12 +82,15 @@ test('all 40 achievements are REACHABLE through valid evidence and award the def
   {...SCORE,tileSet:'rational'},{roomId:'room-two'});
  for(const [scopeId,roomId] of [['online:two','room-two'],['online:three','room-three']])
   send(ref,'online','match-finished',scopeId,FINISH(),{roomId});
- assert.equal(ref.awarded.filter(id=>id.startsWith('O')).length,10);
- assert.equal(new Set(ref.awarded).size,40);
+ send(ref,'online','callout-sent','online:one',{sentCount:1},{roomId:'room-one'});
+ send(ref,'online','callout-sent','online:one',{sentCount:3},{roomId:'room-one'});
+ send(ref,'online','callout-sent','online:one',{sentCount:8},{roomId:'room-one'});
+ assert.equal(ref.awarded.filter(id=>id.startsWith('O')).length,13);
+ assert.equal(new Set(ref.awarded).size,43);
  assert.deepEqual([...ref.awarded].sort(),ACHIEVEMENTS.map(x=>x.id).sort());
- assert.equal(pilotAchievements(ref.store,P1).unlocked.length,40);
+ assert.equal(pilotAchievements(ref.store,P1).unlocked.length,43);
  assert.equal(pilotAchievements(ref.store,P2).unlocked.length,0);
- assert.equal(earnedRewards(ref.store,P1).length,40);
+ assert.equal(earnedRewards(ref.store,P1).length,43);
  assert.equal(ownsAlienOption(ref.store,P1,'heads','nebula-crown'),true);
  assert.equal(ownsAlienOption(ref.store,P2,'heads','nebula-crown'),false);
  assert.equal(ownsAlienOption(ref.store,P2,'heads','orb'),true,'free base parts remain free');
@@ -225,5 +228,5 @@ test('event receipts and recent run traces are strictly capped',()=>{
  assert.equal(pilotAchievements(ref.store,P1).sectorRuns.length,8);
  assert.equal(achievementProgress(ref.store,P1,'missing'),null);
  assert.deepEqual(ACHIEVEMENTS_BY_MODE.online.map(x=>x.id),[
-  'O01','O02','O03','O04','O05','O06','O07','O08','O09','O10']);
+  'O01','O02','O03','O04','O05','O06','O07','O08','O09','O10','O11','O12','O13']);
 });

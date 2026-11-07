@@ -14,7 +14,7 @@ export const MODE_EVENTS=Object.freeze({
    'gadget-bought','gadget-used','sector-cleared','guardian-defeated']),
  local:Object.freeze(['match-started','turn-ready','move-scored','free-exchange','match-finished']),
  online:Object.freeze(['room-joined','lobby-multi','match-started',
-   'move-scored','match-finished'])
+   'move-scored','match-finished','callout-sent'])
 });
 const id=/^[A-Za-z0-9][A-Za-z0-9:._-]{0,119}$/;
 const safeId=value=>typeof value==='string'&&id.test(value);
@@ -38,7 +38,8 @@ const dataSchema=Object.freeze({
  'turn-ready':Object.freeze([]),
  'match-finished':Object.freeze(['playerCount','scoredMoves','winner','everyoneScored','participated','isHost']),
  'room-joined':Object.freeze(['playerCount']),
- 'lobby-multi':Object.freeze(['playerCount'])
+ 'lobby-multi':Object.freeze(['playerCount']),
+ 'callout-sent':Object.freeze(['sentCount'])
 });
 export function validateAchievementEvent(event){
  if(!event||typeof event!=='object'||Array.isArray(event)||
@@ -76,6 +77,7 @@ export function validateAchievementEvent(event){
    break;
   case 'room-joined':
   case 'lobby-multi':good=integer(d.playerCount,1,4);break;
+  case 'callout-sent':good=event.mode==='online'&&integer(d.sentCount,1,80);break;
   case 'free-exchange':
   case 'zone-map-opened':
   case 'salvage-entered':

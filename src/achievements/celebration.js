@@ -1,19 +1,22 @@
 /** Presentation-only achievement celebrations. Awards come from the fixed catalog.
  * These render AFTER game transitions and never determine a gameplay outcome.
  */
+import {CALLOUT_BY_ID} from '../online-callouts.js';
 const colours=Object.freeze({
  'aurora-gold':'#d6a546','warp-mint':'#59e7d1',
  'copper-dawn':'#d78c5f','cosmic-violet':'#9a7aff'
 });
 const clean=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;')
  .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
-const preview=a=>a.reward.collection==='palettes'?
+const preview=a=>a.reward.collection==='callouts'?
+ '<span class="achievement-new-callout" role="img" aria-label="'+clean(a.reward.name)+'">'+clean(CALLOUT_BY_ID[a.reward.id]?.glyph||'⌁')+'</span>':
+ a.reward.collection==='palettes'?
  '<span class="achievement-new-palette" style="--badge-colour:'+colours[a.reward.id]+'"></span>':
  '<img src="./assets/aliens/'+clean(a.reward.collection)+'/'+clean(a.reward.id)+'.svg" alt="" width="62" height="72" loading="lazy">';
 export function achievementRevealMarkup(awards){
  if(!Array.isArray(awards)||!awards.length)return '';
  return '<section class="achievement-reveal" aria-label="New achievements earned">'+
- '<p class="achievement-reveal-top">✦ ACHIEVEMENT UNLOCKED · ALIEN COSMETICS EARNED</p>'+
+ '<p class="achievement-reveal-top">✦ ACHIEVEMENT UNLOCKED · COSMETIC REWARD EARNED</p>'+
  '<div class="achievement-reveal-grid">'+awards.map(a=>'<article class="achievement-reveal-item">'+
  preview(a)+'<div><span>'+clean(a.tier.toUpperCase())+' · '+clean(a.id)+'</span>'+
  '<strong>'+clean(a.title)+'</strong><small>NEW: '+clean(a.reward.name)+'</small></div></article>').join('')+

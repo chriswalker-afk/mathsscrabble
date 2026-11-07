@@ -118,6 +118,28 @@ const replay=await api(base+'/action',{method:'POST',token:host.token,
 assert.equal(replay.status,200,JSON.stringify(replay));
 assert.equal(replay.room.revision,first.room.revision);
 assert.equal(replay.room.match.current,1);
+// A cosmetic-only revision must not make the active pilot's precomputed move stale.
+const radioId=crypto.randomUUID();
+const radio=await api(base+'/callout',{method:'POST',token:host.token,
+ body:{id:radioId,revision:first.room.revision,calloutId:'zib'}});
+assert.equal(radio.status,200,JSON.stringify(radio));
+assert.equal(radio.room.match.current,1,'cosmetic broadcast cannot consume a turn');
+assert.equal(radio.room.match.callouts.at(-1).by,0);
+assert.equal(radio.room.match.callouts.at(-1).calloutId,'zib');
+assert.equal(radio.room.match.rack.length,8);
+const again=await api(base+'/callout',{method:'POST',token:host.token,
+ body:{id:crypto.randomUUID(),revision:radio.room.revision,calloutId:'planet'}});
+assert.equal(again.status,429,'second message in one global turn must be rejected');
+const radioReplay=await api(base+'/callout',{method:'POST',token:host.token,
+ body:{id:radioId,revision:first.room.revision,calloutId:'zib'}});
+assert.equal(radioReplay.status,200,'idempotent retry returns the original result');
+assert.equal(radioReplay.room.revision,radio.room.revision,'retry must not rebroadcast');
+const otherView=await api(base+'/state',{token:joined.token});
+assert.equal(otherView.status,200);
+assert.equal(otherView.room.match.callouts.at(-1).by,0);
+assert.equal(otherView.room.match.sentCalloutThisTurn,false);
+assert.ok(otherView.room.match.rack.every(tile=>!radio.room.match.rack.some(x=>x.id===tile.id)),
+ 'sender hand must remain private even with radio events');
 const second=await api(base+'/action',{method:'POST',token:joined.token,
   body:mutation(first.room,'pass')});
 assert.equal(second.status,200,JSON.stringify(second));

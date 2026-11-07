@@ -41,6 +41,7 @@ async function installKnownLocalRack(){
  await page.reload({waitUntil:'networkidle'});
 }
 async function handover(expected){
+ await page.locator('#local-privacy').waitFor({state:'visible',timeout:6000});
  assert.equal(await page.locator('#local-privacy').isVisible(),true);
  assert.match(await page.locator('#local-handover-title').textContent(),new RegExp(expected,'i'));
  assert.equal(await page.locator('#app').getAttribute('inert'),'');

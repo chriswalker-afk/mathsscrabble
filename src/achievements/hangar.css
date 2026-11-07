@@ -78,3 +78,8 @@
  .hangar-nav a{transition:none}
  .hangar-nav a:hover{transform:none}
 }
+
+
+/* Collectible Alien Radio transmissions appear beside the 40 alien-part badges. */
+.callout-reward-glyph{font-size:clamp(46px,6vw,72px);line-height:1.3;filter:drop-shadow(0 5px 9px #091523a0)}
+.award-card.locked .callout-reward-glyph{opacity:.4;filter:grayscale(1)}

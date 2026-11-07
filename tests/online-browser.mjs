@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {makeOnlineLobby,joinOnlineLobby,startOnlineMatch,takeOnlineAction,
-  timeOutOnlineTurn,viewOnlineRoom,leaveOnlineLobby,updateOnlinePilot,OnlineError} from '../src/online-rules.js';
+  timeOutOnlineTurn,viewOnlineRoom,leaveOnlineLobby,updateOnlinePilot,sendOnlineCallout,OnlineError} from '../src/online-rules.js';
 import {defaultPilotAlien} from '../src/alien/profiles.js';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -74,6 +74,10 @@ async function routeApi(route){
      }else if(op==='start'){
        const next=startOnlineMatch(backend.room,hash,body,clock,()=>0.37);
        backend.room=makeGoodRack(next.room);
+       result={room:viewOnlineRoom(backend.room,hash),event:next.result};
+      }else if(op==='callout'){
+       const next=sendOnlineCallout(backend.room,hash,body,clock);
+       backend.room=next.room;
        result={room:viewOnlineRoom(backend.room,hash),event:next.result};
      }else if(op==='action'){
        const next=takeOnlineAction(backend.room,hash,body,clock,()=>0.37);
@@ -194,6 +198,57 @@ try{
    await guest.locator('#rack .tile').evaluateAll(nodes=>nodes.map(n=>n.dataset.tileId).sort()),
    'each authenticated player has a different hand');
  assert.equal(await guest.locator('#online-score').isEnabled(),false,'guest cannot score on host turn');
+ assert.equal(await guest.locator('#online-callout-open').isEnabled(),true);
+ assert.equal(await guest.locator('#rack .tile').first().isEnabled(),true,
+  'waiting pilot can rearrange or select their private tiles');
+ const guestOriginalIds=await guest.locator('#rack .tile').evaluateAll(nodes=>nodes.map(x=>x.dataset.tileId));
+ // Reorder two tiles using the real pointer-based mouse drag.
+ const rackSource=await guest.locator('#rack .tile').first().boundingBox();
+ const rackDestination=await guest.locator('#rack .tile').nth(3).boundingBox();
+ await guest.mouse.move(rackSource.x+rackSource.width/2,rackSource.y+rackSource.height/2);
+ await guest.mouse.down();
+ await guest.mouse.move(rackDestination.x+rackDestination.width*.85,
+  rackDestination.y+rackDestination.height/2,{steps:10});
+ await guest.mouse.up();
+ const guestAfterDrag=await guest.locator('#rack .tile').evaluateAll(nodes=>nodes.map(x=>x.dataset.tileId));
+ assert.deepEqual([...guestAfterDrag].sort(),[...guestOriginalIds].sort(),
+  'private rearranging must retain the exact tile IDs');
+ assert.notDeepEqual(guestAfterDrag,guestOriginalIds,'waiting pilot can reorder the rack');
+ // A scratch equation on an empty square belongs only to that pilot.
+ const plannedCell=cell(guest,8,8),plannedIndex=Number(await plannedCell.getAttribute('data-index'));
+ await guest.locator('#rack .tile:not(.wildcard)').first().click();
+ assert.equal(await guest.locator('#rack .tile.selected').count(),1,'waiting pilot can select a tile to plan');
+ assert.equal(await cell(guest,8,8).getAttribute('data-locked'),'false');
+ await plannedCell.click();
+ assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),true);
+ assert.equal(await cell(host,8,8).evaluate(x=>x.classList.contains('pending')),false);
+ assert.equal(backend.room.match.board[plannedIndex],null,'practice cannot alter shared board');
+ assert.equal(await guest.locator('#online-score').isEnabled(),false,
+  'planning a private equation cannot submit on another pilot turn');
+ // The preset radio is available while waiting and announces the right alien.
+ await guest.locator('#online-callout-open').click();
+ assert.equal(await guest.locator('.online-radio-choice').count(),11);
+ assert.equal(await guest.locator('.online-radio-choice.is-locked').count(),3);
+ await guest.locator('.online-radio-choice').first().click();
+ await guest.waitForFunction(()=>document.querySelector('#online-callout-status')?.textContent.startsWith('Sent'),null,{timeout:6000});
+ assert.equal(backend.room.callouts.at(-1).by,1);
+ assert.equal(backend.room.callouts.at(-1).calloutId,'zib');
+ assert.equal(backend.room.match.current,0,'sending a callout never spends a turn');
+ assert.equal(backend.room.match.board[plannedIndex],null);
+ assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),true,
+  'sending a cosmetic callout must not clear the waiting pilot draft');
+ assert.ok((await awards(guest)).includes('O11'),'first radio broadcast unlocks bonus symbol');
+ await guest.locator('#online-callout-open').click();
+ assert.equal(await guest.locator('.online-radio-choice:not([disabled])').count(),0,
+  'once-per-turn limit is reflected in the UI');
+ await guest.locator('#online-dialog-close').click();
+ // Simulate two-device sync (normally a revision websocket).
+ await host.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ await host.locator('#online-scores .local-score-row[data-player-index="1"] .online-speech-bubble').waitFor({timeout:6000});
+ assert.equal(await host.locator('#online-scores .local-score-row[data-player-index="1"] .online-speech-bubble').textContent(),'⟡⋔⟡');
+ assert.equal(await host.locator('#online-scores .local-score-row[data-player-index="1"] .alien-player-avatar svg').count(),1,
+  'other players see the actual sending pilot portrait beside their speech bubble');
+
 
  // A syntactically complete, incorrect statement is rejected by the backend.
  for(const [s,r,c] of [['8',6,3],['+',6,4],['1',6,5],['=',6,6],['4',6,7],['2',6,8]])
@@ -221,6 +276,16 @@ try{
  assert.match(await host.locator('#online-dialog .achievement-reveal').textContent(),/Verified/i);
  await host.locator('#online-dialog-actions button').first().click();
  assert.equal(await active(host),false,'host cannot score twice in a row');
+ // A non-overlapping waiting-time draft remains private and intact after
+ // the opponent scores and the synchronized match turn changes.
+ await guest.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+ assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),true,
+  'opponent turns do not wipe valid private planning');
+ assert.equal(await guest.locator('#online-score').isEnabled(),true,
+  'private draft becomes eligible for normal submission only on your own turn');
+ await guest.locator('#online-clear').click();
+ assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),false);
+
 
  // Reconnection restores only the host's own private rack and the shared board.
  await host.reload({waitUntil:'domcontentloaded'});
@@ -276,12 +341,16 @@ try{
    width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
    boardWidth:document.querySelector('#board-frame').getBoundingClientRect().width,
    bagRight:document.querySelector('#online-bag').getBoundingClientRect().right,
-   scoreBottom:document.querySelector('#online-score').getBoundingClientRect().bottom
+   scoreBottom:document.querySelector('#online-score').getBoundingClientRect().bottom,
+   rackHintHeight:document.querySelector('#online-rack-hint').getBoundingClientRect().height,
+   radioHeight:document.querySelector('#online-radio-control').getBoundingClientRect().height,
+   scoreStripHeight:document.querySelector('.left-panel').getBoundingClientRect().height,
+   boardTop:document.querySelector('#board-frame').getBoundingClientRect().top
  }));
  assert.ok(mobile.scrollWidth<=mobile.width+3,'online mode must not overflow on mobile');
  assert.ok(mobile.boardWidth>=335);
  assert.ok(mobile.bagRight<=mobile.width+3);
- assert.ok(mobile.scoreBottom<=844,'primary buttons must be visible above phone fold');
+ assert.ok(mobile.scoreBottom<=844,'primary buttons must be visible above phone fold; layout '+JSON.stringify(mobile));
  assert.deepEqual(errors,[]);
  console.log('Online two-device browser passed: create, join, host start, private racks, server rejection, BIDMAS scoring, reconnect, timers, game over, mobile.');
 }finally{

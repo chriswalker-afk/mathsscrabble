@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {ACHIEVEMENTS,FREE_ALIEN_OPTIONS,ACHIEVEMENTS_BY_MODE} from '../src/achievements/catalog.js';
 import {assertAlienManifest,validateAlienPayload,defaultAlien,ALIEN_PART_FIELDS} from '../src/alien/model.js';
 import {emptyAchievementStore,ownsAlienOption} from '../src/achievements/engine.js';
+import {CALLOUT_BY_ID} from '../src/online-callouts.js';
 const root=new URL('../',import.meta.url).pathname;
 const manifest=JSON.parse(readFileSync(join(root,'alien-manifest.json'),'utf8'));
 const base={heads:4,eyes:4,mouths:4,bodies:4,arms:4,legs:4,accessories:7};
@@ -16,14 +17,15 @@ test('all original free choices are still present in original order and all star
  }
  for(const preset of Object.values(manifest.presets))assert.deepEqual(validateAlienPayload(preset,manifest),preset);
 });
-test('the 40 rewards have exactly one new manifest-allowlisted asset or palette each',()=>{
- assert.equal(ACHIEVEMENTS.length,40);
+test('the 40 original avatar rewards and 3 callouts are registered once',()=>{
+ assert.equal(ACHIEVEMENTS.length,43);
  const prizes=new Set();
  for(const a of ACHIEVEMENTS){
   const {collection,id}=a.reward;
   const key=collection+'/'+id;
   assert.ok(!prizes.has(key),'duplicate reward '+key);prizes.add(key);
-  if(collection==='palettes')assert.ok(Object.hasOwn(manifest.palettes,id));
+  if(collection==='callouts')assert.equal(CALLOUT_BY_ID[id]?.unlock,a.id);
+  else if(collection==='palettes')assert.ok(Object.hasOwn(manifest.palettes,id));
   else {
    assert.ok(manifest.parts[collection].includes(id),'missing part '+key);
    const file=join(root,'assets/aliens',collection,id+'.svg');
@@ -36,8 +38,8 @@ test('the 40 rewards have exactly one new manifest-allowlisted asset or palette 
    assert.ok(!/<script|<foreignObject|<image\b|<use\b|<style\b|url\s*\(|onload|href\s*=/i.test(art),'unsafe asset '+key);
   }
  }
- assert.equal(prizes.size,40);
- for(const [mode,awards] of Object.entries(ACHIEVEMENTS_BY_MODE))assert.equal(awards.length,10,mode);
+ assert.equal(prizes.size,43);
+ for(const [mode,awards] of Object.entries(ACHIEVEMENTS_BY_MODE))assert.equal(awards.length,mode==='online'?13:10,mode);
 });
 test('new awards are not freely selectable and existing parts remain available to anonymous guests',()=>{
  const blank=emptyAchievementStore();
@@ -49,6 +51,7 @@ test('every reward can be composed into a safe canonical alien payload',()=>{
  const columns={heads:'head',eyes:'eyes',mouths:'mouth',bodies:'body',arms:'arms',legs:'legs',accessories:'accessory'};
  for(const a of ACHIEVEMENTS){
   const alien=defaultAlien(); const {collection,id}=a.reward;
+  if(collection==='callouts')continue;
   if(collection==='palettes')alien.colours.skin=id;
   else alien[columns[collection]]=id;
   assert.deepEqual(validateAlienPayload(alien,manifest),alien);
