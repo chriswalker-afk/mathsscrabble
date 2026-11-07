@@ -24,7 +24,7 @@ test('four levels each produce exactly 151 unique, playable physical tile IDs',(
    assert.equal(bag.filter(t=>tilePool(t)==='operators').length,59);
    if(kit.brackets){
      assert.equal(bag.filter(t=>tilePool(t)==='brackets').length,16);
-     assert.equal(bag.filter(t=>t.value?.includes('/')).length,28);
+     assert.equal(bag.filter(t=>t.value?.includes('/')).length,kit.id==='rational'?28:0);
      const p=pairs(bag);assert.equal(p.size,8);
      for(const group of p.values())assert.deepEqual(group.map(t=>t.value).sort(),['(',')']);
    }else{
@@ -44,13 +44,17 @@ test('Nebula uses precisely seven positive fractions, with four pieces each',()=
  assert.ok(bag.some(tile=>tile.value==='0'));
  assert.ok(bag.some(tile=>tile.value==='9'));
 });
-test('Nebula supplies only positive fractions while Quantum keeps signed fractions',()=>{
+test('Nebula has only positive fractions while Quantum uses non-negative integers',()=>{
  const nebula=makeBag(random,'rational'),quantum=makeBag(random,'advanced');
  const nebulaFractions=nebula.filter(t=>t.value?.includes('/'));
  assert.equal(nebulaFractions.length,28);
  assert.ok(nebulaFractions.every(t=>!t.value.startsWith('−')));
  assert.equal(new Set(nebulaFractions.map(t=>t.value)).size,7);
- assert.ok(quantum.some(t=>t.value?.startsWith('−')&&t.value.includes('/')));
+ assert.ok(quantum.every(t=>!t.value?.includes('/')&&!/^−[0-9]/.test(t.value||'')));
+ assert.ok(quantum.some(t=>t.value==='0'));
+ assert.ok(quantum.some(t=>t.value==='9'));
+ assert.equal(tileValueAllowed('advanced','1/2'),false);
+ assert.equal(tileValueAllowed('advanced','−3'),false);
 });
 test('integer kit contains signed whole-number tiles but only basic operations',()=>{
  const bag=makeBag(random,'integer');
@@ -91,7 +95,8 @@ test('special kit identities are guaranteed in the first rack whenever supply ex
  assert.equal(nebula.rack.filter(t=>t.pairId).length,2);
  const quantum=dealPlayableRack([],makeBag(random,'advanced'),kitRackOptions('advanced'),random);
  assert.ok(quantum.rack.filter(t=>['^','√','!'].includes(t.value)).length>=1);
- assert.ok(quantum.rack.filter(t=>t.value?.includes('/')).length>=2);
+ assert.equal(quantum.rack.filter(t=>t.value?.includes('/')).length,0);
+ assert.equal(quantum.rack.filter(t=>tilePool(t)==='numbers').length,6);
 });
 test('negative integers and fractions remain atomic, even next to basic operations',()=>{
  const valid=[
@@ -142,7 +147,7 @@ test('bag scan groups fractions and linked brackets without hiding physical coun
  const bag=makeBag(random,'advanced'),scan=summarizeBag(bag);
  assert.equal(scan.total,151);
  assert.equal(scan.pools.brackets,16);
- assert.ok(scan.groups.some(g=>g.id==='fractions'&&g.total===28));
+ assert.ok(!scan.groups.some(g=>g.id==='fractions'&&g.total>0));
  assert.ok(scan.groups.some(g=>g.id==='brackets'&&g.total===16));
  assert.ok(scan.groups.some(g=>g.id==='advanced'&&g.total===14));
  assert.equal(scan.groups.reduce((n,g)=>n+g.total,0),151);
@@ -164,7 +169,7 @@ test('rational and quantum solo saves survive an exact local validation round tr
 });
 
 test('Step Up is kit-safe: negative and fractional tiles exchange exact physical values',()=>{
- for(const [from,to,kit] of [['−3','−2','integer'],['1/2','3/2','rational'],['−1/2','1/2','advanced']]){
+ for(const [from,to,kit] of [['−3','−2','integer'],['1/2','3/2','rational'],['0','1','advanced']]){
   const bag=makeBag(random,kit),i=bag.findIndex(t=>t.value===from);
   const rack=[bag.splice(i,1)[0]];
   assert.equal(i>=0,true);
