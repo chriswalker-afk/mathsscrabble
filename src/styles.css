@@ -940,3 +940,16 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
    overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
  .topbar .top-actions>*{flex:0 0 auto}
 }
+
+/* Visual identity A — consistent hull materials; leave tile-face contrast intact. */
+.side-panel{border-color:var(--nova-line);background:var(--nova-panel-gradient);
+ box-shadow:var(--nova-shadow-panel)}
+.panel-heading{color:var(--nova-text-faint)}
+.rack-row{border-color:var(--nova-line);box-shadow:inset 0 2px 5px #091a28,var(--nova-shadow-panel)}
+.rogue-summary{box-shadow:var(--nova-shadow-panel)}
+.wood-panel{background:var(--nova-panel-gradient)}
+.quiet-button{border-color:var(--nova-line);border-radius:var(--nova-r-sm)}
+.quiet-button:hover{border-color:var(--nova-line-bright)}
+dialog:not(.drift-hub){border-color:var(--nova-line-bright);
+ box-shadow:var(--nova-shadow-lift)}
+.modal-heading{color:var(--nova-teal)}

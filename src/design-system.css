@@ -1,0 +1,137 @@
+/* EQUA//NOVA · Art Direction Pass A
+ * One shared foundation. Scene-specific sheets own layout and tile geometry.
+ * No external fonts, assets or network requests are required.
+ * More at docs/VISUAL_IDENTITY.md and /visual-direction.html.
+ */
+:root{
+ color-scheme:dark;
+ --nova-void:#071421;
+ --nova-space:#091d2d;
+ --nova-space-raised:#102b3c;
+ --nova-panel:#193747;
+ --nova-panel-raised:#264859;
+ --nova-hull:#426b78;
+ --nova-line:#608a93;
+ --nova-line-bright:#a8ccc4;
+ --nova-text:#f5f2e5;
+ --nova-text-muted:#bbd5d6;
+ --nova-text-faint:#91b5be;
+ --nova-teal:#8fe8d1;
+ --nova-gold:#f4d49b;
+ --nova-violet:#cbb6f5;
+ --nova-blue:#9ccafa;
+ --nova-coral:#f1acaf;
+ --nova-success:#9fe6c1;
+ --nova-danger:#ff9e9f;
+ --nova-focus:#ffe0a3;
+ --nova-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ --nova-r-sm:6px;
+ --nova-r-card:13px;
+ --nova-r-panel:16px;
+ --nova-r-scene:20px;
+ --nova-ease:cubic-bezier(.2,.72,.24,1);
+ --nova-speed-fast:140ms;
+ --nova-speed:240ms;
+ --nova-speed-reveal:580ms;
+ --nova-shadow-panel:inset 0 1px 0 #dcfff225,0 18px 45px #020e1c80;
+ --nova-shadow-lift:inset 0 1px 0 #dcfff238,0 22px 48px #020c19c2;
+ --nova-panel-gradient:linear-gradient(150deg,#234656ec 0%,#142d3eeb 56%,#0e2435ed 100%);
+ --nova-card-gradient:linear-gradient(155deg,#2a4f5be8,#182f42ef 67%,#11283aef);
+ --nova-scene-gradient:radial-gradient(ellipse at 80% 15%,#375d69 0%,transparent 50%),
+   radial-gradient(ellipse at 14% 80%,#28404f 0%,transparent 48%),
+   linear-gradient(145deg,#10293b,#081a2b);
+}
+:where(.home-shell,#app,.online-app,.lab-app,.preview-app,.nova-reference){
+ font-family:var(--nova-font);
+}
+:where(button,a,input,select,[tabindex]):focus-visible{
+ outline:3px solid var(--nova-focus);
+ outline-offset:3px;
+}
+:where(button,a){-webkit-tap-highlight-color:transparent}
+.nova-panel{
+ border:1px solid var(--nova-line);
+ border-radius:var(--nova-r-panel);
+ background:var(--nova-panel-gradient);
+ box-shadow:var(--nova-shadow-panel);
+}
+.nova-panel--raised{
+ border-color:var(--nova-line-bright);
+ box-shadow:var(--nova-shadow-lift);
+}
+.nova-scene{
+ isolation:isolate;
+ position:relative;
+ overflow:hidden;
+ border-radius:var(--nova-r-scene);
+ border:1px solid var(--nova-line);
+ background:var(--nova-scene-gradient);
+}
+.nova-scene::before{
+ content:"";position:absolute;inset:10px;
+ border:1px solid #c6f1db17;border-radius:calc(var(--nova-r-scene) - 6px);
+ pointer-events:none;
+}
+.nova-scene::after{
+ content:"";position:absolute;right:-36px;top:-59px;
+ width:220px;height:220px;border:1px solid #a6e9df24;border-radius:50%;
+ box-shadow:0 0 0 27px #b5fbda08,0 0 0 61px #b5fbda05;
+ pointer-events:none;
+}
+.nova-eyebrow{
+ color:var(--nova-teal);
+ font-weight:850;
+ font-size:clamp(10px,.87vw,12px);
+ letter-spacing:.15em;
+ text-transform:uppercase;
+}
+.nova-display{
+ font-family:var(--nova-font);
+ font-size:clamp(30px,3.5vw,52px);
+ font-weight:900;
+ line-height:1.07;
+ letter-spacing:-.035em;
+ color:var(--nova-text);
+}
+.nova-copy{
+ font:400 14px/1.6 var(--nova-font);
+ color:var(--nova-text-muted);
+}
+.nova-hull-badge{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ border:1px solid var(--nova-line);
+ background:linear-gradient(145deg,#274b57,#132d3d);
+ color:var(--nova-teal);font-size:11px;font-weight:850;
+ letter-spacing:.075em;border-radius:var(--nova-r-sm);
+ padding:8px 11px;
+}
+.nova-action{
+ display:inline-flex;align-items:center;justify-content:center;
+ border:1px solid #ecc891;border-radius:var(--nova-r-sm);
+ background:linear-gradient(155deg,#ffe6b0,#eab66c);
+ color:#1a2b35;
+ box-shadow:inset 0 1px #fff4d4,0 3px #987347;
+ font-weight:850;padding:11px 18px;
+ transition:transform var(--nova-speed-fast) var(--nova-ease),
+ filter var(--nova-speed-fast) var(--nova-ease);
+}
+.nova-action:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.nova-action:active{transform:translateY(1px);box-shadow:inset 0 1px #fff4d4}
+.nova-signal{
+ display:inline-block;width:8px;height:8px;border-radius:50%;
+ background:var(--nova-teal);box-shadow:0 0 11px #67d6c0b3;
+ animation:nova-signal-breathe 2.7s ease-in-out infinite;
+}
+@keyframes nova-signal-breathe{
+ 0%,100%{box-shadow:0 0 7px #67d6c080;opacity:.8}
+ 50%{box-shadow:0 0 15px #67d6c0d9;opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+ .nova-signal{animation:none}
+ .nova-action{transition:none}
+ .nova-action:hover,.nova-action:active{transform:none}
+}
+@media(forced-colors:active){
+ .nova-panel,.nova-scene,.nova-hull-badge,.nova-action{border:1px solid ButtonText}
+ .nova-signal{outline:1px solid Highlight}
+}

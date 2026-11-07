@@ -125,3 +125,11 @@
 }
 
 .online-app .board-zoom-toolbar{max-width:665px}
+
+/* Visual identity A: match lobby and telemetry share the ship's hull material. */
+.online-gate-card{border-color:var(--nova-line-bright);border-radius:var(--nova-r-panel);
+ background:var(--nova-panel-gradient);box-shadow:var(--nova-shadow-lift)}
+.online-form,.online-room-box{border-color:var(--nova-line);background:var(--nova-panel-gradient)}
+.online-gate-kicker{color:var(--nova-teal)}
+.online-gate h1{color:var(--nova-text)}
+.online-app .online-connection.is-live{color:var(--nova-success)}
