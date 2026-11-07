@@ -19,6 +19,7 @@ import {
  exportPilotAchievements,importPilotAchievements,restorePilotAchievements
 } from '../src/achievements/storage.js';
 import {defaultAlien,ALIEN_STORAGE_KEY} from '../src/alien/model.js';
+import {CALLOUT_BY_ID} from '../src/online-callouts.js';
 const P1='pilot-'+'11'.repeat(12),P2='pilot-'+'22'.repeat(12);
 const storage=()=>{
  const items=new Map();
@@ -30,7 +31,7 @@ const storage=()=>{
 };
 test('registry preserves EVERY current base-free alien choice, every palette and four presets',()=>{
  assert.equal(assertAchievementCatalog(),true);
- assert.equal(ACHIEVEMENTS.length,40);
+ assert.equal(ACHIEVEMENTS.length,43);
  for(const [collection,ids] of Object.entries(manifest.parts)){
   assert.deepEqual(ids.slice(0,FREE_ALIEN_OPTIONS[collection].length),FREE_ALIEN_OPTIONS[collection]);
   for(const id of FREE_ALIEN_OPTIONS[collection])assert.equal(isFreeAlienOption(collection,id),true);
@@ -44,18 +45,20 @@ test('registry preserves EVERY current base-free alien choice, every palette and
  for(const part of ACHIEVEMENTS){
   assert.equal(isFreeAlienOption(part.reward.collection,part.reward.id),false);
   assert.equal(achievementForReward(part.reward.collection,part.reward.id)?.id,part.id);
-  assert.ok(part.reward.collection==='palettes'?Object.hasOwn(manifest.palettes,part.reward.id):manifest.parts[part.reward.collection]?.includes(part.reward.id),
-    'Pass B requires all 40 registered reward IDs');
+  assert.ok(part.reward.collection==='callouts'?CALLOUT_BY_ID[part.reward.id]?.unlock===part.id:
+   part.reward.collection==='palettes'?Object.hasOwn(manifest.palettes,part.reward.id):
+    manifest.parts[part.reward.collection]?.includes(part.reward.id),
+    'All rewards must have a known visual or alien part');
  }
 });
-test('each of the four game modes has exactly 6 easy, 3 moderate and 1 hard rewards',()=>{
+test('the original per-mode achievement balance is preserved with 3 extra online transmissions',()=>{
  for(const [mode,awards] of Object.entries(ACHIEVEMENTS_BY_MODE)){
-  assert.equal(awards.length,10,mode);
+  assert.equal(awards.length,mode==='online'?13:10,mode);
   assert.deepEqual(awards.map(a=>a.tier).reduce((out,key)=>
-   ({...out,[key]:(out[key]||0)+1}),{}),{easy:6,moderate:3,hard:1});
+   ({...out,[key]:(out[key]||0)+1}),{}),mode==='online'?{easy:7,moderate:4,hard:2}:{easy:6,moderate:3,hard:1});
   assert.equal(new Set(awards.map(a=>a.rule.event)).size>=3,true);
  }
- assert.equal(new Set(ACHIEVEMENTS.map(x=>x.reward.collection+'/'+x.reward.id)).size,40);
+ assert.equal(new Set(ACHIEVEMENTS.map(x=>x.reward.collection+'/'+x.reward.id)).size,43);
 });
 test('saved local pilot IDs are opaque, unique and persist independent of Alien Lab',()=>{
  assert.equal(createPilotId(Uint8Array.from({length:12},(_,i)=>i)),
