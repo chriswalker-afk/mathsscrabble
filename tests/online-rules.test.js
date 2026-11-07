@@ -52,6 +52,45 @@ const allPhysical=room=>[
  ...room.match.board.filter(t=>t&&t.value!=='='),
  ...room.match.bag,...room.match.players.flatMap(p=>p.rack)
 ];
+test('server-authoritative overall game clock stops actions and chooses final standings',()=>{
+ let room=makeOnlineLobby({code:'GHJKLM',hostName:'Ari',hostHash:H,maxPlayers:2,
+  turnSeconds:60,gameSeconds:300,now:1000});
+ room=joinOnlineLobby(room,'Bea',A,1100);
+ assert.equal(room.gameSeconds,300);
+ room=startOnlineMatch(room,H,request(room.revision,'start'),2000).room;
+ assert.equal(room.match.gameDeadline,302000);
+ assert.equal(roomWakeAt(room),62000,'the earlier turn alarm wakes first');
+ let tick=timeOutOnlineTurn(room,62000);
+ assert.equal(tick.changed,true);
+ room=tick.room;
+ assert.equal(room.match.gameDeadline,302000,'turn timeout does not reset game timer');
+ assert.equal(room.phase,'playing');
+ tick=timeOutOnlineTurn(room,302000);
+ assert.equal(tick.changed,true);
+ room=tick.room;
+ assert.equal(room.phase,'finished');
+ assert.equal(room.match.finishedReason,'time-limit');
+ assert.equal(room.match.deadline,0);
+ assert.equal(room.match.finalScores.length,2);
+ assert.equal(roomWakeAt(room),room.expiresAt);
+ assert.equal(verifyOnlineRoom(room),true);
+ assert.equal(viewOnlineRoom(room,H,302001).match.reason,'time-limit');
+ assert.equal(viewOnlineRoom(room,A,302001).gameSeconds,300);
+ assert.throws(()=>takeOnlineAction(room,H,request(room.revision,'pass'),302001),/not accepting/i);
+ assert.equal(timeOutOnlineTurn(room,302002).changed,false);
+});
+test('game timer works without a turn timer and rejects unsupported durations',()=>{
+ assert.throws(()=>makeOnlineLobby({code:'GHJKLM',hostName:'Ari',hostHash:H,
+  gameSeconds:45,now:1000}),/timer/i);
+ let room=makeOnlineLobby({code:'GHJKLM',hostName:'Ari',hostHash:H,maxPlayers:2,
+  gameSeconds:300,turnSeconds:0,now:1000});
+ room=joinOnlineLobby(room,'Bea',A,1100);
+ room=startOnlineMatch(room,H,request(room.revision,'start'),2000).room;
+ assert.equal(room.match.deadline,0);
+ assert.equal(roomWakeAt(room),302000);
+ assert.equal(timeOutOnlineTurn(room,301999).changed,false);
+ assert.equal(timeOutOnlineTurn(room,302000).room.phase,'finished');
+});
 test('room codes are six ambiguous-character-free symbols',()=>{
  const code=roomCode(new Uint8Array([0,1,2,3,4,5]));
  assert.equal(code,'ABCDEF');
