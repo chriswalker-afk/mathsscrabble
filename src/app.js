@@ -1626,7 +1626,7 @@ function showTraining(firstVisit=false){
    <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
      <p>Press <strong>Score Equation</strong> to check your maths. Later equations must join a locked tile. Reach the target within six turns; one single-tile swap is free each turn.</p></div></div>
   </div>${bracketNote}
-  <p class="training-footnote">Progress saves on this device. Keyboard shortcuts are shown beside the board.</p>`;
+  <p class="training-footnote">Your run saves on this device. To earn cosmetics, choose a pilot in the Hangar before starting a new run.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
   message,[{text:firstVisit?'START MISSION →':'BACK TO GAME',primary:true,fn:firstVisit?rememberIntro:undefined}]);
@@ -1655,7 +1655,7 @@ function showDriftIntro(firstVisit=false){
       <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
     <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
       <p>Each zone has three sectors. Every third sector has a random boss with a temporary rule. Failure ends your Drift run.</p></div></div>
-   </div><p class="training-footnote">Sector Run and Drift saves are separate and stay on this device.</p>`,
+   </div><p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
   [{text:firstVisit?'BEGIN THE DRIFT →':'BACK TO GAME',primary:true}]);
 }
 function restoreMode(mode,{initial=false}={}){
@@ -1720,7 +1720,7 @@ function confirmTileSetChange(id){
 }
 function showTileSetMenu(){
  if(isLocal()||state.busy)return;
- const body='<p class="kit-dialog-explain">Launchpad/Orbit: 5 numbers + 3 operators. Nebula/Quantum: 6 numbers + 3 operators + a matched ( ) pair.</p>'+
+ const body='<p class="kit-dialog-explain">Starting racks — Launchpad/Orbit: 5 numbers + 3 operators. Nebula/Quantum: 6 numbers + 3 operators + a matched ( ) pair.</p>'+
    '<div class="kit-dialog-grid" role="group" aria-label="Choose a maths tile kit">'+
    TILE_SETS.map(kit=>'<button class="kit-dialog-card'+(kit.id===state.tileSet?' is-current':'')+
      '" type="button" data-kit-choice="'+kit.id+'" aria-pressed="'+(kit.id===state.tileSet)+'">'+
