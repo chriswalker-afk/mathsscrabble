@@ -928,3 +928,15 @@ dialog:has(.salvage-grid) #modal-actions{flex-shrink:0;margin-top:10px;padding:1
 .board .board-tile.fraction-tile{font-size:calc(var(--board-cell-size,34px) * .45)}
 .board .fraction-face .frac-numerator,.board .fraction-face .frac-denominator{line-height:.98}
 @media(max-width:730px){.board-zoom-label{font-size:8px}.board-zoom-toolbar button{min-width:26px;padding:2px 4px}}
+
+/* 320px phones: keep every command reachable without widening the document. */
+@media(max-width:370px){
+ .topbar{gap:5px}
+ .topbar .brand{flex:0 0 auto;gap:5px}
+ .topbar .brand-icon{width:29px;height:29px}
+ .topbar .brand strong{font-size:15px;letter-spacing:.04em}
+ .topbar .brand small{display:none}
+ .topbar .top-actions{flex:1 1 0;min-width:0;max-width:100%;justify-content:flex-start;
+   overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
+ .topbar .top-actions>*{flex:0 0 auto}
+}
