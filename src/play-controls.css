@@ -53,8 +53,6 @@
 #app[data-mode="rogue"] .right-panel .drift-loadout #temporary-hint{font-size:9px;margin-top:4px;line-height:1.3}
 @media(min-width:731px){
  #app[data-mode="rogue"] .right-panel{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#548285 transparent}
- .arena .board-frame{width:min(100%,calc(100dvh - 335px),650px)}
- .online-app .arena .board-frame{width:min(100%,calc(100dvh - 315px),650px)}
 }
 @media(max-width:1050px){
  .rack-actions{gap:4px}
