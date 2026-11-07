@@ -1031,6 +1031,7 @@ function readyLocalPlayer(){
 }
 $('local-ready-btn').onclick=readyLocalPlayer;
 function finishLocalTurn(match,message){
+ if(state.ceremony){state.ceremony.finished=true;state.ceremony=null;state.modalEpoch++;clearCeremonyTile();}
  state.localMatch=match;state.board=match.board;state.bag=match.bag;
  state.pending={};state.rack=[];state.placementOrder=[];
  state.selected=null;state.swapping=false;state.swapSet.clear();
@@ -1040,8 +1041,13 @@ function finishLocalTurn(match,message){
  announce(message);persistRun();recordLocalFinish(match);render();
   if(match.phase==='finished')showLocalResults();
 }
+function expireLocalBeforeAction(){
+ if(!isLocal()||!state.localMatch||!isGameTimerExpired(state.localMatch))return false;
+ finishLocalTurn(finishTimedMatch(state.localMatch),'The game timer expired. Final standings are ready.');
+ return true;
+}
 function localPass(reason='pass'){
- if(!isLocal()||state.busy||state.ended)return;
+ if(expireLocalBeforeAction()||!isLocal()||state.busy||state.ended)return;
  if(Object.keys(state.pending).length){
    announce('Return unscored tiles to the rack before passing.',true);return;
  }
@@ -1054,7 +1060,7 @@ function localPass(reason='pass'){
 }
 $('local-pass-btn').onclick=()=>localPass('pass');
 function localSwap(){
- if(!isLocal()||state.busy||state.ended)return;
+ if(expireLocalBeforeAction()||!isLocal()||state.busy||state.ended)return;
  if(!state.swapping){
    if(Object.keys(state.pending).length){announce('Clear your equation before swapping.',true);return;}
    if(!state.bag.length){announce('No tiles remain in the bag.',true);return;}
@@ -1435,7 +1441,7 @@ async function playScoringCeremony(ctl){
 }
 $('skip-ceremony').onclick=()=>finishScoringCeremony(state.ceremony);
 function scoreLocal(){
- if(!isLocal()||state.busy||state.ended||state.swapping)return;
+ if(expireLocalBeforeAction()||!isLocal()||state.busy||state.ended||state.swapping)return;
  try{
    const match=state.localMatch;
    const oldIndex=match.current;
