@@ -4,7 +4,7 @@ import {
  makeOnlineLobby,joinOnlineLobby,startOnlineMatch,sendOnlineCallout,
  takeOnlineAction,viewOnlineRoom,verifyOnlineRoom,OnlineError
 } from '../src/online-rules.js';
-import {CALLOUTS,CALLOUT_BY_ID,isCalloutUnlocked} from '../src/online-callouts.js';
+import {CALLOUTS,CALLOUT_BY_ID,CALLOUT_DISPLAY_MS,visibleCallouts,isCalloutUnlocked} from '../src/online-callouts.js';
 import {emptyAchievementStore,awardForVerifiedEvent,pilotAchievements,achievementProgress} from '../src/achievements/engine.js';
 import {emptyPilotRegistry,addPilot} from '../src/achievements/pilots.js';
 
@@ -37,6 +37,21 @@ test('radio catalogue is fixed, safe, non-verbal and linked only to cosmetic rew
  assert.equal(isCalloutUnlocked('squid',['O11']),true);
  assert.equal(isCalloutUnlocked('jelly',['O11']),false);
  assert.equal(isCalloutUnlocked('<script>',['O11','O12','O13']),false);
+});
+
+test('radio bubbles expire at five seconds, even with staggered messages',()=>{
+ assert.equal(CALLOUT_DISPLAY_MS,5000);
+ const sentAt=1800000000000;
+ const first={id:'one',by:0,calloutId:'zib',at:sentAt};
+ const second={id:'two',by:1,calloutId:'planet',at:sentAt+1000};
+ const invalid={id:'invalid',by:1,calloutId:'unknown',at:sentAt+2000};
+ assert.deepEqual(visibleCallouts([first,second,invalid],sentAt),[first]);
+ assert.deepEqual(visibleCallouts([first,second,invalid],sentAt+4999),[first,second]);
+ assert.deepEqual(visibleCallouts([first,second,invalid],sentAt+5000),[second]);
+ assert.deepEqual(visibleCallouts([first,second],sentAt+5999),[second]);
+ assert.deepEqual(visibleCallouts([first,second],sentAt+6000),[]);
+ assert.deepEqual(visibleCallouts([first],sentAt+14000),[],'old callouts never reappear after refresh');
+ assert.deepEqual(visibleCallouts(null,sentAt),[]);
 });
 
 test('authenticated pilots may transmit while waiting, once per room turn each, without playing',()=>{
