@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="zone-critical-title">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="zone-critical-title">
 <title id="zone-critical-title">The Overload Belt environment</title>
 <defs>
  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#33243d"/><stop offset=".58" stop-color="#6d334e"/><stop offset="1" stop-color="#101f31"/></linearGradient>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="zone-forced-relic-title">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="zone-forced-relic-title">
 <title id="zone-forced-relic-title">The Relic Vault environment</title>
 <defs>
  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22374a"/><stop offset=".58" stop-color="#61553f"/><stop offset="1" stop-color="#101f31"/></linearGradient>
