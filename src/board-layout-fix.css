@@ -13,7 +13,7 @@
 }
 #app .board-first .arena>.board-frame{
  display:block;grid-column:auto;grid-row:auto;justify-self:auto;align-self:auto;
- width:min(100%,calc(100dvh - 238px),790px);
+ width:min(100%,calc(100dvh - 267px),790px);
  max-width:790px;max-height:none;height:auto;aspect-ratio:1;flex:none;
 }
 #app .board-first .arena>.rack-section{
