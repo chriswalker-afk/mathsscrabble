@@ -115,6 +115,13 @@ try{
  assert.equal(await online.locator('#online-callout-stage').count(),1);
  assert.equal(await online.locator('.board-info-popover').count(),1);
  assert.equal(await online.locator('.board-frame').count(),1);
+ const onlineFit=await online.evaluate(()=>{
+   const b=document.querySelector('#board').getBoundingClientRect();
+   const v=document.querySelector('#board-viewport');
+   return {gridWidth:b.width,gridHeight:b.height,viewWidth:v.clientWidth,viewHeight:v.clientHeight};
+ });
+ assert.ok(Math.abs(onlineFit.gridWidth-onlineFit.viewWidth)<=4,'online board initially fills the viewport width');
+ assert.ok(Math.abs(onlineFit.gridHeight-onlineFit.viewHeight)<=4,'online board initially fills the viewport height');
  await online.close();
  assert.deepEqual(errors,[],'no JavaScript errors during mode changes and responsive checks');
  console.log('Board-first acceptance checks passed: rack under board, equation left, gadgets under systems, zone in header, responsive access.');
