@@ -17,6 +17,17 @@
 </header>
 <main class="game-shell board-first">
  <aside class="side-panel left-panel" aria-label="Match standings">
+<div id="equation-preview" class="equation-preview" data-state="empty">
+   <div class="preview-led" aria-hidden="true"></div>
+   <div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="online-expression">—</strong></div><span id="online-preview-status">Join a room to play.</span></div>
+   <div class="preview-points"><small>IF VALID</small><strong id="online-potential">—</strong></div>
+   <div id="ceremony-readout" class="ceremony-readout" hidden aria-label="Verified equation scoring">
+    <div class="ceremony-heading"><span>ENERGY TRANSFER</span><span id="ceremony-tile-count">0 / 0</span></div>
+    <div class="ceremony-values"><strong id="ceremony-count">+0</strong><span id="ceremony-step">SCORING</span></div>
+    <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
+    <button id="skip-ceremony" type="button" class="ceremony-skip">SKIP »</button>
+   </div>
+  </div>
   <div class="panel-heading">PILOT TELEMETRY</div>
   <div class="online-room-box"><small>ROOM CODE</small><strong id="online-room-code">······</strong><span class="online-room-kit" id="online-active-kit">KIT · LAUNCHPAD</span></div>
   <div class="local-score-header"><strong>LIVE STANDINGS</strong><span><span id="online-game-clock">NO GAME LIMIT</span> · <span id="online-clock">--:--</span></span></div>
@@ -49,18 +60,7 @@
    <div class="board-corner bottom-left" aria-hidden="true"></div><div class="board-corner bottom-right" aria-hidden="true"></div>
    <div id="energy-burst" class="energy-burst" aria-hidden="true"></div>
   </div>
-  <div id="equation-preview" class="equation-preview" data-state="empty">
-   <div class="preview-led" aria-hidden="true"></div>
-   <div class="preview-main"><div class="preview-top"><span class="preview-label">EQUATION ARRAY</span><strong id="online-expression">—</strong></div><span id="online-preview-status">Join a room to play.</span></div>
-   <div class="preview-points"><small>IF VALID</small><strong id="online-potential">—</strong></div>
-   <div id="ceremony-readout" class="ceremony-readout" hidden aria-label="Verified equation scoring">
-    <div class="ceremony-heading"><span>ENERGY TRANSFER</span><span id="ceremony-tile-count">0 / 0</span></div>
-    <div class="ceremony-values"><strong id="ceremony-count">+0</strong><span id="ceremony-step">SCORING</span></div>
-    <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
-    <button id="skip-ceremony" type="button" class="ceremony-skip">SKIP »</button>
-   </div>
-  </div>
-<div class="rack-section">
+  <div class="rack-section">
  <div class="rack-heading"><span><span id="online-rack-label">YOUR PRIVATE RACK</span><small id="online-rack-hint" class="online-rack-hint"></small></span>
   <div class="rack-actions" role="group" aria-label="Rack tools">
    <button id="online-undo" class="rack-undo" type="button" title="Undo last placed tile (Backspace)" aria-label="Undo last placed tile">↶ UNDO</button>
