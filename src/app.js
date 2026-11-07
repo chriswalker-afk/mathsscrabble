@@ -528,6 +528,7 @@ function renderLocalStatus(){
  $('local-panel').hidden=false;
  $('local-pass-btn').hidden=false;
  $('rogue-summary').hidden=true;
+ $('drift-loadout').hidden=true;
  $('anomaly-banner').hidden=true;
  $('mode-btn').textContent='⌂ HOME';
  $('footer-mode').textContent='⟡ EQUA//NOVA // LOCAL MULTIPLAYER';
