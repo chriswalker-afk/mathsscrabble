@@ -17,3 +17,7 @@
 .achievement-toast-close{position:absolute;right:9px;top:7px;background:transparent;border:0;color:#f4ead5;font-size:25px;cursor:pointer}
 @media(max-width:540px){.achievement-toast{bottom:8px;right:8px;width:min(280px,calc(100vw - 16px))}.achievement-reveal-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.achievement-toast,.achievement-reveal{animation:none!important;transition:none!important}}
+
+.achievement-hangar-link{display:block;color:#bce8db;text-align:center;font-size:10px;text-decoration:none;letter-spacing:.045em;padding:7px 3px;border-radius:7px;margin:4px 0 10px;overflow-wrap:anywhere}
+.achievement-hangar-link:hover,.achievement-hangar-link:focus-visible{color:#ffe4a4;background:#244c5f}
+.achievement-hangar-link[hidden]{display:none!important}
