@@ -166,6 +166,12 @@
  #app .topbar .zone-header-strip .zone-mini-boss{width:30px;height:30px;flex-basis:30px}
  #app .topbar .zone-header-strip .zone-mini-arrow{display:none}
 }
+/* Mid-sized laptops have slightly more rack wrapping; reserve extra height. */
+@media(min-width:921px) and (max-width:1100px){
+ #app .board-first .arena>.board-frame{
+  width:min(100%,calc(100dvh - 286px),790px);
+ }
+}
 @media(min-width:731px) and (max-height:680px){
  #app .board-first .arena>.board-frame{width:min(100%,calc(100dvh - 224px),790px)}
  #app .board-first .arena .rack-row .rack .tile{height:37px}
