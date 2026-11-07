@@ -27,7 +27,7 @@ try{
  await page.waitForURL(/index\.html$/);
  await page.locator('#home-rogue').click();
  await page.waitForURL(/play\.html\?mode=rogue(?:&tiles=natural)?$/);
- assert.match(await page.locator('#modal-title').textContent(),/evolving reactor run/i);
+ assert.match(await page.locator('#modal-title').textContent(),/clear sectors, upgrade and face bosses/i);
  await page.locator('#modal-actions button').last().click();
  await installKnownRack(page,'rogue');
  assert.match(await page.locator('#sector-label').textContent(),/THE DRIFT 01/i);

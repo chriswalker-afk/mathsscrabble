@@ -70,18 +70,18 @@
   <div><i class="legend-square eee">3E</i><span>Triple equation</span></div></div>
   <div class="panel-divider"></div><div class="panel-heading">BIDMAS PRIORITY</div>
   <p class="rules-note">Brackets → Indices → Division & Multiplication → Addition & Subtraction</p>
-  <p class="rules-note">The server checks each equation. Only your rack can be used; other players' tiles stay private.</p>
+  <p class="rules-note">The server validates each equation. Other players’ racks stay private.</p>
  </aside>
 </main>
 <footer class="bottom-strip"><span id="online-footer">⟡ SIGNAL CLASH // REAL-TIME ROOMS</span>
-<span>ONE SHARED BOARD · PRIVATE RACKS</span><span>MR WALKER MATHS · ALPHA LAB</span></footer>
+<span>ONE SHARED BOARD · PRIVATE RACKS</span><span>MR WALKER MATHS</span></footer>
 </div>
 
 <div id="online-gate" class="online-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
  <div class="online-gate-card">
   <span class="online-gate-kicker">EQUA//NOVA · SIGNAL CLASH</span>
   <h1 id="gate-title">Play together, from anywhere.</h1>
-  <p id="gate-description">Host a private room or enter a six-character code. Each player uses their own device and only sees their own rack.</p>
+  <p id="gate-description">Create a room or enter a six-character code. Each pilot joins on their own device.</p>
    <p class="online-achievement-banner" role="status"><span id="online-achievement-status">✦ Guest · no saved achievement progress.</span> <a href="./achievement-hangar.html" target="_blank" rel="noopener noreferrer">MY PILOTS & ACHIEVEMENTS ↗</a></p>
   <div id="online-entry" class="online-entry">
    <div id="online-avatar-entry-slot">
@@ -105,8 +105,8 @@
    <div class="online-gate-forms">
     <form id="online-create-form" class="online-form">
      <strong>CREATE A ROOM</strong>
-     <label for="online-host-name">YOUR PILOT NAME</label>
-     <input id="online-host-name" autocomplete="nickname" required maxlength="20" placeholder="Pilot name">
+     <label for="online-host-name">NAME SHOWN IN ROOM</label>
+     <input id="online-host-name" autocomplete="nickname" required maxlength="20" placeholder="Display name">
      <div class="online-form-duo">
       <div><label for="online-player-limit">PILOTS</label><select id="online-player-limit"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option></select></div>
       <div><label for="online-timer-settings">TURN TIMER</label><select id="online-timer-settings">
@@ -119,12 +119,12 @@
       <option value="rational">03 · Nebula — Positive fractions</option>
       <option value="advanced">04 · Quantum — Advanced operations</option>
      </select>
-     <p id="online-create-kit-info" class="online-kit-help">The host selects one kit for every pilot. Six number tiles in Nebula and Quantum.</p>
+     <p id="online-create-kit-info" class="online-kit-help">The host’s kit applies to everyone in the room.</p>
      <button id="online-create-button" type="submit" class="primary-command">CREATE ROOM →</button>
     </form>
     <form id="online-join-form" class="online-form">
      <strong>JOIN A ROOM</strong>
-     <label for="online-join-name">YOUR PILOT NAME</label><input id="online-join-name" required maxlength="20" autocomplete="nickname" placeholder="Pilot name">
+     <label for="online-join-name">NAME SHOWN IN ROOM</label><input id="online-join-name" required maxlength="20" autocomplete="nickname" placeholder="Display name">
      <label for="online-join-code">SIX-CHARACTER CODE</label><input id="online-join-code" required maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF">
      <button id="online-join-button" type="submit" class="secondary-command">JOIN ROOM →</button>
     </form>
@@ -142,7 +142,7 @@
    <button id="online-leave-lobby" type="button" class="online-restore">LEAVE LOBBY</button>
   </div>
   <p id="online-gate-error" class="online-gate-error" role="alert" hidden></p>
-  <a class="online-back" href="./index.html">← BACK TO OTHER MODES</a>
+  <div class="online-gate-footer"><a class="online-back" href="./index.html">← BACK TO MISSION CONTROL</a><button id="online-gate-help" type="button" class="online-gate-help">? HOW TO PLAY</button></div>
  </div>
 </div>
 <dialog id="online-dialog" class="online-dialog"><div class="modal-content">

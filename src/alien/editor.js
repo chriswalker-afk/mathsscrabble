@@ -19,10 +19,10 @@ import {
 const $=id=>document.getElementById(id);
 const humanize=value=>value.replace(/-/g,' ').replace(/\b[a-z]/g,c=>c.toUpperCase());
 const descriptions={
- head:'Choose your alien’s head',face:'Mix the eyes and mouth',
- body:'Give your alien a cosy middle',arms:'A little wave goes a long way',
- legs:'Walking, floating or wobbling',accessory:'One special touch',
- colours:'Three independent colour layers'
+ head:'Choose a head',face:'Choose eyes and a mouth',
+ body:'Choose a body',arms:'Choose arms',
+ legs:'Choose legs',accessory:'Add an accessory',
+ colours:'Choose colours'
 };
 const roleLabels={skin:'SKIN · HEAD, ARMS & LEGS',
  outfit:'OUTFIT · BODY',
@@ -211,6 +211,7 @@ function switchSection(id,focusTab=false){
  $('design-completeness').textContent=String(sectionIndex(id)+1)+' / '+EDITOR_SECTIONS.length;
  $('current-section-title').textContent=descriptions[id];
  $('current-section-hint').textContent=section.hint;
+ $('current-section-hint').hidden=!section.hint;
  $('editor-options').setAttribute('aria-labelledby','tab-'+id);
  renderJourney();
  $('editor-options').scrollTop=0;
@@ -312,9 +313,9 @@ function updateSaveUI(){
  label.classList.toggle('is-dirty',isDirty());
  label.textContent=isFresh()?'NOT SAVED YET':saved?'✓ SAVED TO THIS DEVICE':'● UNSAVED CHANGES';
  $('save-description').textContent=isFresh()?
-   'Save this alien in your browser, or export it as a transparent SVG.':
-   saved?'This design is safely stored here. Changes are never saved until you choose.':
-     'Your last saved alien is still there. Save again to keep these changes.';
+   'Save this alien on your device, or export an SVG image.':
+   saved?'Saved here. Save again after making changes.':
+     'Changes are not saved yet. Select Save to keep them.';
  $('alien-load').disabled=isFresh();
  $('alien-undo').disabled=!state.history.past.length;
  $('alien-redo').disabled=!state.history.future.length;

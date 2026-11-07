@@ -252,6 +252,14 @@ try{
  await host.locator('#online-pass').click();
  assert.equal(backend.room.phase,'finished');
  assert.equal(backend.room.match.finalScores.length,2);
+ // Room rule transitions complete before the async browser response finishes.
+ // Wait for the authenticated pilot's completion receipts to be ingested.
+ await host.waitForFunction(()=>{
+  const p=JSON.parse(localStorage.getItem('equa-nova.pilot-profiles.v1')||'null');
+  const a=JSON.parse(localStorage.getItem('equa-nova.achievements.v1')||'null');
+  const unlocked=a?.pilots?.[p?.activeId]?.unlocked||[];
+  return ['O06','O07','O09'].every(id=>unlocked.includes(id));
+ },null,{timeout:6000});
  const earnedEnd=await awards(host);
  assert.ok(earnedEnd.includes('O06'),'scoring pilot receives Remote Explorer');
  assert.ok(earnedEnd.includes('O07'),'host receives Room Captain');

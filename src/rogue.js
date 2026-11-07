@@ -26,7 +26,7 @@ export const ROGUE_ITEMS=Object.freeze([
  {id:'precision-pay',name:'Precision Dividend',cost:5,kind:'ECONOMY',icon:'◎',description:'Earn +2 Flux every time you score with no wildcards in your new tiles.'},
  {id:'premium-dividend',name:'Premium Prospect',cost:6,kind:'ECONOMY',icon:'✷',description:'Earn +1 Flux per newly activated premium square in each scored move.'},
  {id:'extra-swap',name:'Exchange License',cost:6,kind:'TACTICS',icon:'⇄',description:'Get a second separate free single-tile swap every turn.'},
- {id:'wide-rack',name:'Rack Extension',cost:8,kind:'RACK',icon:'+1',description:'Add one extra number slot: carry six numbers and three operators (nine total).'},
+ {id:'wide-rack',name:'Rack Extension',cost:8,kind:'RACK',icon:'+1',description:'Add one number slot to your rack (+1 tile), for any mathematical kit.'},
  {id:'extra-turn',name:'Time Dilator',cost:8,kind:'TACTICS',icon:'+1',description:'Play a seventh turn in every Drift sector.'},
  {id:'starter-spark',name:'Core Igniter',cost:5,kind:'BOARD SPACE',icon:'✳',description:'+6 energy for a scored opening equation through the centre.'}
 ]);

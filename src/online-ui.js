@@ -42,7 +42,7 @@ $('online-tile-kit').value=normalizeTileSet(requestedKit||storage?.getItem(TILE_
 const describeSelectedKit=()=>{
  const kit=TILE_SET_BY_ID[$('online-tile-kit').value];
  $('online-create-kit-info').textContent=kit.short+' · '+kit.desc+
-   ' The host locks this kit for all players when the room is created.';
+   ' All players use this kit.';
 };
 $('online-tile-kit').addEventListener('change',()=>{
  try{storage?.setItem(TILE_SET_STORAGE_KEY,$('online-tile-kit').value);}catch{}
@@ -310,7 +310,7 @@ function showEntry(){
  $('online-lobby').hidden=true;
  $('gate-title').textContent='Play together, from anywhere.';
  $('gate-description').textContent=
-   'Host a room or enter a six-character code. The host selects the mathematical kit; each player sees only their own private rack.';
+   'Create a room or enter a six-character code. Each pilot joins on their own device.';
 }
 function showLobby(){
  if(!state.view)return;
@@ -324,7 +324,7 @@ function showLobby(){
  $('online-entry').hidden=true;
  $('online-lobby').hidden=false;
  $('gate-title').textContent='Pilots assembling.';
- $('gate-description').textContent='Share the room code with your group. All players join on their own devices.';
+ $('gate-description').textContent='Send the code or invite link to other pilots.';
  $('lobby-code').textContent=v.code;
  $('online-lobby-count').textContent=v.people.length+' / '+v.maxPlayers;
  const players=$('online-lobby-players');
@@ -340,8 +340,8 @@ function showLobby(){
  $('online-start-match').hidden=!host;
  $('online-start-match').disabled=!host||!ready||state.busy;
  $('online-lobby-note').textContent=host?
-   (ready?'You can launch with '+v.people.length+' pilots, or wait until all '+v.maxPlayers+' seats are filled.':'At least two pilots must join before the host can start.'):
-   'Waiting for '+v.people[0].name+' to start the match. The lobby updates live.';
+   (ready?'Ready to start, or wait for more pilots.':'Another pilot must join before you can start.'):
+   'Waiting for '+v.people[0].name+' to start the match.';
 }
 function renderStandings(){
  const v=state.view,match=v?.match;
@@ -674,10 +674,10 @@ $('online-help').onclick=()=>{
  const wrap=document.createElement('div');
  wrap.className='training-steps';
  const rules=[
-  ['One board, private racks','Each of 2–4 pilots joins with a code and shares one 19×19 board. The host selects the kit. Launchpad and Orbit use eight private tiles; Nebula and Quantum use eleven (6 numbers, 3 operators and a bracket pair).'],
-  ['Build and submit real equations','The first correct equation crosses the centre; later ones share a locked tile. BIDMAS applies. No 3 = 3 shortcuts.'],
-  ['Score, pass or swap','Premium squares, equation length and crossing awards apply. The server independently validates all tile ownership, maths, scores and timers.'],
-  ['Finish on net points','When the bag is empty and someone goes out, or two full rounds pass without scoring, leftover rack tile values are deducted.']
+  ['Join on separate devices','The host creates a room; other pilots join with the code. The host chooses the kit and starts when at least two players have joined.'],
+  ['Place a real equation','Tap or drag tiles onto a row or column. The first equation crosses the centre; later ones join locked tiles. The = sign is free; blanks can take a chosen value.'],
+  ['Score, swap or pass','Press Score to check BIDMAS. Premium squares and connections boost points. Swap one tile free per turn when available, or pass if stuck.'],
+  ['Win on net points','The match ends when the bag empties and a player clears their rack, or after two rounds without scoring. Unused rack tile points are deducted.']
  ];
  for(const [i,[title,body]] of rules.entries()){
    const row=document.createElement('div');row.className='training-step';
@@ -685,8 +685,14 @@ $('online-help').onclick=()=>{
    const detail=document.createElement('div');const t=document.createElement('strong');t.textContent=title;
    const p=document.createElement('p');p.textContent=body;detail.append(t,p);row.append(num,detail);wrap.append(row);
  }
- showDialog('FLIGHT MANUAL','Online Signal Clash',wrap,[{label:'BACK TO BOARD',primary:true}]);
+ if(hasBracketPair(state.view?.tileSet||$('online-tile-kit').value)){
+  const note=document.createElement('p');note.className='training-footnote';
+  note.textContent='Place or exchange both ( and ) together as a matched pair.';
+  wrap.append(note);
+ }
+ showDialog('FLIGHT MANUAL','Online Signal Clash',wrap,[{label:!$('online-gate').hidden?(state.view?.phase==='lobby'?'BACK TO LOBBY':'BACK TO SETUP'):'BACK TO BOARD',primary:true}]);
 };
+$('online-gate-help').onclick=()=>$('online-help').click();
 async function copyInvite(){
  if(!state.code){showNotice('Create or join a room first.',true);return;}
  const url=new URL('online.html#'+state.code,location.href).href;

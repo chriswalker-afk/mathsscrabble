@@ -730,9 +730,9 @@ function render(){
  else if(state.swapping)coach.textContent=
    isDrift()&&freeSwapsRemaining(state.rogue,state.turn,state.freeSwapTurn)>1?
      'Exchange License: two separate free one-tile swaps this turn.':
-     'Choose one tile for a free swap (once per turn), or several to spend your turn.';
+     'Choose which rack tiles to replace.';
  else if(state.board.every(t=>!t)&&!placed)coach.textContent=
-   state.sector===1?'TRAINING · Find a correct calculation using your shuffled rack. Cross the glowing centre.':'START · Your first equation must cross the centre.';
+   'START · Your first equation must cross the glowing centre.';
  else if(placed&&state.preview.ready)coach.textContent=
    'CHECK · A complete equation is in place. Submit it when you trust your BIDMAS calculation.';
  else if(placed)coach.textContent='BUILD · Arrange one unbroken equation, then add your free equals sign.';
@@ -897,9 +897,8 @@ function showLocalSetup({fromHome=false}={}){
  $('local-tile-set').value=selectedKit;
  const describeKit=()=>{
    const kit=TILE_SET_BY_ID[$('local-tile-set').value];
-   $('local-kit-description').textContent=kit.short+' · '+kit.desc+' Each private rack has '+
-     kitNumberSlots(kit.id)+' number tiles and 3 operators'+(kit.brackets?' plus one linked ( ) bracket pair':'')+
-     '. Players share one board. One free single-tile swap per turn; remaining rack points count against the final score.';
+   $('local-kit-description').textContent=kit.short+' · '+kit.desc+' Rack: '+
+     kitNumberSlots(kit.id)+' numbers, 3 operators'+(kit.brackets?' and a matched ( ) pair':'')+'.';
  };
  $('local-tile-set').addEventListener('change',describeKit);describeKit();
  const wrapper=$('local-setup-names');
@@ -980,7 +979,7 @@ function showLocalSetup({fromHome=false}={}){
  link.href='./alien-lab.html';link.target='_blank';link.rel='noopener noreferrer';
  link.textContent='✳ CREATE A CUSTOM ALIEN IN ALIEN LAB ↗';
  const tip=document.createElement('p');tip.className='alien-setup-note';
- tip.textContent='Choose a separate saved pilot for each seat to keep earned cosmetics. Guest seats can always play; rewards are not shared between players.';
+ tip.textContent='Choose a different saved pilot for each seat to earn achievements, or select Guest.';
  wrapper.append(link,tip);paint();
  const updateCount=()=>{const amount=Number($('local-player-count').value);
    groups.forEach((group,i)=>{group.hidden=i>=amount;});};
@@ -1231,7 +1230,7 @@ function showSectorOutcome(){
    'Target reached. Your run continues into a fresh sector.':
    report.equations?
      'You can retry this sector with a new rack. Look for connections and premium squares.':
-     'Try a short, correct equation first. A balanced rack provides digits, an operation and a wildcard.';
+     'Start with a short correct equation, then connect to existing tiles for more points.';
  const body=`<div class="sector-report">
  <div class="report-energy"><div><span>ENERGY COLLECTED</span><strong>${report.score}</strong></div>
  <div><span>SECTOR TARGET</span><strong>${report.target}</strong></div></div>
@@ -1617,46 +1616,49 @@ function rememberIntro(){
  try{storage?.setItem(INTRO_KEY,'seen');}catch{/* private or blocked storage */}
 }
 function showTraining(firstVisit=false){
+ const bracketNote=hasBracketPair(state.tileSet)?
+  '<p class="training-footnote">In Nebula and Quantum, place both ( and ) in one equation; exchange them as a pair.</p>':'';
  const message=`<div class="training-steps">
-  <div class="training-step"><span>01</span><div><strong>Build one real calculation</strong>
-    <p>Every new game has a <strong>different shuffled starting rack</strong>. Build an equation through the centre, for example <em>8 + 4 = 12</em> if you have suitable tiles. Use <strong>BIDMAS</strong>; an identity like 3 = 3 does not score.</p></div></div>
-  <div class="training-step"><span>02</span><div><strong>Drag, arrange and program</strong>
-    <p>Drag tiles from the rack to the board or tap to place. The = sign is free. Blank tiles <b>#</b>, <b>◇</b> and <b>✦</b> let you choose a number, operation or either. Drag misplaced tiles back to the rack.</p></div></div>
-  <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
-    <p>Click <strong>Score Equation</strong> to check it. Premium squares, longer equations and crossing existing tiles add energy. Reach the target within six turns. You can swap one tile for free each turn.</p></div></div>
- </div>
- <p class="training-footnote">Your run is automatically saved on this device. Arrow keys navigate the grid; number keys 1–8 select rack tiles (9 with Rack Extension), = selects equals and Backspace undoes a tile.</p>`;
+   <div class="training-step"><span>01</span><div><strong>Start at the centre</strong>
+     <p>Build a true equation through the glowing centre square, such as <em>8 + 4 = 12</em>. Use BIDMAS; <em>3 = 3</em> alone does not score.</p></div></div>
+   <div class="training-step"><span>02</span><div><strong>Place your tiles</strong>
+     <p>Tap a rack tile, then a square (or drag it). The <strong>=</strong> sign is free. Blank tiles let you choose a number or operator.</p></div></div>
+   <div class="training-step"><span>03</span><div><strong>Score and connect</strong>
+     <p>Press <strong>Score Equation</strong> to check your maths. Later equations must join a locked tile. Reach the target within six turns; one single-tile swap is free each turn.</p></div></div>
+  </div>${bracketNote}
+  <p class="training-footnote">Your run saves on this device. To earn cosmetics, choose a pilot in the Hangar before starting a new run.</p>`;
  showModal(firstVisit?'WELCOME TO THE REACTOR':'FLIGHT MANUAL',
-   firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
-   message,firstVisit?
-    [{text:'SKIP GUIDE',fn:rememberIntro},
-     {text:'START MISSION →',primary:true,fn:rememberIntro}]:
-    [{text:'BACK TO GAME',primary:true}]);
+  firstVisit?'Ready to build your first equation?':'How to play EQUA//NOVA',
+  message,[{text:firstVisit?'START MISSION →':'BACK TO GAME',primary:true,fn:firstVisit?rememberIntro:undefined}]);
 }
 $('help-btn').onclick=()=>isLocal()?showLocalHelp():isDrift()?showDriftIntro():showTraining();
 function showLocalHelp(){
- showModal('LOCAL MULTIPLAYER · FLIGHT MANUAL','Build together, compete separately',
-   `<div class="training-steps">
-   <div class="training-step"><span>01</span><div><strong>Your rack is private</strong>
-     <p>Choose 2–4 players. Every turn begins on a secure handover screen. Tap Ready only when the named player holds the device. Never pass the screen while your rack is visible.</p></div></div>
-   <div class="training-step"><span>02</span><div><strong>Score on the same board</strong>
-     <p>The first correct equation crosses the centre; later ones must join a locked tile. BIDMAS and the free equals sign work as in Solo mode. A wrong equation is not scored. Use Pass Turn if you cannot play.</p></div></div>
-   <div class="training-step"><span>03</span><div><strong>Finish on net points</strong>
-     <p>Players alternate scoring, exchanging or passing. The match finishes when the bag is empty and a player empties their rack, or after two complete circuits without scoring. Remaining tile points are deducted from each score. The highest net score wins.</p></div></div>
-   </div><p class="training-footnote">Timers can be Off, 60, 90 or 120 seconds. Timers begin only when the next player presses Ready, and an expired turn counts as a pass. No online room or login is needed.</p>`,
-   [{text:'BACK TO MATCH',primary:true}]);
+ const bracketNote=hasBracketPair(state.tileSet)?
+  '<p class="training-footnote">Place or exchange both ( and ) together as a matched pair.</p>':'';
+ showModal('LOCAL MULTIPLAYER · FLIGHT MANUAL','Share a board, keep your rack private',
+  `<div class="training-steps">
+    <div class="training-step"><span>01</span><div><strong>Handover privately</strong>
+      <p>Pass the device before tapping <strong>Ready</strong>. Only the current player sees their rack.</p></div></div>
+    <div class="training-step"><span>02</span><div><strong>Score or swap</strong>
+      <p>Start through the centre; later equations join locked tiles. Use the free <strong>=</strong>, then press <strong>Score</strong> to check BIDMAS. You may pass or swap.</p></div></div>
+    <div class="training-step"><span>03</span><div><strong>Highest net score wins</strong>
+      <p>The match ends when someone empties their rack after the bag runs out, or after two rounds without scoring. Unused tile points are deducted.</p></div></div>
+   </div>${bracketNote}<p class="training-footnote">Timers are optional and start after Ready. A timeout counts as a pass.</p>`,
+  [{text:'BACK TO MATCH',primary:true}]);
 }
-function showDriftIntro(){
- showModal('THE DRIFT · PILOT BRIEFING','An evolving reactor run',
-   `<div class="training-steps">
-     <div class="training-step"><span>01</span><div><strong>Build accurate equations</strong>
-       <p>Every sector uses the same BIDMAS rules and premium grid. There are normally six turns, five numbers and three operators (six numbers in Nebula/Quantum). Rational kits include a linked bracket pair; Ship Systems can expand the rack or add turns.</p></div></div>
-     <div class="training-step"><span>02</span><div><strong>Earn and spend Flux</strong>
-       <p>After each cleared sector, review your energy, Flux reward and zone route. You can <strong>continue immediately</strong> or visit the illustrated <strong>Salvage Bay</strong> to buy upgrades. Fill up to four illustrated Ship Systems and carry two one-use Mission Gadgets. Tap a Mission Gadget during play to arm score boosts or transform a rack tile.</p></div></div>
-     <div class="training-step"><span>03</span><div><strong>Survive anomalies</strong>
-       <p>Every three sectors form a named zone. Sector three is the randomly selected zone boss: its unique temporary rules might seal operators, block squares, drain energy or demand a particular tile. The in-game Zone Map shows your route, the current guardian and your victories. If you fail the run ends.</p></div></div>
-   </div><p class="training-footnote">Both game modes have independent automatic saves on this device. You can switch back without losing either run.</p>`,
-   [{text:'BEGIN THE DRIFT →',primary:true}]);
+function showDriftIntro(firstVisit=false){
+ const bracketNote=hasBracketPair(state.tileSet)?
+  '<p class="training-footnote">Place both ( and ) in the same equation; exchange them as a pair.</p>':'';
+ showModal('THE DRIFT · PILOT BRIEFING','Clear sectors, upgrade and face bosses',
+  `<div class="training-steps">
+    <div class="training-step"><span>01</span><div><strong>Reach the target</strong>
+      <p>Tap or drag tiles to build true BIDMAS equations: first through the centre, then joined to locked tiles. The = sign is free. Reach each target in six turns (seven with Time Dilator).</p></div></div>
+    <div class="training-step"><span>02</span><div><strong>Spend Flux or continue</strong>
+      <p>After a clear, visit the optional <strong>Salvage Bay</strong> for up to four Ship Systems and two one-use Mission Gadgets, or continue straight away.</p></div></div>
+    <div class="training-step"><span>03</span><div><strong>Beat the zone boss</strong>
+      <p>Each zone has three sectors. Every third sector has a random boss with a temporary rule. Failure ends your Drift run.</p></div></div>
+   </div>${bracketNote}<p class="training-footnote">Sector Run and Drift save separately. Choose a pilot before starting a new run to earn cosmetics.</p>`,
+  [{text:firstVisit?'BEGIN THE DRIFT →':'BACK TO GAME',primary:true}]);
 }
 function restoreMode(mode,{initial=false}={}){
  state.modalEpoch++;
@@ -1687,7 +1689,7 @@ function restoreMode(mode,{initial=false}={}){
    state.tileSet=normalizeTileSet(new URLSearchParams(location.search).get('tiles')||storage?.getItem(TILE_SET_STORAGE_KEY));
    state.rogue=mode==='rogue'?makeRogueState(state.tileSet):null;
    freshSector(1,{newRun:true});
-   if(mode==='rogue')showDriftIntro();
+   if(mode==='rogue')showDriftIntro(true);
    else if(initial){
      let seen=false;
      try{seen=storage?.getItem(INTRO_KEY)==='seen';}catch{/* no storage */}
@@ -1720,7 +1722,7 @@ function confirmTileSetChange(id){
 }
 function showTileSetMenu(){
  if(isLocal()||state.busy)return;
- const body='<p class="kit-dialog-explain">Choose the mathematical tiles used for the whole run. New sets preserve the same board and original 5 number / 3 operator balance; rational kits add two bracket tiles.</p>'+
+ const body='<p class="kit-dialog-explain">Starting racks — Launchpad/Orbit: 5 numbers + 3 operators. Nebula/Quantum: 6 numbers + 3 operators + a matched ( ) pair.</p>'+
    '<div class="kit-dialog-grid" role="group" aria-label="Choose a maths tile kit">'+
    TILE_SETS.map(kit=>'<button class="kit-dialog-card'+(kit.id===state.tileSet?' is-current':'')+
      '" type="button" data-kit-choice="'+kit.id+'" aria-pressed="'+(kit.id===state.tileSet)+'">'+
@@ -1728,7 +1730,7 @@ function showTileSetMenu(){
      '<strong>'+kit.title+'</strong>'+
      '<em>'+kit.sample+'</em><small>'+kit.operations+'</small>'+
      '</button>').join('')+'</div>'+
-   '<p class="kit-dialog-explain">The advanced kit supports integer powers from −8 to 8, exact rational square roots and factorials from 0! to 8!.</p>';
+   '<p class="kit-dialog-explain">Quantum adds powers (−8 to 8), exact square roots and factorials (0! to 8!). Choosing another kit starts a new run.</p>';
  showModal('CHOOSE YOUR MATHS KIT','Four levels of equations',body,
    [{text:'BACK TO BOARD',primary:true}]);
  document.querySelectorAll('[data-kit-choice]').forEach(button=>{
