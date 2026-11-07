@@ -45,7 +45,9 @@ test('radio bubbles expire at five seconds, even with staggered messages',()=>{
  const first={id:'one',by:0,calloutId:'zib',at:sentAt};
  const second={id:'two',by:1,calloutId:'planet',at:sentAt+1000};
  const invalid={id:'invalid',by:1,calloutId:'unknown',at:sentAt+2000};
- assert.deepEqual(visibleCallouts([first,second,invalid],sentAt),[first]);
+ assert.deepEqual(visibleCallouts([first,invalid],sentAt),[first]);
+ assert.deepEqual(visibleCallouts([first,second],sentAt),[first,second],
+  'small future-time tolerance handles client clocks slightly behind the server');
  assert.deepEqual(visibleCallouts([first,second,invalid],sentAt+4999),[first,second]);
  assert.deepEqual(visibleCallouts([first,second,invalid],sentAt+5000),[second]);
  assert.deepEqual(visibleCallouts([first,second],sentAt+5999),[second]);
