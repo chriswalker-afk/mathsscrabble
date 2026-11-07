@@ -60,7 +60,7 @@ export function renderZoneStrip(rogue,sector,phase,onOpen){
 
 function zoneCard(rogue,sector,phase,zone,current){
  const start=(zone-1)*ZONE_LENGTH+1;
- const known=current||zone<zoneNumber(sector)||Boolean(rogue.zoneBosses?.[zone-1]);
+ const known=current||zone<zoneNumber(sector);
  const boss=known?zoneBoss(rogue,start):null;
  const cleared=zone<zoneNumber(sector)||current&&phase==='won'&&isBossSector(sector);
  const title=boss?boss.zone:'The Uncharted Beyond';

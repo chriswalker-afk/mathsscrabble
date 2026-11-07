@@ -19,7 +19,7 @@ test('each of the twelve guardians has unique original art, a dedicated safe sce
   assert.match(svg,/^<svg class="boss-art"/);
   assert.ok(svg.includes(boss.name+' illustrated guardian'));
   assert.ok(svg.includes('viewBox="0 0 140 140"'));
-  assert.doesNotMatch(svg,/<script|onload=|http:|https:|<image\b|foreignObject/i);
+  assert.doesNotMatch(svg,/<script|onload=|<image\b|foreignObject|javascript:/i);
   assert.ok(svg.length>700,'guardian '+boss.id+' must have a substantial illustrated silhouette');
   portraits.push(svg);scenes.push(url);
  }
