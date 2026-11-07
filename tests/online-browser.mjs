@@ -280,6 +280,8 @@ try{
   'opponent turns do not wipe valid private planning');
  assert.equal(await guest.locator('#online-score').isEnabled(),true,
   'private draft becomes eligible for normal submission only on your own turn');
+ await guest.locator('#online-clear').click();
+ assert.equal(await cell(guest,8,8).evaluate(x=>x.classList.contains('pending')),false);
 
 
  // Reconnection restores only the host's own private rack and the shared board.
