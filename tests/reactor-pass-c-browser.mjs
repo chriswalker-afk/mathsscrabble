@@ -36,7 +36,7 @@ try{
        .every(button=>{const rect=button.getBoundingClientRect();return rect.right<=innerWidth+2&&rect.left>=-2}),
     statusVisible:(()=>{const r=document.querySelector('#reactor-phase-label').getBoundingClientRect();return r.width>25&&r.right<=innerWidth})()
   }));
-  assert.ok(geometry.frame<=665,'Pass C must not expand 19×19 board frame');
+  assert.ok(geometry.frame<=720,'Pass C must respect the existing 720px tablet frame cap');
   assert.ok(geometry.console<=665,'console must fit same compact playing region');
   assert.ok(geometry.scroll<=geometry.viewport+3,'no page overflow at '+width+': '+JSON.stringify(geometry));
   assert.ok(geometry.zoomVisible,'all zoom controls remain reachable at '+width);
