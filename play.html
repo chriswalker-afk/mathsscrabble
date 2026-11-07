@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1b2b"><title>EQUA//NOVA | Equation Reactor — Play</title>
 <link rel="stylesheet" href="./src/design-system.css">
-<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/reactor-pass-c.css"><script type="module" src="./src/app.js"></script></head>
+<link rel="stylesheet" href="./src/styles.css"><link rel="stylesheet" href="./src/drift-map.css"><link rel="stylesheet" href="./src/salvage-bay.css"><link rel="stylesheet" href="./src/alien/badges.css"><link rel="stylesheet" href="./src/reactor-pass-c.css"><link rel="stylesheet" href="./src/drift-world.css"><script type="module" src="./src/app.js"></script></head>
 <body>
 <div class="stars" aria-hidden="true"></div>
 <div id="app">
@@ -58,7 +58,7 @@
   <div class="ceremony-meter"><div id="ceremony-meter-fill"></div></div>
   <button id="skip-ceremony" type="button" class="ceremony-skip" aria-label="Skip scoring animation and view results">SKIP <span aria-hidden="true">»</span></button>
 </div></div>
-<div id="anomaly-banner" class="anomaly-banner" hidden role="note"><div id="boss-banner-art" class="boss-banner-art" aria-hidden="true"></div><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
+<div id="anomaly-banner" class="anomaly-banner" hidden role="note"><img id="anomaly-scene" class="anomaly-scene" alt="" aria-hidden="true" width="960" height="360" decoding="async"><div id="boss-banner-art" class="boss-banner-art" aria-hidden="true"></div><div class="anomaly-label">SECTOR ANOMALY</div><strong id="anomaly-name">NONE</strong><span id="anomaly-text"></span></div>
 <div class="command-group"><button id="score-btn" class="primary-command" type="button"><strong>⚡ SCORE EQUATION</strong><small>VALIDATE & LOCK IN</small></button>
 <button id="undo-btn" class="secondary-command" type="button">↶ CLEAR PLACEMENT</button>
 <button id="local-pass-btn" class="secondary-command local-pass-btn" type="button" hidden>↪ PASS TURN</button>
