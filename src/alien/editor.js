@@ -339,6 +339,7 @@ function previewLockedColour(role,id){
  notify('Preview only: '+labelReward('palettes',id)+' — earn it to save this colour.');
 }
 function selectPart(field,id){
+ refreshEntitlements();
  if(!owns(PART_COLLECTIONS[field],id)){previewLocked(field,id);return;}
  const next=updateAlienPart(current(),state.library.manifest,field,id);
  const selector='[data-field="'+field+'"][data-option="'+id+'"]';
@@ -346,6 +347,7 @@ function selectPart(field,id){
    message:humanize(id)+' selected. Your alien is looking good!'});
 }
 function selectColour(role,palette){
+ refreshEntitlements();
  if(!owns('palettes',palette)){previewLockedColour(role,palette);return;}
  const next=updateAlienColour(current(),state.library.manifest,role,palette);
  renderChange(next,{focusSelector:
@@ -359,6 +361,7 @@ function usePreset(id){
  });
 }
 function randomise(){
+ refreshEntitlements();
  const manifest=state.library.manifest;
  const allowed={...manifest,parts:Object.fromEntries(Object.entries(manifest.parts).map(([kind,ids])=>[kind,ids.filter(id=>owns(kind,id))])),palettes:Object.fromEntries(Object.entries(manifest.palettes).filter(([id])=>owns('palettes',id)))};
  const next=randomAlien(allowed,current(),cryptoRandom);
@@ -380,6 +383,7 @@ function performRedo(){
  notify('Redid that change.');
 }
 function save(){
+ refreshEntitlements();
  for(const [field,collection] of Object.entries(PART_COLLECTIONS))if(!owns(collection,current()[field])){notify('Locked parts cannot be saved. Choose an earned or free part.',true);return;}
  for(const id of Object.values(current().colours))if(!owns('palettes',id)){notify('Locked colours cannot be saved.',true);return;}
  const successful=saveAlienToStorage(maybeStorage(),current(),state.library.manifest);
@@ -411,7 +415,22 @@ function exportSvg(){
    notify('Unable to export this alien: '+err.message,true);
  }
 }
+function refreshOwnedOptions(){
+ if(!state.ready||!state.library)return;
+ refreshEntitlements();
+ renderOptions();
+ updateSaveUI();
+}
 function bindButtons(){
+ // Hangar may change pilot ownership while the editor stays open.
+ window.addEventListener('pageshow',refreshOwnedOptions);
+ window.addEventListener('focus',refreshOwnedOptions);
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshOwnedOptions();
+ });
+ window.addEventListener('storage',event=>{
+  if(event.storageArea===maybeStorage())refreshOwnedOptions();
+ });
  $('alien-prev-section').onclick=()=>moveCategory(-1);
  $('alien-next-section').onclick=()=>moveCategory(1);
  $('alien-undo').onclick=performUndo;
