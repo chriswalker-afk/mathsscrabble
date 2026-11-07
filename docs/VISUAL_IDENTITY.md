@@ -234,3 +234,67 @@ in the encounter briefing, and its artwork stays consistent across views.
 **Next art pass:** Pass E can concentrate on the Salvage Bay workshop and
 micro-interactions, aligning its hardware catalogue with the richer worlds
 without overloading the board interface.
+
+## 10. Pass E — Orbital Salvage Bay and equipment showroom (implemented)
+
+**Objective:** Turn the optional Drift upgrade stop into a memorable,
+inhabited repair workshop with tactile equipment rather than another
+listing of text cards. The suspended reactor vessel remains the anchor
+image; a new self-contained transparent SVG overlays the same hangar
+with a cheerful toolbelt-wearing alien mechanic, spanner, helper drone,
+tool cabinets, diagnostic lights and a workbench.
+
+### Information architecture
+
+1. **Workshop arrival:** one concise banner identifies the repair bay and
+   reminds players that Ship Systems persist while Mission Gadgets are
+   consumed once.
+2. **Flux and installed capacity:** three high-contrast instruments update
+   instantly after each purchase: wallet balance, 0–4 Ship System slots,
+   and 0–2 carried gadgets.
+3. **Fitted loadout:** a six-bay equipment rack with existing item-specific
+   SVG insignia and category hues. Filled bays can be selected to inspect
+   the item's actual effect; empty bays show clear placeholders.
+4. **Module depot and Gadget Locker:** the original four system offers and
+   three gadget offers appear in separate labelled galleries. Each has a
+   substantial original SVG case/cartridge, item name, effect description,
+   cost and an actionable INSTALL / STORE button. Disabled purchases
+   explain whether Flux or capacity is insufficient.
+5. **Continue or return:** the original round-results and launch controls
+   remain in the fixed footer; the player never has to navigate to another
+   shop or change screens to buy.
+
+The item-specific inner emblems continue to come from
+`src/equipment-art.js`; `src/workshop-art.js` gives those
+unique designs a dimensional physical casing. Permanent modules use
+fitted metal cabinets; one-use gadgets use rechargeable-looking
+cartridges, without pretending gadgets are permanent. All SVG content
+is constructed from the existing allowlisted item catalog.
+
+### Behaviour and accessibility
+
+`src/salvage-workshop.js` owns only the view. It invokes
+`purchaseUpgrade` / `purchaseTemporary` through the game app and
+always accepts the game engine's returned state. It does **not**
+reroll stock, compute prices, write saves or invent purchase outcomes.
+The screen repaints in the *same modal* after a successful purchase,
+preserving the scroll location and moving keyboard focus to a viable
+next action (or the live confirmation). A result message is announced
+with an existing `role=status` region.
+
+The new visual styles are scoped to
+`#drift-hub[data-view="salvage"]`. They cannot affect the 19×19 board
+or rack. The hero artwork is supplied by an original local SVG and
+does not introduce a second decorative image element for screen
+readers. All essential text is DOM text independent of SVG. Layouts
+adapt at 320, 390, 768 and 1366 pixels, keep the fixed launch footer
+visible, and disable all decorative transitions under the user's
+reduced-motion preference.
+
+New unit and end-to-end browser regressions check every equipment
+asset, seeded stock persistence across buys and reopening, live Flux,
+remaining stock, 4+2 slots, equipment explanations, keyboard focus,
+image decoding, phone overflow and the existing boss/rack math rules.
+
+**Next art pass:** F — finishing polish on smaller screens and
+communication states, followed by a holistic consistency audit.
