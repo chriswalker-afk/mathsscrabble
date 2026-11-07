@@ -42,7 +42,7 @@ $('online-tile-kit').value=normalizeTileSet(requestedKit||storage?.getItem(TILE_
 const describeSelectedKit=()=>{
  const kit=TILE_SET_BY_ID[$('online-tile-kit').value];
  $('online-create-kit-info').textContent=kit.short+' · '+kit.desc+
-   ' The host locks this kit for all players when the room is created.';
+   ' All players use this kit.';
 };
 $('online-tile-kit').addEventListener('change',()=>{
  try{storage?.setItem(TILE_SET_STORAGE_KEY,$('online-tile-kit').value);}catch{}
@@ -310,7 +310,7 @@ function showEntry(){
  $('online-lobby').hidden=true;
  $('gate-title').textContent='Play together, from anywhere.';
  $('gate-description').textContent=
-   'Host a room or enter a six-character code. The host selects the mathematical kit; each player sees only their own private rack.';
+   'Create a room or enter a six-character code. Each pilot joins on their own device.';
 }
 function showLobby(){
  if(!state.view)return;
@@ -324,7 +324,7 @@ function showLobby(){
  $('online-entry').hidden=true;
  $('online-lobby').hidden=false;
  $('gate-title').textContent='Pilots assembling.';
- $('gate-description').textContent='Share the room code with your group. All players join on their own devices.';
+ $('gate-description').textContent='Send the code or invite link to other pilots.';
  $('lobby-code').textContent=v.code;
  $('online-lobby-count').textContent=v.people.length+' / '+v.maxPlayers;
  const players=$('online-lobby-players');
@@ -340,8 +340,8 @@ function showLobby(){
  $('online-start-match').hidden=!host;
  $('online-start-match').disabled=!host||!ready||state.busy;
  $('online-lobby-note').textContent=host?
-   (ready?'You can launch with '+v.people.length+' pilots, or wait until all '+v.maxPlayers+' seats are filled.':'At least two pilots must join before the host can start.'):
-   'Waiting for '+v.people[0].name+' to start the match. The lobby updates live.';
+   (ready?'Ready to start, or wait for more pilots.':'Another pilot must join before you can start.'):
+   'Waiting for '+v.people[0].name+' to start the match.';
 }
 function renderStandings(){
  const v=state.view,match=v?.match;
