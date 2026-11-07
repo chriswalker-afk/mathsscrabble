@@ -41,7 +41,7 @@ try{
   await page.setViewportSize(size);
   const d=await dimensions();
   console.log('Board-first layout',size,d);
-  assert.equal(d.gridColumns,size.width>920||size.width<=730&&false?2:1,
+  assert.equal(d.gridColumns,size.width>920?2:1,
    'wide desktops have only two play columns; narrow screens stack');
   assert.ok(d.board.width>=size.minBoard,'board should gain usable width: '+JSON.stringify(d));
   assert.ok(d.preview.y>=d.board.bottom-1,'equation preview sits after board');
