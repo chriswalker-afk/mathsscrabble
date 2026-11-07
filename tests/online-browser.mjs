@@ -214,6 +214,13 @@ try{
  assert.deepEqual([...guestAfterDrag].sort(),[...guestOriginalIds].sort(),
   'private rearranging must retain the exact tile IDs');
  assert.notDeepEqual(guestAfterDrag,guestOriginalIds,'waiting pilot can reorder the rack');
+  assert.equal(await guest.locator('#online-score').evaluate(x=>x.closest('.rack-commit-actions')!==null),true);
+  const actionCountBeforeShuffle=backend.actions;
+  await guest.locator('#online-shuffle').click();
+  const guestAfterShuffle=await guest.locator('#rack .tile').evaluateAll(tiles=>tiles.map(t=>t.dataset.tileId));
+  assert.notDeepEqual(guestAfterShuffle,guestAfterDrag,'waiting pilots can shuffle privately');
+  assert.deepEqual([...guestAfterShuffle].sort(),[...guestAfterDrag].sort(),'shuffle preserves private tiles');
+  assert.equal(backend.actions,actionCountBeforeShuffle,'shuffle must not contact the game server');
  // A scratch equation on an empty square belongs only to that pilot.
  const plannedCell=cell(guest,8,8),plannedIndex=Number(await plannedCell.getAttribute('data-index'));
  await guest.locator('#rack .tile:not(.wildcard)').first().click();
