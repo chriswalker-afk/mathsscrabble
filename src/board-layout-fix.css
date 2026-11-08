@@ -243,11 +243,54 @@
  #app .topbar .zone-header-strip{animation:none}
 }
 
-/* Full-board FIT uses smaller cells on short laptops; keep maths symbols
-   legible without overlaying a tile's score or spilling into neighbours. */
+/* The 19x19 FIT board can have cells as small as 12px on a phone.
+   Use pixel values supplied by board-zoom.js: no invalid CSS length
+   multiplication, viewport-based font floor, or mobile text inflation.
+   This applies to pending AND scored tiles in every game mode. */
+#app .board{
+ -webkit-text-size-adjust:100%;
+ text-size-adjust:100%;
+}
 #app .board .board-tile{
- font-size:clamp(10px,calc(var(--board-cell-size,34px) * .82),30px);
+ font-size:var(--board-glyph-size,18px);
+ line-height:1;
+ white-space:nowrap;
+ padding:0 1px;
+}
+#app .board .board-tile.signed-tile{
+ font-size:var(--board-signed-size,13px);
+}
+#app .board .board-tile.fraction-tile{
+ font-size:var(--board-fraction-size,12px);
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ transform:none;
+ padding:0;
+ gap:0;
+}
+#app .board .board-tile.fraction-tile .frac-numerator,
+#app .board .board-tile.fraction-tile .frac-denominator{
+ line-height:1;
+}
+#app .board .board-tile.fraction-tile .frac-rule{
+ width:58%;
+ min-width:0;
+ max-width:100%;
+ height:var(--board-frac-rule-size,1px);
+ min-height:1px;
+ margin:var(--board-frac-gap-size,0px) 0;
 }
 #app .board .bonus-label{
- font-size:clamp(8px,calc(var(--board-cell-size,34px) * .36),17px);
+ font-size:var(--board-bonus-size,10px);
+ line-height:1;
+ white-space:nowrap;
+}
+#app .board .bonus-start .bonus-label{
+ font-size:var(--board-start-size,16px);
+}
+#app .board .boss-cell-label{
+ font-size:var(--board-signed-size,13px);
+ line-height:1;
 }
