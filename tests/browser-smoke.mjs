@@ -177,12 +177,14 @@ try{
       const board=document.querySelector('.board-frame').getBoundingClientRect();
       const rack=document.querySelector('.rack-row').getBoundingClientRect();
       const font=parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize);
-      return {boardWidth:board.width,boardFont:font,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+      const cellWidth=document.querySelector('#board .cell').getBoundingClientRect().width;
+      return {boardWidth:board.width,boardFont:font,cellWidth,rackBottom:rack.bottom,scrollHeight:document.documentElement.scrollHeight,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
     });
     console.log('Layout',size,geometry);
     const minimum=size.height>=768?(size.width<=1100?475:485):450;
     assert.ok(geometry.boardWidth>=minimum,'board must remain legible with rack and scoring dock directly below it');
-    assert.ok(geometry.boardFont>=16,'all 19 columns visible with recognizable mathematical tiles');
+    assert.ok(geometry.boardFont>=geometry.cellWidth*.65&&geometry.boardFont<geometry.cellWidth*.8,
+      'board glyph size must track the actual square size, not a fixed viewport font floor');
     const currentBoardWidth=geometry.boardWidth;
     await page.locator('#board-zoom-in').click();
     await page.locator('#board-zoom-in').click();
@@ -190,7 +192,7 @@ try{
       font:parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize),
       frameWidth:document.querySelector('.board-frame').getBoundingClientRect().width
     }));
-    assert.ok(zoomed.font>=24,'zoom controls should enlarge mathematical glyphs on demand');
+    assert.ok(zoomed.font>=geometry.boardFont*1.2,'zoom must enlarge the maths glyphs, not just the cells');
     assert.equal(zoomed.frameWidth,currentBoardWidth,'zoom must not enlarge the board frame');
     await page.locator('#board-zoom-out').click();
     await page.locator('#board-zoom-out').click();
