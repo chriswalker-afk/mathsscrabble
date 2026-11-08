@@ -190,7 +190,7 @@ try{
       font:parseFloat(getComputedStyle(document.querySelector('.board-tile')).fontSize),
       frameWidth:document.querySelector('.board-frame').getBoundingClientRect().width
     }));
-    assert.ok(zoomed.font>=24,'zoom controls should enlarge mathematical glyphs on demand');
+    assert.ok(zoomed.font>=geometry.boardFont*1.2,'zoom must enlarge the maths glyphs, not just the cells');
     assert.equal(zoomed.frameWidth,currentBoardWidth,'zoom must not enlarge the board frame');
     await page.locator('#board-zoom-out').click();
     await page.locator('#board-zoom-out').click();
