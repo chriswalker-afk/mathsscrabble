@@ -1,6 +1,51 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+// Include normal maths, two-character signed values and stacked rational tiles.
+// CSS overflow:hidden would hide broken glyphs, so inspect text rectangles,
+// not merely the width of the outer board-tile element.
+const glyphSamples=['8','+','−','×','÷','=','−9','(',')','√','^','!','3/4','12/13'];
+const seedGlyphs=page=>page.evaluate(async values=>{
+ const {renderTileFace,tileFaceClass}=await import('./src/tile-face.js');
+ const cells=[...document.querySelectorAll('#board .cell')];
+ values.forEach((value,i)=>{
+  const cell=cells[i];cell.classList.add('occupied');
+  const glyph=document.createElement('span');
+  glyph.className='board-tile'+(tileFaceClass(value)?' '+tileFaceClass(value):'');
+  renderTileFace(glyph,value);cell.replaceChildren(glyph);
+ });
+},glyphSamples);
+const glyphGeometry=page=>page.evaluate(count=>{
+ const tiles=[...document.querySelectorAll('#board .cell .board-tile')].slice(0,count);
+ return tiles.map(tile=>{
+  const box=tile.getBoundingClientRect(),cell=tile.parentElement.getBoundingClientRect();
+  const textRects=[],walker=document.createTreeWalker(tile,NodeFilter.SHOW_TEXT);
+  let node;
+  while((node=walker.nextNode())){
+   if(!node.textContent.trim())continue;
+   const range=document.createRange();range.selectNodeContents(node);
+   const rect=range.getBoundingClientRect();
+   textRects.push({left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom});
+  }
+  return {value:tile.textContent,kind:tile.className,cellWidth:cell.width,
+   font:parseFloat(getComputedStyle(tile).fontSize),width:box.width,height:box.height,
+   overflowing:tile.scrollWidth>tile.clientWidth+1||tile.scrollHeight>tile.clientHeight+1,
+   clipped:textRects.some(r=>r.left<box.left-1.25||r.right>box.right+1.25||
+      r.top<box.top-1.25||r.bottom>box.bottom+1.25)};
+ });
+},glyphSamples.length);
+const assertGlyphsFit=async(page,label)=>{
+ const geom=await glyphGeometry(page);
+ assert.equal(geom.length,glyphSamples.length,'sample tile faces were created');
+ assert.ok(geom.every(x=>!x.clipped&&!x.overflowing),
+  label+' contains clipped symbols: '+JSON.stringify(geom.filter(x=>x.clipped||x.overflowing)));
+ const signed=geom.find(x=>x.value==='−9');
+ const fraction=geom.find(x=>x.kind.includes('fraction-tile'));
+ const regular=geom.find(x=>x.value==='8');
+ assert.ok(signed.font<regular.font,'two-character negative tiles must scale down');
+ assert.ok(fraction.font<regular.font,'stacked fractions must scale down');
+ return geom;
+};
 try{
  for(const size of [{width:1366,height:768},{width:390,height:844},{width:320,height:700}]){
   const page=await browser.newPage({viewport:size});
@@ -19,6 +64,10 @@ try{
       font:parseFloat(getComputedStyle(b.querySelector('.bonus-label')).fontSize)};
   });
   const original=await snapshot();
+  await seedGlyphs(page);
+  const initialGlyphs=await assertGlyphsFit(page,size.width+'px FIT');
+  assert.ok(initialGlyphs.find(x=>x.value==='8').font<initialGlyphs[0].cellWidth,
+    'the numeric font must scale with the cell even on very small phones');
   assert.ok(original.frameWidth<=665,'board viewport must remain compact');
   assert.ok(original.gridWidth>0,'grid exists');
   assert.ok(Math.abs(original.gridWidth-original.clientWidth)<=4,
@@ -30,10 +79,14 @@ try{
   await page.locator('#board-zoom-in').click();
   await page.locator('#board-zoom-in').click();
   const zoomed=await snapshot();
+  const zoomGlyphs=await assertGlyphsFit(page,size.width+'px zoomed');
+  assert.ok(zoomGlyphs[0].font>initialGlyphs[0].font+4,
+    'zoom must enlarge the mathematical glyph, not only its cell');
   assert.ok(zoomed.cellWidth>original.cellWidth+8,'zoom must enlarge square dimensions');
   assert.equal(zoomed.frameWidth,original.frameWidth,'zoom must not expand the board footprint');
   await page.locator('#board-zoom-fit').click();
   const fitted=await snapshot();
+  await assertGlyphsFit(page,size.width+'px FIT reset');
   assert.ok(fitted.scrollWidth<=fitted.clientWidth+5,'FIT must reveal all 19 columns');
   assert.ok(fitted.scrollHeight<=fitted.clientHeight+5,'FIT must reveal all 19 rows');
   assert.ok(Math.abs(fitted.gridWidth-fitted.clientWidth)<=4,'FIT fills entire board viewport width');
@@ -63,6 +116,7 @@ try{
         Math.abs(v.clientHeight-b.getBoundingClientRect().height)<=4;
     });
     const resized=await snapshot();
+    await assertGlyphsFit(page,'1024px resized FIT');
     assert.ok(Math.abs(resized.gridWidth-resized.clientWidth)<=4,'responsive FIT preserves horizontal fill');
     assert.ok(Math.abs(resized.gridHeight-resized.clientHeight)<=4,'responsive FIT preserves vertical fill');
     assert.equal(await page.locator('#board-zoom-level').textContent(),'100%');
@@ -79,5 +133,5 @@ try{
   assert.deepEqual(errors,[]);
   await page.close();
  }
- console.log('19x19 zoom browser passed: full board, FIT, zoom controls, panning and recenter across desktop and phone sizes.');
+ console.log('19x19 zoom browser passed: fitted board, unclipped number/operator/signed/fraction faces, zoom, resize and recenter on phones and desktops.');
 }finally{await browser.close();}
