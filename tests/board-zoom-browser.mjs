@@ -53,6 +53,11 @@ try{
   await page.goto('http://127.0.0.1:4173/play.html?mode=sector',{waitUntil:'networkidle'});
   if(await page.locator('#modal[open]').count())await page.locator('#modal-actions button').last().click();
   assert.equal(await page.locator('#board .cell').count(),361);
+  // Exercise an actual pending placement as well as all representative glyphs.
+  await page.locator('#rack .tile:not(.wildcard)').first().click();
+  await page.locator('#board .cell[data-index="180"]').click();
+  assert.equal(await page.locator('#board .cell[data-index="180"] .board-tile').count(),1,
+    'an actual tile must render on the board after placement');
   const snapshot=()=>page.evaluate(()=>{
     const v=document.getElementById('board-viewport'),f=document.getElementById('board-frame'),b=document.getElementById('board');
     return {frameWidth:f.getBoundingClientRect().width,viewportWidth:v.clientWidth,
