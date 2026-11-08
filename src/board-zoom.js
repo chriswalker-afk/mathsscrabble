@@ -4,6 +4,23 @@
 import {SIZE,CENTER} from './engine.js';
 const DEFAULT_CELL=34,MIN_CELL=12,MAX_CELL=128,STEP=5,GAP=2,PAD=6,FIT_CLEARANCE=2;
 
+// Text must shrink alongside the physical grid cell. CSS calc() multiplication
+// is not consistently supported by mobile Safari, and a 10px font floor can
+// clip signed numbers or stacked fractions inside a fitted 12-17px cell.
+// Store already-calculated px lengths instead of asking CSS to multiply lengths.
+export function boardGlyphSizes(cell){
+ const px=ratio=>(Math.round(cell*ratio*100)/100)+'px';
+ return {
+  '--board-glyph-size':px(.70),
+  '--board-signed-size':px(.46),
+  '--board-fraction-size':px(.43),
+  '--board-bonus-size':px(.46),
+  '--board-start-size':px(.62),
+  '--board-frac-rule-size':px(.08),
+  '--board-frac-gap-size':px(.02)
+ };
+}
+
 export function fittedCellSize(width,height){
  const side=Math.min(width,height);
  if(side<=0)return DEFAULT_CELL; // Hidden/awaiting layout: retry on resize.
@@ -24,6 +41,8 @@ export function initBoardZoom(){
    const ratio=(size+GAP)/(cell+GAP);
    const oldX=view.scrollLeft+anchorX,oldY=view.scrollTop+anchorY;
    cell=size;board.style.setProperty('--board-cell-size',size+'px');
+   for(const [name,value] of Object.entries(boardGlyphSizes(size)))
+    board.style.setProperty(name,value);
    view.scrollLeft=oldX*ratio-anchorX;view.scrollTop=oldY*ratio-anchorY;
    // 100% means the complete board fits, rather than a fixed 34px tile.
    if(output)output.value=Math.round(100*cell/fitSize())+'%';
